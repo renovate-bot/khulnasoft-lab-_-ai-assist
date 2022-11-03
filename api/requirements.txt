@@ -1,0 +1,8 @@
+fastapi==0.82.0
+numpy==1.23.2
+sse-starlette==1.1.6
+tokenizers==0.12.1
+tritonclient[all]==2.25.0
+uvicorn==0.18.3
+requests==2.28.1
+redis==4.3.4
