@@ -20,7 +20,7 @@ class GitLab:
         :param token:
         :return:
         """
-        end_point = "ai/aiassist"
+        end_point = "ml/ai-assist"
         url = urllib.parse.urljoin(self.api_base_url, end_point)
         headers = dict(Authorization=token)
         try:
