@@ -1,0 +1,68 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: triton-deployment
+  labels:
+    app: triton
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: triton
+  template:
+    metadata:
+      labels:
+        app: triton
+    spec:
+      imagePullSecrets:
+        - name: gitlab-registry
+      containers:
+        - name: triton
+          image: moyix/triton_with_ft:22.09
+          ports:
+            - containerPort: 8000
+            - containerPort: 8001
+            - containerPort: 8002
+          env:
+            - name: MODEL
+              value: "fastertransformer"
+            - name: MODEL_DIR
+              value: "/model" # Use this path as it's hardcoded in Triton configs
+            - name: TRITON_BIN
+              value: "/opt/tritonserver/bin/tritonserver"
+          command: ["/bin/bash", "-c", "--"]
+          args:
+            - "CUDA_VISIBLE_DEVICES=0 $(TRITON_BIN) --model-repository=$(MODEL_DIR) --model-control-mode=explicit --load-model=$(MODEL)"
+          volumeMounts:
+            - name: pvc-models-vol
+              mountPath: /model
+              readOnly: true
+          resources:
+            limits:
+              nvidia.com/gpu: "1"
+      volumes:
+        - name: pvc-models-vol
+          persistentVolumeClaim:
+            claimName: pvc-models
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: triton-svc
+  labels:
+    app: triton
+spec:
+  type: ClusterIP
+  ports:
+    - name: grpc
+      port: 8000
+      targetPort: 8000
+    - name: http
+      port: 8001
+      targetPort: 8001
+    - name: metrics
+      port: 8002
+      targetPort: 8002
+  selector:
+    app: triton
