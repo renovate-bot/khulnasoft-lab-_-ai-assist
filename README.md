@@ -60,3 +60,51 @@ Next open VS Code, install the GitLab Workflow extension, or run that extension 
 In VS Code settings you will need to set `AI Assist Server` to `http://localhost:5000` ofcourse change the port if you 
 are deviating from the default. Set `AI Assist engine` to `FauxPilot`. It should now work.
 
+## Deploying to the Kubernetes cluster 
+
+To successfully deploy AI Assist to a k8s cluster, please, make sure your cluster supports NVIDIA® GPU hardware accelerators.
+Below, we give a guideline tested specifically on the GKE cluster in the Applied ML group. Successful work 
+on any other clusters is not guaranteed.
+
+1. Create a GKE cluster with the following configuration:
+   - gke version `1.24.5-gke.600`
+   - image type `container-optimized OS with containerd.`
+   - machine type `n1-standard-2` machines, 
+   - autoscaling enabled `from 0 to 5` nodes
+   - 1 Nvidia T4 GPU 16 GB GDDR6
+   - Nvidia driver version: 510.47.03, CUDA version: 11.7
+
+2. Install NVIDIA GPU device drivers (more [info](https://cloud.google.com/kubernetes-engine/docs/how-to/gpus#installing_drivers)):
+   ```shell
+   kubectl apply -f https://raw.githubusercontent.com/GoogleCloudPlatform/container-engine-accelerators/master/nvidia-driver-installer/cos/daemonset-preloaded-latest.yaml
+   ```
+
+3. Create the `ai-assist` namespace and update the current context
+   ```shell
+   export KUBERNETES_AI_ASSIST_NAMESPACE=ai-assist
+   kubectl create namespace $KUBERNETES_AI_ASSIST_NAMESPACE
+   kubectl config set-context --current --namespace $KUBERNETES_AI_ASSIST_NAMESPACE
+   ```
+
+4. Create the `docker-registry` secret to pull private images from GitLab AI Assist registry:
+   ```shell
+   export DEPLOY_TOKEN_USERNAME=<USERNAME>
+   export DEPLOY_TOKEN_PASSWORD=<PASSWORD>
+   kubectl create secret docker-registry gitlab-registry \
+      --docker-server="registry.gitlab.com" \
+      --docker-username="$DEPLOY_TOKEN_USERNAME" \
+      --docker-password="$DEPLOY_TOKEN_PASSWORD"   
+   ```
+
+5. Run the k8s job to fetch the `codegen-2B-multi` model from Hugging Face:
+   ```shell
+   kubectl apply -f ./manifests/model-loader.yaml
+   kubectl wait --for=condition=complete --timeout=15m job/model-loader-job
+   ```
+
+6. Deploy Triton Inference server:
+   ```shell
+   kubectl apply -f ./manifests/triton-inference.yaml
+   ```
+
+7. TBD: Deploy the API service:
