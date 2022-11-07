@@ -1,0 +1,41 @@
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: pvc-models
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 50Gi
+  storageClassName: standard
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: model-loader-job
+spec:
+  ttlSecondsAfterFinished: 100
+  template:
+    spec:
+      imagePullSecrets:
+        - name: gitlab-registry
+      containers:
+        - name: model-loader
+          image: registry.gitlab.com/gitlab-org/modelops/applied-ml/ai-assist/ai-assist-api/model-loader:84188b5a58df11dbdb5ae500d018cd95c37e4da6
+          env:
+            - name: MODEL
+              value: "codegen-2B-multi"
+            - name: NUM_GPUS
+              value: "1"
+            - name: MODELS_DIR
+              value: "/data/models"
+          volumeMounts:
+            - name: pvc-models-vol
+              mountPath: /data/models
+      volumes:
+        - name: pvc-models-vol
+          persistentVolumeClaim:
+            claimName: pvc-models
+      restartPolicy: Never

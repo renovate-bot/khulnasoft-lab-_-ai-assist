@@ -19,6 +19,15 @@ include:
 
 variables:
   API_IMAGE: $CI_REGISTRY_IMAGE/api
+  MODEL_LOADER_IMAGE: $CI_REGISTRY_IMAGE/model-loader
+  DOCKER_TLS_CERTDIR: "/certs"
+
+.docker:
+  image: docker:20.10.21
+  services:
+    - docker:20.10.21-dind
+  before_script:
+    - docker login -u "$CI_REGISTRY_USER" -p "$CI_REGISTRY_PASSWORD" $CI_REGISTRY
 
 flake8:
   image: registry.gitlab.com/pipeline-components/flake8:latest
@@ -44,13 +53,9 @@ dokter:
       - "dokter-$CI_COMMIT_SHA.json"
       - "dokter-sast-$CI_COMMIT_SHA.json"
 
-docker-build:
-  image: docker:latest
+docker-build-api:
+  extends: [ ".docker" ]
   stage: docker
-  services:
-    - docker:dind
-  before_script:
-    - docker login -u "$CI_REGISTRY_USER" -p "$CI_REGISTRY_PASSWORD" $CI_REGISTRY
   script:
     - docker build -t $API_IMAGE:$CI_COMMIT_SHA -f api/Dockerfile .
     - docker push $API_IMAGE:$CI_COMMIT_SHA
@@ -58,6 +63,15 @@ docker-build:
     key: build-cache-$CI_COMMIT_REF_NAME
     paths:
       - dist/
+
+docker-build-model-loader:
+  extends: [ ".docker" ]
+  stage: docker
+  variables:
+    TARGET_IMAGE: $MODEL_LOADER_IMAGE:$CI_COMMIT_SHA
+  script:
+    - docker build -t $TARGET_IMAGE model-loader/.
+    - docker push $TARGET_IMAGE
 
 container_scanning:
   stage: post-build-test
