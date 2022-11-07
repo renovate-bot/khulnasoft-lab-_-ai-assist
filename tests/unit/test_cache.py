@@ -15,8 +15,8 @@ cache = Cache(expiry_seconds=2)
         "a1b2c3d4e5"
     ]
 )
-def test_cache(key: str):
-    set_key = cache.set_cached_token(key=key)
+def test_local_cache(key: str):
+    set_key = cache.set_cached_token(key=key, value=True)
     retrieved = cache.get_cached_token(key=key)
     assert set_key == retrieved
 
@@ -25,8 +25,8 @@ def test_cache(key: str):
     "key",
     ["abcde"]
 )
-def test_cache_expiration(key):
-    set_key = cache.set_cached_token(key=key)
+def test_local_cache_expiration(key):
+    set_key = cache.set_cached_token(key=key, value=True)
     assert set_key is True
     time.sleep(2)
     assert cache.get_cached_token(key=key) is False

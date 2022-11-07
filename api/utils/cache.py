@@ -1,6 +1,7 @@
 import datetime
 import os
 import hashlib
+from typing import Union
 
 import redis
 from config.config import Config
@@ -42,14 +43,15 @@ class Cache:
             # Key does not exist in cache
             return False
 
-    def set_cached_token(self, key: str) -> bool:
+    def set_cached_token(self, key: str, value: Union[str, dict, bool]) -> bool:
         """
         Insert a token into Redis
         :param key: Token, will be used for both key and value
+        :param value:
         :return: bool
         """
         key = self._encode(key=key)
-        self.cache.set(name=key, value=key, ex=self.expiry_seconds)
+        self.cache.set(name=key, value=value, ex=self.expiry_seconds)
         return True
 
     def get_cached_token(self, key: str) -> bool:

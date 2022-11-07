@@ -47,8 +47,6 @@ class GitLab:
         if self.cache.get_cached_token(key=token) is True:
             return True
 
-        if self.check_api(token=token) is True:
-            self.cache.set_cached_token(key=token)
-            return True
-
-        return False
+        checked_value = self.check_api(token=token)
+        self.cache.set_cached_token(key=token, value=checked_value)
+        return checked_value
