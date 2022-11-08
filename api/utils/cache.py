@@ -1,6 +1,7 @@
 import datetime
 import os
 import hashlib
+from typing import Union
 
 import redis
 from config.config import Config
@@ -9,8 +10,8 @@ config = Config()
 
 
 class Cache:
-    def __init__(self, expiry_seconds: int = 3600):
-        if config.use_local_cache is True:
+    def __init__(self, expiry_seconds: int = 3600, use_local_cache: bool = config.use_local_cache):
+        if use_local_cache is True:
             self.cache = self.LocalCache()
         else:
             self.cache = redis.Redis(host='redis', port=6379, db=0, password=os.environ.get("REDIS_PASS"))
@@ -42,14 +43,15 @@ class Cache:
             # Key does not exist in cache
             return False
 
-    def set_cached_token(self, key: str) -> bool:
+    def set_cached_token(self, key: str, value: Union[str, dict, bool]) -> bool:
         """
         Insert a token into Redis
         :param key: Token, will be used for both key and value
+        :param value:
         :return: bool
         """
         key = self._encode(key=key)
-        self.cache.set(name=key, value=key, ex=self.expiry_seconds)
+        self.cache.set(name=key, value=value, ex=self.expiry_seconds)
         return True
 
     def get_cached_token(self, key: str) -> bool:
