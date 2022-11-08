@@ -2,22 +2,34 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: triton-deployment
+  name: model-serving
   labels:
-    app: triton
+    app: model-serving
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: triton
+      app: model-serving
   template:
     metadata:
       labels:
-        app: triton
+        app: model-serving
     spec:
       imagePullSecrets:
         - name: gitlab-registry
       containers:
+        - name: api
+          image: registry.gitlab.com/gitlab-org/modelops/applied-ml/ai-assist/ai-assist-api/api:33b50f1472376768a54b11cebadf9d8530fa635d
+          ports:
+            - containerPort: 5000
+          env:
+            - name: TRITON_HOST
+              value: "localhost"
+            - name: TRITON_PORT
+              value: "8001"
+            - name: BYPASS_EXTERNAL_AUTH
+              value: "true"
+
         - name: triton
           image: moyix/triton_with_ft:22.09
           ports:
@@ -35,34 +47,31 @@ spec:
           args:
             - "CUDA_VISIBLE_DEVICES=0 $(TRITON_BIN) --model-repository=$(MODEL_DIR) --model-control-mode=explicit --load-model=$(MODEL)"
           volumeMounts:
-            - name: pvc-models-vol
+            - name: model-nfc-pvc-volume
               mountPath: /model
               readOnly: true
           resources:
             limits:
               nvidia.com/gpu: "1"
       volumes:
-        - name: pvc-models-vol
+        - name: model-nfc-pvc-volume
           persistentVolumeClaim:
-            claimName: pvc-models
+            claimName: model-nfs-pvc
 ---
 apiVersion: v1
 kind: Service
 metadata:
-  name: triton-svc
+  name: model-k8s-serving
   labels:
-    app: triton
+    app: model-serving
 spec:
   type: ClusterIP
   ports:
-    - name: grpc
-      port: 8000
-      targetPort: 8000
     - name: http
-      port: 8001
-      targetPort: 8001
+      port: 8080
+      targetPort: 5000
     - name: metrics
-      port: 8002
+      port: 8082
       targetPort: 8002
   selector:
-    app: triton
+    app: model-serving

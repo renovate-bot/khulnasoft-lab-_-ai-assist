@@ -140,19 +140,24 @@ on any other clusters is not guaranteed.
    - 1 Nvidia T4 GPU 16 GB GDDR6
    - Nvidia driver version: 510.47.03, CUDA version: 11.7
 
-1. Install NVIDIA GPU device drivers (more [info](https://cloud.google.com/kubernetes-engine/docs/how-to/gpus#installing_drivers)):
+2. Install NVIDIA GPU device drivers (more [info](https://cloud.google.com/kubernetes-engine/docs/how-to/gpus#installing_drivers)):
    ```shell
    kubectl apply -f https://raw.githubusercontent.com/GoogleCloudPlatform/container-engine-accelerators/master/nvidia-driver-installer/cos/daemonset-preloaded-latest.yaml
    ```
 
-1. Create the `ai-assist` namespace and update the current context
+3. Provision GCP persistence disk to store AI Assist models:
+   ```shell
+   gcloud compute disks create --size=250GB --zone=us-central1-c nfs-ai-assist-models-disk
+   ```
+
+4. Create the `ai-assist` namespace and update the current context
    ```shell
    export KUBERNETES_AI_ASSIST_NAMESPACE=ai-assist
    kubectl create namespace $KUBERNETES_AI_ASSIST_NAMESPACE
    kubectl config set-context --current --namespace $KUBERNETES_AI_ASSIST_NAMESPACE
    ```
 
-1. Create the `docker-registry` secret to pull private images from GitLab AI Assist registry:
+5. Create the `docker-registry` secret to pull private images from GitLab AI Assist registry:
    ```shell
    export DEPLOY_TOKEN_USERNAME=<USERNAME>
    export DEPLOY_TOKEN_PASSWORD=<PASSWORD>
@@ -162,15 +167,19 @@ on any other clusters is not guaranteed.
       --docker-password="$DEPLOY_TOKEN_PASSWORD"   
    ```
 
-1. Run the k8s job to fetch the `codegen-2B-multi` model from Hugging Face:
+6. Deploy NFS server and model persistence volume:
+   ```shell
+   kubectl apply -f ./manifests/model-nfs-server.yaml
+   kubectl apply -f ./manifests/model-persistense-volumes.yaml
+   ```
+
+7. Run the k8s job to fetch the `codegen-2B-multi` model from Hugging Face:
    ```shell
    kubectl apply -f ./manifests/model-loader.yaml
    kubectl wait --for=condition=complete --timeout=15m job/model-loader-job
    ```
 
-1. Deploy Triton Inference server:
+8. Deploy Triton Inference server including API service:
    ```shell
-   kubectl apply -f ./manifests/triton-inference.yaml
+   kubectl apply -f ./manifests/model-serving.yaml
    ```
-
-1. TBD: Deploy the API service:
