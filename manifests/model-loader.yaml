@@ -2,14 +2,16 @@
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
-  name: pvc-models
+  name: model-nfs-pvc
+  labels:
+    app: model-nfc-pvc
 spec:
   accessModes:
-    - ReadWriteOnce
+    - ReadWriteMany
+  storageClassName: ""
   resources:
     requests:
       storage: 50Gi
-  storageClassName: standard
 ---
 apiVersion: batch/v1
 kind: Job
@@ -32,10 +34,10 @@ spec:
             - name: MODELS_DIR
               value: "/data/models"
           volumeMounts:
-            - name: pvc-models-vol
+            - name: model-nfc-pvc-volume
               mountPath: /data/models
       volumes:
-        - name: pvc-models-vol
+        - name: model-nfc-pvc-volume
           persistentVolumeClaim:
-            claimName: pvc-models
+            claimName: model-nfs-pvc
       restartPolicy: Never
