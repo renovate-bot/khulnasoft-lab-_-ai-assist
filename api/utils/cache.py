@@ -10,8 +10,8 @@ config = Config()
 
 
 class Cache:
-    def __init__(self, expiry_seconds: int = 3600):
-        if config.use_local_cache is True:
+    def __init__(self, expiry_seconds: int = 3600, use_local_cache: bool = config.use_local_cache):
+        if use_local_cache is True:
             self.cache = self.LocalCache()
         else:
             self.cache = redis.Redis(host='redis', port=6379, db=0, password=os.environ.get("REDIS_PASS"))
