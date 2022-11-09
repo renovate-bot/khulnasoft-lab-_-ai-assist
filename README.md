@@ -150,14 +150,30 @@ on any other clusters is not guaranteed.
    gcloud compute disks create --size=250GB --zone=us-central1-c nfs-ai-assist-models-disk
    ```
 
-4. Create the `ai-assist` namespace and update the current context
+4. Install [`cert-manager`](https://cert-manager.io/docs/):
+   ```shell
+   kubectl create namespace cert-manager
+   kubectl config set-context --current --namespace cert-manager
+   kubectl apply -f https://github.com/cert-manager/cert-manager/releases/download/v1.10.0/cert-manager.yaml
+   kubectl apply -f ./manifests/cert-manager/cluster-issuer.yaml
+   ```
+
+5. Install the Ingress [`NGINX`](https://kubernetes.github.io/ingress-nginx/) controller:
+   ```shell
+   kubectl create namespace nginx
+   kubectl config set-context --current --namespace nginx
+   helm repo add ingress-nginx https://kubernetes.github.io/ingress-nginx && helm repo update
+   helm install nginx ingress-nginx/ingress-nginx
+   ```
+
+6. Create the `ai-assist` namespace and update the current context
    ```shell
    export KUBERNETES_AI_ASSIST_NAMESPACE=ai-assist
    kubectl create namespace $KUBERNETES_AI_ASSIST_NAMESPACE
    kubectl config set-context --current --namespace $KUBERNETES_AI_ASSIST_NAMESPACE
    ```
 
-5. Create the `docker-registry` secret to pull private images from GitLab AI Assist registry:
+7. Create the `docker-registry` secret to pull private images from GitLab AI Assist registry:
    ```shell
    export DEPLOY_TOKEN_USERNAME=<USERNAME>
    export DEPLOY_TOKEN_PASSWORD=<PASSWORD>
@@ -167,19 +183,24 @@ on any other clusters is not guaranteed.
       --docker-password="$DEPLOY_TOKEN_PASSWORD"   
    ```
 
-6. Deploy NFS server and model persistence volume:
+8. Deploy NFS server and model persistence volume:
    ```shell
    kubectl apply -f ./manifests/model-nfs-server.yaml
    kubectl apply -f ./manifests/model-persistense-volumes.yaml
    ```
 
-7. Run the k8s job to fetch the `codegen-2B-multi` model from Hugging Face:
+9. Run the k8s job to fetch the `codegen-2B-multi` model from Hugging Face:
    ```shell
    kubectl apply -f ./manifests/model-loader.yaml
    kubectl wait --for=condition=complete --timeout=15m job/model-loader-job
    ```
 
-8. Deploy Triton Inference server including API service:
+10. Deploy Triton Inference server including API service:
+    ```shell
+    kubectl apply -f ./manifests/model-serving.yaml
+    ```
+
+11. Deploy the NGINX ingress resource with TLS enabled:
    ```shell
-   kubectl apply -f ./manifests/model-serving.yaml
+   kubectl apply -f ./manifests/ingress/ingress-nginx.yaml
    ```
