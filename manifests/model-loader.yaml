@@ -11,7 +11,10 @@ spec:
   storageClassName: ""
   resources:
     requests:
-      storage: 50Gi
+      storage: 200Gi
+  selector:
+    matchLabels:
+      app: model-nfs-pv
 ---
 apiVersion: batch/v1
 kind: Job
@@ -28,7 +31,7 @@ spec:
           image: registry.gitlab.com/gitlab-org/modelops/applied-ml/ai-assist/ai-assist-api/model-loader:84188b5a58df11dbdb5ae500d018cd95c37e4da6
           env:
             - name: MODEL
-              value: "codegen-2B-multi"
+              value: "codegen-16B-multi"
             - name: NUM_GPUS
               value: "1"
             - name: MODELS_DIR

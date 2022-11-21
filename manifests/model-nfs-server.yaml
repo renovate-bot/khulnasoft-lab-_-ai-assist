@@ -28,7 +28,7 @@ spec:
           securityContext:
             privileged: true
           volumeMounts:
-            - mountPath: /data
+            - mountPath: /exports
               name: nfs-models-volume
       volumes:
         - name: nfs-models-volume
