@@ -25,7 +25,7 @@ class Cache:
         def __init__(self):
             self.in_memory_cache = {}
 
-        def set(self, name: str, value: str, ex: int) -> None:
+        def set(self, name: str, value: bool, ex: int) -> None:
             if self.in_memory_cache.get(name, None) is None:
                 expiration = datetime.datetime.now() + datetime.timedelta(seconds=ex)
                 self.in_memory_cache[name] = {"value": value, "ex": expiration}
@@ -33,6 +33,8 @@ class Cache:
         def exists(self, name: str) -> int:
             key = self.in_memory_cache.get(name)
             if key is not None:
+                if key["value"] is False:
+                    return 0
                 if key["ex"] > datetime.datetime.now():
                     # Key is still in cache and not expired
                     return 1
