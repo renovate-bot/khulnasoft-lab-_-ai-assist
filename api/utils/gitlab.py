@@ -22,7 +22,7 @@ class GitLab:
         """
         end_point = "ml/ai-assist"
         url = urllib.parse.urljoin(self.api_base_url, end_point)
-        headers = dict(Authorization=token)
+        headers = dict(Authorization=f"Bearer {token}")
         try:
             r = requests.get(url=url, headers=headers)
             if r.status_code == 200:  # TODO: Perform a better check
