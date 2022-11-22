@@ -2,34 +2,22 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: model-serving
+  name: model-triton
   labels:
-    app: model-serving
+    app: model-triton
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: model-serving
+      app: model-triton
   template:
     metadata:
       labels:
-        app: model-serving
+        app: model-triton
     spec:
       imagePullSecrets:
         - name: gitlab-registry
       containers:
-        - name: api
-          image: registry.gitlab.com/gitlab-org/modelops/applied-ml/ai-assist/ai-assist-api/api:33b50f1472376768a54b11cebadf9d8530fa635d
-          ports:
-            - containerPort: 5000
-          env:
-            - name: TRITON_HOST
-              value: "localhost"
-            - name: TRITON_PORT
-              value: "8001"
-            - name: BYPASS_EXTERNAL_AUTH
-              value: "true"
-
         - name: triton
           image: moyix/triton_with_ft:22.09
           ports:
@@ -61,17 +49,17 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: model-k8s-serving
+  name: model-k8s-triton
   labels:
-    app: model-serving
+    app: model-triton
 spec:
   type: ClusterIP
   ports:
-    - name: http
+    - name: api
       port: 8080
-      targetPort: 5000
+      targetPort: 8001 
     - name: metrics
       port: 8082
       targetPort: 8002
   selector:
-    app: model-serving
+    app: model-triton
