@@ -147,7 +147,7 @@ on any other clusters is not guaranteed.
 
 3. Provision GCP persistence disk to store AI Assist models:
    ```shell
-   gcloud compute disks create --size=250GB --zone=us-central1-c nfs-ai-assist-models-disk
+   gcloud compute disks create --size=500GB --zone=us-central1-c nfs-ai-assist-models-disk
    ```
 
 4. Install [`cert-manager`](https://cert-manager.io/docs/):
@@ -189,10 +189,10 @@ on any other clusters is not guaranteed.
    kubectl apply -f ./manifests/model-persistense-volumes.yaml
    ```
 
-9. Run the k8s job to fetch the `codegen-2B-multi` model from Hugging Face:
+9. Run the k8s job to fetch the `codegen-16B-multi` model from Hugging Face:
    ```shell
    kubectl apply -f ./manifests/model-loader.yaml
-   kubectl wait --for=condition=complete --timeout=15m job/model-loader-job
+   kubectl wait --for=condition=complete --timeout=30m job/model-loader-job
    ```
 
 10. Deploy Triton Inference server including API service:
