@@ -72,8 +72,8 @@ metadata:
     release: prometheus
 spec:
   endpoints:
-  - interval: 30s
-    port: metrics
+    - interval: 30s
+      port: metrics
   selector:
     matchLabels:
       app: model-triton
