@@ -57,9 +57,23 @@ spec:
   ports:
     - name: api
       port: 8080
-      targetPort: 8001 
+      targetPort: 8001
     - name: metrics
       port: 8082
       targetPort: 8002
   selector:
     app: model-triton
+---
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: model-triton
+  labels:
+    release: prometheus
+spec:
+  endpoints:
+  - interval: 30s
+    port: metrics
+  selector:
+    matchLabels:
+      app: model-triton
