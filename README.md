@@ -204,3 +204,108 @@ on any other clusters is not guaranteed.
    ```shell
    kubectl apply -f ./manifests/ingress/ingress-nginx.yaml
    ```
+
+## Monitoring
+
+Proper observability is a corner stone of a well engineered, production worthy system. So like any such system we have monitoring too.
+
+### Prerequisites
+
+You will need `kubectl` installed on your computer and a modicum of comfort with the command line. Following that, you will need to configure a context to connect to the cluster from which you wish to deploy, access, or remove the monitoring stack.
+
+Additionally you will also need to have the latest version of helm and make installed.
+
+### Deploying Monitoring
+
+Deploying monitoring to your kubernetes cluster is rather straight forward. While connected to the cluster run the following make commands.
+
+```shell
+make monitoring-setup # This only needs to be run once
+make monitoring-deploy
+```
+
+### Connecting to Grafana and Prometheus UI
+
+Firstly let's check our context and then switch to the correct context as needed.
+
+```shell
+# Checking your context
+kubectl config current-context
+
+# Finding available contexts
+kubectl config get-contexts
+
+# Switching contexts
+kubectl config use-context {{CONTEXT_NAME_HERE}}
+```
+
+#### Grafana Port Forward
+
+Grafana is where all the dashboard of the metrics can be found. Now that we are in the correct context you can port-forward the grafana service to your local machine with the following command.
+
+```shell
+# Mapping port 80 on the service to localhost:3000 
+kubectl -n monitoring port-forward service/prometheus-grafana 3000:80
+```
+
+#### Prometheus UI Port Forward
+
+Occasionally it is useful to check which targets are being scraped by Prometheus and if they are actually receiving metrics. The following command will execute a port forward to your desired Prometheus instance, assuming you are in the correct context. You are in the correct context, right?
+
+```shell
+# Mapping port 9090 on the service to localhost:9090
+kubectl -n monitoring port-forward service/prometheus-kube-prometheus-prometheus 9090:9090
+```
+
+#### Service Discovery
+
+Once port forwarding is set up, Service Discovery is useful to determine if Prometheus can even see the ServiceMonitor you have deployed. If your ServiceMonitor does not appear after 60 seconds then it is likely to be misconfigured.
+
+The most common things to forget when configuring a Service and ServiceMonitor are as follows:
+
+- The label `release: prometheus` in the ServiceMonitor
+- The name of the port which should be specified in the Service as well as in the ServiceMonitor (`port: web` in the ServiceMonitor and `name:web` in the Service in the below example
+- The selector that should be set in `metadata.labels` in the Service and in `spec.selector.matchLabels` in the ServiceMonitor (`app: clickhouse-exploration-go` in the below example) .
+
+```yaml
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: clickhouse-exploration-go-servicemonitor
+  labels:
+    release: prometheus
+spec:
+  endpoints:
+  - interval: 30s
+    port: web
+  selector:
+    matchLabels:
+      app: clickhouse-exploration-go
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: clickhouse-exploration-go-service
+  labels:
+    app: clickhouse-exploration-go
+spec:
+  selector:
+    app: clickhouse-exploration-go
+  ports:
+  - protocol: "TCP"
+    name: web
+    port: 4444
+    targetPort: 4444
+  type: LoadBalancer
+
+```
+
+Service Discovery only tells you if Prometheus can see the ServiceMonitor, in order to determine if the metrics can be pulled from the service you need to check the targets page.
+
+#### Targets
+
+Once port forwarding is setup, Targets can be found under the Status tab or one can simply go to this endpoint: <http://localhost:9090/targets?search>=
+
+Targets are useful for debugging. Below are examples of two ServiceMonitors, connecting to a golang and python service respectively, that are not configured for scraping and do not expose a `/metrics` endpoint.
+
+![README.PrometheusUI](./docs/assets/README.PrometheusUI.png)
