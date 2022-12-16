@@ -1,7 +1,7 @@
 import os
 
-import numpy as np
 import torch
+import numpy as np
 import triton_python_backend_utils as pb_utils
 from transformers import AutoTokenizer, AutoModelForCausalLM
 
@@ -17,6 +17,7 @@ def numpy2pb(name, data):
 
 class TritonPythonModel:
     def __init__(self):
+        self.device = None
         self.model = None
         self.tokenizer = None
 
@@ -29,6 +30,8 @@ class TritonPythonModel:
         if offload_folder is None:
             raise ValueError("OFFLOAD_FOLDER env variable not set in the model config file")
 
+        self.device = "cuda" if torch.cuda.is_available() else "cpu"
+
         # initialize tokenizer
         self.tokenizer = AutoTokenizer.from_pretrained(model_path)
         if self.tokenizer.pad_token is None:
@@ -36,13 +39,17 @@ class TritonPythonModel:
             self.tokenizer.padding_side = "left"
 
         # initialize model
-        self.model = AutoModelForCausalLM.from_pretrained(
-            model_path,
-            torch_dtype=torch.float32,
-            device_map="auto",
-            offload_folder=offload_folder,
-            offload_state_dict=True,
-            low_cpu_mem_usage=True,
+        self.model = (
+            AutoModelForCausalLM.from_pretrained(
+                model_path,
+                torch_dtype=torch.float32,
+                device_map="auto",
+                offload_folder=offload_folder,
+                offload_state_dict=True,
+                low_cpu_mem_usage=True,
+            )
+            .eval()
+            .to(self.device)
         )
 
     def execute(self, requests):
@@ -54,12 +61,16 @@ class TritonPythonModel:
             prompt = prompts_np[0, 0].decode("utf-8")
             print(f"{prompt=}")
 
-            prompts_encoded = self.tokenizer(
-                prompt,
-                return_tensors="pt",
-                max_length=128,
-                truncation=True,
-                padding="max_length")
+            prompts_encoded = (
+                self.tokenizer(
+                    prompt,
+                    return_tensors="pt",
+                    max_length=128,
+                    truncation=True,
+                    padding="max_length"
+                )
+                .to(self.device)
+            )
 
             print(f"{prompts_encoded=}")
 
@@ -69,14 +80,16 @@ class TritonPythonModel:
                 max_new_tokens=20,
                 top_k=3,
                 penalty_alpha=0.4,
-                pad_token_id=50256)
+                pad_token_id=50256
+            )
 
             print(f"{suggestion=}")
             print(f"{suggestion.is_cuda=}")
 
             suggestion_decoded = self.tokenizer.batch_decode(
                 suggestion,
-                skip_special_tokens=True)
+                skip_special_tokens=True
+            )
 
             print(f"{suggestion_decoded=}")
 
