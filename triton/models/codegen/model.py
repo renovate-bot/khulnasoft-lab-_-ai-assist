@@ -1,4 +1,4 @@
-import json
+import os
 
 import numpy as np
 import torch
@@ -20,15 +20,14 @@ class TritonPythonModel:
         self.model = None
         self.tokenizer = None
 
-    def initialize(self, args: dict):
-        model_config = json.loads(args["model_config"])
-        model_path = model_config["parameters"].get("model_path", {"string_value": None})["string_value"]
+    def initialize(self, _: dict):
+        model_path = os.environ.get("MODEL_PATH")
         if model_path is None:
-            raise ValueError("model_path parameter not set in the model config file")
+            raise ValueError("MODEL_PATH env variable not set in the model config file")
 
-        offload_folder = model_config["parameters"].get("offload_folder", {"string_value": None})["string_value"]
+        offload_folder = os.environ.get("OFFLOAD_FOLDER")
         if offload_folder is None:
-            raise ValueError("offload_folder parameter not set in the model config file")
+            raise ValueError("OFFLOAD_FOLDER env variable not set in the model config file")
 
         # initialize tokenizer
         self.tokenizer = AutoTokenizer.from_pretrained(model_path)
