@@ -21,6 +21,7 @@ variables:
   API_IMAGE: $CI_REGISTRY_IMAGE/api
   MODEL_LOADER_IMAGE: $CI_REGISTRY_IMAGE/model-loader
   TRITON_SERVER_IMAGE: $CI_REGISTRY_IMAGE/triton-server
+  MODEL_LOADER_CODEGEN_IMAGE: $CI_REGISTRY_IMAGE/model-codegen-loader
   DOCKER_TLS_CERTDIR: "/certs"
 
 .docker:
@@ -81,6 +82,19 @@ docker-build-triton-server:
     TARGET_IMAGE: $TRITON_SERVER_IMAGE:$CI_COMMIT_SHA
   script:
     - docker build -t $TARGET_IMAGE triton/.
+    - docker push $TARGET_IMAGE
+
+docker-build-model-codegen-loader:
+  extends: [ ".docker" ]
+  stage: docker
+  parallel:
+    matrix:
+      - MODEL_NAME: Salesforce/codegen-350M-multi
+        TARGET_IMAGE: $MODEL_LOADER_CODEGEN_IMAGE:350m-multi-$CI_COMMIT_SHORT_SHA
+      - MODEL_NAME: Salesforce/codegen-16B-multi
+        TARGET_IMAGE: $MODEL_LOADER_CODEGEN_IMAGE:16b-multi-$CI_COMMIT_SHORT_SHA
+  script:
+    - docker build -t $TARGET_IMAGE --build-arg MODEL_NAME=$MODEL_NAME triton/models/.
     - docker push $TARGET_IMAGE
 
 container_scanning:
