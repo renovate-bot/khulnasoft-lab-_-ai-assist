@@ -1,0 +1,71 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: model-triton
+  labels:
+    app: model-triton
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: model-triton
+  template:
+    metadata:
+      labels:
+        app: model-triton
+    spec:
+      imagePullSecrets:
+        - name: gitlab-registry
+      containers:
+        - name: triton
+          image: registry.gitlab.com/gitlab-org/modelops/applied-ml/ai-assist/ai-assist-api/triton-server:918fff43e4fbfba2591adc2c4ac713d7c3840a0b
+          ports:
+            - containerPort: 8000
+            - containerPort: 8001
+            - containerPort: 8002
+          env:
+            - name: MODEL_REPOSITORY
+              value: "/data/models"
+            - name: MODEL_PATH
+              value: "/data/hf/codegen"
+            - name: OFFLOAD_FOLDER
+              value: "/tmp/offload/codegen"
+            - name: TRITON_BIN
+              value: "/opt/tritonserver/bin/tritonserver"
+          command: ["/bin/bash", "-c", "--"]
+          args:
+            - mkdir -p $(OFFLOAD_FOLDER);
+              tritonserver --model-repository=$(MODEL_REPOSITORY)
+          volumeMounts:
+            - name: models-nfc-pvc-volume
+              mountPath: /data
+              readOnly: true
+          resources:
+            limits:
+              nvidia.com/gpu: "1"
+      volumes:
+        - name: models-nfc-pvc-volume
+          persistentVolumeClaim:
+            claimName: models-nfs-pvc
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: model-k8s-triton
+  labels:
+    app: model-triton
+spec:
+  type: ClusterIP
+  ports:
+    - name: api
+      port: 8080
+      targetPort: 8001
+    - name: metrics
+      port: 8082
+      targetPort: 8002
+    - name: http
+      port: 8084
+      targetPort: 8000
+  selector:
+    app: model-triton
