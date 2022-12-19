@@ -20,6 +20,7 @@ include:
 variables:
   API_IMAGE: $CI_REGISTRY_IMAGE/api
   MODEL_LOADER_IMAGE: $CI_REGISTRY_IMAGE/model-loader
+  TRITON_SERVER_IMAGE: $CI_REGISTRY_IMAGE/triton-server
   DOCKER_TLS_CERTDIR: "/certs"
 
 .docker:
@@ -71,6 +72,15 @@ docker-build-model-loader:
     TARGET_IMAGE: $MODEL_LOADER_IMAGE:$CI_COMMIT_SHA
   script:
     - docker build -t $TARGET_IMAGE model-loader/.
+    - docker push $TARGET_IMAGE
+
+docker-build-triton-server:
+  extends: [ ".docker" ]
+  stage: docker
+  variables:
+    TARGET_IMAGE: $TRITON_SERVER_IMAGE:$CI_COMMIT_SHA
+  script:
+    - docker build -t $TARGET_IMAGE triton/.
     - docker push $TARGET_IMAGE
 
 container_scanning:
