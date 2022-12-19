@@ -39,17 +39,16 @@ class TritonPythonModel:
             self.tokenizer.padding_side = "left"
 
         # initialize model
+        torch_dtype = torch.float16 if torch.cuda.is_available() else torch.float32
         self.model = (
             AutoModelForCausalLM.from_pretrained(
                 model_path,
-                torch_dtype=torch.float32,
+                torch_dtype=torch_dtype,
                 device_map="auto",
                 offload_folder=offload_folder,
                 offload_state_dict=True,
                 low_cpu_mem_usage=True,
             )
-            .eval()
-            .to(self.device)
         )
 
     def execute(self, requests):
