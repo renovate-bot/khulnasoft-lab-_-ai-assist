@@ -83,7 +83,7 @@ class Config:
     def auth(self) -> AuthConfig:
         return AuthConfig(
             gitlab_api_base_url=Config._get_value("GITLAB_API_URL", "https://gitlab.com/api/v4/"),
-            bypass=Config._str_to_bool(Config._get_value("AUTH_BYPASS_EXTERNAL", False))
+            bypass=Config._str_to_bool(Config._get_value("AUTH_BYPASS_EXTERNAL", "False"))
         )
 
     @staticmethod
