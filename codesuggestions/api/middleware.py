@@ -1,4 +1,5 @@
-import logging as log
+import logging
+from hashlib import sha1
 
 from starlette.middleware import Middleware
 from starlette.authentication import AuthenticationError, HTTPConnection
@@ -13,12 +14,15 @@ __all__ = [
     "MiddlewareAuthentication",
 ]
 
+log = logging.getLogger("codesuggestions")
+
 
 class MiddlewareLogRequest(Middleware):
     class CustomHeaderMiddleware(BaseHTTPMiddleware):
-        # TODO: https://www.starlette.io/middleware/#basehttpmiddleware
+
         async def dispatch(self, request, call_next):
-            print("logging")
+            user = sha1(request.client.host.encode("utf-8")).hexdigest()
+            log.info(f"Received request - {user}")
             return await call_next(request)
 
     def __init__(self):

@@ -44,6 +44,11 @@ class Config:
                 "fmt": '%(levelprefix)s %(asctime)s - "%(request_line)s" %(status_code)s',
                 "use_colors": True
             },
+            "default": {
+                "()": "uvicorn.logging.DefaultFormatter",
+                "fmt": '%(levelprefix)s %(asctime)s - "%(message)s"',
+                "use_colors": True,
+            },
         },
         "handlers": {
             "access": {
@@ -51,12 +56,21 @@ class Config:
                 "class": "logging.StreamHandler",
                 "stream": "ext://sys.stdout",
             },
+            "default": {
+                "formatter": "default",
+                "class": "logging.StreamHandler",
+                "stream": "ext://sys.stderr",
+            },
         },
         "loggers": {
             "uvicorn.access": {
                 "handlers": ["access"],
                 # "level": "INFO",
                 "propagate": False
+            },
+            "codesuggestions": {
+                "handlers": ["default"],
+                "level": "INFO"
             },
         },
     }

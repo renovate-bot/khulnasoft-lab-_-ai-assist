@@ -33,6 +33,10 @@ class FastApiContainer(containers.DeclarativeContainer):
         bypass_auth=config.auth.bypass,
     )
 
+    log_middleware = providers.Factory(
+        middleware.MiddlewareLogRequest,
+    )
+
 
 class CodeSuggestionsContainer(containers.DeclarativeContainer):
     wiring_config = containers.WiringConfiguration(modules=["codesuggestions.api.suggestions"])
