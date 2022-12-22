@@ -1,4 +1,5 @@
 import uvicorn
+from logging.config import dictConfig
 from dotenv import load_dotenv
 
 from codesuggestions import Config
@@ -6,8 +7,11 @@ from codesuggestions.api import create_fast_api_server
 from codesuggestions.deps import FastApiContainer, CodeSuggestionsContainer
 
 load_dotenv()
-
 config = Config()
+
+# configure logging
+dictConfig(config.fastapi.uvicorn_logger)
+
 fast_api_container = FastApiContainer()
 fast_api_container.config.auth.from_value(config.auth._asdict())
 fast_api_container.config.fastapi.from_value(config.fastapi._asdict())
