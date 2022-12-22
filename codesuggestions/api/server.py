@@ -13,7 +13,8 @@ __all__ = [
 @inject
 def create_fast_api_server(
         config: dict = Provide[FastApiContainer.config.fastapi],
-        auth_middleware: MiddlewareAuthentication = Provide[FastApiContainer.auth_middleware]
+        auth_middleware: MiddlewareAuthentication = Provide[FastApiContainer.auth_middleware],
+        log_middleware: MiddlewareLogRequest = Provide[FastApiContainer.log_middleware],
 ):
     fastapi_app = FastAPI(
         title="GitLab Code Suggestions",
@@ -24,7 +25,7 @@ def create_fast_api_server(
         swagger_ui_parameters={"defaultModelsExpandDepth": -1},
         middleware=[
             auth_middleware,
-            MiddlewareLogRequest()
+            log_middleware,
         ],
     )
 
