@@ -1,2 +1,2 @@
-from codesuggestions.api import http
+from codesuggestions.api import suggestions
 from codesuggestions.api import middleware
