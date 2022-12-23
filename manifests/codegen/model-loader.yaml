@@ -36,7 +36,7 @@ spec:
 apiVersion: batch/v1
 kind: Job
 metadata:
-  name: model-loader-job
+  name: model-sourcecode-loader-job
 spec:
   ttlSecondsAfterFinished: 100
   template:
@@ -44,22 +44,48 @@ spec:
       imagePullSecrets:
         - name: gitlab-registry
       containers:
-        - name: model-loader
-          image: registry.gitlab.com/gitlab-org/modelops/applied-ml/ai-assist/ai-assist-api/model-codegen-loader:16b-multi-240a4c7b
+        - name: model-sourcecode-loader-job
+          image: registry.gitlab.com/gitlab-org/modelops/applied-ml/ai-assist/ai-assist-api/model-codegen-loader:16b-multi-3e5a08c9
           env:
             - name: MODELS_REPO
               value: "/data/models"
+          command: [ "/bin/sh", "-c", "--" ]
+          args:
+            - rm -rf $(MODELS_REPO) && mkdir -p $(MODELS_REPO);
+              cp -r /model/* $(MODELS_REPO)
+          volumeMounts:
+            - name: models-nfc-pvc-volume
+              mountPath: /data
+      volumes:
+        - name: models-nfc-pvc-volume
+          persistentVolumeClaim:
+            claimName: models-nfs-pvc
+      restartPolicy: Never
+
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: model-cache-loader-job
+spec:
+  ttlSecondsAfterFinished: 100
+  template:
+    spec:
+      imagePullSecrets:
+        - name: gitlab-registry
+      containers:
+        - name: model-cache-loader-job
+          image: registry.gitlab.com/gitlab-org/modelops/applied-ml/ai-assist/ai-assist-api/model-codegen-loader:16b-multi-3e5a08c9
+          env:
             - name: MODEL_HF_CACHE
               value: "/data/hf/codegen"
             - name: GIT_LFS_SKIP_SMUDGE
               value: "1"
           command: [ "/bin/sh", "-c", "--" ]
           args:
-            - rm -rf $(MODELS_REPO) && rm -rf $(MODEL_HF_CACHE);
-              mkdir -p $(MODELS_REPO) && mkdir -p $(MODEL_HF_CACHE);
+            - rm -rf $(MODEL_HF_CACHE) && mkdir -p $(MODEL_HF_CACHE);
               git clone --depth=1 ${MODEL_HF_REPO} $(MODEL_HF_CACHE);
               git -C $(MODEL_HF_CACHE) lfs pull;
-              cp -r /model/* $(MODELS_REPO)
           volumeMounts:
             - name: models-nfc-pvc-volume
               mountPath: /data
