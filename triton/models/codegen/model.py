@@ -44,7 +44,7 @@ def numpy2pb(name, data):
 
 
 class TritonPythonModel:
-    MAX_PROMPT_LEN = 128
+    MAX_PROMPT_LEN = 256
 
     def __init__(self):
         self.device = None
