@@ -16,6 +16,8 @@ def numpy2pb(name, data):
 
 
 class TritonPythonModel:
+    MAX_PROMPT_LEN = 128
+
     def __init__(self):
         self.device = None
         self.model = None
@@ -64,7 +66,7 @@ class TritonPythonModel:
                 self.tokenizer(
                     prompt,
                     return_tensors="pt",
-                    max_length=128,
+                    max_length=self.MAX_PROMPT_LEN,
                     truncation=True,
                     padding="max_length"
                 )
@@ -85,14 +87,16 @@ class TritonPythonModel:
             print(f"{suggestion=}")
             print(f"{suggestion.is_cuda=}")
 
-            suggestion_decoded = self.tokenizer.batch_decode(
-                suggestion,
+            # Take the code completion only instead of the prompt + completion
+            completion = suggestion[:, self.MAX_PROMPT_LEN:]
+            completion_decoded = self.tokenizer.batch_decode(
+                completion,
                 skip_special_tokens=True
             )
 
-            print(f"{suggestion_decoded=}")
+            print(f"{completion_decoded=}")
 
-            completions_np = np.array(suggestion_decoded, dtype="object")
+            completions_np = np.array(completion_decoded, dtype="object")
             completions_pb = numpy2pb("completions", completions_np)
 
             response = pb_utils.InferenceResponse([completions_pb])
