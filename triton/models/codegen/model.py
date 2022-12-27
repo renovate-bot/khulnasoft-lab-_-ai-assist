@@ -1,9 +1,37 @@
 import os
+import logging
+from logging.config import dictConfig
 
 import torch
 import numpy as np
 import triton_python_backend_utils as pb_utils
 from transformers import AutoTokenizer, AutoModelForCausalLM
+
+CONFIG_LOGGER = {
+    "version": 1,
+    "formatters": {
+        "default": {
+            "format": '%(levelname)s %(asctime)s - "%(message)s"',
+            "use_colors": True,
+        },
+    },
+    "handlers": {
+        "default": {
+            "formatter": "default",
+            "class": "logging.StreamHandler",
+            "stream": "ext://sys.stderr",
+        },
+    },
+    "loggers": {
+        "model.codegen": {
+            "handlers": ["default"],
+        },
+    },
+}
+
+dictConfig(CONFIG_LOGGER)
+log = logging.getLogger("model.codegen")
+log.setLevel(logging.DEBUG if os.environ.get("MODEL_DEBUG") else logging.INFO)
 
 
 def pb2numpy(request, name):
@@ -16,6 +44,8 @@ def numpy2pb(name, data):
 
 
 class TritonPythonModel:
+    MAX_PROMPT_LEN = 256
+
     def __init__(self):
         self.device = None
         self.model = None
@@ -56,43 +86,38 @@ class TritonPythonModel:
 
         for request in requests:
             prompts_np = pb2numpy(request, "prompts")
-
             prompt = prompts_np[0, 0].decode("utf-8")
-            print(f"{prompt=}")
-
-            prompts_encoded = (
+            prompt_encoded = (
                 self.tokenizer(
                     prompt,
                     return_tensors="pt",
-                    max_length=128,
+                    max_length=self.MAX_PROMPT_LEN,
                     truncation=True,
                     padding="max_length"
                 )
                 .to(self.device)
             )
 
-            print(f"{prompts_encoded=}")
-
             suggestion = self.model.generate(
-                inputs=prompts_encoded["input_ids"],
-                attention_mask=prompts_encoded["attention_mask"],
+                inputs=prompt_encoded["input_ids"],
+                attention_mask=prompt_encoded["attention_mask"],
                 max_new_tokens=20,
                 top_k=3,
                 penalty_alpha=0.4,
                 pad_token_id=50256
             )
 
-            print(f"{suggestion=}")
-            print(f"{suggestion.is_cuda=}")
-
-            suggestion_decoded = self.tokenizer.batch_decode(
-                suggestion,
+            # Take the code completion only instead of the prompt + completion
+            completion = suggestion[:, self.MAX_PROMPT_LEN:]
+            completion_decoded = self.tokenizer.batch_decode(
+                completion,
                 skip_special_tokens=True
             )
 
-            print(f"{suggestion_decoded=}")
+            log.debug(f"Prompt received: {prompt}")
+            log.debug(f"Completion generated: {completion_decoded}")
 
-            completions_np = np.array(suggestion_decoded, dtype="object")
+            completions_np = np.array(completion_decoded, dtype="object")
             completions_pb = numpy2pb("completions", completions_np)
 
             response = pb_utils.InferenceResponse([completions_pb])
