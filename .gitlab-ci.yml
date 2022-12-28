@@ -9,9 +9,7 @@ workflow:
 stages:
   - lint
   - build
-  - docker
-  - post-build-test
-  - publish
+  - test
 
 variables:
   PIP_CACHE_DIR: "$CI_PROJECT_DIR/.cache/pip"
@@ -28,7 +26,7 @@ cache:
       - poetry.lock
       - .gitlab-ci.yml
   paths:
-    - .cache/pip
+    - $PIP_CACHE_DIR
     - $VENV_DIR
     - $POETRY_CACHE_DIR
 
@@ -84,6 +82,20 @@ build-docker-model-codegen-loader-tmp:
     - docker build -t $TARGET_IMAGE --build-arg MODEL_NAME=$MODEL_NAME triton/models/.
     - docker push $TARGET_IMAGE
 
+tests:
+  extends: .poetry
+  stage: test
+  needs:
+    - install
+  script:
+    - poetry install --with test
+    - poetry run pytest --junitxml=".test-reports/tests.xml"
+  artifacts:
+    when: always
+    expire_in: 1 weeks
+    reports:
+      junit:
+        - .test-reports/*.xml
 
 #include:
 #  - template: Security/Container-Scanning.gitlab-ci.yml
