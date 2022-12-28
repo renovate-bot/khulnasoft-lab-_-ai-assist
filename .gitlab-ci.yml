@@ -179,8 +179,6 @@ release-docker-triton:
   stage: release
   extends: .docker-release-latest
   cache: { }
-  needs:
-    - build-docker-triton-tmp
   variables:
     TARGET_IMAGE: "$DOCKER_TRITON_SERVER_TMP:$CI_COMMIT_SHORT_SHA"
     RELEASED_IMAGE_COMMIT: "$DOCKER_TRITON_SERVER:$CI_COMMIT_SHORT_SHA"
@@ -192,8 +190,6 @@ release-docker-model-codegen-loader:
   stage: release
   extends: .docker-release-latest
   cache: { }
-  needs:
-    - build-docker-model-codegen-loader-tmp
   parallel:
     matrix:
       # release codegen-small
