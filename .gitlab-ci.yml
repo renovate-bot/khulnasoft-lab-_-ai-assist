@@ -68,7 +68,6 @@ cache:
 lint:
   extends: .poetry
   stage: lint
-  allow_failure: true
   script:
     - poetry install --with lint
     - poetry run flake8 codesuggestions
