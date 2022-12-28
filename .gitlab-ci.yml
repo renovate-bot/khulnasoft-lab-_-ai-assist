@@ -14,11 +14,18 @@ stages:
 variables:
   PIP_CACHE_DIR: "$CI_PROJECT_DIR/.cache/pip"
   POETRY_CACHE_DIR: "$CI_PROJECT_DIR/.cache/poetry"
-  VENV_DIR: "$CI_PROJECT_DIR/.venv"
 
   DOCKER_TLS_CERTDIR: "/certs"
   DOCKER_TRITON_SERVER_TMP: "$CI_REGISTRY_IMAGE/tmp/triton-server"
   DOCKER_MODEL_LOADER_CODEGEN_TMP: "$CI_REGISTRY_IMAGE/tmp/model-codegen-loader"
+
+  SAST_EXCLUDED_PATHS: "tests, tmp, api, converter, model-loader"
+
+include:
+  - template: Jobs/Dependency-Scanning.gitlab-ci.yml
+  - template: Jobs/License-Scanning.gitlab-ci.yml
+  - template: Jobs/SAST.gitlab-ci.yml
+  - template: Jobs/Secret-Detection.gitlab-ci.yml
 
 cache:
   key:
@@ -27,14 +34,15 @@ cache:
       - .gitlab-ci.yml
   paths:
     - $PIP_CACHE_DIR
-    - $VENV_DIR
     - $POETRY_CACHE_DIR
+    - requirements.txt
 
 .poetry:
   before_script:
     - pip install poetry==1.3.1
     - poetry config virtualenvs.in-project true
     - poetry config cache-dir ${POETRY_CACHE_DIR}
+    - poetry export -f requirements.txt --output requirements.txt --without-hashes
     - poetry config --list
 
 .docker:
@@ -96,6 +104,51 @@ tests:
     reports:
       junit:
         - .test-reports/*.xml
+
+gemnasium-python-dependency_scanning:
+  stage: test
+  needs:
+    - install
+  rules:
+    - if: $DEPENDENCY_SCANNING_DISABLED
+      when: never
+    - if: $CI_COMMIT_BRANCH && $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+    - if: $CI_MERGE_REQUEST_IID
+    - if: $CI_COMMIT_TAG
+
+license_scanning:
+  stage: test
+  needs:
+    - install
+  rules:
+    - if: $LICENSE_MANAGEMENT_DISABLED
+      when: never
+    - if: $CI_COMMIT_BRANCH && $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+    - if: $CI_MERGE_REQUEST_IID
+    - if: $CI_COMMIT_TAG
+
+secret_detection:
+  stage: test
+  needs:
+    - install
+  cache: {}
+  rules:
+    - if: $SECRET_DETECTION_DISABLED
+      when: never
+    - if: $CI_COMMIT_BRANCH && $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+    - if: $CI_MERGE_REQUEST_IID
+    - if: $CI_COMMIT_TAG
+
+semgrep-sast:
+  stage: test
+  needs:
+    - install
+  rules:
+    - if: $SAST_DISABLED
+      when: never
+    - if: $CI_COMMIT_BRANCH && $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+    - if: $CI_MERGE_REQUEST_IID
+    - if: $CI_COMMIT_TAG
 
 #include:
 #  - template: Security/Container-Scanning.gitlab-ci.yml
