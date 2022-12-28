@@ -18,6 +18,10 @@ variables:
   POETRY_CACHE_DIR: "$CI_PROJECT_DIR/.cache/poetry"
   VENV_DIR: "$CI_PROJECT_DIR/.venv"
 
+  DOCKER_TLS_CERTDIR: "/certs"
+  DOCKER_TRITON_SERVER_TMP: "$CI_REGISTRY_IMAGE/tmp/triton-server"
+  DOCKER_MODEL_LOADER_CODEGEN_TMP: "$CI_REGISTRY_IMAGE/tmp/model-codegen-loader"
+
 cache:
   key:
     files:
@@ -35,6 +39,13 @@ cache:
     - poetry config cache-dir ${POETRY_CACHE_DIR}
     - poetry config --list
 
+.docker:
+  image: docker:20.10.21
+  services:
+    - docker:20.10.21-dind
+  before_script:
+    - docker login -u "$CI_REGISTRY_USER" -p "$CI_REGISTRY_PASSWORD" $CI_REGISTRY
+
 install:
   extends: .poetry
   stage: build
@@ -48,6 +59,28 @@ lint:
   script:
     - poetry install --with lint
     - poetry run flake8 codesuggestions
+
+build-docker-triton-tmp:
+  extends: .docker
+  stage: build
+  variables:
+    TARGET_IMAGE: "$DOCKER_TRITON_SERVER_TMP:$CI_COMMIT_SHA"
+  script:
+    - docker build -t $TARGET_IMAGE triton/.
+    - docker push $TARGET_IMAGE
+
+build-docker-model-codegen-loader-tmp:
+  extends: .docker
+  stage: build
+  parallel:
+    matrix:
+      - MODEL_NAME: Salesforce/codegen-350M-multi
+        TARGET_IMAGE: "$DOCKER_MODEL_LOADER_CODEGEN_TMP:350m-multi-$CI_COMMIT_SHORT_SHA"
+      - MODEL_NAME: Salesforce/codegen-16B-multi
+        TARGET_IMAGE: "$DOCKER_MODEL_LOADER_CODEGEN_TMP:16b-multi-$CI_COMMIT_SHORT_SHA"
+  script:
+    - docker build -t $TARGET_IMAGE --build-arg MODEL_NAME=$MODEL_NAME triton/models/.
+    - docker push $TARGET_IMAGE
 
 
 #include:
