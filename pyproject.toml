@@ -26,5 +26,15 @@ optional = true
 [tool.poetry.group.test.dependencies]
 pytest = "^7.2.0"
 
+[tool.poetry.group.lint]
+optional = true
+
+[tool.poetry.group.lint.dependencies]
+flake8 = "^6.0.0"
+
+[tool.pytest.ini_options]
+addopts = "--disable-warnings"
+testpaths = ["tests/test_config.py"]
+
 [tool.poetry.scripts]
 codesuggestions = "codesuggestions.app:main"
