@@ -41,29 +41,12 @@ class DetectorRegex(BaseDetector):
     def finditer(self, content: str) -> Iterable[Detected]:
         matches = self.re_expression.finditer(content)
         for match in matches:
-            # noinspection PyUnresolvedReferences
-            value = match.group(1)
-            # noinspection PyUnresolvedReferences
-            start, end = match.span(1)
-
-            yield Detected(
-                start=start,
-                end=end,
-                val=value,
-            )
+            # noinspection PyTypeChecker
+            yield _get_detected_from_match(match)
 
     def match(self, content: str) -> Optional[Detected]:
-        if self.re_expression.match(content):
-            # noinspection PyUnresolvedReferences
-            value = match.group(1)
-            # noinspection PyUnresolvedReferences
-            start, end = match.span(1)
-
-            return Detected(
-                start=start,
-                end=end,
-                val=value,
-            )
+        if match := self.re_expression.match(content):
+            return _get_detected_from_match(match)
 
         return None
 
@@ -75,3 +58,14 @@ class DetectorRegexEmail(DetectorRegex):
 
     def __init__(self):
         super().__init__(email_pattern, flags=regex.MULTILINE | regex.VERBOSE)
+
+
+def _get_detected_from_match(match: regex.Match, g: int = 1) -> Detected:
+    value = match.group(g)
+    start, end = match.span(g)
+
+    return Detected(
+        start=start,
+        end=end,
+        val=value,
+    )
