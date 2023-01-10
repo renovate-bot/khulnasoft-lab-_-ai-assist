@@ -1,6 +1,8 @@
 import pytest
 
-from codesuggestions.suggestions.detectors import DetectorRegexEmail, DetectorRegexIPV6, Detected
+from codesuggestions.suggestions.detectors import (
+    DetectorRegexEmail, DetectorRegexIPV6, DetectorRegexIPV4, Detected
+)
 
 
 @pytest.mark.parametrize(
@@ -83,6 +85,25 @@ def test_detector_email_detect_all(test_content, expected_output):
 )
 def test_detector_ipv6_detect_all(test_content, expected_output):
     det = DetectorRegexIPV6()
+    detected = det.detect_all(test_content)
+
+    assert detected == expected_output
+
+
+@pytest.mark.parametrize(
+    "test_content,expected_output", [
+        ("test no ip", []),
+        ("test no ip 2020.10", []),
+        ("test no ip 20.10.01", []),
+        ("test no ipv4 1::3:4:5:6:7:8", []),
+        ("test 127.0.0.1", [Detected(start=5, end=14, val='127.0.0.1')]),
+        ("test 255.255.255.255", [Detected(start=5, end=20, val='255.255.255.255')]),
+        ("test 10.1.1.124", [Detected(start=5, end=15, val='10.1.1.124')]),
+        ("test 10.01.1.124", [Detected(start=5, end=16, val='10.01.1.124')]),  # detect this ip even if it's invalid
+    ]
+)
+def test_detector_ipv4_detect_all(test_content, expected_output):
+    det = DetectorRegexIPV4()
     detected = det.detect_all(test_content)
 
     assert detected == expected_output

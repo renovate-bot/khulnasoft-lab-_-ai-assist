@@ -7,6 +7,7 @@ __all__ = [
     "BaseDetector",
     "DetectorRegexEmail",
     "DetectorRegexIPV6",
+    "DetectorRegexIPV4",
 ]
 
 email_pattern = r"""
@@ -120,3 +121,8 @@ def _get_detected_from_match(match: regex.Match, g: int = 1) -> Detected:
 class DetectorRegexIPV6(DetectorRegex):
     def __init__(self):
         super().__init__(ipv6_pattern, flags=regex.MULTILINE | regex.VERBOSE)
+
+
+class DetectorRegexIPV4(DetectorRegex):
+    def __init__(self):
+        super().__init__(ipv4_pattern, flags=regex.MULTILINE | regex.VERBOSE)
