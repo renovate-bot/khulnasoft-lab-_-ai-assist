@@ -1,9 +1,11 @@
 import regex
 from abc import ABC, abstractmethod
 from typing import NamedTuple, Iterable, Optional
+from enum import Enum
 
 __all__ = [
     "Detected",
+    "DetectorKind",
     "BaseDetector",
     "DetectorRegexEmail",
     "DetectorRegexIPV6",
@@ -69,7 +71,14 @@ ipv4_pattern = (
 )
 
 
+class DetectorKind(Enum):
+    EMAIL = 1
+    IPV4 = 2
+    IPV6 = 3
+
+
 class Detected(NamedTuple):
+    kind: DetectorKind
     start: int
     end: int
     val: str
@@ -80,8 +89,13 @@ class BaseDetector(ABC):
     def detect_all(self, content: str) -> list[Detected]:
         pass
 
+    @property
+    @abstractmethod
+    def kind(self):
+        pass
 
-class DetectorRegex(BaseDetector):
+
+class DetectorRegex(BaseDetector, ABC):
     def __init__(self, pattern: str, flags: int = 0):
         self.re_expression = regex.compile(pattern, flags)
 
@@ -89,13 +103,24 @@ class DetectorRegex(BaseDetector):
         matches = self.re_expression.finditer(content)
         for match in matches:
             # noinspection PyTypeChecker
-            yield _get_detected_from_match(match)
+            yield self._get_detected_from_match(match)
 
     def match(self, content: str) -> Optional[Detected]:
         if match := self.re_expression.match(content):
-            return _get_detected_from_match(match)
+            return self._get_detected_from_match(match)
 
         return None
+
+    def _get_detected_from_match(self, match: regex.Match, g: int = 1) -> Detected:
+        value = match.group(g)
+        start, end = match.span(g)
+
+        return Detected(
+            kind=self.kind,
+            start=start,
+            end=end,
+            val=value,
+        )
 
     def detect_all(self, content: str) -> list[Detected]:
         return list(self.finditer(content))
@@ -106,23 +131,24 @@ class DetectorRegexEmail(DetectorRegex):
     def __init__(self):
         super().__init__(email_pattern, flags=regex.MULTILINE | regex.VERBOSE)
 
-
-def _get_detected_from_match(match: regex.Match, g: int = 1) -> Detected:
-    value = match.group(g)
-    start, end = match.span(g)
-
-    return Detected(
-        start=start,
-        end=end,
-        val=value,
-    )
+    @property
+    def kind(self):
+        return DetectorKind.EMAIL
 
 
 class DetectorRegexIPV6(DetectorRegex):
     def __init__(self):
         super().__init__(ipv6_pattern, flags=regex.MULTILINE | regex.VERBOSE)
 
+    @property
+    def kind(self):
+        return DetectorKind.IPV6
+
 
 class DetectorRegexIPV4(DetectorRegex):
     def __init__(self):
         super().__init__(ipv4_pattern, flags=regex.MULTILINE | regex.VERBOSE)
+
+    @property
+    def kind(self):
+        return DetectorKind.IPV4
