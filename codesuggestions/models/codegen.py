@@ -22,7 +22,7 @@ class Codegen(BaseModel):
 
     # Model hyperparameters
     MODEL_TEMPERATURE = .2
-    MODEL_REPETITION_PENALTY = 1.1
+    MODEL_REPETITION_PENALTY = 1
     MODEL_TOP_K = 0
     MODEL_TOP_P = .95
     MODEL_PAD_ID = 50256
