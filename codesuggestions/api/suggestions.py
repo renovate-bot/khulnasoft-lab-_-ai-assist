@@ -58,7 +58,7 @@ class ResponseSuggestions(BaseModel):
     usage: Optional[Usage]
 
 
-@router.post("/", response_model=ResponseSuggestions)
+@router.post("", response_model=ResponseSuggestions)
 @inject
 async def completions(
         req: RequestSuggestions,
