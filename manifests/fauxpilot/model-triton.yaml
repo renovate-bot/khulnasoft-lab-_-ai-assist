@@ -19,32 +19,36 @@ spec:
         - name: gitlab-registry
       containers:
         - name: triton
-          image: moyix/triton_with_ft:22.09
+          image: registry.gitlab.com/gitlab-org/modelops/applied-ml/code-suggestions/ai-assist/tmp/triton-server:363a6123
           ports:
             - containerPort: 8000
             - containerPort: 8001
             - containerPort: 8002
           env:
-            - name: MODEL
-              value: "fastertransformer"
-            - name: MODEL_DIR
-              value: "/model" # Use this path as it's hardcoded in Triton configs
+            - name: MODEL_REPOSITORY
+              value: "/data/models"
             - name: TRITON_BIN
               value: "/opt/tritonserver/bin/tritonserver"
           command: ["/bin/bash", "-c", "--"]
           args:
-            - "CUDA_VISIBLE_DEVICES=0 $(TRITON_BIN) --model-repository=$(MODEL_DIR) --model-control-mode=explicit --load-model=$(MODEL)"
+            - "$(TRITON_BIN) --model-repository=$(MODEL_REPOSITORY)"
           volumeMounts:
-            - name: model-nfc-pvc-volume
-              mountPath: /model
+            - name: models-fauxpilot-nfc-pvc-volume
+              mountPath: /data
               readOnly: true
+            - name: dshm
+              mountPath: /dev/shm
           resources:
             limits:
               nvidia.com/gpu: "1"
       volumes:
-        - name: model-nfc-pvc-volume
+        - name: models-fauxpilot-nfc-pvc-volume
           persistentVolumeClaim:
-            claimName: model-nfs-pvc
+            claimName: models-fauxpilot-nfs-pvc
+        - name: dshm
+          emptyDir:
+            sizeLimit: "2Gi"
+            medium: "Memory"
 ---
 apiVersion: v1
 kind: Service

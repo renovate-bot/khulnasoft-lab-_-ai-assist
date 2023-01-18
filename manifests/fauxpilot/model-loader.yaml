@@ -1,0 +1,36 @@
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: model-loader-job
+spec:
+  ttlSecondsAfterFinished: 100
+  template:
+    spec:
+      imagePullSecrets:
+        - name: gitlab-registry
+      containers:
+        - name: model-loader
+          image: registry.gitlab.com/gitlab-org/modelops/applied-ml/code-suggestions/ai-assist/model-fauxpilot:latest
+          env:
+            - name: MODELS_DIR
+              value: "/data/models"
+            - name: MODEL_FT_CONFIG
+              value: "/data/models/fastertransformer/config.pbtxt"
+          command: [ "/bin/sh", "-c", "--" ]
+          args:
+            - rm -rf $(MODELS_DIR) && mkdir -p $(MODELS_DIR);
+              cp -r /model/* $(MODELS_DIR);
+              sed -e 's@${MODELS_DIR}@'"$MODELS_DIR"'@' -e 's@${MODEL_NUM_GPU}@'"$MODEL_NUM_GPUS"'@' $(MODEL_FT_CONFIG) > $(MODEL_FT_CONFIG).tmp;
+              mv $(MODEL_FT_CONFIG).tmp $(MODEL_FT_CONFIG);
+              curl -L "${MODEL_ARCHIVE}" -o /data/model.tar.zst;
+              zstd -dc /data/model.tar.zst | tar -xf - -C "${MODELS_DIR}" --strip-components=1;
+              rm -f /data/model.tar.zst;
+          volumeMounts:
+            - name: models-fauxpilot-nfc-pvc-volume
+              mountPath: /data
+      volumes:
+        - name: models-fauxpilot-nfc-pvc-volume
+          persistentVolumeClaim:
+            claimName: models-fauxpilot-nfs-pvc
+      restartPolicy: Never

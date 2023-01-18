@@ -12,14 +12,27 @@ spec:
     - hosts:
         - aiassist.unreview.io
       secretName: ai-assist-ingress-nginx-grpc-tls
+    - hosts:
+        - codesuggestions.gitlab.com
+      secretName: ai-assist-gitlab-ingress-nginx-grpc-tls
   rules:
     - host: aiassist.unreview.io
       http:
         paths:
-          - path: /
-            pathType: ImplementationSpecific
+          - path: /v1/completions
+            pathType: Exact
             backend:
               service:
-                name: model-k8s-api
+                name: faux-pilot
+                port:
+                  number: 8080
+    - host: codesuggestions.gitlab.com
+      http:
+        paths:
+          - path: /v1/completions
+            pathType: Exact
+            backend:
+              service:
+                name: faux-pilot
                 port:
                   number: 8080

@@ -33,7 +33,7 @@ spec:
       volumes:
         - name: nfs-models-volume
           gcePersistentDisk:
-            pdName: nfs-ai-assist-models-disk
+            pdName: nfs-codesuggestions-fauxpilot-disk
             fsType: ext4
 ---
 apiVersion: v1

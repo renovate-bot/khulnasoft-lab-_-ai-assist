@@ -1,0 +1,9 @@
+kind: Service
+apiVersion: v1
+metadata:
+  name: faux-pilot
+spec:
+  type: ExternalName
+  externalName: model-k8s-gateway.fauxpilot.svc.cluster.local
+  ports:
+    - port: 8080
