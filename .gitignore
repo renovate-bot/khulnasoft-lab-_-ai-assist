@@ -1,6 +1,3 @@
-# Codegen Models
-models/*
-
 .vscode/*
 !.vscode/settings.json
 !.vscode/tasks.json

@@ -14,7 +14,7 @@ RUN apk add --no-cache git git-lfs
 RUN mkdir -p ${MODEL_DIR}/${MODEL_VERSION}
 WORKDIR ${MODEL_DIR}
 
-COPY ${MODEL_ID}/config.pbtxt .
-COPY ${MODEL_ID}/model.py ${MODEL_VERSION}/.
+COPY config.pbtxt .
+COPY model.py ${MODEL_VERSION}/.
 
 ENTRYPOINT ["sh", "-c"]

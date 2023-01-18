@@ -23,8 +23,8 @@ variables:
   DOCKER_TRITON_SERVER: "$CI_REGISTRY_IMAGE/triton-server"
   DOCKER_TRITON_SERVER_TMP: "$CI_REGISTRY_IMAGE/tmp/triton-server"
 
-  DOCKER_MODEL_LOADER_CODEGEN: "$CI_REGISTRY_IMAGE/model-codegen-loader"
-  DOCKER_MODEL_LOADER_CODEGEN_TMP: "$CI_REGISTRY_IMAGE/tmp/model-codegen-loader"
+  DOCKER_MODEL_CODEGEN: "$CI_REGISTRY_IMAGE/model-codegen"
+  DOCKER_MODEL_CODEGEN_TMP: "$CI_REGISTRY_IMAGE/tmp/model-codegen"
 
   SAST_EXCLUDED_PATHS: "tests, tmp, api, converter, model-loader"
 
@@ -91,41 +91,28 @@ build-docker-model-gateway-tmp:
     - docker build -t $TARGET_IMAGE .
     - docker push $TARGET_IMAGE
 
-build-docker-triton-tmp:
-  extends: .docker
-  stage: build
-  cache: { }
-  variables:
-    TARGET_IMAGE: "$DOCKER_TRITON_SERVER_TMP:$CI_COMMIT_SHORT_SHA"
-  script:
-    - docker build -t $TARGET_IMAGE triton/.
-    - docker push $TARGET_IMAGE
-  rules:
-    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
-      changes:
-        - triton/Dockerfile
-    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
-      when: manual
-
-build-docker-model-codegen-loader-tmp:
+build-docker-model-codegen-tmp:
   extends: .docker
   stage: build
   cache: { }
   parallel:
     matrix:
       - MODEL_NAME: Salesforce/codegen-350M-multi
-        TARGET_IMAGE: "$DOCKER_MODEL_LOADER_CODEGEN_TMP:350m-multi-$CI_COMMIT_SHORT_SHA"
+        MODEL_ID: codegen-350M-multi
+        TARGET_IMAGE: "$DOCKER_MODEL_CODEGEN_TMP:350m-multi-$CI_COMMIT_SHORT_SHA"
       - MODEL_NAME: Salesforce/codegen-16B-multi
-        TARGET_IMAGE: "$DOCKER_MODEL_LOADER_CODEGEN_TMP:16b-multi-$CI_COMMIT_SHORT_SHA"
+        MODEL_ID: codegen-16b-multi
+        TARGET_IMAGE: "$DOCKER_MODEL_CODEGEN_TMP:16b-multi-$CI_COMMIT_SHORT_SHA"
   script:
-    - docker build -t $TARGET_IMAGE --build-arg MODEL_NAME=$MODEL_NAME triton/models/.
+    - |
+      docker build -t $TARGET_IMAGE \
+          -f models/codegen/Dockerfile.model \
+          --build-arg MODEL_NAME=$MODEL_NAME --build-arg MODEL_ID=$MODEL_ID \
+          models/codegen/.
     - docker push $TARGET_IMAGE
   rules:
-    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
-      changes:
-        - triton/models/**/*
-    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
-      when: manual
+    - changes:
+        - models/codegen/**/*
 
 tests:
   extends: .poetry
@@ -209,19 +196,21 @@ release-docker-triton:
   rules:
     - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
 
-release-docker-model-codegen-loader:
+release-docker-model-codegen:
   stage: release
   extends: .docker-release-latest
   cache: { }
   parallel:
     matrix:
       # release codegen-small
-      - TARGET_IMAGE: "$DOCKER_MODEL_LOADER_CODEGEN_TMP:350m-multi-$CI_COMMIT_SHORT_SHA"
-        RELEASED_IMAGE_COMMIT: "$DOCKER_MODEL_LOADER_CODEGEN:350m-multi-$CI_COMMIT_SHORT_SHA"
-        RELEASED_IMAGE_LATEST: "$DOCKER_MODEL_LOADER_CODEGEN:350m-multi-latest"
+      - TARGET_IMAGE: "$DOCKER_MODEL_CODEGEN_TMP:350m-multi-$CI_COMMIT_SHORT_SHA"
+        RELEASED_IMAGE_COMMIT: "$DOCKER_MODEL_CODEGEN:350m-multi-$CI_COMMIT_SHORT_SHA"
+        RELEASED_IMAGE_LATEST: "$DOCKER_MODEL_CODEGEN:350m-multi-latest"
       # release codegen-large
-      - TARGET_IMAGE: "$DOCKER_MODEL_LOADER_CODEGEN_TMP:16b-multi-$CI_COMMIT_SHORT_SHA"
-        RELEASED_IMAGE_COMMIT: "$DOCKER_MODEL_LOADER_CODEGEN:16b-multi-$CI_COMMIT_SHORT_SHA"
-        RELEASED_IMAGE_LATEST: "$DOCKER_MODEL_LOADER_CODEGEN:16b-multi-latest"
+      - TARGET_IMAGE: "$DOCKER_MODEL_CODEGEN_TMP:16b-multi-$CI_COMMIT_SHORT_SHA"
+        RELEASED_IMAGE_COMMIT: "$DOCKER_MODEL_CODEGEN:16b-multi-$CI_COMMIT_SHORT_SHA"
+        RELEASED_IMAGE_LATEST: "$DOCKER_MODEL_CODEGEN:16b-multi-latest"
   rules:
     - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+      changes:
+        - models/codegen/**/*
