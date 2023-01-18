@@ -1,0 +1,23 @@
+FROM alpine:3.17.0
+
+ARG MODEL_VERSION="1"
+ARG MODEL_NUM_GPUS="1"
+ARG MODEL_DIR="/model"
+
+ENV MODEL_ID="codegen-16B-multi"
+ENV MODEL_ARCHIVE="https://huggingface.co/moyix/${MODEL_ID}-gptj/resolve/main/${MODEL_ID}-${MODEL_NUM_GPUS}gpu.tar.zst"
+
+RUN apk --no-cache add \
+    zstd \
+    curl
+
+WORKDIR ${MODEL_DIR}
+
+COPY ensemble ensemble
+COPY fastertransformer fastertransformer
+
+COPY postprocessing/config.pbtxt postprocessing/config.pbtxt
+COPY postprocessing/model.py postprocessing/${MODEL_VERSION}/config.pbtxt
+
+COPY preprocessing/config.pbtxt preprocessing/config.pbtxt
+COPY preprocessing/model.py preprocessing/${MODEL_VERSION}/config.pbtxt
