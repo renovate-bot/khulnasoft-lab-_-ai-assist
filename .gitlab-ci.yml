@@ -23,6 +23,9 @@ variables:
   DOCKER_MODEL_CODEGEN: "$CI_REGISTRY_IMAGE/model-codegen"
   DOCKER_MODEL_CODEGEN_TMP: "$CI_REGISTRY_IMAGE/tmp/model-codegen"
 
+  DOCKER_MODEL_FAUXPILOT: "$CI_REGISTRY_IMAGE/model-fauxpilot"
+  DOCKER_MODEL_FAUXPILOT_TMP: "$CI_REGISTRY_IMAGE/tmp/model-fauxpilot"
+
   SAST_EXCLUDED_PATHS: "tests, tmp, api, converter, model-loader"
 
 include:
@@ -110,6 +113,22 @@ build-docker-model-codegen-tmp:
   rules:
     - changes:
         - models/codegen/**/*
+
+build-docker-model-fauxpilot-tmp:
+  extends: .docker
+  stage: build
+  cache: { }
+  variables:
+    TARGET_IMAGE: "$DOCKER_MODEL_FAUXPILOT_TMP:$CI_COMMIT_SHORT_SHA"
+  script:
+    - |
+      docker build -t $TARGET_IMAGE \
+          -f models/fauxpilot/Dockerfile.model \
+          models/fauxpilot/.
+    - docker push $TARGET_IMAGE
+  rules:
+    - changes:
+        - models/fauxpilot/**/*
 
 tests:
   extends: .poetry
@@ -200,3 +219,16 @@ release-docker-model-codegen:
     - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
       changes:
         - models/codegen/**/*
+
+release-docker-model-fauxpilot:
+  stage: release
+  extends: .docker-release-latest
+  cache: { }
+  variables:
+    TARGET_IMAGE: "$DOCKER_MODEL_FAUXPILOT_TMP:$CI_COMMIT_SHORT_SHA"
+    RELEASED_IMAGE_COMMIT: "$DOCKER_MODEL_FAUXPILOT:$CI_COMMIT_SHORT_SHA"
+    RELEASED_IMAGE_LATEST: "$DOCKER_MODEL_FAUXPILOT:latest"
+  rules:
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+      changes:
+        - models/fauxpilot/**/*

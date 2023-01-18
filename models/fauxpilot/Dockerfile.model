@@ -4,6 +4,7 @@ ARG MODEL_VERSION="1"
 ARG MODEL_NUM_GPUS="1"
 ARG MODEL_DIR="/model"
 
+ENV MODEL_NUM_GPUS=${MODEL_NUM_GPUS}
 ENV MODEL_ID="codegen-16B-multi"
 ENV MODEL_ARCHIVE="https://huggingface.co/moyix/${MODEL_ID}-gptj/resolve/main/${MODEL_ID}-${MODEL_NUM_GPUS}gpu.tar.zst"
 
@@ -14,10 +15,12 @@ RUN apk --no-cache add \
 WORKDIR ${MODEL_DIR}
 
 COPY ensemble ensemble
+RUN mkdir -p ensemble/${MODEL_VERSION} && cat /dev/null > ensemble/${MODEL_VERSION}/.tmp
+
 COPY fastertransformer fastertransformer
 
 COPY postprocessing/config.pbtxt postprocessing/config.pbtxt
-COPY postprocessing/model.py postprocessing/${MODEL_VERSION}/config.pbtxt
+COPY postprocessing/model.py postprocessing/${MODEL_VERSION}/model.py
 
 COPY preprocessing/config.pbtxt preprocessing/config.pbtxt
-COPY preprocessing/model.py preprocessing/${MODEL_VERSION}/config.pbtxt
+COPY preprocessing/model.py preprocessing/${MODEL_VERSION}/model.py
