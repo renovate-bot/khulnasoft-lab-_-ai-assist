@@ -99,7 +99,8 @@ def test_detector_ipv6_detect_all(test_content, expected_output):
         ("test 127.0.0.1", [Detected(kind=DetectorKind.IPV4, start=5, end=14, val='127.0.0.1')]),
         ("test 255.255.255.255", [Detected(kind=DetectorKind.IPV4, start=5, end=20, val='255.255.255.255')]),
         ("test 10.1.1.124", [Detected(kind=DetectorKind.IPV4, start=5, end=15, val='10.1.1.124')]),
-        ("test 10.01.1.124", [Detected(kind=DetectorKind.IPV4, start=5, end=16, val='10.01.1.124')]),  # detect this ip even if it's invalid
+        # detect this ip even if it's invalid
+        ("test 10.01.1.124", [Detected(kind=DetectorKind.IPV4, start=5, end=16, val='10.01.1.124')]),
     ]
 )
 def test_detector_ipv4_detect_all(test_content, expected_output):
