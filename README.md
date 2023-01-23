@@ -38,10 +38,10 @@ API_EXTERNAL_PORT=5001  # External port for the API used in docker-compose
 TRITON_HOST=triton
 TRITON_PORT=8001
 TRITON_VERBOSITY=False
-DOCS_URL=None  # To disable docs on the API endpoint
-OPENAPI_URL=None  # To disable docs on the API endpoint
-REDOC_URL=None  # To disable docs on the API endpoint
-BYPASS_EXTERNAL_AUTH=False  # Can be used for local development to bypass the GitLab server side check
+FASTAPI_DOCS_URL=None  # To disable docs on the API endpoint
+FASTAPI_OPENAPI_URL=None  # To disable docs on the API endpoint
+FASTAPI_REDOC_URL=None  # To disable docs on the API endpoint
+AUTH_BYPASS_EXTERNAL=False  # Can be used for local development to bypass the GitLab server side check
 GITLAB_API_URL=https://gitlab.com/api/v4/  # Can be changed to GDK: http://127.0.0.1:3000/api/v4/
 USE_LOCAL_CACHE=True  # Uses a local in-memory cache instead of Redis
 ```
