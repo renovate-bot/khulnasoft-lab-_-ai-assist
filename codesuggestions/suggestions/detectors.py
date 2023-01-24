@@ -90,6 +90,7 @@ detector_secrets_plugins = [
     {"name": "SendGridDetector"},
     {"name": "AzureStorageKeyDetector"},
     {"name": "DiscordBotTokenDetector"},
+    {"name": "KeywordDetector"},
 ]
 
 

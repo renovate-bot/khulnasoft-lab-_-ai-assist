@@ -141,6 +141,10 @@ def test_detector_ipv4_detect_all(test_content, expected_output):
         ("twilio: SKxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx1\nACxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx1", [
             Detected(kind=DetectorKind.SECRET, start=8, end=42, val='SKxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx1'),
             Detected(kind=DetectorKind.SECRET, start=43, end=77, val='ACxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx1')
+        ]),
+        ("password = 'random_password'\nif (apikey == 'api_key') {\napi_key = ''", [
+            Detected(kind=DetectorKind.SECRET, start=12, end=27, val="random_password"),
+            Detected(kind=DetectorKind.SECRET, start=44, end=51, val="api_key"),
         ])
     ]
 )
