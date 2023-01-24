@@ -3,6 +3,10 @@ from abc import ABC, abstractmethod
 from typing import NamedTuple, Iterable, Optional
 from enum import Enum
 
+# noinspection PyProtectedMember
+from detect_secrets.core.scan import _process_line_based_plugins, PotentialSecret
+from detect_secrets.settings import transient_settings
+
 __all__ = [
     "Detected",
     "DetectorKind",
@@ -10,6 +14,7 @@ __all__ = [
     "DetectorRegexEmail",
     "DetectorRegexIPV6",
     "DetectorRegexIPV4",
+    "DetectorSecrets",
 ]
 
 email_pattern = r"""
@@ -65,16 +70,34 @@ ipv6_pattern = (
 )
 
 ipv4_pattern = (
-    r"(?:^|[\b\s@?,!;:\'\")(.\p{Han}])("
-    + ipv4addr
-    + r")(?:$|[\s@,?!;:'\"(.\p{Han}])"
+        r"(?:^|[\b\s@?,!;:\'\")(.\p{Han}])("
+        + ipv4addr
+        + r")(?:$|[\s@,?!;:'\"(.\p{Han}])"
 )
+
+detector_secrets_filters = [
+    # https://github.com/Yelp/detect-secrets/blob/master/docs/filters.md#built-in-filters
+    {"path": "detect_secrets.filters.heuristic.is_potential_uuid"},
+    {"path": "detect_secrets.filters.heuristic.is_likely_id_string"},
+    {"path": "detect_secrets.filters.heuristic.is_templated_secret"},
+    {"path": "detect_secrets.filters.heuristic.is_sequential_string"},
+]
+detector_secrets_plugins = [
+    {"name": "TwilioKeyDetector"},
+    {"name": "JwtTokenDetector"},
+    {"name": "BasicAuthDetector"},
+    {"name": "ArtifactoryDetector"},
+    {"name": "SendGridDetector"},
+    {"name": "AzureStorageKeyDetector"},
+    {"name": "DiscordBotTokenDetector"},
+]
 
 
 class DetectorKind(Enum):
     EMAIL = 1
     IPV4 = 2
     IPV6 = 3
+    SECRET = 4
 
 
 class Detected(NamedTuple):
@@ -152,3 +175,37 @@ class DetectorRegexIPV4(DetectorRegex):
     @property
     def kind(self):
         return DetectorKind.IPV4
+
+
+class DetectorSecrets(BaseDetector):
+
+    def _get_detected_from_secret(self, content: str, secret: PotentialSecret) -> Detected:
+        start = content.index(secret.secret_value)
+        end = start + len(secret.secret_value)
+
+        return Detected(
+            kind=self.kind,
+            start=start,
+            end=end,
+            val=secret.secret_value,
+        )
+
+    def detect_all(self, content: str) -> list[Detected]:
+        detected = []
+        lines = content.splitlines()
+
+        settings = {"plugins_used": detector_secrets_plugins, "filters_used": detector_secrets_filters}
+        with transient_settings(settings) as _:
+            lines_enumerated = list(enumerate(lines, start=1))
+
+            # we use the private method of `detect_secrets` to avoid writing files with content
+            # we do not need to pass any file names and can pass the empty value
+            for potential_secret in _process_line_based_plugins(lines_enumerated, ""):
+                detected_secret = self._get_detected_from_secret(content, potential_secret)
+                detected.append(detected_secret)
+
+        return detected
+
+    @property
+    def kind(self):
+        return DetectorKind.SECRET
