@@ -4,6 +4,7 @@ from codesuggestions.suggestions.detectors import (
     DetectorRegexIPV4,
     DetectorRegexIPV6,
     DetectorBasicAuthSecrets,
+    DetectorTokenSecrets,
     Detected,
     DetectorKind,
 )
@@ -12,6 +13,7 @@ __all__ = [
     "DEFAULT_REPLACEMENT_EMAIL",
     "DEFAULT_REPLACEMENT_IPV4",
     "DEFAULT_REPLACEMENT_IPV6",
+    "DEFAULT_REPLACEMENT_SECRET",
     "CodeSuggestionsUseCase",
 ]
 
@@ -30,6 +32,7 @@ class CodeSuggestionsUseCase:
             DetectorRegexIPV6(),
             DetectorRegexIPV4(),
             DetectorBasicAuthSecrets(),
+            DetectorTokenSecrets(),
         ]
         self.pii_replacements = {
             DetectorKind.EMAIL: DEFAULT_REPLACEMENT_EMAIL,
