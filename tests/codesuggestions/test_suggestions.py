@@ -2,7 +2,11 @@ import pytest
 from unittest.mock import Mock
 
 from codesuggestions.suggestions.base import (
-    CodeSuggestionsUseCase, DEFAULT_REPLACEMENT_EMAIL, DEFAULT_REPLACEMENT_IPV4, DEFAULT_REPLACEMENT_IPV6,
+    CodeSuggestionsUseCase,
+    DEFAULT_REPLACEMENT_EMAIL,
+    DEFAULT_REPLACEMENT_IPV4,
+    DEFAULT_REPLACEMENT_IPV6,
+    DEFAULT_REPLACEMENT_SECRET
 )
 from codesuggestions.models import BaseModel
 
@@ -14,7 +18,9 @@ from codesuggestions.models import BaseModel
         ("mask email mail@box.com address", f"mask email {DEFAULT_REPLACEMENT_EMAIL} address"),
         ("mask email mail@box.com and ip 127.0.0.1 and another ip ::255.255.255.255 and date 01.10.02",
          f"mask email {DEFAULT_REPLACEMENT_EMAIL} and ip {DEFAULT_REPLACEMENT_IPV4} "
-         f"and another ip {DEFAULT_REPLACEMENT_IPV6} and date 01.10.02")
+         f"and another ip {DEFAULT_REPLACEMENT_IPV6} and date 01.10.02"),
+        ("how to clone repo: https://username:encrypted_token@gitlab.com/namespace/project.git",
+         f"how to clone repo: https://username:{DEFAULT_REPLACEMENT_SECRET}@gitlab.com/namespace/project.git")
     ]
 )
 def test_redact(test_content, expected_output):
