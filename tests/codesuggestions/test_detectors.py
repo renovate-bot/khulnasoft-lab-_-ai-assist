@@ -1,7 +1,14 @@
 import pytest
 
 from codesuggestions.suggestions.detectors import (
-    DetectorRegexEmail, DetectorRegexIPV6, DetectorRegexIPV4, DetectorSecrets, Detected, DetectorKind
+    DetectorRegexEmail,
+    DetectorRegexIPV6,
+    DetectorRegexIPV4,
+    DetectorBasicAuthSecrets,
+    DetectorTokenSecrets,
+    DetectorKeywordsSecrets,
+    Detected,
+    DetectorKind
 )
 
 
@@ -115,12 +122,21 @@ def test_detector_ipv4_detect_all(test_content, expected_output):
         ("basic auth: git clone https://username:1eeccr334f@gitlab.com/username/repository.git", [
             Detected(kind=DetectorKind.SECRET, start=39, end=49, val='1eeccr334f')
         ]),
-        ("jwt with no signature: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9"
-         ".eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ", [
-             Detected(kind=DetectorKind.SECRET,start=23,end=134,val="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9"
-                                                                    ".eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI"
-                                                                    "6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ")
-         ]),
+        ("basic auth with 1eeccr334f': git clone https://username:1eeccr334f@gitlab.com/username/repository.git", [
+            Detected(kind=DetectorKind.SECRET, start=56, end=66, val='1eeccr334f')
+        ])
+    ]
+)
+def test_detector_basic_auth_secrets_detect_all(test_content, expected_output):
+    det = DetectorBasicAuthSecrets()
+    detected = det.detect_all(test_content)
+
+    assert detected == expected_output
+
+
+@pytest.mark.parametrize(
+    "test_content,expected_output", [
+        ("no secrets", []),
         ("artifactory credentials artif-key:AKCxxxxxxxxx1\nartifactoryx:_password=AKCxxxxxxxxx1", [
             Detected(kind=DetectorKind.SECRET, start=33, end=47, val=":AKCxxxxxxxxx1"),
             Detected(kind=DetectorKind.SECRET, start=70, end=84, val="=AKCxxxxxxxxx1"),
@@ -142,14 +158,32 @@ def test_detector_ipv4_detect_all(test_content, expected_output):
             Detected(kind=DetectorKind.SECRET, start=8, end=42, val='SKxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx1'),
             Detected(kind=DetectorKind.SECRET, start=43, end=77, val='ACxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx1')
         ]),
-        ("password = 'random_password'\nif (apikey == 'api_key') {\napi_key = ''", [
-            Detected(kind=DetectorKind.SECRET, start=12, end=27, val="random_password"),
-            Detected(kind=DetectorKind.SECRET, start=44, end=51, val="api_key"),
+    ]
+)
+def test_detector_token_secrets_detect_all(test_content, expected_output):
+    det = DetectorTokenSecrets()
+    detected = det.detect_all(test_content)
+
+    assert detected == expected_output
+
+
+@pytest.mark.parametrize(
+    "test_content,expected_output", [
+        ("no secrets: if (api_key == password) {\n\tprint('password')\n}", []),
+        ("has secrets: if (api_key == 'password') {\n\tprint('password')\n}", [
+            Detected(kind=DetectorKind.SECRET, start=29, end=37, val="password")
+        ]),
+        ("has another secret: aws_secret_access_key: 'key'\napikey_myservice: 'another key'", [
+            Detected(kind=DetectorKind.SECRET, start=44, end=47, val="key"),
+            Detected(kind=DetectorKind.SECRET, start=68, end=79, val="another key"),
         ])
     ]
 )
-def test_detector_secrets_detect_all(test_content, expected_output):
-    det = DetectorSecrets()
+def test_detector_keyword_secrets_detect_all(test_content, expected_output):
+    det = DetectorKeywordsSecrets()
     detected = det.detect_all(test_content)
+
+    sorted(detected, key=lambda d: d.start)
+    sorted(expected_output, key=lambda d: d.start)
 
     assert detected == expected_output
