@@ -183,7 +183,7 @@ def test_detector_keyword_secrets_detect_all(test_content, expected_output):
     det = DetectorKeywordsSecrets()
     detected = det.detect_all(test_content)
 
-    sorted(detected, key=lambda d: d.start)
-    sorted(expected_output, key=lambda d: d.start)
+    detected = sorted(detected, key=lambda d: d.start)
+    expected_output = sorted(expected_output, key=lambda d: d.start)
 
     assert detected == expected_output
