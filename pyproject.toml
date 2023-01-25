@@ -20,6 +20,7 @@ numpy = "^1.24.1"
 tritonclient = { extras = ["grpc"], version = "^2.29.0" }
 python-dotenv = "^0.21.0"
 regex = "^2022.10.31"
+detect-secrets = "^1.4.0"
 
 [tool.poetry.group.test]
 optional = true

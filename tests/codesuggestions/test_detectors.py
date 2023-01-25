@@ -1,7 +1,14 @@
 import pytest
 
 from codesuggestions.suggestions.detectors import (
-    DetectorRegexEmail, DetectorRegexIPV6, DetectorRegexIPV4, Detected, DetectorKind
+    DetectorRegexEmail,
+    DetectorRegexIPV6,
+    DetectorRegexIPV4,
+    DetectorBasicAuthSecrets,
+    DetectorTokenSecrets,
+    DetectorKeywordsSecrets,
+    Detected,
+    DetectorKind
 )
 
 
@@ -105,5 +112,78 @@ def test_detector_ipv6_detect_all(test_content, expected_output):
 def test_detector_ipv4_detect_all(test_content, expected_output):
     det = DetectorRegexIPV4()
     detected = det.detect_all(test_content)
+
+    assert detected == expected_output
+
+
+@pytest.mark.parametrize(
+    "test_content,expected_output", [
+        ("no secrets", []),
+        ("basic auth: git clone https://username:1eeccr334f@gitlab.com/username/repository.git", [
+            Detected(kind=DetectorKind.SECRET, start=39, end=49, val='1eeccr334f')
+        ]),
+        ("basic auth with 1eeccr334f': git clone https://username:1eeccr334f@gitlab.com/username/repository.git", [
+            Detected(kind=DetectorKind.SECRET, start=56, end=66, val='1eeccr334f')
+        ])
+    ]
+)
+def test_detector_basic_auth_secrets_detect_all(test_content, expected_output):
+    det = DetectorBasicAuthSecrets()
+    detected = det.detect_all(test_content)
+
+    assert detected == expected_output
+
+
+@pytest.mark.parametrize(
+    "test_content,expected_output", [
+        ("no secrets", []),
+        ("artifactory credentials artif-key:AKCxxxxxxxxx1\nartifactoryx:_password=AKCxxxxxxxxx1", [
+            Detected(kind=DetectorKind.SECRET, start=33, end=47, val=":AKCxxxxxxxxx1"),
+            Detected(kind=DetectorKind.SECRET, start=70, end=84, val="=AKCxxxxxxxxx1"),
+        ]),
+        ("sendgrid tokens: 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", [
+            Detected(kind=DetectorKind.SECRET, start=17, end=86, val="SG.ngeVfQFYQlKU0ufo8x5d1A.TwL2iGABf9DHoTf"
+                                                                     "-09kqeF8tAmbihYzrnopKc-1s5cr")
+        ]),
+        ("azure: AccountKey=lJzRc1YdHaAA2KCNJJ1tkYwF/+mKK6Ygw0NGe170Xu592euJv2wYUtBlV8z+qnlcNQSnIYVTkLWntUO1F8j8rQ==", [
+            Detected(kind=DetectorKind.SECRET, start=7, end=106, val="AccountKey=lJzRc1YdHaAA2KCNJJ1tkYwF/+"
+                                                                     "mKK6Ygw0NGe170Xu592euJv2wYUtBlV8z+qnl"
+                                                                     "cNQSnIYVTkLWntUO1F8j8rQ==")
+        ]),
+        ("discord: MTk4NjIyNDgzNDcxOTI1MjQ4.Cl2FMQ.ZnCjm1XVW7vRze4b7Cq4se7kKWs", [
+            Detected(kind=DetectorKind.SECRET, start=9, end=68, val="MTk4NjIyNDgzNDcxOTI1MjQ4.Cl2FMQ"
+                                                                    ".ZnCjm1XVW7vRze4b7Cq4se7kKWs")
+        ]),
+        ("twilio: SKxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx1\nACxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx1", [
+            Detected(kind=DetectorKind.SECRET, start=8, end=42, val='SKxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx1'),
+            Detected(kind=DetectorKind.SECRET, start=43, end=77, val='ACxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx1')
+        ]),
+    ]
+)
+def test_detector_token_secrets_detect_all(test_content, expected_output):
+    det = DetectorTokenSecrets()
+    detected = det.detect_all(test_content)
+
+    assert detected == expected_output
+
+
+@pytest.mark.parametrize(
+    "test_content,expected_output", [
+        ("no secrets: if (api_key == password) {\n\tprint('password')\n}", []),
+        ("has secrets: if (api_key == 'password') {\n\tprint('password')\n}", [
+            Detected(kind=DetectorKind.SECRET, start=29, end=37, val="password")
+        ]),
+        ("has another secret: aws_secret_access_key: 'key'\napikey_myservice: 'another key'", [
+            Detected(kind=DetectorKind.SECRET, start=44, end=47, val="key"),
+            Detected(kind=DetectorKind.SECRET, start=68, end=79, val="another key"),
+        ])
+    ]
+)
+def test_detector_keyword_secrets_detect_all(test_content, expected_output):
+    det = DetectorKeywordsSecrets()
+    detected = det.detect_all(test_content)
+
+    sorted(detected, key=lambda d: d.start)
+    sorted(expected_output, key=lambda d: d.start)
 
     assert detected == expected_output
