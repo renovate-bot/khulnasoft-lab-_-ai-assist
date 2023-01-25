@@ -6,6 +6,11 @@ input [
     name: "TOKENS_BATCH"
     data_type: TYPE_UINT32
     dims: [ -1, -1 ]
+  },
+  {
+    name: "REQUEST_INPUT_LEN"
+    data_type: TYPE_UINT32
+    dims: [ 1 ]
   }
 ]
 output [
@@ -17,8 +22,8 @@ output [
 ]
 
 instance_group [
-    {
-        count: 1
-        kind: KIND_CPU
-    }
+  {
+    count: 1
+    kind: KIND_CPU
+  }
 ]

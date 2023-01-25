@@ -65,15 +65,13 @@ class TritonPythonModel:
         for idx, request in enumerate(requests):
             # Get input tensors
             tokens_batch = pb_utils.get_input_tensor_by_name(request, 'TOKENS_BATCH').as_numpy()
-
-            # Reshape Input
-            # tokens_batch = tokens_batch.reshape([-1, tokens_batch.shape[0]])
-            # tokens_batch = tokens_batch.T
+            req_input_len_batch = pb_utils.get_input_tensor_by_name(request, 'REQUEST_INPUT_LEN').as_numpy()
 
             # Postprocessing output data
             outputs = []
-            for beam_tokens in tokens_batch:
+            for beam_tokens, req_input_len in zip(tokens_batch, req_input_len_batch):
                 for tokens in beam_tokens:
+                    tokens = tokens[req_input_len[0]:]
                     output = self.tokenizer.decode(tokens, skip_special_tokens=True)
                     outputs.append(output.encode('utf8'))
 

@@ -221,6 +221,10 @@ ensemble_scheduling {
         key: "TOKENS_BATCH"
         value: "output_ids"
       }
+      input_map {
+        key: "REQUEST_INPUT_LEN"
+        value: "_REQUEST_INPUT_LEN"
+      }
 
       output_map {
         key: "OUTPUT"
