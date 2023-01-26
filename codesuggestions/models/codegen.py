@@ -24,7 +24,7 @@ class Codegen(BaseModel):
     MODEL_TEMPERATURE = .2
     MODEL_REPETITION_PENALTY = 1
     MODEL_TOP_K = 0
-    MODEL_TOP_P = .95
+    MODEL_TOP_P = .98
     MODEL_PAD_ID = 50256
 
     def __init__(self, grpc_client: triton_grpc_util.InferenceServerClient, timeout: int = 10):
