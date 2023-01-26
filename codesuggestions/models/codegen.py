@@ -87,6 +87,4 @@ class Codegen(BaseModel):
             .decode("utf-8")
         )
 
-        completion = completion[len(prompt):]
-
         return completion
