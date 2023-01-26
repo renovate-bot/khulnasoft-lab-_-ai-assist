@@ -30,3 +30,5 @@ monitoring-deploy:
 .PHONY: monitoring-teardown
 monitoring-teardown:
 	@helm uninstall -n ${MONITORING_NAMESPACE} prometheus
+
+.PHONY: all test test clean

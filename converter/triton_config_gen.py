@@ -3,12 +3,15 @@
 import argparse
 import os
 from string import Template
-from transformers import GPTJConfig, AutoTokenizer
+
 import torch
+from transformers import GPTJConfig, AutoTokenizer
+
 
 def round_up(x, multiple):
     remainder = x % multiple
     return x if remainder == 0 else x + multiple - remainder
+
 
 SCRIPT_DIR = os.path.dirname(os.path.realpath(__file__))
 CONFIG_TEMPLATE_PATH = os.path.join(SCRIPT_DIR, 'config_template.pbtxt')
@@ -53,20 +56,21 @@ with open(args.template, 'r') as f:
 
 model_name = os.path.basename(args.hf_model_dir)
 version = '1'
-params = {}
-params['tensor_para_size'] = args.num_gpu
-params['name'] = model_name
-params['max_seq_len'] = max_seq_len
-params['is_half'] = is_half
-params['head_num'] = config.n_head
-params['size_per_head'] = config.n_embd // config.n_head
-params['inter_size'] = 4*config.n_embd
+params = {
+    'tensor_para_size': args.num_gpu,
+    'name': model_name,
+    'max_seq_len': max_seq_len,
+    'is_half': is_half,
+    'head_num': config.n_head,
+    'size_per_head': config.n_embd // config.n_head,
+    'inter_size': 4 * config.n_embd,
+    'vocab_size': round_up(tokenizer.vocab_size, 1024),
+    'start_id': tokenizer.eos_token_id,
+    'end_id': tokenizer.eos_token_id,
+    'decoder_layers': config.n_layer,
+    'rotary_embedding': config.rotary_dim
+}
 # Vocab size gets rounded up to a multiple of 1024
-params['vocab_size'] = round_up(tokenizer.vocab_size, 1024)
-params['start_id'] = tokenizer.eos_token_id
-params['end_id'] = tokenizer.eos_token_id
-params['decoder_layers'] = config.n_layer
-params['rotary_embedding'] = config.rotary_dim
 # NOTE: this assumes that the model dir follows the format used by the other conversion scripts
 model_dir = os.path.join(args.model_store, f'{model_name}-{args.num_gpu}gpu')
 weights_path = os.path.join(model_dir, 'fastertransformer', f'{version}', f'{args.num_gpu}-gpu')
