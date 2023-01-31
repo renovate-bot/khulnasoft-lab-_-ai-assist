@@ -10,6 +10,10 @@ __all__ = [
     "CodeSuggestionsContainer",
 ]
 
+_PROBS_ENDPOINTS = [
+    "/monitoring/liveness"
+]
+
 
 def _init_triton_grpc_client(host: str, port: int):
     client = grpc_connect_triton(host, port)
@@ -31,10 +35,12 @@ class FastApiContainer(containers.DeclarativeContainer):
         middleware.MiddlewareAuthentication,
         auth_provider,
         bypass_auth=config.auth.bypass,
+        skip_endpoints=_PROBS_ENDPOINTS,
     )
 
     log_middleware = providers.Factory(
         middleware.MiddlewareLogRequest,
+        skip_endpoints=_PROBS_ENDPOINTS,
     )
 
 
