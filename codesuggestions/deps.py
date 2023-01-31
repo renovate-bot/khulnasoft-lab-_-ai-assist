@@ -11,7 +11,7 @@ __all__ = [
 ]
 
 _PROBS_ENDPOINTS = [
-    "/monitoring/liveness"
+    "/monitoring/healthz"
 ]
 
 

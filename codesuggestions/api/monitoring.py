@@ -23,10 +23,10 @@ def is_triton_server_live(
 ):
     try:
         return monitoring.is_triton_server_live(grpc_client)
-    except triton_grpc_util.InferenceServerException as _:
+    except triton_grpc_util.InferenceServerException:
         return False
 
 
-router.add_api_route("/liveness", health([
+router.add_api_route("/healthz", health([
     is_triton_server_live
 ]))

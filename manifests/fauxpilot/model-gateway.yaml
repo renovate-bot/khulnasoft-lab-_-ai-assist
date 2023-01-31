@@ -33,7 +33,7 @@ spec:
               value: "false"
           livenessProbe:
             httpGet:
-              path: /monitoring/liveness
+              path: /monitoring/healthz
               port: 5052
             initialDelaySeconds: 10
             periodSeconds: 5
