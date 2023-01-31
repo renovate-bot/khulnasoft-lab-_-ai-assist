@@ -36,7 +36,7 @@ spec:
               path: /monitoring/healthz
               port: 5052
             initialDelaySeconds: 10
-            periodSeconds: 5
+            periodSeconds: 10
             timeoutSeconds: 1
             failureThreshold: 3
 ---
