@@ -39,7 +39,10 @@ class FastApiContainer(containers.DeclarativeContainer):
 
 
 class CodeSuggestionsContainer(containers.DeclarativeContainer):
-    wiring_config = containers.WiringConfiguration(modules=["codesuggestions.api.suggestions"])
+    wiring_config = containers.WiringConfiguration(modules=[
+        "codesuggestions.api.suggestions",
+        "codesuggestions.api.monitoring",
+    ])
 
     config = providers.Configuration()
 
