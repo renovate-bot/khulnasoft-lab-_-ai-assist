@@ -21,7 +21,8 @@ spec:
         - name: model-gateway
           image: registry.gitlab.com/gitlab-org/modelops/applied-ml/code-suggestions/ai-assist/model-gateway:latest
           ports:
-            - containerPort: 5052
+            - name: app-port
+              containerPort: 5052
           env:
             - name: TRITON_HOST
               value: "model-k8s-triton"
@@ -34,7 +35,7 @@ spec:
           livenessProbe:
             httpGet:
               path: /monitoring/healthz
-              port: 5052
+              port: app-port
             initialDelaySeconds: 10
             periodSeconds: 10
             timeoutSeconds: 1
