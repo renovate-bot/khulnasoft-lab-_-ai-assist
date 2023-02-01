@@ -10,11 +10,11 @@ Cluster configuration:
 - name: ai-assist
 - version: 1.24.8-gke.2000
 - zone: us-central1-c
-- node pool #0: node-pool-n2-cpu
+- node pool \#0: node-pool-n2-cpu
   - description: node pool created for apps requiring CPU only
   - type: n2-standard-2
   - autoscaling enabled: 0-5 nodes
-- node pool #1: node-pool-a100-gpu
+- node pool \#1: node-pool-a100-gpu
   - description: node pool created for apps requiring GPU+CPU
   - type: a2-highgpu-1g
   - autoscaling enabled: 0-5 nodes
