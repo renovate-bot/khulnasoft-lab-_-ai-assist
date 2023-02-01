@@ -20,7 +20,7 @@ the extension either provides entire code snippets (e.g., generating functions) 
 analyzing file extensions and other files in the repo. At this stage, the extension takes the context above the cursor 
 and send it to `model-gateway` for generating code completions. Please note that further changes in the extension related 
 to analyzing project files and their extensions will require changes in the used model. You can find more details on 
-how to enable and configure the Gitlab VSCode extension in TBD.
+how to enable and configure the Gitlab VSCode extension in [vscode.md](vscode.md).
 
 ## Wrapping business logic in Model Gateway
 Model Gateway is responsible for wrapping the Codegen model with business logic. 
