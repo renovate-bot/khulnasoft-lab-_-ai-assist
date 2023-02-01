@@ -9,6 +9,28 @@ Code Suggestions components:
 - Model Gateway (the current repo)
 - Salesforce Codegen model
 
+```mermaid
+flowchart LR
+    subgraph private k8s
+        ingress(Nginx Ingress)
+        subgraph cpu-node-pool
+            modelgateway(Model gateway)
+        end
+        subgraph gpu-node-pool
+            ensemble(Model Ensemble)
+            ensemble -.-> encoder(Encoder)
+            encoder -.-> model(Fauxpilot/Codegen)
+            model -.-> decoder(Decoder)
+            decoder -.-> ensemble 
+        end
+    end
+    
+    req((request)) -.-> ingress
+    ingress --> modelgateway
+    modelgateway <--> gitlab(GitLab API)
+    modelgateway --> ensemble
+```
+
 We rely on Google Kubernetes Engine (GKE) with the GPU support enabled to deploy the above components.
 Please note that Code Suggestions currently provides code completions only in Visual Studio Code with the 
 official GitLab extension installed.
