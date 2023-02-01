@@ -23,9 +23,7 @@ class _PathResolver:
         self.endpoints = set(endpoints if endpoints else [])
 
     def skip_path(self, path: str) -> bool:
-        if path in self.endpoints:
-            return True
-        return False
+        return path in self.endpoints
 
 
 class MiddlewareLogRequest(Middleware):
