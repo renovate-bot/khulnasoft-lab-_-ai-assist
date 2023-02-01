@@ -1,5 +1,6 @@
 import logging
 from hashlib import sha1
+from typing import Optional
 
 from starlette.middleware import Middleware
 from starlette.authentication import AuthenticationError, HTTPConnection
@@ -17,16 +18,36 @@ __all__ = [
 log = logging.getLogger("codesuggestions")
 
 
+class _PathResolver:
+    def __init__(self, endpoints: list[str]):
+        self.endpoints = set(endpoints)
+
+    @classmethod
+    def from_optional_list(cls, endpoints: Optional[list] = None) -> "_PathResolver":
+        if endpoints is None:
+            endpoints = []
+        return cls(endpoints)
+
+    def skip_path(self, path: str) -> bool:
+        return path in self.endpoints
+
+
 class MiddlewareLogRequest(Middleware):
     class CustomHeaderMiddleware(BaseHTTPMiddleware):
+        def __init__(self, path_resolver: _PathResolver, *args, **kwargs):
+            self.path_resolver = path_resolver
+            super().__init__(*args, **kwargs)
 
         async def dispatch(self, request, call_next):
-            user = sha1(request.client.host.encode("utf-8")).hexdigest()
-            log.info(f"Received request - {user}")
+            if not self.path_resolver.skip_path(request.url.path):
+                user = sha1(request.client.host.encode("utf-8")).hexdigest()
+                log.info(f"Received request - {user}")
             return await call_next(request)
 
-    def __init__(self):
-        super().__init__(MiddlewareLogRequest.CustomHeaderMiddleware)
+    def __init__(self, skip_endpoints: Optional[list] = None):
+        path_resolver = _PathResolver.from_optional_list(skip_endpoints)
+
+        super().__init__(MiddlewareLogRequest.CustomHeaderMiddleware, path_resolver=path_resolver)
 
 
 class MiddlewareAuthentication(Middleware):
@@ -34,14 +55,18 @@ class MiddlewareAuthentication(Middleware):
         PREFIX_BEARER_HEADER = "bearer"
         AUTH_HEADER = "Authorization"
 
-        def __init__(self, auth_provider: AuthProvider, bypass_auth: bool):
+        def __init__(self, auth_provider: AuthProvider, bypass_auth: bool, path_resolver: _PathResolver):
             self.auth_provider = auth_provider
             self.bypass_auth = bypass_auth
+            self.path_resolver = path_resolver
 
         async def authenticate(self, conn: HTTPConnection):
             """
             Ref: https://www.starlette.io/authentication/
             """
+
+            if self.path_resolver.skip_path(conn.url.path):
+                return
 
             if self.bypass_auth:
                 log.critical("Auth is disabled, all users allowed")
@@ -66,10 +91,16 @@ class MiddlewareAuthentication(Middleware):
         log.error(e)
         return PlainTextResponse(status_code=401)
 
-    def __init__(self, auth_provider: AuthProvider, bypass_auth: bool = False, **kwargs):
+    def __init__(
+        self,
+        auth_provider: AuthProvider,
+        bypass_auth: bool = False,
+        skip_endpoints: Optional[list] = None,
+    ):
+        path_resolver = _PathResolver.from_optional_list(skip_endpoints)
+
         super().__init__(
             AuthenticationMiddleware,
-            backend=MiddlewareAuthentication.AuthBackend(auth_provider, bypass_auth),
+            backend=MiddlewareAuthentication.AuthBackend(auth_provider, bypass_auth, path_resolver),
             on_error=MiddlewareAuthentication.on_auth_error,
-            **kwargs,
         )

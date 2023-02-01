@@ -2,6 +2,7 @@ from fastapi import FastAPI
 from dependency_injector.wiring import Provide, inject
 
 from codesuggestions.api.suggestions import router as http_router_suggestions
+from codesuggestions.api.monitoring import router as http_monitoring_router
 from codesuggestions.api.middleware import MiddlewareAuthentication, MiddlewareLogRequest
 from codesuggestions.deps import FastApiContainer
 
@@ -30,5 +31,6 @@ def create_fast_api_server(
     )
 
     fastapi_app.include_router(http_router_suggestions, prefix="/v1")
+    fastapi_app.include_router(http_monitoring_router)
 
     return fastapi_app
