@@ -35,3 +35,7 @@ For model storage, the cluster provides an NFS server with 500GB of available sp
 persistent volume created on top of the NFS has `ReadWriteMany` access mode. With follow-up iterations, we
 can revisit the way to store models and update them. The current solution cannot be considered optimal for GA.
 The NFS server is not linked to Gitlab CI. We may have difficulty updating model versions at one go.
+
+Relevant links: 
+- n2-standard-2 - [N2 Machine series](https://cloud.google.com/compute/docs/general-purpose-machines#n2_machines)
+- a2-highgpu-1g - [NVIDIA A100 GPU](https://cloud.google.com/compute/docs/gpus#a100-gpus)
