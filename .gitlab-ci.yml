@@ -1,3 +1,4 @@
+---
 image: python:3.9.13
 
 workflow:
@@ -16,6 +17,7 @@ variables:
   PIP_CACHE_DIR: "$CI_PROJECT_DIR/.cache/pip"
   POETRY_CACHE_DIR: "$CI_PROJECT_DIR/.cache/poetry"
 
+  DOCKER_VERSION: "20.10.23"
   DOCKER_TLS_CERTDIR: "/certs"
   DOCKER_MODEL_GATEWAY: "$CI_REGISTRY_IMAGE/model-gateway"
   DOCKER_MODEL_GATEWAY_TMP: "$CI_REGISTRY_IMAGE/tmp/model-gateway"
@@ -53,11 +55,11 @@ cache:
     - poetry config --list
 
 .docker:
-  image: docker:20.10.21
+  image: docker:${DOCKER_VERSION}
   services:
-    - docker:20.10.21-dind
+    - docker:${DOCKER_VERSION}-dind
   before_script:
-    - docker login -u "$CI_REGISTRY_USER" -p "$CI_REGISTRY_PASSWORD" $CI_REGISTRY
+    - docker login -u "$CI_REGISTRY_USER" -p "$CI_REGISTRY_PASSWORD" "$CI_REGISTRY"
 
 .docker-release-latest:
   extends: .docker
@@ -84,7 +86,7 @@ install:
 build-docker-model-gateway-tmp:
   extends: .docker
   stage: build
-  cache: { }
+  cache: {}
   variables:
     TARGET_IMAGE: "$DOCKER_MODEL_GATEWAY_TMP:$CI_COMMIT_SHORT_SHA"
   script:
@@ -94,7 +96,7 @@ build-docker-model-gateway-tmp:
 build-docker-model-codegen-tmp:
   extends: .docker
   stage: build
-  cache: { }
+  cache: {}
   parallel:
     matrix:
       - MODEL_NAME: Salesforce/codegen-350M-multi
@@ -117,7 +119,7 @@ build-docker-model-codegen-tmp:
 build-docker-model-fauxpilot-tmp:
   extends: .docker
   stage: build
-  cache: { }
+  cache: {}
   variables:
     TARGET_IMAGE: "$DOCKER_MODEL_FAUXPILOT_TMP:$CI_COMMIT_SHORT_SHA"
   script:
@@ -171,7 +173,7 @@ secret_detection:
   stage: test
   needs:
     - install
-  cache: { }
+  cache: {}
   rules:
     - if: $SECRET_DETECTION_DISABLED
       when: never
@@ -193,7 +195,7 @@ semgrep-sast:
 release-docker-model-gateway:
   stage: release
   extends: .docker-release-latest
-  cache: { }
+  cache: {}
   variables:
     TARGET_IMAGE: "$DOCKER_MODEL_GATEWAY_TMP:$CI_COMMIT_SHORT_SHA"
     RELEASED_IMAGE_COMMIT: "$DOCKER_MODEL_GATEWAY:$CI_COMMIT_SHORT_SHA"
@@ -204,7 +206,7 @@ release-docker-model-gateway:
 release-docker-model-codegen:
   stage: release
   extends: .docker-release-latest
-  cache: { }
+  cache: {}
   parallel:
     matrix:
       # release codegen-small
@@ -223,7 +225,7 @@ release-docker-model-codegen:
 release-docker-model-fauxpilot:
   stage: release
   extends: .docker-release-latest
-  cache: { }
+  cache: {}
   variables:
     TARGET_IMAGE: "$DOCKER_MODEL_FAUXPILOT_TMP:$CI_COMMIT_SHORT_SHA"
     RELEASED_IMAGE_COMMIT: "$DOCKER_MODEL_FAUXPILOT:$CI_COMMIT_SHORT_SHA"
