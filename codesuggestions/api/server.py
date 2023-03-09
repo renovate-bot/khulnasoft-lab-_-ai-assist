@@ -1,9 +1,13 @@
 from fastapi import FastAPI
 from dependency_injector.wiring import Provide, inject
 
-from codesuggestions.api.suggestions import router as http_router_suggestions
+from codesuggestions.api.suggestions import router as http_suggestions_router
 from codesuggestions.api.monitoring import router as http_monitoring_router
-from codesuggestions.api.middleware import MiddlewareAuthentication, MiddlewareLogRequest
+from codesuggestions.api.middleware import (
+    MiddlewareAuthentication,
+    MiddlewareLogRequest,
+)
+from codesuggestions.api.v2.api import api_router as api_router_v2
 from codesuggestions.deps import FastApiContainer
 
 __all__ = [
@@ -13,9 +17,11 @@ __all__ = [
 
 @inject
 def create_fast_api_server(
-        config: dict = Provide[FastApiContainer.config.fastapi],
-        auth_middleware: MiddlewareAuthentication = Provide[FastApiContainer.auth_middleware],
-        log_middleware: MiddlewareLogRequest = Provide[FastApiContainer.log_middleware],
+    config: dict = Provide[FastApiContainer.config.fastapi],
+    auth_middleware: MiddlewareAuthentication = Provide[
+        FastApiContainer.auth_middleware
+    ],
+    log_middleware: MiddlewareLogRequest = Provide[FastApiContainer.log_middleware],
 ):
     fastapi_app = FastAPI(
         title="GitLab Code Suggestions",
@@ -30,7 +36,8 @@ def create_fast_api_server(
         ],
     )
 
-    fastapi_app.include_router(http_router_suggestions, prefix="/v1")
+    fastapi_app.include_router(http_suggestions_router, prefix="/v1")
+    fastapi_app.include_router(api_router_v2)
     fastapi_app.include_router(http_monitoring_router)
 
     return fastapi_app

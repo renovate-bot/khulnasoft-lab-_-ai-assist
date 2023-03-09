@@ -52,7 +52,7 @@ class ResponseSuggestions(BaseModel):
 
     id: str
     model: str = "codegen"
-    object: str = 'text_completion'
+    object: str = "text_completion"
     created: int
     choices: list[Choice]
     usage: Optional[Usage]
@@ -61,8 +61,10 @@ class ResponseSuggestions(BaseModel):
 @router.post("", response_model=ResponseSuggestions)
 @inject
 async def completions(
-        req: RequestSuggestions,
-        code_suggestions: CodeSuggestionsUseCase = Depends(Provide[CodeSuggestionsContainer.usecase]),
+    req: RequestSuggestions,
+    code_suggestions: CodeSuggestionsUseCase = Depends(
+        Provide[CodeSuggestionsContainer.usecase]
+    ),
 ):
     suggestion = code_suggestions(req.prompt)
 
