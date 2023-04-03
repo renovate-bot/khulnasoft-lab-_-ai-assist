@@ -26,6 +26,7 @@ class CurrentFile(BaseModel):
 class SuggestionsRequest(BaseModel):
     prompt_version: int = 1
     repository_name: constr(strip_whitespace=True, max_length=255)
+    repository_id: int
     current_file: CurrentFile
 
 
