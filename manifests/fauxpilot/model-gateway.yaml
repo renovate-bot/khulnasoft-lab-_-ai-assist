@@ -30,8 +30,6 @@ spec:
               value: "8080"
             - name: FASTAPI_API_PORT
               value: "5052"
-            - name: BYPASS_EXTERNAL_AUTH
-              value: "false"
           livenessProbe:
             httpGet:
               path: /monitoring/healthz
