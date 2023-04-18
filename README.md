@@ -29,23 +29,28 @@ GPU.
 Below described the configuration per component
 
 ### API
+
 All parameters for the API are available from `api/config/config.py` which heavily relies on environment variables. An
 overview of all environment variables used and their default value, if you want to deviate you should make them
-available in a `.env`
+available in a `.env`:
 
 ```dotenv
 API_EXTERNAL_PORT=5001  # External port for the API used in docker-compose
 TRITON_HOST=triton
 TRITON_PORT=8001
 TRITON_VERBOSITY=False
-FASTAPI_DOCS_URL=None  # To disable docs on the API endpoint
-FASTAPI_OPENAPI_URL=None  # To disable docs on the API endpoint
-FASTAPI_REDOC_URL=None  # To disable docs on the API endpoint
+# FASTAPI_DOCS_URL=None  # To disable docs on the API endpoint
+# FASTAPI_OPENAPI_URL=None  # To disable docs on the API endpoint
+# FASTAPI_REDOC_URL=None  # To disable docs on the API endpoint
 AUTH_BYPASS_EXTERNAL=False  # Can be used for local development to bypass the GitLab server side check
 GITLAB_API_URL=https://gitlab.com/api/v4/  # Can be changed to GDK: http://127.0.0.1:3000/api/v4/
 USE_LOCAL_CACHE=True  # Uses a local in-memory cache instead of Redis
 ```
 
+Note that the `FASTAPI_xxx_URL` values must either be commented out or
+prefaced with a valid route that begins with `/`. `python-dotenv` will
+treat any value as a string, so specifying `None` maps to the Python
+value `'None'`.
 
 ## Local development
 
