@@ -215,9 +215,31 @@ You will need `kubectl` installed on your computer and a modicum of comfort with
 
 Additionally you will also need to have the latest version of helm and make installed.
 
+Other useful tools:
+
+1. [kubectx](https://github.com/ahmetb/kubectx): For managing multiple Kubenetes contextes.
+1. [k9s](https://github.com/derailed/k9s): A nice interface for managing and navigating a Kubernetes cluster.
+
+### Connect to the Kubernetes cluster
+
+1. Log into the [Google Cloud console](https://console.cloud.google.com).
+1. In the Search prompt, enter `Kubernetes clusters`.
+1. Navigate to the cluster (for example: `ai-assist`) to which you want to connect.
+1. Click on `Connect`. You should see a command in the form:
+
+    ```shell
+    gcloud container clusters get-credentials ai-assist --zone us-central1-c --project unreview-poc-390200e5
+    ```
+
+1. Run that command on your terminal. This will set the current Kubernetes context to that cluster.
+1. For the `ai-assist` cluster, add your local IP to the `Control plane authorized networks`. This restricts `kubectl` access
+   for specific IP addresses.
+
 ### Deploying Monitoring
 
-Deploying monitoring to your kubernetes cluster is rather straight forward. While connected to the cluster run the following make commands.
+NOTE: This is only necessary for installing monitoring on a new cluster. This is not necessary for accessing a production environment.
+
+Deploying monitoring to your kubernetes cluster is rather straightforward. While connected to the cluster run the following make commands.
 
 ```shell
 make monitoring-setup # This only needs to be run once
