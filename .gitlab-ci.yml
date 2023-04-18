@@ -76,6 +76,8 @@ lint:
   script:
     - poetry install --with lint
     - poetry run flake8 codesuggestions
+    - poetry lock --no-update
+    - git diff --exit-code
 
 install:
   extends: .poetry
