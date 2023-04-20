@@ -6,6 +6,8 @@ from codesuggestions import Config
 from codesuggestions.api import create_fast_api_server
 from codesuggestions.deps import FastApiContainer, CodeSuggestionsContainer
 
+from codesuggestions.structured_logging import setup_logging
+
 # load env variables from .env if exists
 load_dotenv()
 
@@ -25,6 +27,7 @@ def main():
     code_suggestions_container.config.triton.from_value(config.triton._asdict())
 
     app = create_fast_api_server()
+    setup_logging(app, json_logs=True, log_level="INFO")
 
     @app.on_event("startup")
     def on_server_startup():
@@ -36,7 +39,7 @@ def main():
         fast_api_container.shutdown_resources()
         code_suggestions_container.shutdown_resources()
 
-    uvicorn.run(app, host=config.fastapi.api_host, port=config.fastapi.api_port)
+    uvicorn.run(app, host=config.fastapi.api_host, port=config.fastapi.api_port, log_config=config.fastapi.uvicorn_logger)
 
 
 if __name__ == "__main__":
