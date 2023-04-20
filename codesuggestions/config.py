@@ -35,44 +35,9 @@ class Config:
         '0': False, 'no': False, 'false': False, 'off': False
     }
 
-    UVICORN_LOGGER = {
+    STRUCTURED_LOGGING = {
         "version": 1,
-        "disable_existing_loggers": False,
-        "formatters": {
-            "access": {
-                "()": "uvicorn.logging.AccessFormatter",
-                "fmt": '%(levelprefix)s %(asctime)s - "%(request_line)s" %(status_code)s',
-                "use_colors": True
-            },
-            "default": {
-                "()": "uvicorn.logging.DefaultFormatter",
-                "fmt": '%(levelprefix)s %(asctime)s - "%(message)s"',
-                "use_colors": True,
-            },
-        },
-        "handlers": {
-            "access": {
-                "formatter": "access",
-                "class": "logging.StreamHandler",
-                "stream": "ext://sys.stdout",
-            },
-            "default": {
-                "formatter": "default",
-                "class": "logging.StreamHandler",
-                "stream": "ext://sys.stderr",
-            },
-        },
-        "loggers": {
-            "uvicorn.access": {
-                "handlers": ["access"],
-                # "level": "INFO",
-                "propagate": False
-            },
-            "codesuggestions": {
-                "handlers": ["default"],
-                "level": "INFO"
-            },
-        },
+        "disable_existing_loggers": False
     }
 
     @property
@@ -90,7 +55,7 @@ class Config:
             redoc_url=Config._get_value("FASTAPI_REDOC_URL", None),
             api_host=Config._get_value("FASTAPI_API_HOST", "0.0.0.0"),
             api_port=int(Config._get_value("FASTAPI_API_PORT", 5000)),
-            uvicorn_logger=Config.UVICORN_LOGGER,
+            uvicorn_logger=Config.STRUCTURED_LOGGING
         )
 
     @property
