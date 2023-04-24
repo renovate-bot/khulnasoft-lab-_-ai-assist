@@ -7,12 +7,14 @@ from asgi_correlation_id.context import correlation_id
 from typing import Optional
 
 from fastapi import Response
+from fastapi.encoders import jsonable_encoder
 
 from starlette.middleware import Middleware
 from starlette.authentication import AuthenticationError, HTTPConnection
+from starlette.concurrency import iterate_in_threadpool
 from starlette.middleware.authentication import AuthenticationMiddleware, AuthenticationBackend
 from starlette.middleware.base import BaseHTTPMiddleware, Request
-from starlette.responses import PlainTextResponse
+from starlette.responses import JSONResponse
 
 from uvicorn.protocols.utils import get_path_with_query_string
 
@@ -75,6 +77,14 @@ class MiddlewareLogRequest(Middleware):
                 http_method = request.method
                 http_version = request.scope["http_version"]
                 process_time_s = process_time / 1e9
+
+                if 400 <= status_code < 500:
+                    # StreamingResponse is received from the MiddlewareAuthentication, so
+                    # we need to read the response ourselves.
+                    response_body = [section async for section in response.body_iterator]
+                    response.body_iterator = iterate_in_threadpool(iter(response_body))
+                    structlog.contextvars.bind_contextvars(response_body=response_body[0].decode())
+
                 # Recreate the Uvicorn access log format, but add all parameters as structured information
                 access_logger.info(
                     f"""{client_host}:{client_port} - "{http_method} {url} HTTP/{http_version}" {status_code}""",
@@ -135,8 +145,8 @@ class MiddlewareAuthentication(Middleware):
 
     @staticmethod
     def on_auth_error(_: Request, e: Exception):
-        log.error(e)
-        return PlainTextResponse(status_code=401)
+        content = jsonable_encoder({'error': str(e)})
+        return JSONResponse(status_code=401, content=content)
 
     def __init__(
         self,
