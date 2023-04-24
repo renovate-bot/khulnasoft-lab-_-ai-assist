@@ -1,4 +1,3 @@
-
 # GitLab AI Assist
 
 This project is based on the open source project 
@@ -60,10 +59,9 @@ architecture.
 You can either run `make develop-local` or  `docker-compose -f docker-compose.dev.yaml up --build --remove-orphans` this
 will run the API.
 
-Next open VS Code, install the GitLab Workflow extension, or run that extension locally. 
+Next open the VS Code extension project, and run the development version of the GitLab Workflow extension locally. 
 
-In VS Code settings you will need to set `AI Assist Server` to `http://localhost:5000` ofcourse change the port if you 
-are deviating from the default. Set `AI Assist engine` to `FauxPilot`. It should now work.
+In VS Code code need to set the const `AI_ASSISTED_CODE_SUGGESTIONS_API_URL` constant to `http://localhost:5000/completions`.
 
 Since the feature is only for SaaS, you need to run GDK in SaaS mode:
 ```bash
