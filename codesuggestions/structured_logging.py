@@ -1,15 +1,10 @@
 import logging
 import structlog
 import sys
-import time
 
 from structlog.types import EventDict, Processor
-from fastapi import Request, Response
-from uvicorn.protocols.utils import get_path_with_query_string
 from asgi_correlation_id import CorrelationIdMiddleware
-from asgi_correlation_id.context import correlation_id
 from starlette.types import ASGIApp
-from starlette.middleware.base import BaseHTTPMiddleware
 
 access_logger = structlog.stdlib.get_logger("api.access")
 
@@ -35,50 +30,7 @@ def drop_color_message_key(_, __, event_dict: EventDict) -> EventDict:
     return event_dict
 
 
-async def access_logging_middleware(request: Request, call_next) -> Response:
-    structlog.contextvars.clear_contextvars()
-    # These context vars will be added to all log entries emitted during the request
-    request_id = correlation_id.get()
-    structlog.contextvars.bind_contextvars(correlation_id=request_id)
-
-    start_time = time.perf_counter_ns()
-    # If the call_next raises an error, we still want to return our own 500 response,
-    # so we can add headers to it (process time, request ID...)
-    response = Response(status_code=500)
-    try:
-        response = await call_next(request)
-    except Exception:
-        # TODO: Validate that we don't swallow exceptions (unit test?)
-        structlog.stdlib.get_logger("api.error").exception("Uncaught exception")
-        raise
-    finally:
-        process_time = time.perf_counter_ns() - start_time
-        status_code = response.status_code
-        url = get_path_with_query_string(request.scope)
-        client_host = request.client.host
-        client_port = request.client.port
-        http_method = request.method
-        http_version = request.scope["http_version"]
-        process_time_s = process_time / 1e9
-        # Recreate the Uvicorn access log format, but add all parameters as structured information
-        access_logger.info(
-            f"""{client_host}:{client_port} - "{http_method} {url} HTTP/{http_version}" {status_code}""",
-            url=str(request.url),
-            path=url,
-            status_code=status_code,
-            method=http_method,
-            correlation_id=request_id,
-            http_version=http_version,
-            client_ip=client_host,
-            client_port=client_port,
-            duration_s=process_time_s
-        )
-        response.headers["X-Process-Time"] = str(process_time_s)
-        return response
-
-
 def setup_logging(app: ASGIApp, json_logs: bool = False, log_level: str = "INFO"):
-    app.add_middleware(BaseHTTPMiddleware, dispatch=access_logging_middleware)
     app.add_middleware(CorrelationIdMiddleware)
 
     timestamper = structlog.processors.TimeStamper(fmt="iso")

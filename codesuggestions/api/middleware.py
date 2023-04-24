@@ -1,12 +1,20 @@
 import logging
-from hashlib import sha1
+import structlog
+import time
+
+from asgi_correlation_id.context import correlation_id
+
 from typing import Optional
+
+from fastapi import Response
 
 from starlette.middleware import Middleware
 from starlette.authentication import AuthenticationError, HTTPConnection
 from starlette.middleware.authentication import AuthenticationMiddleware, AuthenticationBackend
 from starlette.middleware.base import BaseHTTPMiddleware, Request
 from starlette.responses import PlainTextResponse
+
+from uvicorn.protocols.utils import get_path_with_query_string
 
 from codesuggestions.auth import AuthProvider
 
@@ -16,6 +24,7 @@ __all__ = [
 ]
 
 log = logging.getLogger("codesuggestions")
+access_logger = structlog.stdlib.get_logger("api.access")
 
 
 class _PathResolver:
@@ -39,10 +48,48 @@ class MiddlewareLogRequest(Middleware):
             super().__init__(*args, **kwargs)
 
         async def dispatch(self, request, call_next):
-            if not self.path_resolver.skip_path(request.url.path):
-                user = sha1(request.client.host.encode("utf-8")).hexdigest()
-                log.info(f"Received request - {user}")
-            return await call_next(request)
+            if self.path_resolver.skip_path(request.url.path):
+                return await call_next(request)
+
+            structlog.contextvars.clear_contextvars()
+            # These context vars will be added to all log entries emitted during the request
+            request_id = correlation_id.get()
+            structlog.contextvars.bind_contextvars(correlation_id=request_id)
+
+            start_time = time.perf_counter_ns()
+            # If the call_next raises an error, we still want to return our own 500 response,
+            # so we can add headers to it (process time, request ID...)
+            response = Response(status_code=500)
+            try:
+                response = await call_next(request)
+            except Exception:
+                # TODO: Validate that we don't swallow exceptions (unit test?)
+                structlog.stdlib.get_logger("api.error").exception("Uncaught exception")
+                raise
+            finally:
+                process_time = time.perf_counter_ns() - start_time
+                status_code = response.status_code
+                url = get_path_with_query_string(request.scope)
+                client_host = request.client.host
+                client_port = request.client.port
+                http_method = request.method
+                http_version = request.scope["http_version"]
+                process_time_s = process_time / 1e9
+                # Recreate the Uvicorn access log format, but add all parameters as structured information
+                access_logger.info(
+                    f"""{client_host}:{client_port} - "{http_method} {url} HTTP/{http_version}" {status_code}""",
+                    url=str(request.url),
+                    path=url,
+                    status_code=status_code,
+                    method=http_method,
+                    correlation_id=request_id,
+                    http_version=http_version,
+                    client_ip=client_host,
+                    client_port=client_port,
+                    duration_s=process_time_s
+                )
+                response.headers["X-Process-Time"] = str(process_time_s)
+                return response
 
     def __init__(self, skip_endpoints: Optional[list] = None):
         path_resolver = _PathResolver.from_optional_list(skip_endpoints)

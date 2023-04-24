@@ -31,8 +31,8 @@ def create_fast_api_server(
         redoc_url=config["redoc_url"],
         swagger_ui_parameters={"defaultModelsExpandDepth": -1},
         middleware=[
-            auth_middleware,
             log_middleware,
+            auth_middleware,
         ],
     )
 
