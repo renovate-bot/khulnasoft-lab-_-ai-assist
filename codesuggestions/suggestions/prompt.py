@@ -5,7 +5,7 @@ from pathlib import Path
 __all__ = [
     "LanguageId",
     "LanguageResolver",
-    "ModelPromptEncoder",
+    "ModelPromptBuilder",
     "ModelPromptDecoder",
 ]
 
@@ -53,20 +53,20 @@ class LanguageResolver:
         return None
 
 
-class ModelPromptEncoder:
+class ModelPromptBuilder:
     def __init__(self, prompt: str):
-        self.prompt = prompt
+        self._prompt = prompt
 
     def prepend_lang_id(self, lang_id: Optional[LanguageId]):
         if lang_id:
             lang = lang_id.name.lower()
-            self.prompt = f"<{lang}>{self.prompt}"
+            self._prompt = f"<{lang}>{self.prompt}"
 
         return self
 
     @property
-    def encoded(self) -> str:
-        return self.prompt
+    def prompt(self) -> str:
+        return self._prompt
 
 
 class ModelPromptDecoder:

@@ -1,6 +1,6 @@
 import pytest
 
-from codesuggestions.suggestions.prompt import LanguageId, LanguageResolver, ModelPromptEncoder, ModelPromptDecoder
+from codesuggestions.suggestions.prompt import LanguageId, LanguageResolver, ModelPromptBuilder
 
 
 @pytest.mark.parametrize(
@@ -29,7 +29,7 @@ def test_lang_resolver_from_filepath(test_file_names, expected_lang_id):
 
 
 @pytest.mark.parametrize(
-    "test_lang_id,test_prompt,expected_encoded", [
+    "test_lang_id,prompt,prompt_constructed", [
         (None, "model prompt", "model prompt"),
         (LanguageId.C, "model prompt", "<c>model prompt"),
         (LanguageId.CPP, "model prompt", "<cpp>model prompt"),
@@ -46,11 +46,11 @@ def test_lang_resolver_from_filepath(test_file_names, expected_lang_id):
         (LanguageId.KOTLIN, "model prompt", "<kotlin>model prompt"),
     ]
 )
-def test_model_prompt_encoder_lang(test_lang_id, test_prompt, expected_encoded):
-    encoded = (
-        ModelPromptEncoder(test_prompt)
+def test_construct_model_prompt_lang(test_lang_id, prompt, prompt_constructed):
+    constructed = (
+        ModelPromptBuilder(prompt)
         .prepend_lang_id(test_lang_id)
-        .encoded
+        .prompt
     )
 
-    assert encoded == expected_encoded
+    assert constructed == prompt_constructed
