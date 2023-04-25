@@ -11,6 +11,10 @@ from codesuggestions.suggestions.detectors import (
     Detected,
     DetectorKind,
 )
+from codesuggestions.suggestions.prompt import (
+    LanguageResolver,
+    ModelPromptBuilder,
+)
 
 __all__ = [
     "DEFAULT_REPLACEMENT_EMAIL",
@@ -18,6 +22,7 @@ __all__ = [
     "DEFAULT_REPLACEMENT_IPV6",
     "DEFAULT_REPLACEMENT_SECRET",
     "CodeSuggestionsUseCase",
+    "CodeSuggestionsUseCaseV2",
 ]
 
 DEFAULT_REPLACEMENT_EMAIL = "<email placeholder|email@example.com>"
@@ -83,6 +88,17 @@ class RedactPiiMixin:
         return self._redact_pii(content, pii_detected)
 
 
+class PromptEngineMixin:
+    def build_prompt(self, content: str, file_name: str) -> str:
+        lang_id = LanguageResolver.from_file_name(file_name)
+
+        return (
+            ModelPromptBuilder(content)
+            .prepend_lang_id(lang_id)
+            .prompt
+        )
+
+
 class CodeSuggestionsUseCase(RedactPiiMixin):
     def __init__(self, model: Codegen):
         RedactPiiMixin.__init__(self, PII_DETECTORS, PII_REPLACEMENTS)
@@ -96,7 +112,15 @@ class CodeSuggestionsUseCase(RedactPiiMixin):
         return completion
 
 
-def _process_content(content: str, *funcs) -> str:
-    for func in funcs:
-        content = func(content)
-    return content
+class CodeSuggestionsUseCaseV2(RedactPiiMixin, PromptEngineMixin):
+    def __init__(self, model: Codegen):
+        RedactPiiMixin.__init__(self, PII_DETECTORS, PII_REPLACEMENTS)
+        PromptEngineMixin.__init__(self)
+        self.model = model
+
+    def __call__(self, content: str, file_name: str) -> str:
+        prompt = self.build_prompt(content, file_name)
+        completion = self.model(prompt)
+        completion = self.redact_pii(completion)
+
+        return completion
