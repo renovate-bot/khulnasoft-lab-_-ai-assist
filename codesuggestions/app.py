@@ -39,7 +39,8 @@ def main():
         fast_api_container.shutdown_resources()
         code_suggestions_container.shutdown_resources()
 
-    uvicorn.run(app, host=config.fastapi.api_host, port=config.fastapi.api_port, log_config=config.fastapi.uvicorn_logger)
+    # For now, trust all IPs for proxy headers until https://github.com/encode/uvicorn/pull/1611 is available.
+    uvicorn.run(app, host=config.fastapi.api_host, port=config.fastapi.api_port, log_config=config.fastapi.uvicorn_logger, forwarded_allow_ips="*")
 
 
 if __name__ == "__main__":
