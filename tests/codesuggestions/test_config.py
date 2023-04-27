@@ -11,6 +11,8 @@ test_data = dict(
 
     api_host="localhost",
     api_port=8080,
+    metrics_host="127.0.0.1",
+    metrics_port=8082,
     docs_url="docs",
     openapi_url="openapi",
     redoc_url="redoc",
@@ -28,6 +30,9 @@ def mock_env_vars(request):
 
         "FASTAPI_API_HOST": request.param["api_host"],
         "FASTAPI_API_PORT": str(request.param["api_port"]),
+        "FASTAPI_API_METRICS_HOST": request.param["metrics_host"],
+        "FASTAPI_API_METRICS_PORT": str(request.param["metrics_port"]),
+
         "FASTAPI_DOCS_URL": request.param["docs_url"],
         "FASTAPI_OPENAPI_URL": request.param["openapi_url"],
         "FASTAPI_REDOC_URL": request.param["redoc_url"],
@@ -50,6 +55,9 @@ def test_config(mock_env_vars, configuration):
 
     assert config.fastapi.api_host == configuration["api_host"]
     assert config.fastapi.api_port == configuration["api_port"]
+    assert config.fastapi.metrics_host == configuration["metrics_host"]
+    assert config.fastapi.metrics_port == configuration["metrics_port"]
+
     assert config.fastapi.docs_url == configuration["docs_url"]
     assert config.fastapi.openapi_url == configuration["openapi_url"]
     assert config.fastapi.redoc_url == configuration["redoc_url"]

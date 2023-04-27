@@ -35,6 +35,11 @@ available in a `.env`:
 
 ```dotenv
 API_EXTERNAL_PORT=5001  # External port for the API used in docker-compose
+METRICS_EXTERNAL_PORT=8082  # External port for the /metrics endpoint used in docker-compose
+FASTAPI_API_HOST=0.0.0.0
+FASTAPI_API_PORT=5000
+FASTAPI_METRICS_HOST=0.0.0.0
+FASTAPI_METRICS_PORT=8082
 TRITON_HOST=triton
 TRITON_PORT=8001
 TRITON_VERBOSITY=False
