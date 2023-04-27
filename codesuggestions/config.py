@@ -21,6 +21,8 @@ class FastApiConfig(NamedTuple):
     redoc_url: str
     api_host: str
     api_port: int
+    metrics_host: str
+    metrics_port: int
     uvicorn_logger: dict
 
 
@@ -55,6 +57,8 @@ class Config:
             redoc_url=Config._get_value("FASTAPI_REDOC_URL", None),
             api_host=Config._get_value("FASTAPI_API_HOST", "0.0.0.0"),
             api_port=int(Config._get_value("FASTAPI_API_PORT", 5000)),
+            metrics_host=Config._get_value("FASTAPI_API_METRICS_HOST", "0.0.0.0"),
+            metrics_port=int(Config._get_value("FASTAPI_API_METRICS_PORT", 8082)),
             uvicorn_logger=Config.STRUCTURED_LOGGING
         )
 

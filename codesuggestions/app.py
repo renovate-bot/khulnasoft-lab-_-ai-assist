@@ -1,12 +1,16 @@
+import logging
 import uvicorn
 from logging.config import dictConfig
 from dotenv import load_dotenv
 
 from codesuggestions import Config
 from codesuggestions.api import create_fast_api_server
-from codesuggestions.deps import FastApiContainer, CodeSuggestionsContainer
+from codesuggestions.deps import FastApiContainer, CodeSuggestionsContainer, _PROBS_ENDPOINTS
 
 from codesuggestions.structured_logging import setup_logging
+
+from prometheus_fastapi_instrumentator import Instrumentator
+from prometheus_client import start_http_server
 
 # load env variables from .env if exists
 load_dotenv()
@@ -28,11 +32,28 @@ def main():
 
     app = create_fast_api_server()
     setup_logging(app, json_logs=True, log_level="INFO")
+    log = logging.getLogger("uvicorn.error")
 
     @app.on_event("startup")
     def on_server_startup():
         fast_api_container.init_resources()
         code_suggestions_container.init_resources()
+
+        instrumentator = Instrumentator(
+            should_group_status_codes=True,
+            should_ignore_untemplated=True,
+            should_respect_env_var=False,
+            should_instrument_requests_inprogress=False,
+            excluded_handlers=_PROBS_ENDPOINTS
+        )
+        instrumentator.instrument(app)
+        # https://github.com/trallnag/prometheus-fastapi-instrumentator/issues/10
+        log.info(
+            "Metrics HTTP server running on http://%s:%d",
+            config.fastapi.metrics_host,
+            config.fastapi.metrics_port,
+        )
+        start_http_server(addr=config.fastapi.metrics_host, port=config.fastapi.metrics_port)
 
     @app.on_event("shutdown")
     def on_server_shutdown():
