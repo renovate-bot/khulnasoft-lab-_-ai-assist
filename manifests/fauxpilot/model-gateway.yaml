@@ -21,8 +21,10 @@ spec:
         - name: model-gateway
           image: registry.gitlab.com/gitlab-org/modelops/applied-ml/code-suggestions/ai-assist/model-gateway:latest
           ports:
-            - name: app-port
+            - name: api-port
               containerPort: 5052
+            - name: metrics-port
+              containerPort: 8082
           env:
             - name: TRITON_HOST
               value: "model-k8s-triton"
@@ -33,7 +35,7 @@ spec:
           livenessProbe:
             httpGet:
               path: /monitoring/healthz
-              port: app-port
+              port: api-port
             initialDelaySeconds: 10
             periodSeconds: 10
             timeoutSeconds: 1
@@ -48,7 +50,25 @@ metadata:
 spec:
   type: ClusterIP
   ports:
-    - port: 8080
-      targetPort: 5052
+    - name: api
+      port: 8080
+      targetPort: api-port
+    - name: metrics
+      port: 8081
+      targetPort: metrics-port
   selector:
     app: model-gateway
+---
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: model-gateway-servicemonitor
+  labels:
+    release: prometheus
+spec:
+  endpoints:
+    - interval: 30s
+      port: metrics
+  selector:
+    matchLabels:
+      app: model-gateway
