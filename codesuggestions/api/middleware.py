@@ -96,7 +96,8 @@ class MiddlewareLogRequest(Middleware):
                     http_version=http_version,
                     client_ip=client_host,
                     client_port=client_port,
-                    duration_s=process_time_s
+                    duration_s=process_time_s,
+                    user_agent=request.headers.get('User-Agent')
                 )
                 response.headers["X-Process-Time"] = str(process_time_s)
                 return response
