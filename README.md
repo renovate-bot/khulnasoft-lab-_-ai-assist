@@ -171,7 +171,7 @@ on any other clusters is not guaranteed.
    kubectl create namespace nginx
    kubectl config set-context --current --namespace nginx
    helm repo add ingress-nginx https://kubernetes.github.io/ingress-nginx && helm repo update
-   helm install nginx ingress-nginx/ingress-nginx
+   helm install nginx ingress-nginx/ingress-nginx --set controller.config.use-forwarded-headers=true
    ```
 
 6. Create the `ai-assist` namespace and update the current context
