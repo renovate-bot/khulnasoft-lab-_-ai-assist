@@ -18,7 +18,7 @@ The latest version of the completion API, and also the suggested one to use is t
 
 ### /completions/v1
 
-```json
+```shell
 // Request
 curl --request POST \
   --url 'https://codesuggestions.gitlab.com/v1/completions' \
@@ -49,7 +49,7 @@ curl --request POST \
 
 ### /completions/v2
 
-```json
+```shell
 // Request
 curl --request POST \
   --url 'https://codesuggestions.gitlab.com/v2/completions' \
