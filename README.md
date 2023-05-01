@@ -21,14 +21,13 @@ The latest version of the completion API, and also the suggested one to use is t
 ```json
 // Request
 curl --request POST \
---url 'https://codesuggestions.gitlab.com/v1/completions' \
---header 'Content-Type: application/json' \
---header 'User-Agent: GitLab-Code-Completion-VSCode-Ext' \
---header 'Authorization: Bearer YOUR_TOKEN_HERE' \
---header 'Content-Type: application/json' \
---data-raw '{
+  --url 'https://codesuggestions.gitlab.com/v1/completions' \
+  --header 'User-Agent: GitLab-Code-Completion-VSCode-Ext' \
+  --header 'Authorization: Bearer YOUR_TOKEN_HERE' \
+  --header 'Content-Type: application/json' \
+  --data-raw '{
     "prompt": "def is_odd(n: int) ->"
-}'
+  }'
 
 // Response: Successful
 {
@@ -53,20 +52,20 @@ curl --request POST \
 ```json
 // Request
 curl --request POST \
---url 'https://codesuggestions.gitlab.com/v2/completions' \
---header 'User-Agent: vs-code-gitlab-workflow/3.60.0 VSCode/1.77.3 Node.js/16.14.2 (darwin; arm64)' \
---header 'Authorization: Bearer YOUR TOKEN HERE' \
---header 'Content-Type: application/json' \
---data-raw '{
-  "prompt_version": 1,
-  "project_path": "gitlab-org/modelops/applied-ml/review-recommender/pipeline-scheduler",
-  "project_id": 33191677,
-  "current_file": {
-    "file_name": "test.py",
-    "content_above_cursor": "def is_even(n: int) ->",
-    "content_below_cursor": ""
-  }
-}'
+  --url 'https://codesuggestions.gitlab.com/v2/completions' \
+  --header 'User-Agent: vs-code-gitlab-workflow/3.60.0 VSCode/1.77.3 Node.js/16.14.2 (darwin; arm64)' \
+  --header 'Authorization: Bearer YOUR TOKEN HERE' \
+  --header 'Content-Type: application/json' \
+  --data-raw '{
+    "prompt_version": 1,
+    "project_path": "gitlab-org/modelops/applied-ml/review-recommender/pipeline-scheduler",
+    "project_id": 33191677,
+    "current_file": {
+      "file_name": "test.py",
+      "content_above_cursor": "def is_even(n: int) ->",
+      "content_below_cursor": ""
+    }
+  }'
 
 // Response: Successful
 {
