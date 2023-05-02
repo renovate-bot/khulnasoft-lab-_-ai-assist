@@ -129,7 +129,28 @@ prefaced with a valid route that begins with `/`. `python-dotenv` will
 treat any value as a string, so specifying `None` maps to the Python
 value `'None'`.
 
-## Local development
+## How to run the server locally
+
+1. Create virtualenv and init shell: `poetry shell`
+2. Install dependencies: `poetry install`
+3. Update the `.env` file in the root folder with the following variables:
+   ```
+   AUTH_BYPASS_EXTERNAL=true
+   TRITON_HOST=localhost
+   TRITON_PORT=8080
+   FASTAPI_DOCS_URL=/docs
+   FASTAPI_OPENAPI_URL=/openapi.json
+   FASTAPI_API_PORT=5052
+   ```
+4. Get k8s credentials to access our k8s cluster: 
+   `gcloud container clusters get-credentials ai-assist --zone us-central1-c --project unreview-poc-390200e5`
+5. Port-forward the triton server to access it locally:
+   `kubectl port-forward svc/model-k8s-triton -n fauxpilot 8080:8080 --address='0.0.0.0'`
+6. Start the model-gateway server locally: `poetry run codesuggestions`
+7. Open `http://0.0.0.0:5052/docs` in your browser and run any requests to the codegen model
+
+
+## Local development using GDK
 
 If you are on Apple Silicon, you will need to host Triton somewhere else as there is a dependency on Nvidia GPU and 
 architecture. 
@@ -156,8 +177,8 @@ In GDK you need to enable the feature flags:
 ```ruby
 rails console
 
-g = Group.find(22)  # id of root group
-Feature.enable(:ai_assist_api, g)
+g = Group.find(22)  # id of your root group
+Feature.enable(:ai_assist_api)
 Feature.enable(:ai_assist_flag, g)
 ```
 
