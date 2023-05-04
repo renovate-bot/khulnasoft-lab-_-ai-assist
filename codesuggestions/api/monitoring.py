@@ -27,6 +27,8 @@ def is_triton_server_live(
         return False
 
 
-router.add_api_route("/healthz", health([
+router.add_api_route("/tritonz", health([
     is_triton_server_live
 ]))
+
+router.add_api_route("/healthz", health([]))
