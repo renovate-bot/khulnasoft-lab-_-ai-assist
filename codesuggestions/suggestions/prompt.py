@@ -43,14 +43,16 @@ class LanguageResolver:
         LanguageId.KOTLIN: {"kts", "kt"},
     }
 
+    EXTENSION_TO_LANG_ID = {
+        value: key
+        for key, values in ALL_LANGS.items()
+        for value in values
+    }
+
     @staticmethod
     def resolve(file_name: str) -> Optional[LanguageId]:
         ext = Path(file_name).suffix.replace(".", "")
-        for lang, all_ext in LanguageResolver.ALL_LANGS.items():
-            if ext in all_ext:
-                return lang
-
-        return None
+        return LanguageResolver.EXTENSION_TO_LANG_ID.get(ext, None)
 
 
 class ModelPromptBuilder:
