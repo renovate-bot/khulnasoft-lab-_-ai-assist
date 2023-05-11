@@ -143,7 +143,7 @@ value `'None'`.
    FASTAPI_API_PORT=5052
    ```
 4. Get k8s credentials to access our k8s cluster: 
-   `gcloud container clusters get-credentials ai-assist --zone us-central1-c --project gitlab-ai-assisted-prd`
+   `gcloud container clusters get-credentials ai-assist --zone us-central1-c --project unreview-poc-390200e5`
 5. Port-forward the triton server to access it locally:
    `kubectl port-forward svc/model-k8s-triton -n fauxpilot 8080:8080 --address='0.0.0.0'`
 6. Start the model-gateway server locally: `poetry run codesuggestions`
