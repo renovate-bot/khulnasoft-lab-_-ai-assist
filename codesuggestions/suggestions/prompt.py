@@ -6,7 +6,6 @@ __all__ = [
     "LanguageId",
     "LanguageResolver",
     "ModelPromptBuilder",
-    "ModelPromptDecoder",
 ]
 
 
@@ -69,7 +68,3 @@ class ModelPromptBuilder:
     @property
     def prompt(self) -> str:
         return self._prompt
-
-
-class ModelPromptDecoder:
-    pass
