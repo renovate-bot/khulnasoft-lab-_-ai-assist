@@ -90,7 +90,7 @@ class RedactPiiMixin:
 
 class PromptEngineMixin:
     def build_prompt(self, content: str, file_name: str) -> str:
-        lang_id = LanguageResolver.from_file_name(file_name)
+        lang_id = LanguageResolver.resolve(file_name)
 
         return (
             ModelPromptBuilder(content)

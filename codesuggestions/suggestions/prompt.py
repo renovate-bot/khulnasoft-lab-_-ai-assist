@@ -44,7 +44,7 @@ class LanguageResolver:
     }
 
     @staticmethod
-    def from_file_name(file_name: str) -> Optional[LanguageId]:
+    def resolve(file_name: str) -> Optional[LanguageId]:
         ext = Path(file_name).suffix.replace(".", "")
         for lang, all_ext in LanguageResolver.ALL_LANGS.items():
             if ext in all_ext:

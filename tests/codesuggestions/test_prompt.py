@@ -23,7 +23,7 @@ from codesuggestions.suggestions.prompt import LanguageId, LanguageResolver, Mod
 )
 def test_lang_resolver_from_filepath(test_file_names, expected_lang_id):
     for test_file_name in test_file_names:
-        lang_id = LanguageResolver.from_file_name(test_file_name)
+        lang_id = LanguageResolver.resolve(test_file_name)
 
         assert lang_id == expected_lang_id
 
