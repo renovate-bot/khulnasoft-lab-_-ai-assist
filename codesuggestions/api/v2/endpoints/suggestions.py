@@ -5,7 +5,7 @@ from fastapi import APIRouter, Depends
 from pydantic import BaseModel, constr
 
 from codesuggestions.deps import CodeSuggestionsContainer
-from codesuggestions.suggestions import CodeSuggestionsUseCase
+from codesuggestions.suggestions import CodeSuggestionsUseCaseV2
 
 __all__ = [
     "router",
@@ -47,11 +47,14 @@ class SuggestionsResponse(BaseModel):
 @inject
 async def completions(
     req: SuggestionsRequest,
-    code_suggestions: CodeSuggestionsUseCase = Depends(
-        Provide[CodeSuggestionsContainer.usecase]
+    code_suggestions: CodeSuggestionsUseCaseV2 = Depends(
+        Provide[CodeSuggestionsContainer.usecase_v2]
     ),
 ):
-    suggestion = code_suggestions(req.current_file.content_above_cursor)
+    suggestion = code_suggestions(
+        req.current_file.content_above_cursor,
+        req.current_file.file_name,
+    )
 
     return SuggestionsResponse(
         id="id",

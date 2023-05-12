@@ -1,4 +1,6 @@
-from codesuggestions.models import BaseModel
+from typing import List, Dict
+
+from codesuggestions.models import Codegen
 from codesuggestions.suggestions.detectors import (
     DetectorRegexEmail,
     DetectorRegexIPV4,
@@ -9,6 +11,10 @@ from codesuggestions.suggestions.detectors import (
     Detected,
     DetectorKind,
 )
+from codesuggestions.suggestions.prompt import (
+    LanguageResolver,
+    ModelPromptBuilder,
+)
 
 __all__ = [
     "DEFAULT_REPLACEMENT_EMAIL",
@@ -16,6 +22,7 @@ __all__ = [
     "DEFAULT_REPLACEMENT_IPV6",
     "DEFAULT_REPLACEMENT_SECRET",
     "CodeSuggestionsUseCase",
+    "CodeSuggestionsUseCaseV2",
 ]
 
 DEFAULT_REPLACEMENT_EMAIL = "<email placeholder|email@example.com>"
@@ -23,29 +30,32 @@ DEFAULT_REPLACEMENT_IPV4 = "<ipv4 placeholder|x.x.x.x>"
 DEFAULT_REPLACEMENT_IPV6 = "<ipv6 placeholder|x:x:x:x:x:x:x:x>"
 DEFAULT_REPLACEMENT_SECRET = "<secret placeholder|secret>"
 
+PII_DETECTORS = [
+    DetectorRegexEmail(),
+    # a different order of IPVx detectors may change the output
+    DetectorRegexIPV6(),
+    DetectorRegexIPV4(),
+    DetectorBasicAuthSecrets(),
+    DetectorTokenSecrets(),
+    DetectorKeywordsSecrets()
+]
 
-class CodeSuggestionsUseCase:
-    def __init__(self, model: BaseModel):
-        self.model = model
-        self.detectors = [
-            DetectorRegexEmail(),
-            # a different order of IPVx detectors may change the output
-            DetectorRegexIPV6(),
-            DetectorRegexIPV4(),
-            DetectorBasicAuthSecrets(),
-            DetectorTokenSecrets(),
-            DetectorKeywordsSecrets()
-        ]
-        self.pii_replacements = {
-            DetectorKind.EMAIL: DEFAULT_REPLACEMENT_EMAIL,
-            DetectorKind.IPV4: DEFAULT_REPLACEMENT_IPV4,
-            DetectorKind.IPV6: DEFAULT_REPLACEMENT_IPV6,
-            DetectorKind.SECRET: DEFAULT_REPLACEMENT_SECRET,
-        }
+PII_REPLACEMENTS = {
+    DetectorKind.EMAIL: DEFAULT_REPLACEMENT_EMAIL,
+    DetectorKind.IPV4: DEFAULT_REPLACEMENT_IPV4,
+    DetectorKind.IPV6: DEFAULT_REPLACEMENT_IPV6,
+    DetectorKind.SECRET: DEFAULT_REPLACEMENT_SECRET,
+}
+
+
+class RedactPiiMixin:
+    def __init__(self, detectors: List, replacements: Dict):
+        self.pii_detectors = detectors
+        self.pii_replacements = replacements
 
     def _detect_pii(self, content: str) -> list[Detected]:
         detected = []
-        for detector in self.detectors:
+        for detector in self.pii_detectors:
             detected.extend(detector.detect_all(content))
 
         return detected
@@ -73,19 +83,44 @@ class CodeSuggestionsUseCase:
 
         return redacted
 
-    def _postprocess_pii(self, completion: str) -> str:
-        pii_detected = self._detect_pii(completion)
-        return self._redact_pii(completion, pii_detected)
+    def redact_pii(self, content: str) -> str:
+        pii_detected = self._detect_pii(content)
+        return self._redact_pii(content, pii_detected)
+
+
+class PromptEngineMixin:
+    def build_prompt(self, content: str, file_name: str) -> str:
+        lang_id = LanguageResolver.resolve(file_name)
+
+        return (
+            ModelPromptBuilder(content)
+            .prepend_lang_id(lang_id)
+            .prompt
+        )
+
+
+class CodeSuggestionsUseCase(RedactPiiMixin):
+    def __init__(self, model: Codegen):
+        RedactPiiMixin.__init__(self, PII_DETECTORS, PII_REPLACEMENTS)
+        self.model = model
 
     def __call__(self, prompt: str) -> str:
         completion = self.model(prompt)
 
-        completion = _process_content(completion, self._postprocess_pii)
+        completion = self.redact_pii(completion)
 
         return completion
 
 
-def _process_content(content: str, *funcs) -> str:
-    for func in funcs:
-        content = func(content)
-    return content
+class CodeSuggestionsUseCaseV2(RedactPiiMixin, PromptEngineMixin):
+    def __init__(self, model: Codegen):
+        RedactPiiMixin.__init__(self, PII_DETECTORS, PII_REPLACEMENTS)
+        PromptEngineMixin.__init__(self)
+        self.model = model
+
+    def __call__(self, content: str, file_name: str) -> str:
+        prompt = self.build_prompt(content, file_name)
+        completion = self.model(prompt)
+        completion = self.redact_pii(completion)
+
+        return completion

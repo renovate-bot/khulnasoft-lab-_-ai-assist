@@ -3,7 +3,10 @@ from dependency_injector import containers, providers
 from codesuggestions.auth import GitLabAuthProvider
 from codesuggestions.api import middleware
 from codesuggestions.models import grpc_connect_triton, Codegen
-from codesuggestions.suggestions import CodeSuggestionsUseCase
+from codesuggestions.suggestions import (
+    CodeSuggestionsUseCase,
+    CodeSuggestionsUseCaseV2,
+)
 
 __all__ = [
     "FastApiContainer",
@@ -69,5 +72,10 @@ class CodeSuggestionsContainer(containers.DeclarativeContainer):
 
     usecase = providers.Singleton(
         CodeSuggestionsUseCase,
+        model=model_codegen,
+    )
+
+    usecase_v2 = providers.Singleton(
+        CodeSuggestionsUseCaseV2,
         model=model_codegen,
     )
