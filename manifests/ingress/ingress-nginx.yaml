@@ -6,7 +6,7 @@ metadata:
   annotations:
     nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
     nginx.ingress.kubernetes.io/use-regex: "true"
-    nginx.ingress.kubernetes.io/white-source-range: |
+    nginx.ingress.kubernetes.io/whitelist-source-range: |
       173.245.48.0/20,
       103.21.244.0/22,
       103.22.200.0/22,
