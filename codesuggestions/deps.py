@@ -1,6 +1,6 @@
 from dependency_injector import containers, providers
 
-from codesuggestions.auth import GitLabAuthProvider
+from codesuggestions.auth import GitLabAuthProvider, GitLabOidcProvider
 from codesuggestions.api import middleware
 from codesuggestions.models import grpc_connect_triton, Codegen
 from codesuggestions.suggestions import (
@@ -35,9 +35,15 @@ class FastApiContainer(containers.DeclarativeContainer):
         base_url=config.auth.gitlab_api_base_url,
     )
 
+    oidc_provider = providers.Singleton(
+        GitLabOidcProvider,
+        base_url=config.auth.gitlab_base_url,
+    )
+
     auth_middleware = providers.Factory(
         middleware.MiddlewareAuthentication,
         auth_provider,
+        oidc_provider,
         bypass_auth=config.auth.bypass,
         skip_endpoints=_PROBS_ENDPOINTS,
     )

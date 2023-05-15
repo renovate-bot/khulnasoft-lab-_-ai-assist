@@ -118,9 +118,18 @@ class MiddlewareAuthentication(Middleware):
     class AuthBackend(AuthenticationBackend):
         PREFIX_BEARER_HEADER = "bearer"
         AUTH_HEADER = "Authorization"
+        AUTH_TYPE_HEADER = "X-Gitlab-Authentication-Type"
+        OIDC_AUTH = "oidc"
 
-        def __init__(self, auth_provider: AuthProvider, bypass_auth: bool, path_resolver: _PathResolver):
-            self.auth_provider = auth_provider
+        def __init__(
+            self,
+            key_auth_provider: AuthProvider,
+            oidc_auth_provider: AuthProvider,
+            bypass_auth: bool,
+            path_resolver: _PathResolver,
+        ):
+            self.key_auth_provider = key_auth_provider
+            self.oidc_auth_provider = oidc_auth_provider
             self.bypass_auth = bypass_auth
             self.path_resolver = path_resolver
 
@@ -144,15 +153,23 @@ class MiddlewareAuthentication(Middleware):
             if bearer.lower() != self.PREFIX_BEARER_HEADER:
                 raise AuthenticationError('Invalid authorization header')
 
-            self.authenticate_with_token(token)
+            self.authenticate_with_token(conn.headers, token)
 
         @timing("auth_duration_s")
-        def authenticate_with_token(self, token):
-            is_auth = self.auth_provider.authenticate(token)
+        def authenticate_with_token(self, headers, token):
+            auth_provider = self._auth_provider(headers)
+
+            is_auth = auth_provider.authenticate(token)
             if not is_auth:
                 raise AuthenticationError("Forbidden by auth provider")
 
-            return
+        def _auth_provider(self, headers):
+            auth_type = headers.get(self.AUTH_TYPE_HEADER)
+
+            if auth_type == self.OIDC_AUTH:
+                return self.oidc_auth_provider
+
+            return self.key_auth_provider
 
     @staticmethod
     def on_auth_error(_: Request, e: Exception):
@@ -161,7 +178,8 @@ class MiddlewareAuthentication(Middleware):
 
     def __init__(
         self,
-        auth_provider: AuthProvider,
+        key_auth_provider: AuthProvider,
+        oidc_auth_provider: AuthProvider,
         bypass_auth: bool = False,
         skip_endpoints: Optional[list] = None,
     ):
@@ -169,6 +187,8 @@ class MiddlewareAuthentication(Middleware):
 
         super().__init__(
             AuthenticationMiddleware,
-            backend=MiddlewareAuthentication.AuthBackend(auth_provider, bypass_auth, path_resolver),
+            backend=MiddlewareAuthentication.AuthBackend(
+                key_auth_provider, oidc_auth_provider, bypass_auth, path_resolver
+            ),
             on_error=MiddlewareAuthentication.on_auth_error,
         )
