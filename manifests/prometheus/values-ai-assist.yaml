@@ -4,8 +4,7 @@ prometheus:
     replicas: 2
     externalLabels:
       cluster: ai-assist
-      env: prd-ai-assist
-
+      env: gprd
 
     remoteWrite:
       - url: https://remote-write.ops.gke.gitlab.net/api/v1/receive
@@ -14,6 +13,6 @@ prometheus:
           username:
             name: remote-write-auth
             key: username
-          password: 
+          password:
             name: remote-write-auth
             key: password
