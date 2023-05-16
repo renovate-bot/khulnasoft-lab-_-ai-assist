@@ -1,0 +1,19 @@
+# kube-prometheus-stack values
+prometheus:
+  prometheusSpec:
+    replicas: 2
+    externalLabels:
+      cluster: ai-assist
+      env: prd-ai-assist
+
+
+    remoteWrite:
+      - url: https://remote-write.ops.gke.gitlab.net/api/v1/receive
+        name: thanos
+        basicAuth:
+          username:
+            name: remote-write-auth
+            key: username
+          password: 
+            name: remote-write-auth
+            key: password
