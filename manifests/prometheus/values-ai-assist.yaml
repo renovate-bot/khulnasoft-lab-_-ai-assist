@@ -2,9 +2,17 @@
 prometheus:
   prometheusSpec:
     replicas: 2
+    retention: 1d
     externalLabels:
       cluster: ai-assist
       env: gprd
+    storageSpec:
+     volumeClaimTemplate:
+       spec:
+         storageClassName: pd-ssd
+         resources:
+           requests:
+             storage: 50Gi
 
     remoteWrite:
       - url: https://remote-write.ops.gke.gitlab.net/api/v1/receive
