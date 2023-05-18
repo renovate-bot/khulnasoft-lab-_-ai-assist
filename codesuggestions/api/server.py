@@ -10,6 +10,9 @@ from codesuggestions.api.middleware import (
 from codesuggestions.api.v2.api import api_router as api_router_v2
 from codesuggestions.deps import FastApiContainer
 
+from starlette_context.middleware import RawContextMiddleware
+from starlette.middleware import Middleware
+
 __all__ = [
     "create_fast_api_server",
 ]
@@ -23,6 +26,7 @@ def create_fast_api_server(
     ],
     log_middleware: MiddlewareLogRequest = Provide[FastApiContainer.log_middleware],
 ):
+    context_middleware = Middleware(RawContextMiddleware)
     fastapi_app = FastAPI(
         title="GitLab Code Suggestions",
         description="GitLab Code Suggestions API to serve code completion predictions",
@@ -31,6 +35,7 @@ def create_fast_api_server(
         redoc_url=config["redoc_url"],
         swagger_ui_parameters={"defaultModelsExpandDepth": -1},
         middleware=[
+            context_middleware,
             log_middleware,
             auth_middleware,
         ],

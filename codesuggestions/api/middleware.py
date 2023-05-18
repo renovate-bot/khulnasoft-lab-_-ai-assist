@@ -19,6 +19,8 @@ from starlette.responses import JSONResponse
 from uvicorn.protocols.utils import get_path_with_query_string
 
 from codesuggestions.auth import AuthProvider
+from codesuggestions.api.timing import timing
+from starlette_context import context
 
 __all__ = [
     "MiddlewareLogRequest",
@@ -85,9 +87,7 @@ class MiddlewareLogRequest(Middleware):
                     response.body_iterator = iterate_in_threadpool(iter(response_body))
                     structlog.contextvars.bind_contextvars(response_body=response_body[0].decode())
 
-                # Recreate the Uvicorn access log format, but add all parameters as structured information
-                access_logger.info(
-                    f"""{client_host}:{client_port} - "{http_method} {url} HTTP/{http_version}" {status_code}""",
+                fields = dict(
                     url=str(request.url),
                     path=url,
                     status_code=status_code,
@@ -99,6 +99,12 @@ class MiddlewareLogRequest(Middleware):
                     duration_s=process_time_s,
                     user_agent=request.headers.get('User-Agent')
                 )
+                fields.update(context.data)
+
+                # Recreate the Uvicorn access log format, but add all parameters as structured information
+                access_logger.info(
+                    f"""{client_host}:{client_port} - "{http_method} {url} HTTP/{http_version}" {status_code}""",
+                    **fields)
                 response.headers["X-Process-Time"] = str(process_time_s)
                 return response
 
@@ -138,6 +144,10 @@ class MiddlewareAuthentication(Middleware):
             if bearer.lower() != self.PREFIX_BEARER_HEADER:
                 raise AuthenticationError('Invalid authorization header')
 
+            self.authenticate_with_token(token)
+
+        @timing("auth_duration_s")
+        def authenticate_with_token(self, token):
             is_auth = self.auth_provider.authenticate(token)
             if not is_auth:
                 raise AuthenticationError("Forbidden by auth provider")
