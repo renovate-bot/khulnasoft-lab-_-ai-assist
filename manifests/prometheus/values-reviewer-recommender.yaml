@@ -1,13 +1,14 @@
 # kube-prometheus-stack values
 prometheus:
   prometheusSpec:
-    replicas: 2
+    replicas: 1
     retention: 1d
     externalLabels:
       cluster: reviewer-recommender
       env: gprd
       environment: grpd
       type: suggested_reviewers
+      stage: main
     storageSpec:
      volumeClaimTemplate:
        spec:

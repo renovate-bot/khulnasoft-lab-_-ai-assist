@@ -1,7 +1,7 @@
 # kube-prometheus-stack values
 prometheus:
   prometheusSpec:
-    replicas: 2
+    replicas: 1
     retention: 1d
     externalLabels:
       cluster: ai-assist
