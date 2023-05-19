@@ -6,7 +6,7 @@ prometheus:
     externalLabels:
       cluster: reviewer-recommender
       env: gprd
-      environment: grpd
+      environment: gprd
       type: suggested_reviewers
       stage: main
     storageSpec:
@@ -27,4 +27,3 @@ prometheus:
           password:
             name: remote-write-auth
             key: password
-
