@@ -1,0 +1,30 @@
+# kube-prometheus-stack values
+prometheus:
+  prometheusSpec:
+    replicas: 1
+    retention: 1d
+    externalLabels:
+      cluster: reviewer-recommender
+      env: gprd
+      environment: grpd
+      type: suggested_reviewers
+      stage: main
+    storageSpec:
+     volumeClaimTemplate:
+       spec:
+         storageClassName: pd-ssd
+         resources:
+           requests:
+             storage: 50Gi
+
+    remoteWrite:
+      - url: https://remote-write.ops.gke.gitlab.net/api/v1/receive
+        name: thanos
+        basicAuth:
+          username:
+            name: remote-write-auth
+            key: username
+          password:
+            name: remote-write-auth
+            key: password
+
