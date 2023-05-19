@@ -6,6 +6,7 @@ prometheus:
     externalLabels:
       cluster: ai-assist
       env: gprd
+      environment: grpd
       type: code_suggestions
       stage: main
     storageSpec:
