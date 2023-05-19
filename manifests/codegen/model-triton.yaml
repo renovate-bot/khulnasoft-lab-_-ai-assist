@@ -6,7 +6,7 @@ metadata:
   labels:
     app: model-triton
 spec:
-  replicas: 1
+  replicas: 4
   selector:
     matchLabels:
       app: model-triton
