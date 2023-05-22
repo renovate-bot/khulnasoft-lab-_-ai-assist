@@ -1,0 +1,61 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: model-loader-job-v2
+spec:
+  ttlSecondsAfterFinished: 100
+  template:
+    spec:
+      imagePullSecrets:
+        - name: gitlab-registry
+      initContainers:
+        - name: download-model-gcs
+          image: google/cloud-sdk:429.0.0-alpine
+          env:
+            - name: MODEL_ARCHIVE_NAME
+              value: "1-gpu.tar.zst"
+          command: [ "/bin/sh", "-c", "--" ]
+          args:
+            - rm -f ${MODEL_ARCHIVE_NAME};
+              gcloud auth activate-service-account --key-file=/etc/gcp-storage-credentials/key.json;
+              gsutil -m cp gs://code-suggestions/model-deployments/16b_v5/${MODEL_ARCHIVE_NAME} /data/;
+          volumeMounts:
+            - name: models-codesuggestions-nfc-pvc-volume
+              mountPath: /data
+            - name: gcp-storage-credentials
+              mountPath: "/etc/gcp-storage-credentials"
+              readOnly: true
+      containers:
+        - name: unpack-model-gcs
+          image: registry.gitlab.com/gitlab-org/modelops/applied-ml/code-suggestions/ai-assist/model-fauxpilot:latest
+          env:
+            - name: MODEL_NUM_GPU
+              value: "1"
+            - name: MODEL_ARCHIVE
+              value: "/data/1-gpu.tar.zst"
+            - name: MODELS_DIR
+              value: "/data/models"
+            - name: MODEL_WEIGHTS_DIR
+              value: "/data/models/fastertransformer/1/1-gpu"
+            - name: MODEL_FT_CONFIG
+              value: "/data/models/fastertransformer/config.pbtxt"
+          command: [ "/bin/sh", "-c", "--" ]
+          args:
+            - rm -rf ${MODELS_DIR} && mkdir -p ${MODELS_DIR};
+              rm -rf ${MODEL_WEIGHTS_DIR} && mkdir -p ${MODEL_WEIGHTS_DIR};
+              cp -r /model/* ${MODELS_DIR};
+              sed -e 's@${MODELS_DIR}@'"$MODELS_DIR"'@' -e 's@${MODEL_NUM_GPU}@'"$MODEL_NUM_GPUS"'@' $(MODEL_FT_CONFIG) > $(MODEL_FT_CONFIG).tmp;
+              mv $(MODEL_FT_CONFIG).tmp $(MODEL_FT_CONFIG);
+              zstd -dc ${MODEL_ARCHIVE} | tar -xf - -C "${MODEL_WEIGHTS_DIR}" --strip-components=1;
+              rm -f ${MODEL_ARCHIVE};
+          volumeMounts:
+            - name: models-codesuggestions-nfc-pvc-volume
+              mountPath: /data
+      volumes:
+        - name: models-codesuggestions-nfc-pvc-volume
+          persistentVolumeClaim:
+            claimName: models-codesuggestions-nfs-pvc-v2
+        - name: gcp-storage-credentials
+          secret:
+            secretName: gcp-storage-credentials
+      restartPolicy: Never

@@ -1,0 +1,83 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: model-triton
+  labels:
+    app: model-triton
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: model-triton
+  template:
+    metadata:
+      labels:
+        app: model-triton
+    spec:
+      imagePullSecrets:
+        - name: gitlab-registry
+      containers:
+        - name: triton
+          image: registry.gitlab.com/gitlab-org/modelops/applied-ml/code-suggestions/ai-assist/tmp/triton-server:363a6123
+          ports:
+            - containerPort: 8000
+            - containerPort: 8001
+            - containerPort: 8002
+          env:
+            - name: MODEL_REPOSITORY
+              value: "/data/models"
+            - name: TRITON_BIN
+              value: "/opt/tritonserver/bin/tritonserver"
+          command: ["/bin/bash", "-c", "--"]
+          args:
+            - "$(TRITON_BIN) --model-repository=$(MODEL_REPOSITORY)"
+          volumeMounts:
+            - name: models-codesuggestions-nfc-pvc-volume
+              mountPath: /data
+              readOnly: true
+            - name: dshm
+              mountPath: /dev/shm
+          resources:
+            limits:
+              nvidia.com/gpu: "1"
+      volumes:
+        - name: models-codesuggestions-nfc-pvc-volume
+          persistentVolumeClaim:
+            claimName: models-codesuggestions-nfs-pvc-v2
+        - name: dshm
+          emptyDir:
+            sizeLimit: "2Gi"
+            medium: "Memory"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: model-k8s-triton
+  labels:
+    app: model-triton
+spec:
+  type: ClusterIP
+  ports:
+    - name: api
+      port: 8080
+      targetPort: 8001
+    - name: metrics
+      port: 8082
+      targetPort: 8002
+  selector:
+    app: model-triton
+---
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: model-triton
+  labels:
+    release: prometheus
+spec:
+  endpoints:
+    - interval: 30s
+      port: metrics
+  selector:
+    matchLabels:
+      app: model-triton
