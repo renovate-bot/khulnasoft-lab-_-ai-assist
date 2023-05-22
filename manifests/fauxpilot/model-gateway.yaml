@@ -19,7 +19,7 @@ spec:
         - name: gitlab-registry
       containers:
         - name: model-gateway
-          image: registry.gitlab.com/gitlab-org/modelops/applied-ml/code-suggestions/ai-assist/model-gateway:latest
+          image: registry.gitlab.com/gitlab-org/modelops/applied-ml/code-suggestions/ai-assist/model-gateway:78856be2
           ports:
             - name: api-port
               containerPort: 5052
