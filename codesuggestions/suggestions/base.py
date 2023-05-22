@@ -14,6 +14,7 @@ from codesuggestions.suggestions.detectors import (
 from codesuggestions.suggestions.prompt import (
     LanguageResolver,
     ModelPromptBuilder,
+    remove_incomplete_lines,
 )
 
 __all__ = [
@@ -121,6 +122,7 @@ class CodeSuggestionsUseCaseV2(RedactPiiMixin, PromptEngineMixin):
     def __call__(self, content: str, file_name: str) -> str:
         prompt = self.build_prompt(content, file_name)
         completion = self.model(prompt)
+        completion = remove_incomplete_lines(completion)
         completion = self.redact_pii(completion)
 
         return completion
