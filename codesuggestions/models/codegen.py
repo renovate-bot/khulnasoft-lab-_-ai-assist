@@ -18,7 +18,7 @@ class Codegen(BaseModel):
     MODEL_NAME = "ensemble"
 
     # Number of tokens to generate
-    REQUEST_OUTPUT_LEN = 128
+    REQUEST_OUTPUT_LEN = 32
 
     # Model hyperparameters
     MODEL_TEMPERATURE = .2
