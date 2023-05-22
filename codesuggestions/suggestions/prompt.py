@@ -6,6 +6,7 @@ __all__ = [
     "LanguageId",
     "LanguageResolver",
     "ModelPromptBuilder",
+    "remove_incomplete_lines",
 ]
 
 
@@ -68,3 +69,10 @@ class ModelPromptBuilder:
     @property
     def prompt(self) -> str:
         return self._prompt
+
+
+def remove_incomplete_lines(s: str, sep: str = "\n") -> str:
+    if (index := s.rfind(sep)) != -1:
+        return s[:index + 1]
+
+    return s
