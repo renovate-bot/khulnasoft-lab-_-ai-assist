@@ -1,0 +1,79 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: model-gateway
+  labels:
+    app: model-gateway
+    {{- include "ai-assist.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.modelGateway.replicas }}
+  selector:
+    matchLabels:
+      app: model-gateway
+      {{- include "ai-assist.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        app: model-gateway
+        {{- include "ai-assist.selectorLabels" . | nindent 8 }}
+    spec:
+      imagePullSecrets:
+        - name: gitlab-registry
+      containers:
+        - name: model-gateway
+          image: {{ .Values.modelGateway.modelGateway.image.repository }}:{{ .Values.modelGateway.modelGateway.image.tag | default .Chart.AppVersion }}
+          ports:
+            - name: api-port
+              containerPort: 5052
+            - name: metrics-port
+              containerPort: 8082
+          env:
+            - name: TRITON_HOST
+              value: {{ quote .Values.modelGateway.modelGateway.env.tritonHost }}
+            - name: TRITON_PORT
+              value: {{ quote .Values.modelGateway.modelGateway.env.tritonPort }}
+            - name: FASTAPI_API_PORT
+              value: {{ quote .Values.modelGateway.modelGateway.env.fastapiApiPort }}
+          livenessProbe:
+            httpGet:
+              path: /monitoring/healthz
+              port: api-port
+            initialDelaySeconds: 10
+            periodSeconds: 10
+            timeoutSeconds: 1
+            failureThreshold: 3
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: model-k8s-gateway
+  labels:
+    app: model-gateway
+    {{- include "ai-assist.labels" . | nindent 4 }}
+spec:
+  type: ClusterIP
+  ports:
+    - name: api
+      port: 8080
+      targetPort: api-port
+    - name: metrics
+      port: 8081
+      targetPort: metrics-port
+  selector:
+    app: model-gateway
+---
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: model-gateway-servicemonitor
+  labels:
+    release: prometheus
+    {{- include "ai-assist.labels" . | nindent 4 }}
+spec:
+  endpoints:
+    - interval: 30s
+      port: metrics
+  selector:
+    matchLabels:
+      app: model-gateway

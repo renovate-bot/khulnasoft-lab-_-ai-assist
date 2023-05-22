@@ -1,0 +1,55 @@
+commonLabels:
+  tier: "sv"
+  type: "ai-assist"
+  stage: "main"
+  shard: "default"
+
+fauxPilot: {}
+
+modelGateway:
+  modelGateway:
+    env:
+      fastapiApiPort: "5052"
+      tritonHost: model-k8s-triton
+      tritonPort: "8080"
+    image:
+      repository: registry.gitlab.com/gitlab-org/modelops/applied-ml/code-suggestions/ai-assist/model-gateway
+      tag: latest
+  replicas: 3
+
+modelK8SGateway: {}
+
+modelK8STriton: {}
+
+modelLoaderJob:
+  modelLoader:
+    env:
+      modelFtConfig: /data/models/fastertransformer/config.pbtxt
+      modelsDir: /data/models
+    image:
+      repository: registry.gitlab.com/gitlab-org/modelops/applied-ml/code-suggestions/ai-assist/model-fauxpilot
+      tag: latest
+
+modelNfsK8SServer: {}
+
+modelNfsServer:
+  modelNfsServer:
+    image:
+      repository: gcr.io/google_containers/volume-nfs
+      tag: "0.8"
+  replicas: 1
+
+modelTriton:
+  replicas: 1
+  triton:
+    env:
+      modelRepository: /data/models
+      tritonBin: /opt/tritonserver/bin/tritonserver
+    image:
+      repository: registry.gitlab.com/gitlab-org/modelops/applied-ml/code-suggestions/ai-assist/tmp/triton-server
+      tag: 363a6123
+
+pvc:
+  modelsFauxpilotNfsPvc:
+    storageClass: ""
+    storageRequest: 500Gi

@@ -1,18 +1,9 @@
-# Source: ai-assist/templates/model-loader.yaml
 apiVersion: batch/v1
 kind: Job
 metadata:
   name: model-loader-job
   labels:
-    helm.sh/chart: ai-assist-0.1.0
-    app.kubernetes.io/name: ai-assist
-    app.kubernetes.io/instance: ai-assist
-    app.kubernetes.io/version: "0.1.0"
-    app.kubernetes.io/managed-by: Helm
-    shard: "default"
-    stage: "main"
-    tier: "sv"
-    type: "ai-assist"
+    {{- include "ai-assist.labels" . | nindent 4 }}
 spec:
   ttlSecondsAfterFinished: 100
   template:
@@ -21,12 +12,12 @@ spec:
         - name: gitlab-registry
       containers:
         - name: model-loader
-          image: registry.gitlab.com/gitlab-org/modelops/applied-ml/code-suggestions/ai-assist/model-fauxpilot:latest
+          image: {{ .Values.modelLoaderJob.modelLoader.image.repository }}:{{ .Values.modelLoaderJob.modelLoader.image.tag | default .Chart.AppVersion }}
           env:
             - name: MODELS_DIR
-              value: "/data/models"
+              value: {{ quote .Values.modelLoaderJob.modelLoader.env.modelsDir }}
             - name: MODEL_FT_CONFIG
-              value: "/data/models/fastertransformer/config.pbtxt"
+              value: {{ quote .Values.modelLoaderJob.modelLoader.env.modelFtConfig }}
           command: [ "/bin/sh", "-c", "--" ]
           args:
             - rm -rf $(MODELS_DIR) && mkdir -p $(MODELS_DIR);
@@ -44,4 +35,3 @@ spec:
           persistentVolumeClaim:
             claimName: models-fauxpilot-nfs-pvc
       restartPolicy: Never
----

@@ -1,18 +1,9 @@
-# Source: ai-assist/templates/ingress-nginx.yaml
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: ingress-nginx
   labels:
-    helm.sh/chart: ai-assist-0.1.0
-    app.kubernetes.io/name: ai-assist
-    app.kubernetes.io/instance: ai-assist
-    app.kubernetes.io/version: "0.1.0"
-    app.kubernetes.io/managed-by: Helm
-    shard: "default"
-    stage: "main"
-    tier: "sv"
-    type: "ai-assist"
+    {{- include "ai-assist.labels" . | nindent 4 }}
   annotations:
     cert-manager.io/cluster-issuer: letsencrypt-prod
     nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
@@ -47,4 +38,3 @@ spec:
                 name: faux-pilot
                 port:
                   number: 8080
----
