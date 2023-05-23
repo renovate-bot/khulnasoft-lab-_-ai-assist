@@ -26,6 +26,8 @@ class AuthProvider(ABC):
 
 
 class GitLabAuthProvider(AuthProvider):
+    REQUEST_TIMEOUT_SECONDS = 1
+
     def __init__(self, base_url: str, expiry_seconds: int = 3600):
         self.base_url = base_url
         self.expiry_seconds = expiry_seconds
@@ -40,7 +42,7 @@ class GitLabAuthProvider(AuthProvider):
         is_allowed = False
 
         try:
-            res = requests.get(url=url, headers=headers)
+            res = requests.get(url=url, headers=headers, timeout=self.REQUEST_TIMEOUT_SECONDS)
             if not (200 <= res.status_code < 300):
                 is_allowed = False
             else:
