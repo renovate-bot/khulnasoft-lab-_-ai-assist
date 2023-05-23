@@ -1,3 +1,5 @@
+import pathlib
+
 from typing import List, Dict, Optional
 
 from codesuggestions.models import Codegen
@@ -19,8 +21,7 @@ from codesuggestions.suggestions.prompt import (
 )
 from prometheus_client import Counter
 
-LANGUAGE_COUNTER = Counter('code_suggestions_prompt_language', 'Language count by number', ['lang'])
-
+LANGUAGE_COUNTER = Counter('code_suggestions_prompt_language', 'Language count by number', ['lang', 'extension'])
 
 __all__ = [
     "DEFAULT_REPLACEMENT_EMAIL",
@@ -95,17 +96,20 @@ class RedactPiiMixin:
 
 
 class PromptEngineMixin:
-    def increment_lang_counter(self, lang_id: Optional[LanguageId]):
-        lang = None
+    def increment_lang_counter(self, lang_id: Optional[LanguageId], filename: Optional[str]):
+        labels = {}
+        labels['lang'] = None
 
         if lang_id:
-            lang = lang_id.name.lower()
+            labels['lang'] = lang_id.name.lower()
 
-        LANGUAGE_COUNTER.labels(lang=lang).inc()
+        labels['extension'] = pathlib.Path(filename).suffix[1:]
+
+        LANGUAGE_COUNTER.labels(**labels).inc()
 
     def build_prompt(self, content: str, file_name: str) -> str:
         lang_id = LanguageResolver.resolve(file_name)
-        self.increment_lang_counter(lang_id)
+        self.increment_lang_counter(lang_id, file_name)
 
         return (
             ModelPromptBuilder(content)
