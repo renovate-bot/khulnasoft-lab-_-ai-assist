@@ -120,6 +120,7 @@ TRITON_VERBOSITY=False
 # FASTAPI_OPENAPI_URL=None  # To disable docs on the API endpoint
 # FASTAPI_REDOC_URL=None  # To disable docs on the API endpoint
 AUTH_BYPASS_EXTERNAL=False  # Can be used for local development to bypass the GitLab server side check
+GITLAB_URL=https://gitlab.com/  # Can be changed to GDK: http://127.0.0.1:3000/
 GITLAB_API_URL=https://gitlab.com/api/v4/  # Can be changed to GDK: http://127.0.0.1:3000/api/v4/
 USE_LOCAL_CACHE=True  # Uses a local in-memory cache instead of Redis
 ```
