@@ -31,4 +31,12 @@ def grpc_requested_output(name: str) -> triton_grpc_util.InferRequestedOutput:
 
 
 def grpc_connect_triton(host: str, port: int, verbose: bool = False) -> triton_grpc_util.InferenceServerClient:
-    return triton_grpc_util.InferenceServerClient(url=f"{host}:{port}", verbose=verbose)
+    return triton_grpc_util.InferenceServerClient(
+        url=f"{host}:{port}",
+        verbose=verbose,
+        keepalive_options=triton_grpc_util.KeepAliveOptions(
+            keepalive_time_ms=30000,
+            keepalive_timeout_ms=20000,
+            keepalive_permit_without_calls=False,
+            http2_max_pings_without_data=2,
+        ))
