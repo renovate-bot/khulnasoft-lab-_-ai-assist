@@ -60,7 +60,8 @@ class MiddlewareLogRequest(Middleware):
             request_id = correlation_id.get()
             structlog.contextvars.bind_contextvars(correlation_id=request_id)
 
-            start_time = time.perf_counter_ns()
+            start_time_total = time.perf_counter()
+            start_time_cpu = time.process_time()
             # If the call_next raises an error, we still want to return our own 500 response,
             # so we can add headers to it (process time, request ID...)
             response = Response(status_code=500)
@@ -71,14 +72,14 @@ class MiddlewareLogRequest(Middleware):
                 structlog.stdlib.get_logger("api.error").exception("Uncaught exception")
                 raise
             finally:
-                process_time = time.perf_counter_ns() - start_time
+                elapsed_time = time.perf_counter() - start_time_total
+                cpu_time = time.process_time() - start_time_cpu
                 status_code = response.status_code
                 url = get_path_with_query_string(request.scope)
                 client_host = request.client.host
                 client_port = request.client.port
                 http_method = request.method
                 http_version = request.scope["http_version"]
-                process_time_s = process_time / 1e9
 
                 if 400 <= status_code < 500:
                     # StreamingResponse is received from the MiddlewareAuthentication, so
@@ -96,7 +97,8 @@ class MiddlewareLogRequest(Middleware):
                     http_version=http_version,
                     client_ip=client_host,
                     client_port=client_port,
-                    duration_s=process_time_s,
+                    duration_s=elapsed_time,
+                    cpu_s=cpu_time,
                     user_agent=request.headers.get('User-Agent')
                 )
                 fields.update(context.data)
@@ -105,7 +107,7 @@ class MiddlewareLogRequest(Middleware):
                 access_logger.info(
                     f"""{client_host}:{client_port} - "{http_method} {url} HTTP/{http_version}" {status_code}""",
                     **fields)
-                response.headers["X-Process-Time"] = str(process_time_s)
+                response.headers["X-Process-Time"] = str(elapsed_time)
                 return response
 
     def __init__(self, skip_endpoints: Optional[list] = None):
