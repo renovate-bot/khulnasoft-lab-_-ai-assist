@@ -32,6 +32,12 @@ class AuthConfig(NamedTuple):
     bypass: bool
 
 
+class ProfilingConfig(NamedTuple):
+    enabled: bool
+    verbose: int
+    period_ms: int
+
+
 class Config:
     BOOLEAN_STATES = {
         '1': True, 'yes': True, 'true': True, 'on': True,
@@ -69,6 +75,14 @@ class Config:
             gitlab_base_url=Config._get_value("GITLAB_URL", "https://gitlab.com/"),
             gitlab_api_base_url=Config._get_value("GITLAB_API_URL", "https://gitlab.com/api/v4/"),
             bypass=Config._str_to_bool(Config._get_value("AUTH_BYPASS_EXTERNAL", "False"))
+        )
+
+    @property
+    def profiling(self) -> ProfilingConfig:
+        return ProfilingConfig(
+            enabled=Config._get_value("GOOGLE_CLOUD_PROFILER", False),
+            verbose=int(Config._get_value("GOOGLE_CLOUD_PROFILER_VERBOSE", 2)),
+            period_ms=int(Config._get_value("GOOGLE_CLOUD_PROFILER_PERIOD_MS", 10)),
         )
 
     @staticmethod
