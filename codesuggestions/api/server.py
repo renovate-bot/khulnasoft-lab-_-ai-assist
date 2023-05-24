@@ -1,17 +1,17 @@
-from fastapi import FastAPI
 from dependency_injector.wiring import Provide, inject
+from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
+from starlette.middleware import Middleware
+from starlette_context.middleware import RawContextMiddleware
 
-from codesuggestions.api.suggestions import router as http_suggestions_router
-from codesuggestions.api.monitoring import router as http_monitoring_router
 from codesuggestions.api.middleware import (
     MiddlewareAuthentication,
     MiddlewareLogRequest,
 )
+from codesuggestions.api.monitoring import router as http_monitoring_router
+from codesuggestions.api.suggestions import router as http_suggestions_router
 from codesuggestions.api.v2.api import api_router as api_router_v2
 from codesuggestions.deps import FastApiContainer
-
-from starlette_context.middleware import RawContextMiddleware
-from starlette.middleware import Middleware
 
 __all__ = [
     "create_fast_api_server",
@@ -26,7 +26,15 @@ def create_fast_api_server(
     ],
     log_middleware: MiddlewareLogRequest = Provide[FastApiContainer.log_middleware],
 ):
+
     context_middleware = Middleware(RawContextMiddleware)
+    cors_middleware = Middleware(
+        CORSMiddleware,
+        allow_origins=["*"],
+        allow_methods=["POST"],
+        allow_headers=["*"],
+    )
+
     fastapi_app = FastAPI(
         title="GitLab Code Suggestions",
         description="GitLab Code Suggestions API to serve code completion predictions",
@@ -36,6 +44,7 @@ def create_fast_api_server(
         swagger_ui_parameters={"defaultModelsExpandDepth": -1},
         middleware=[
             context_middleware,
+            cors_middleware,
             log_middleware,
             auth_middleware,
         ],
