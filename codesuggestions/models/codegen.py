@@ -27,7 +27,7 @@ class Codegen(BaseModel):
     MODEL_TOP_P = .98
     MODEL_PAD_ID = 50256
 
-    def __init__(self, grpc_client: triton_grpc_util.InferenceServerClient, timeout: int = 10):
+    def __init__(self, grpc_client: triton_grpc_util.InferenceServerClient, timeout: int = 30):
         self.client = grpc_client
         self.timeout = timeout
 
@@ -80,6 +80,7 @@ class Codegen(BaseModel):
             inputs_model,
             request_id=uuid.uuid4().hex,
             outputs=outputs_model,
+            client_timeout=self.timeout,
         )
 
         completion = (
