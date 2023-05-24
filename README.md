@@ -9,55 +9,69 @@ It uses the [SalesForce CodeGen](https://github.com/salesforce/CodeGen) models i
 [Triton Inference Server](https://developer.nvidia.com/nvidia-triton-inference-server) with the 
 [FasterTransformer backend](https://github.com/triton-inference-server/fastertransformer_backend/).
 
-Below are examples for the multiple version of the completion API.
+## API
 
-## Completions API
+### Authentication
 
-The latest version of the completion API, and also the suggested one to use is the `v2` end point which confusingly enough expects `prompt_version = 1`. See [this issue](https://gitlab.com/gitlab-org/gitlab-vscode-extension/-/issues/638) for more details about prompt versioning.
+The Code Suggestions API supports three types of authentication.
 
-### /completions/v1
+- Personal access tokens.
+- OAuth 2.0 tokens.
+- Code Suggestions access tokens.
+
+#### Personal access tokens
+
+You can use personal access tokens (PAT) to authenticate with the API by passing it in the
+`Authorization` header.
 
 ```shell
-// Request
-curl --request POST \
-  --url 'https://codesuggestions.gitlab.com/v1/completions' \
-  --header 'User-Agent: GitLab-Code-Completion-VSCode-Ext' \
-  --header 'Authorization: Bearer YOUR_TOKEN_HERE' \
-  --header 'Content-Type: application/json' \
-  --data-raw '{
-    "prompt": "def is_odd(n: int) ->"
-  }'
-
-// Response: Successful
-{
-  "id": "id",
-  "model": "codegen",
-  "object": "text_completion",
-  "created": 1682030781,
-  "choices": [
-    {
-      "text": " bool:\n    return n % 2 == 1\n\n\ndef is_even",
-      "index": 0,
-      "finish_reason": "length"
-    }
-  ],
-  "usage": null
-}
-
+curl --header "Authorization: Bearer <personal_access_token>" "https://codesuggestions.gitlab.com/v2/completions"
 ```
 
-### /completions/v2
+#### OAuth 2.0 tokens
+
+You can use an OAuth 2.0 token to authenticate with the API by passing it in the `Authorization`
+header.
 
 ```shell
-// Request
+curl --header "Authorization: Bearer <oauth_token>" "https://codesuggestions.gitlab.com/v2/completions"
+```
+
+#### Code Suggestions access tokens
+
+You can use an Code Suggestions access token to authenticate with the API by passing it in the
+`Authorization` header and specifying the `X-Gitlab-Authentication-Type` header.
+
+```shell
+curl --header "Authorization: Bearer <access_token>" --header "X-Gitlab-Authentication-Type: oidc" \
+  "https://codesuggestions.gitlab.com/v2/completions"
+```
+
+### Completions
+
+Given a prompt, the service will return one or more predicted completions.
+
+```plaintext
+POST v2/completions
+```
+
+| Attribute                           | Type   | Required | Description                                     | Example                   |
+| ----------------------------------- | ------ | -------- | ----------------------------------------------- | ------------------------- |
+| `prompt_version`                    | int    | no       | The version of the prompt                       | `1`                       |
+| `project_path`                      | string | yes      | The name of the project (max_len: **255**)      | `gitlab-orb/gitlab-shell` |
+| `project_id`                        | int    | yes      | The id of the project (max_len: **255**)        | `gitlab-shell`            |
+| `current_file.file_name`            | string | yes      | The name of the current file (max_len: **255**) | `README.md`               |
+| `current_file.content_above_cursor` | string | yes      | The content above cursor (max_len: **100,000**) | `import numpy as np`      |
+| `current_file.content_below_cursor` | string | yes      | The content below cursor (max_len: **100,000**) | `def __main__:\n`         |
+
+```shell
 curl --request POST \
   --url 'https://codesuggestions.gitlab.com/v2/completions' \
-  --header 'User-Agent: vs-code-gitlab-workflow/3.60.0 VSCode/1.77.3 Node.js/16.14.2 (darwin; arm64)' \
-  --header 'Authorization: Bearer YOUR TOKEN HERE' \
+  --header 'Authorization: Bearer <access_token>' \
   --header 'Content-Type: application/json' \
   --data-raw '{
     "prompt_version": 1,
-    "project_path": "gitlab-org/modelops/applied-ml/review-recommender/pipeline-scheduler",
+    "project_path": "gitlab-org/gitlab-shell",
     "project_id": 33191677,
     "current_file": {
       "file_name": "test.py",
@@ -65,8 +79,9 @@ curl --request POST \
       "content_below_cursor": ""
     }
   }'
+```
 
-// Response: Successful
+```json
 {
   "id": "id",
   "model": "codegen",
@@ -81,6 +96,61 @@ curl --request POST \
   ]
 }
 ```
+
+#### Responses
+
+- `200: OK` if the service returns some completions.
+- `422: Unprocessable Entity` if the required attributes are missing.
+- `401: Unauthorized` if the service fails to authenticate using the access token.
+
+### Deprecations
+
+The following endpoints are to be deprecated and removed.
+
+#### Completions V1
+
+Given a prompt, the service will return one or more predicted completions.
+
+```plaintext
+POST completions/v1
+```
+
+| Attribute | Type   | Required | Description           | Example                 |
+| --------- | ------ | -------- | --------------------- | ----------------------- |
+| prompt    | string | yes      | Prompt to be complete | `def is_odd(n: int) ->` |
+
+```shell
+curl --request POST \
+  --url 'https://codesuggestions.gitlab.com/v1/completions' \
+  --header 'Authorization: Bearer <access_token>' \
+  --header 'Content-Type: application/json' \
+  --data-raw '{
+    "prompt": "def is_odd(n: int) ->"
+  }'
+```
+
+```json
+{
+  "id": "id",
+  "model": "codegen",
+  "object": "text_completion",
+  "created": 1682030781,
+  "choices": [
+    {
+      "text": " bool:\n    return n % 2 == 1\n\n\ndef is_even",
+      "index": 0,
+      "finish_reason": "length"
+    }
+  ],
+  "usage": null
+}
+```
+
+##### Responses
+
+- `200: OK` if the service returns some completions.
+- `422: Unprocessable Entity` if the required attributes are missing.
+- `401: Unauthorized` if the service fails to authenticate using the access token.
 
 ## Prerequisites
 
@@ -215,7 +285,8 @@ The VS Code extension has the following functions:
 ### AI Assist API
 
 Is written in Python and uses the FastApi framework along with Uvicorn. It has the following functions
-1. Provide a REST API for incoming calls on `/v1/completions`
+
+1. Provide a REST API for incoming calls on `/v2/completions`
 1. Authenticate incoming requests against GitLab `/v4/ml/ai-assist` and cache the result
 1. Convert the prompt into a format that can be used by Triton Inference server
 1. Call the Triton Inference Server, await the result and parse it back as a response
