@@ -1,12 +1,12 @@
 # GitLab AI Assist
 
-This project is based on the open source project 
-[FauxPilot](https://github.com/moyix/fauxpilot/blob/main/docker-compose.yaml) as an initial iteration in an effort to 
-create a GitLab owned AI Assistant to help developers write secure code by the 
+This project is based on the open source project
+[FauxPilot](https://github.com/moyix/fauxpilot/blob/main/docker-compose.yaml) as an initial iteration in an effort to
+create a GitLab owned AI Assistant to help developers write secure code by the
 [AI Assist SEG](https://about.gitlab.com/handbook/engineering/incubation/ai-assist/).
 
-It uses the [SalesForce CodeGen](https://github.com/salesforce/CodeGen) models inside of NVIDIA's 
-[Triton Inference Server](https://developer.nvidia.com/nvidia-triton-inference-server) with the 
+It uses the [SalesForce CodeGen](https://github.com/salesforce/CodeGen) models inside of NVIDIA's
+[Triton Inference Server](https://developer.nvidia.com/nvidia-triton-inference-server) with the
 [FasterTransformer backend](https://github.com/triton-inference-server/fastertransformer_backend/).
 
 Below are examples for the multiple version of the completion API.
@@ -92,8 +92,8 @@ You'll need:
 * [`nvidia-docker`](https://github.com/NVIDIA/nvidia-docker)
 * `curl` and `zstd` for downloading and unpacking the models.
 
-Note that the VRAM requirements listed by `setup.sh` are *total* -- if you have multiple GPUs, you can split the model 
-across them. So, if you have two NVIDIA RTX 3080 GPUs, you *should* be able to run the 6B model by putting half on each 
+Note that the VRAM requirements listed by `setup.sh` are *total* -- if you have multiple GPUs, you can split the model
+across them. So, if you have two NVIDIA RTX 3080 GPUs, you *should* be able to run the 6B model by putting half on each
 GPU.
 
 ## Configuration
@@ -143,7 +143,7 @@ value `'None'`.
    FASTAPI_OPENAPI_URL=/openapi.json
    FASTAPI_API_PORT=5052
    ```
-4. Get k8s credentials to access our k8s cluster: 
+4. Get k8s credentials to access our k8s cluster:
    `gcloud container clusters get-credentials ai-assist --zone us-central1-c --project unreview-poc-390200e5`
 5. Port-forward the triton server to access it locally:
    `kubectl port-forward svc/model-k8s-triton -n fauxpilot 8080:8080 --address='0.0.0.0'`
@@ -153,13 +153,13 @@ value `'None'`.
 
 ## Local development using GDK
 
-If you are on Apple Silicon, you will need to host Triton somewhere else as there is a dependency on Nvidia GPU and 
-architecture. 
+If you are on Apple Silicon, you will need to host Triton somewhere else as there is a dependency on Nvidia GPU and
+architecture.
 
 You can either run `make develop-local` or  `docker-compose -f docker-compose.dev.yaml up --build --remove-orphans` this
 will run the API.
 
-Next open the VS Code extension project, and run the development version of the GitLab Workflow extension locally. 
+Next open the VS Code extension project, and run the development version of the GitLab Workflow extension locally.
 
 In VS Code code need to set the const `AI_ASSISTED_CODE_SUGGESTIONS_API_URL` constant to `http://localhost:5000/completions`.
 
@@ -187,8 +187,8 @@ This will allow the feature to actually return `{"user_is_allowed": true }`.
 
 ## Authentication
 
-The intended use of this API is to be called from the 
-[GitLab VS code extension](https://gitlab.com/gitlab-org/gitlab-vscode-extension), the extension authenticates users 
+The intended use of this API is to be called from the
+[GitLab VS code extension](https://gitlab.com/gitlab-org/gitlab-vscode-extension), the extension authenticates users
 against the GitLab Rails API. However, we can not rely on the VS Extension to authorize users for AI Assist as it runs
 on the client side, we need a server side check. So in order to do that, the extension passes along the user's token via
 a header to the AI Assist API, this token is subsequently used to make a `GET` call to `/v4/ml/ai-assist` on behalf of
@@ -222,23 +222,23 @@ Is written in Python and uses the FastApi framework along with Uvicorn. It has t
 
 ### Triton Inference server
 
-NVIDIA Triton™ Inference Server, is an open-source inference serving software that helps standardize model deployment 
+NVIDIA Triton™ Inference Server, is an open-source inference serving software that helps standardize model deployment
 and execution and delivers fast and scalable AI in production. See [https://developer.nvidia.com/nvidia-triton-inference-server](https://developer.nvidia.com/nvidia-triton-inference-server)
 
 ### GitLab API
 
 The endpoint `/v4/ml/ai-assist` checks if a user meets the requirements to use AI Assist and returns a boolean.
 
-## Deploying to the Kubernetes cluster 
+## Deploying to the Kubernetes cluster
 
 To successfully deploy AI Assist to a k8s cluster, please, make sure your cluster supports NVIDIA® GPU hardware accelerators.
-Below, we give a guideline tested specifically on the GKE cluster in the Applied ML group. Successful work 
+Below, we give a guideline tested specifically on the GKE cluster in the Applied ML group. Successful work
 on any other clusters is not guaranteed.
 
 1. Create a GKE cluster with the following configuration:
    - gke version `1.24.5-gke.600`
    - image type `container-optimized OS with containerd.`
-   - machine type `n1-standard-2` machines, 
+   - machine type `n1-standard-2` machines,
    - autoscaling enabled `from 0 to 5` nodes
    - 1 Nvidia T4 GPU 16 GB GDDR6
    - Nvidia driver version: 510.47.03, CUDA version: 11.7
@@ -269,6 +269,16 @@ on any other clusters is not guaranteed.
    helm install nginx ingress-nginx/ingress-nginx --set controller.config.use-forwarded-headers=true
    ```
 
+   To enable monitoring on ingress-nginx:
+
+   ```shell
+   helm upgrade nginx ingress-nginx/ingress-nginx \
+     --namespace nginx \
+     --set controller.metrics.enabled=true \
+     --set controller.metrics.serviceMonitor.enabled=true \
+     --set controller.metrics.serviceMonitor.additionalLabels.release="prometheus"
+   ```
+
 6. Create the `ai-assist` namespace and update the current context
    ```shell
    export KUBERNETES_AI_ASSIST_NAMESPACE=ai-assist
@@ -283,7 +293,7 @@ on any other clusters is not guaranteed.
    kubectl create secret docker-registry gitlab-registry \
       --docker-server="registry.gitlab.com" \
       --docker-username="$DEPLOY_TOKEN_USERNAME" \
-      --docker-password="$DEPLOY_TOKEN_PASSWORD"   
+      --docker-password="$DEPLOY_TOKEN_PASSWORD"
    ```
 
 8. Deploy NFS server and model persistence volume:
@@ -369,7 +379,7 @@ kubectl config use-context {{CONTEXT_NAME_HERE}}
 Grafana is where all the dashboard of the metrics can be found. Now that we are in the correct context you can port-forward the grafana service to your local machine with the following command.
 
 ```shell
-# Mapping port 80 on the service to localhost:3000 
+# Mapping port 80 on the service to localhost:3000
 kubectl -n monitoring port-forward service/prometheus-grafana 3000:80
 ```
 
