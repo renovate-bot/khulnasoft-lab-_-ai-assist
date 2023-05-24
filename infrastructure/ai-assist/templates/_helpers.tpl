@@ -49,8 +49,8 @@ app.kubernetes.io/managed-by: {{ .Release.Service }}
 Selector labels
 */}}
 {{- define "ai-assist.selectorLabels" -}}
-app.kubernetes.io/name: {{ include "ai-assist.name" . }}
-app.kubernetes.io/instance: {{ .Release.Name }}
+# app.kubernetes.io/name: {{ include "ai-assist.name" . }}
+# app.kubernetes.io/instance: {{ .Release.Name }}
 {{- end }}
 
 {{/*

@@ -3,6 +3,9 @@ apiVersion: batch/v1
 kind: Job
 metadata:
   name: model-loader-job
+  annotations:
+    meta.helm.sh/release-name: ai-assist
+    meta.helm.sh/release-namespace: fauxpilot
   labels:
     helm.sh/chart: ai-assist-0.1.0
     app.kubernetes.io/name: ai-assist

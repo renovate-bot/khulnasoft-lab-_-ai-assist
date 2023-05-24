@@ -3,6 +3,9 @@ apiVersion: v1
 kind: Service
 metadata:
   name: model-k8s-triton
+  annotations:
+    meta.helm.sh/release-name: ai-assist
+    meta.helm.sh/release-namespace: fauxpilot
   labels:
     app: model-triton
     helm.sh/chart: ai-assist-0.1.0
@@ -18,8 +21,8 @@ spec:
   type: ClusterIP
   selector:
     app: model-triton
-    app.kubernetes.io/name: ai-assist
-    app.kubernetes.io/instance: ai-assist
+    # app.kubernetes.io/name: ai-assist
+    # app.kubernetes.io/instance: ai-assist
   ports:
     - name: api
       port: 8080
@@ -33,6 +36,9 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: model-triton
+  annotations:
+    meta.helm.sh/release-name: ai-assist
+    meta.helm.sh/release-namespace: fauxpilot
   labels:
     app: model-triton
     helm.sh/chart: ai-assist-0.1.0
@@ -49,14 +55,14 @@ spec:
   selector:
     matchLabels:
       app: model-triton
-      app.kubernetes.io/name: ai-assist
-      app.kubernetes.io/instance: ai-assist
+      # app.kubernetes.io/name: ai-assist
+      # app.kubernetes.io/instance: ai-assist
   template:
     metadata:
       labels:
         app: model-triton
-        app.kubernetes.io/name: ai-assist
-        app.kubernetes.io/instance: ai-assist
+        # app.kubernetes.io/name: ai-assist
+        # app.kubernetes.io/instance: ai-assist
     spec:
       imagePullSecrets:
         - name: gitlab-registry
@@ -98,6 +104,9 @@ apiVersion: monitoring.coreos.com/v1
 kind: ServiceMonitor
 metadata:
   name: model-triton
+  annotations:
+    meta.helm.sh/release-name: ai-assist
+    meta.helm.sh/release-namespace: fauxpilot
   labels:
     release: prometheus
     helm.sh/chart: ai-assist-0.1.0

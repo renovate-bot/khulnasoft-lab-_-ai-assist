@@ -3,6 +3,9 @@ apiVersion: v1
 kind: PersistentVolume
 metadata:
   name: models-fauxpilot-nfs-pv
+  annotations:
+    meta.helm.sh/release-name: ai-assist
+    meta.helm.sh/release-namespace: fauxpilot
   labels:
     app: models-fauxpilot-nfs-pv
     helm.sh/chart: ai-assist-0.1.0
@@ -28,6 +31,9 @@ apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
   name: models-fauxpilot-nfs-pvc
+  annotations:
+    meta.helm.sh/release-name: ai-assist
+    meta.helm.sh/release-namespace: fauxpilot
   labels:
     app: models-fauxpilot-nfs-pvc
     helm.sh/chart: ai-assist-0.1.0

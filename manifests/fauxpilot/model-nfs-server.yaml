@@ -3,6 +3,9 @@ apiVersion: v1
 kind: Service
 metadata:
   name: model-nfs-k8s-server
+  annotations:
+    meta.helm.sh/release-name: ai-assist
+    meta.helm.sh/release-namespace: fauxpilot
   labels:
     app: model-nfs-server
     helm.sh/chart: ai-assist-0.1.0
@@ -32,6 +35,9 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: model-nfs-server
+  annotations:
+    meta.helm.sh/release-name: ai-assist
+    meta.helm.sh/release-namespace: fauxpilot
   labels:
     app: model-nfs-server
     helm.sh/chart: ai-assist-0.1.0
@@ -48,14 +54,14 @@ spec:
   selector:
     matchLabels:
       app: model-nfs-server
-      app.kubernetes.io/name: ai-assist
-      app.kubernetes.io/instance: ai-assist
+      # app.kubernetes.io/name: ai-assist
+      # app.kubernetes.io/instance: ai-assist
   template:
     metadata:
       labels:
         app: model-nfs-server
-        app.kubernetes.io/name: ai-assist
-        app.kubernetes.io/instance: ai-assist
+        # app.kubernetes.io/name: ai-assist
+        # app.kubernetes.io/instance: ai-assist
     spec:
       containers:
         - name: model-nfs-server
