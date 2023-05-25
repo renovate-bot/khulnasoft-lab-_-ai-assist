@@ -6,7 +6,7 @@ metadata:
   labels:
     app: model-gateway
 spec:
-  replicas: 12
+  replicas: 1
   selector:
     matchLabels:
       app: model-gateway
@@ -19,7 +19,7 @@ spec:
         - name: gitlab-registry
       containers:
         - name: model-gateway
-          image: registry.gitlab.com/gitlab-org/modelops/applied-ml/code-suggestions/ai-assist/model-gateway:4863cff1
+          image: registry.gitlab.com/gitlab-org/modelops/applied-ml/code-suggestions/ai-assist/tmp/model-gateway:2e067e32
           ports:
             - name: api-port
               containerPort: 5052
@@ -27,9 +27,9 @@ spec:
               containerPort: 8082
           env:
             - name: TRITON_HOST
-              value: "model-k8s-triton"
+              value: "model-k8s-triton-headless"
             - name: TRITON_PORT
-              value: "8080"
+              value: "8001"
             - name: FASTAPI_API_PORT
               value: "5052"
             # Enable the Google Cloud Profiler
