@@ -1,6 +1,6 @@
 import pytest
 
-from codesuggestions.suggestions.prompt import LanguageId, LanguageResolver, ModelPromptBuilder
+from codesuggestions.suggestions.prompt import LanguageId, LanguageResolver, ModelPromptBuilder, remove_incomplete_lines
 
 
 @pytest.mark.parametrize(
@@ -54,3 +54,16 @@ def test_construct_model_prompt_lang(test_lang_id, prompt, prompt_constructed):
     )
 
     assert constructed == prompt_constructed
+
+
+@pytest.mark.parametrize(
+    "test_completion,expected_completion", [
+        ("def hello_world():\n", "def hello_world():\n"),
+        ("def hello_world():\nprint(", "def hello_world():\n"),
+        ("def hello_world():", "def hello_world():"),
+    ]
+)
+def test_remove_incomplete_line(test_completion, expected_completion):
+    completion = remove_incomplete_lines(test_completion, sep="\n")
+
+    assert completion == expected_completion

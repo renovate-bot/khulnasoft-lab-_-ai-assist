@@ -30,6 +30,15 @@ def drop_color_message_key(_, __, event_dict: EventDict) -> EventDict:
     return event_dict
 
 
+def add_custom_keys(_, __, event_dict: EventDict) -> EventDict:
+    """
+    Add fields that are expected by our logging infrastructure
+    """
+    event_dict["type"] = "mlops"
+    event_dict["stage"] = "main"
+    return event_dict
+
+
 def setup_logging(app: ASGIApp, json_logs: bool = False, log_level: str = "INFO"):
     app.add_middleware(CorrelationIdMiddleware)
 
@@ -42,6 +51,7 @@ def setup_logging(app: ASGIApp, json_logs: bool = False, log_level: str = "INFO"
         structlog.stdlib.PositionalArgumentsFormatter(),
         structlog.stdlib.ExtraAdder(),
         drop_color_message_key,
+        add_custom_keys,
         timestamper,
         structlog.processors.StackInfoRenderer(),
     ]

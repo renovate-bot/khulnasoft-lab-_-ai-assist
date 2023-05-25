@@ -4,8 +4,11 @@ from dependency_injector.wiring import Provide, inject
 from fastapi import APIRouter, Depends
 from pydantic import BaseModel, constr
 
+from codesuggestions.api.timing import timing
 from codesuggestions.deps import CodeSuggestionsContainer
 from codesuggestions.suggestions import CodeSuggestionsUseCaseV2
+
+from starlette.concurrency import run_in_threadpool
 
 __all__ = [
     "router",
@@ -51,10 +54,7 @@ async def completions(
         Provide[CodeSuggestionsContainer.usecase_v2]
     ),
 ):
-    suggestion = code_suggestions(
-        req.current_file.content_above_cursor,
-        req.current_file.file_name,
-    )
+    suggestion = await run_in_threadpool(get_suggestions, code_suggestions, req)
 
     return SuggestionsResponse(
         id="id",
@@ -62,4 +62,12 @@ async def completions(
         choices=[
             SuggestionsResponse.Choice(text=suggestion),
         ],
+    )
+
+
+@timing("get_suggestions_duration_s")
+def get_suggestions(code_suggestions: CodeSuggestionsUseCaseV2, req: SuggestionsRequest):
+    return code_suggestions(
+        req.current_file.content_above_cursor,
+        req.current_file.file_name,
     )

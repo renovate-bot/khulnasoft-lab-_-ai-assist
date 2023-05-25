@@ -19,6 +19,8 @@ from starlette.responses import JSONResponse
 from uvicorn.protocols.utils import get_path_with_query_string
 
 from codesuggestions.auth import AuthProvider
+from codesuggestions.api.timing import timing
+from starlette_context import context
 
 __all__ = [
     "MiddlewareLogRequest",
@@ -58,7 +60,8 @@ class MiddlewareLogRequest(Middleware):
             request_id = correlation_id.get()
             structlog.contextvars.bind_contextvars(correlation_id=request_id)
 
-            start_time = time.perf_counter_ns()
+            start_time_total = time.perf_counter()
+            start_time_cpu = time.process_time()
             # If the call_next raises an error, we still want to return our own 500 response,
             # so we can add headers to it (process time, request ID...)
             response = Response(status_code=500)
@@ -69,14 +72,14 @@ class MiddlewareLogRequest(Middleware):
                 structlog.stdlib.get_logger("api.error").exception("Uncaught exception")
                 raise
             finally:
-                process_time = time.perf_counter_ns() - start_time
+                elapsed_time = time.perf_counter() - start_time_total
+                cpu_time = time.process_time() - start_time_cpu
                 status_code = response.status_code
                 url = get_path_with_query_string(request.scope)
                 client_host = request.client.host
                 client_port = request.client.port
                 http_method = request.method
                 http_version = request.scope["http_version"]
-                process_time_s = process_time / 1e9
 
                 if 400 <= status_code < 500:
                     # StreamingResponse is received from the MiddlewareAuthentication, so
@@ -85,9 +88,7 @@ class MiddlewareLogRequest(Middleware):
                     response.body_iterator = iterate_in_threadpool(iter(response_body))
                     structlog.contextvars.bind_contextvars(response_body=response_body[0].decode())
 
-                # Recreate the Uvicorn access log format, but add all parameters as structured information
-                access_logger.info(
-                    f"""{client_host}:{client_port} - "{http_method} {url} HTTP/{http_version}" {status_code}""",
+                fields = dict(
                     url=str(request.url),
                     path=url,
                     status_code=status_code,
@@ -96,10 +97,17 @@ class MiddlewareLogRequest(Middleware):
                     http_version=http_version,
                     client_ip=client_host,
                     client_port=client_port,
-                    duration_s=process_time_s,
+                    duration_s=elapsed_time,
+                    cpu_s=cpu_time,
                     user_agent=request.headers.get('User-Agent')
                 )
-                response.headers["X-Process-Time"] = str(process_time_s)
+                fields.update(context.data)
+
+                # Recreate the Uvicorn access log format, but add all parameters as structured information
+                access_logger.info(
+                    f"""{client_host}:{client_port} - "{http_method} {url} HTTP/{http_version}" {status_code}""",
+                    **fields)
+                response.headers["X-Process-Time"] = str(elapsed_time)
                 return response
 
     def __init__(self, skip_endpoints: Optional[list] = None):
@@ -112,9 +120,18 @@ class MiddlewareAuthentication(Middleware):
     class AuthBackend(AuthenticationBackend):
         PREFIX_BEARER_HEADER = "bearer"
         AUTH_HEADER = "Authorization"
+        AUTH_TYPE_HEADER = "X-Gitlab-Authentication-Type"
+        OIDC_AUTH = "oidc"
 
-        def __init__(self, auth_provider: AuthProvider, bypass_auth: bool, path_resolver: _PathResolver):
-            self.auth_provider = auth_provider
+        def __init__(
+            self,
+            key_auth_provider: AuthProvider,
+            oidc_auth_provider: AuthProvider,
+            bypass_auth: bool,
+            path_resolver: _PathResolver,
+        ):
+            self.key_auth_provider = key_auth_provider
+            self.oidc_auth_provider = oidc_auth_provider
             self.bypass_auth = bypass_auth
             self.path_resolver = path_resolver
 
@@ -138,11 +155,23 @@ class MiddlewareAuthentication(Middleware):
             if bearer.lower() != self.PREFIX_BEARER_HEADER:
                 raise AuthenticationError('Invalid authorization header')
 
-            is_auth = self.auth_provider.authenticate(token)
+            self.authenticate_with_token(conn.headers, token)
+
+        @timing("auth_duration_s")
+        def authenticate_with_token(self, headers, token):
+            auth_provider = self._auth_provider(headers)
+
+            is_auth = auth_provider.authenticate(token)
             if not is_auth:
                 raise AuthenticationError("Forbidden by auth provider")
 
-            return
+        def _auth_provider(self, headers):
+            auth_type = headers.get(self.AUTH_TYPE_HEADER)
+
+            if auth_type == self.OIDC_AUTH:
+                return self.oidc_auth_provider
+
+            return self.key_auth_provider
 
     @staticmethod
     def on_auth_error(_: Request, e: Exception):
@@ -151,7 +180,8 @@ class MiddlewareAuthentication(Middleware):
 
     def __init__(
         self,
-        auth_provider: AuthProvider,
+        key_auth_provider: AuthProvider,
+        oidc_auth_provider: AuthProvider,
         bypass_auth: bool = False,
         skip_endpoints: Optional[list] = None,
     ):
@@ -159,6 +189,8 @@ class MiddlewareAuthentication(Middleware):
 
         super().__init__(
             AuthenticationMiddleware,
-            backend=MiddlewareAuthentication.AuthBackend(auth_provider, bypass_auth, path_resolver),
+            backend=MiddlewareAuthentication.AuthBackend(
+                key_auth_provider, oidc_auth_provider, bypass_auth, path_resolver
+            ),
             on_error=MiddlewareAuthentication.on_auth_error,
         )

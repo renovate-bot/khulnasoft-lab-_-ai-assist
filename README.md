@@ -1,63 +1,77 @@
 # GitLab AI Assist
 
-This project is based on the open source project 
-[FauxPilot](https://github.com/moyix/fauxpilot/blob/main/docker-compose.yaml) as an initial iteration in an effort to 
-create a GitLab owned AI Assistant to help developers write secure code by the 
+This project is based on the open source project
+[FauxPilot](https://github.com/moyix/fauxpilot/blob/main/docker-compose.yaml) as an initial iteration in an effort to
+create a GitLab owned AI Assistant to help developers write secure code by the
 [AI Assist SEG](https://about.gitlab.com/handbook/engineering/incubation/ai-assist/).
 
-It uses the [SalesForce CodeGen](https://github.com/salesforce/CodeGen) models inside of NVIDIA's 
-[Triton Inference Server](https://developer.nvidia.com/nvidia-triton-inference-server) with the 
+It uses the [SalesForce CodeGen](https://github.com/salesforce/CodeGen) models inside of NVIDIA's
+[Triton Inference Server](https://developer.nvidia.com/nvidia-triton-inference-server) with the
 [FasterTransformer backend](https://github.com/triton-inference-server/fastertransformer_backend/).
 
-Below are examples for the multiple version of the completion API.
+## API
 
-## Completions API
+### Authentication
 
-The latest version of the completion API, and also the suggested one to use is the `v2` end point which confusingly enough expects `prompt_version = 1`. See [this issue](https://gitlab.com/gitlab-org/gitlab-vscode-extension/-/issues/638) for more details about prompt versioning.
+The Code Suggestions API supports three types of authentication.
 
-### /completions/v1
+- Personal access tokens.
+- OAuth 2.0 tokens.
+- Code Suggestions access tokens.
+
+#### Personal access tokens
+
+You can use personal access tokens (PAT) to authenticate with the API by passing it in the
+`Authorization` header.
 
 ```shell
-// Request
-curl --request POST \
-  --url 'https://codesuggestions.gitlab.com/v1/completions' \
-  --header 'User-Agent: GitLab-Code-Completion-VSCode-Ext' \
-  --header 'Authorization: Bearer YOUR_TOKEN_HERE' \
-  --header 'Content-Type: application/json' \
-  --data-raw '{
-    "prompt": "def is_odd(n: int) ->"
-  }'
-
-// Response: Successful
-{
-  "id": "id",
-  "model": "codegen",
-  "object": "text_completion",
-  "created": 1682030781,
-  "choices": [
-    {
-      "text": " bool:\n    return n % 2 == 1\n\n\ndef is_even",
-      "index": 0,
-      "finish_reason": "length"
-    }
-  ],
-  "usage": null
-}
-
+curl --header "Authorization: Bearer <personal_access_token>" "https://codesuggestions.gitlab.com/v2/completions"
 ```
 
-### /completions/v2
+#### OAuth 2.0 tokens
+
+You can use an OAuth 2.0 token to authenticate with the API by passing it in the `Authorization`
+header.
 
 ```shell
-// Request
+curl --header "Authorization: Bearer <oauth_token>" "https://codesuggestions.gitlab.com/v2/completions"
+```
+
+#### Code Suggestions access tokens
+
+You can use an Code Suggestions access token to authenticate with the API by passing it in the
+`Authorization` header and specifying the `X-Gitlab-Authentication-Type` header.
+
+```shell
+curl --header "Authorization: Bearer <access_token>" --header "X-Gitlab-Authentication-Type: oidc" \
+  "https://codesuggestions.gitlab.com/v2/completions"
+```
+
+### Completions
+
+Given a prompt, the service will return one or more predicted completions.
+
+```plaintext
+POST v2/completions
+```
+
+| Attribute                           | Type   | Required | Description                                     | Example                   |
+| ----------------------------------- | ------ | -------- | ----------------------------------------------- | ------------------------- |
+| `prompt_version`                    | int    | no       | The version of the prompt                       | `1`                       |
+| `project_path`                      | string | yes      | The name of the project (max_len: **255**)      | `gitlab-orb/gitlab-shell` |
+| `project_id`                        | int    | yes      | The id of the project (max_len: **255**)        | `gitlab-shell`            |
+| `current_file.file_name`            | string | yes      | The name of the current file (max_len: **255**) | `README.md`               |
+| `current_file.content_above_cursor` | string | yes      | The content above cursor (max_len: **100,000**) | `import numpy as np`      |
+| `current_file.content_below_cursor` | string | yes      | The content below cursor (max_len: **100,000**) | `def __main__:\n`         |
+
+```shell
 curl --request POST \
   --url 'https://codesuggestions.gitlab.com/v2/completions' \
-  --header 'User-Agent: vs-code-gitlab-workflow/3.60.0 VSCode/1.77.3 Node.js/16.14.2 (darwin; arm64)' \
-  --header 'Authorization: Bearer YOUR TOKEN HERE' \
+  --header 'Authorization: Bearer <access_token>' \
   --header 'Content-Type: application/json' \
   --data-raw '{
     "prompt_version": 1,
-    "project_path": "gitlab-org/modelops/applied-ml/review-recommender/pipeline-scheduler",
+    "project_path": "gitlab-org/gitlab-shell",
     "project_id": 33191677,
     "current_file": {
       "file_name": "test.py",
@@ -65,8 +79,9 @@ curl --request POST \
       "content_below_cursor": ""
     }
   }'
+```
 
-// Response: Successful
+```json
 {
   "id": "id",
   "model": "codegen",
@@ -82,6 +97,61 @@ curl --request POST \
 }
 ```
 
+#### Responses
+
+- `200: OK` if the service returns some completions.
+- `422: Unprocessable Entity` if the required attributes are missing.
+- `401: Unauthorized` if the service fails to authenticate using the access token.
+
+### Deprecations
+
+The following endpoints are to be deprecated and removed.
+
+#### Completions V1
+
+Given a prompt, the service will return one or more predicted completions.
+
+```plaintext
+POST completions/v1
+```
+
+| Attribute | Type   | Required | Description           | Example                 |
+| --------- | ------ | -------- | --------------------- | ----------------------- |
+| prompt    | string | yes      | Prompt to be complete | `def is_odd(n: int) ->` |
+
+```shell
+curl --request POST \
+  --url 'https://codesuggestions.gitlab.com/v1/completions' \
+  --header 'Authorization: Bearer <access_token>' \
+  --header 'Content-Type: application/json' \
+  --data-raw '{
+    "prompt": "def is_odd(n: int) ->"
+  }'
+```
+
+```json
+{
+  "id": "id",
+  "model": "codegen",
+  "object": "text_completion",
+  "created": 1682030781,
+  "choices": [
+    {
+      "text": " bool:\n    return n % 2 == 1\n\n\ndef is_even",
+      "index": 0,
+      "finish_reason": "length"
+    }
+  ],
+  "usage": null
+}
+```
+
+##### Responses
+
+- `200: OK` if the service returns some completions.
+- `422: Unprocessable Entity` if the required attributes are missing.
+- `401: Unauthorized` if the service fails to authenticate using the access token.
+
 ## Prerequisites
 
 You'll need:
@@ -92,8 +162,8 @@ You'll need:
 * [`nvidia-docker`](https://github.com/NVIDIA/nvidia-docker)
 * `curl` and `zstd` for downloading and unpacking the models.
 
-Note that the VRAM requirements listed by `setup.sh` are *total* -- if you have multiple GPUs, you can split the model 
-across them. So, if you have two NVIDIA RTX 3080 GPUs, you *should* be able to run the 6B model by putting half on each 
+Note that the VRAM requirements listed by `setup.sh` are *total* -- if you have multiple GPUs, you can split the model
+across them. So, if you have two NVIDIA RTX 3080 GPUs, you *should* be able to run the 6B model by putting half on each
 GPU.
 
 ## Configuration
@@ -120,6 +190,7 @@ TRITON_VERBOSITY=False
 # FASTAPI_OPENAPI_URL=None  # To disable docs on the API endpoint
 # FASTAPI_REDOC_URL=None  # To disable docs on the API endpoint
 AUTH_BYPASS_EXTERNAL=False  # Can be used for local development to bypass the GitLab server side check
+GITLAB_URL=https://gitlab.com/  # Can be changed to GDK: http://127.0.0.1:3000/
 GITLAB_API_URL=https://gitlab.com/api/v4/  # Can be changed to GDK: http://127.0.0.1:3000/api/v4/
 USE_LOCAL_CACHE=True  # Uses a local in-memory cache instead of Redis
 ```
@@ -142,7 +213,7 @@ value `'None'`.
    FASTAPI_OPENAPI_URL=/openapi.json
    FASTAPI_API_PORT=5052
    ```
-4. Get k8s credentials to access our k8s cluster: 
+4. Get k8s credentials to access our k8s cluster:
    `gcloud container clusters get-credentials ai-assist --zone us-central1-c --project unreview-poc-390200e5`
 5. Port-forward the triton server to access it locally:
    `kubectl port-forward svc/model-k8s-triton -n fauxpilot 8080:8080 --address='0.0.0.0'`
@@ -152,13 +223,13 @@ value `'None'`.
 
 ## Local development using GDK
 
-If you are on Apple Silicon, you will need to host Triton somewhere else as there is a dependency on Nvidia GPU and 
-architecture. 
+If you are on Apple Silicon, you will need to host Triton somewhere else as there is a dependency on Nvidia GPU and
+architecture.
 
 You can either run `make develop-local` or  `docker-compose -f docker-compose.dev.yaml up --build --remove-orphans` this
 will run the API.
 
-Next open the VS Code extension project, and run the development version of the GitLab Workflow extension locally. 
+Next open the VS Code extension project, and run the development version of the GitLab Workflow extension locally.
 
 In VS Code code need to set the const `AI_ASSISTED_CODE_SUGGESTIONS_API_URL` constant to `http://localhost:5000/completions`.
 
@@ -186,8 +257,8 @@ This will allow the feature to actually return `{"user_is_allowed": true }`.
 
 ## Authentication
 
-The intended use of this API is to be called from the 
-[GitLab VS code extension](https://gitlab.com/gitlab-org/gitlab-vscode-extension), the extension authenticates users 
+The intended use of this API is to be called from the
+[GitLab VS code extension](https://gitlab.com/gitlab-org/gitlab-vscode-extension), the extension authenticates users
 against the GitLab Rails API. However, we can not rely on the VS Extension to authorize users for AI Assist as it runs
 on the client side, we need a server side check. So in order to do that, the extension passes along the user's token via
 a header to the AI Assist API, this token is subsequently used to make a `GET` call to `/v4/ml/ai-assist` on behalf of
@@ -214,30 +285,31 @@ The VS Code extension has the following functions:
 ### AI Assist API
 
 Is written in Python and uses the FastApi framework along with Uvicorn. It has the following functions
-1. Provide a REST API for incoming calls on `/v1/completions`
+
+1. Provide a REST API for incoming calls on `/v2/completions`
 1. Authenticate incoming requests against GitLab `/v4/ml/ai-assist` and cache the result
 1. Convert the prompt into a format that can be used by Triton Inference server
 1. Call the Triton Inference Server, await the result and parse it back as a response
 
 ### Triton Inference server
 
-NVIDIA Triton™ Inference Server, is an open-source inference serving software that helps standardize model deployment 
+NVIDIA Triton™ Inference Server, is an open-source inference serving software that helps standardize model deployment
 and execution and delivers fast and scalable AI in production. See [https://developer.nvidia.com/nvidia-triton-inference-server](https://developer.nvidia.com/nvidia-triton-inference-server)
 
 ### GitLab API
 
 The endpoint `/v4/ml/ai-assist` checks if a user meets the requirements to use AI Assist and returns a boolean.
 
-## Deploying to the Kubernetes cluster 
+## Deploying to the Kubernetes cluster
 
 To successfully deploy AI Assist to a k8s cluster, please, make sure your cluster supports NVIDIA® GPU hardware accelerators.
-Below, we give a guideline tested specifically on the GKE cluster in the Applied ML group. Successful work 
+Below, we give a guideline tested specifically on the GKE cluster in the Applied ML group. Successful work
 on any other clusters is not guaranteed.
 
 1. Create a GKE cluster with the following configuration:
    - gke version `1.24.5-gke.600`
    - image type `container-optimized OS with containerd.`
-   - machine type `n1-standard-2` machines, 
+   - machine type `n1-standard-2` machines,
    - autoscaling enabled `from 0 to 5` nodes
    - 1 Nvidia T4 GPU 16 GB GDDR6
    - Nvidia driver version: 510.47.03, CUDA version: 11.7
@@ -268,6 +340,16 @@ on any other clusters is not guaranteed.
    helm install nginx ingress-nginx/ingress-nginx --set controller.config.use-forwarded-headers=true
    ```
 
+   To enable monitoring on ingress-nginx:
+
+   ```shell
+   helm upgrade nginx ingress-nginx/ingress-nginx \
+     --namespace nginx \
+     --set controller.metrics.enabled=true \
+     --set controller.metrics.serviceMonitor.enabled=true \
+     --set controller.metrics.serviceMonitor.additionalLabels.release="prometheus"
+   ```
+
 6. Create the `ai-assist` namespace and update the current context
    ```shell
    export KUBERNETES_AI_ASSIST_NAMESPACE=ai-assist
@@ -282,7 +364,7 @@ on any other clusters is not guaranteed.
    kubectl create secret docker-registry gitlab-registry \
       --docker-server="registry.gitlab.com" \
       --docker-username="$DEPLOY_TOKEN_USERNAME" \
-      --docker-password="$DEPLOY_TOKEN_PASSWORD"   
+      --docker-password="$DEPLOY_TOKEN_PASSWORD"
    ```
 
 8. Deploy NFS server and model persistence volume:
@@ -368,7 +450,7 @@ kubectl config use-context {{CONTEXT_NAME_HERE}}
 Grafana is where all the dashboard of the metrics can be found. Now that we are in the correct context you can port-forward the grafana service to your local machine with the following command.
 
 ```shell
-# Mapping port 80 on the service to localhost:3000 
+# Mapping port 80 on the service to localhost:3000
 kubectl -n monitoring port-forward service/prometheus-grafana 3000:80
 ```
 

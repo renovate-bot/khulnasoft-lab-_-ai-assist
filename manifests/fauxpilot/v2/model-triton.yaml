@@ -6,7 +6,12 @@ metadata:
   labels:
     app: model-triton
 spec:
-  replicas: 4
+  replicas: 1
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 3
+      maxUnavailable: 0
   selector:
     matchLabels:
       app: model-triton
@@ -19,7 +24,7 @@ spec:
         - name: gitlab-registry
       containers:
         - name: triton
-          image: registry.gitlab.com/gitlab-org/modelops/applied-ml/ai-assist/ai-assist-api/triton-server:918fff43e4fbfba2591adc2c4ac713d7c3840a0b
+          image: registry.gitlab.com/gitlab-org/modelops/applied-ml/code-suggestions/ai-assist/tmp/triton-server:363a6123
           ports:
             - containerPort: 8000
             - containerPort: 8001
@@ -27,27 +32,36 @@ spec:
           env:
             - name: MODEL_REPOSITORY
               value: "/data/models"
-            - name: MODEL_PATH
-              value: "/data/hf/codegen"
-            - name: OFFLOAD_FOLDER
-              value: "/tmp/offload/codegen"
             - name: TRITON_BIN
               value: "/opt/tritonserver/bin/tritonserver"
           command: ["/bin/bash", "-c", "--"]
           args:
-            - mkdir -p $(OFFLOAD_FOLDER);
-              tritonserver --model-repository=$(MODEL_REPOSITORY)
+            - "$(TRITON_BIN) --model-repository=$(MODEL_REPOSITORY)"
           volumeMounts:
-            - name: models-nfc-pvc-volume
+            - name: models-codesuggestions-nfc-pvc-volume
               mountPath: /data
               readOnly: true
+            - name: dshm
+              mountPath: /dev/shm
           resources:
             limits:
               nvidia.com/gpu: "1"
+          readinessProbe:
+            httpGet: 
+              path: /v2/health/ready
+              port: 8000
+            periodSeconds: 10
+            initialDelaySeconds: 900
+            timeoutSeconds: 1
+            failureThreshold: 3
       volumes:
-        - name: models-nfc-pvc-volume
+        - name: models-codesuggestions-nfc-pvc-volume
           persistentVolumeClaim:
-            claimName: models-nfs-pvc
+            claimName: models-codesuggestions-nfs-pvc-v2
+        - name: dshm
+          emptyDir:
+            sizeLimit: "2Gi"
+            medium: "Memory"
 ---
 apiVersion: v1
 kind: Service
@@ -64,8 +78,19 @@ spec:
     - name: metrics
       port: 8082
       targetPort: 8002
-    - name: http
-      port: 8084
-      targetPort: 8000
   selector:
     app: model-triton
+---
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: model-triton
+  labels:
+    release: prometheus
+spec:
+  endpoints:
+    - interval: 30s
+      port: metrics
+  selector:
+    matchLabels:
+      app: model-triton

@@ -1,4 +1,6 @@
-from typing import List, Dict
+import pathlib
+
+from typing import List, Dict, Optional
 
 from codesuggestions.models import Codegen
 from codesuggestions.suggestions.detectors import (
@@ -12,9 +14,14 @@ from codesuggestions.suggestions.detectors import (
     DetectorKind,
 )
 from codesuggestions.suggestions.prompt import (
+    LanguageId,
     LanguageResolver,
     ModelPromptBuilder,
+    remove_incomplete_lines,
 )
+from prometheus_client import Counter
+
+LANGUAGE_COUNTER = Counter('code_suggestions_prompt_language', 'Language count by number', ['lang', 'extension'])
 
 __all__ = [
     "DEFAULT_REPLACEMENT_EMAIL",
@@ -89,8 +96,20 @@ class RedactPiiMixin:
 
 
 class PromptEngineMixin:
+    def increment_lang_counter(self, lang_id: Optional[LanguageId], filename: Optional[str]):
+        labels = {}
+        labels['lang'] = None
+
+        if lang_id:
+            labels['lang'] = lang_id.name.lower()
+
+        labels['extension'] = pathlib.Path(filename).suffix[1:]
+
+        LANGUAGE_COUNTER.labels(**labels).inc()
+
     def build_prompt(self, content: str, file_name: str) -> str:
         lang_id = LanguageResolver.resolve(file_name)
+        self.increment_lang_counter(lang_id, file_name)
 
         return (
             ModelPromptBuilder(content)
@@ -99,28 +118,22 @@ class PromptEngineMixin:
         )
 
 
-class CodeSuggestionsUseCase(RedactPiiMixin):
+class CodeSuggestionsUseCase:
     def __init__(self, model: Codegen):
-        RedactPiiMixin.__init__(self, PII_DETECTORS, PII_REPLACEMENTS)
         self.model = model
 
     def __call__(self, prompt: str) -> str:
-        completion = self.model(prompt)
-
-        completion = self.redact_pii(completion)
-
-        return completion
+        return self.model(prompt)
 
 
-class CodeSuggestionsUseCaseV2(RedactPiiMixin, PromptEngineMixin):
+class CodeSuggestionsUseCaseV2(PromptEngineMixin):
     def __init__(self, model: Codegen):
-        RedactPiiMixin.__init__(self, PII_DETECTORS, PII_REPLACEMENTS)
         PromptEngineMixin.__init__(self)
         self.model = model
 
     def __call__(self, content: str, file_name: str) -> str:
         prompt = self.build_prompt(content, file_name)
         completion = self.model(prompt)
-        completion = self.redact_pii(completion)
+        completion = remove_incomplete_lines(completion)
 
         return completion

@@ -17,7 +17,7 @@ dependency-injector = "^4.41.0"
 uvicorn = { extras = ["standard"], version = "^0.20.0" }
 requests = "^2.28.1"
 numpy = "^1.24.1"
-tritonclient = { extras = ["grpc"], version = "^2.29.0" }
+tritonclient = { extras = ["grpc"], version = "^2.33.0" }
 python-dotenv = "^0.21.0"
 regex = "^2022.10.31"
 detect-secrets = "^1.4.0"
@@ -25,6 +25,9 @@ fastapi-health = "^0.4.0"
 structlog = "^23.1.0"
 asgi-correlation-id = "^4.1.0"
 prometheus-fastapi-instrumentator = "^6.0.0"
+python-jose = {extras = ["cryptography"], version = "^3.3.0"}
+starlette-context = "^0.3.6"
+google-cloud-profiler = "^4.0.0"
 
 [tool.poetry.group.test]
 optional = true
