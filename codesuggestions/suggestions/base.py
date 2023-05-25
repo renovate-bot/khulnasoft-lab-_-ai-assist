@@ -118,22 +118,16 @@ class PromptEngineMixin:
         )
 
 
-class CodeSuggestionsUseCase(RedactPiiMixin):
+class CodeSuggestionsUseCase:
     def __init__(self, model: Codegen):
-        RedactPiiMixin.__init__(self, PII_DETECTORS, PII_REPLACEMENTS)
         self.model = model
 
     def __call__(self, prompt: str) -> str:
-        completion = self.model(prompt)
-
-        completion = self.redact_pii(completion)
-
-        return completion
+        return self.model(prompt)
 
 
-class CodeSuggestionsUseCaseV2(RedactPiiMixin, PromptEngineMixin):
+class CodeSuggestionsUseCaseV2(PromptEngineMixin):
     def __init__(self, model: Codegen):
-        RedactPiiMixin.__init__(self, PII_DETECTORS, PII_REPLACEMENTS)
         PromptEngineMixin.__init__(self)
         self.model = model
 
@@ -141,6 +135,5 @@ class CodeSuggestionsUseCaseV2(RedactPiiMixin, PromptEngineMixin):
         prompt = self.build_prompt(content, file_name)
         completion = self.model(prompt)
         completion = remove_incomplete_lines(completion)
-        completion = self.redact_pii(completion)
 
         return completion
