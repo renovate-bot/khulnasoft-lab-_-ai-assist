@@ -1,25 +1,27 @@
 apiVersion: v1
 kind: PersistentVolume
 metadata:
-  name: models-fauxpilot-nfs-pv
+  name: models-codesuggestions-nfs-pv-v2
   labels:
-    app: models-fauxpilot-nfs-pv
+    app: models-codesuggestions-nfs-pv
+    version: v2
     {{- include "ai-assist.labels" . | nindent 4 }}
 spec:
   capacity:
-    storage: 500Gi
+    storage: 250Gi
   accessModes:
-  - ReadWriteMany
+    - ReadWriteMany
   nfs:
-    server: model-nfs-k8s-server.fauxpilot.svc.cluster.local
-    path: /
+    server: models-nfs-k8s-server-v2.fauxpilot.svc.cluster.local
+    path: "/"
 ---
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
-  name: models-fauxpilot-nfs-pvc
+  name: models-codesuggestions-nfs-pvc-v2
   labels:
-    app: models-fauxpilot-nfs-pvc
+    app: models-codesuggestions-nfs-pvc
+    version: v2
     {{- include "ai-assist.labels" . | nindent 4 }}
 spec:
   accessModes:
@@ -30,4 +32,5 @@ spec:
       storage: {{ .Values.pvc.modelsFauxpilotNfsPvc.storageRequest | quote }}
   selector:
     matchLabels:
-      app: models-fauxpilot-nfs-pv
+      app: models-codesuggestions-nfs-pv
+      version: v2

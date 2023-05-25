@@ -1,20 +1,23 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: model-nfs-server
+  name: models-nfs-server-v2
   labels:
     app: model-nfs-server
+    version: v2
     {{- include "ai-assist.labels" . | nindent 4 }}
 spec:
   replicas: {{ .Values.modelNfsServer.replicas }}
   selector:
     matchLabels:
       app: model-nfs-server
+      version: v2
       {{- include "ai-assist.selectorLabels" . | nindent 6 }}
   template:
     metadata:
       labels:
         app: model-nfs-server
+        version: v2
         {{- include "ai-assist.selectorLabels" . | nindent 8 }}
     spec:
       containers:
@@ -35,17 +38,17 @@ spec:
       volumes:
         - name: nfs-models-volume
           gcePersistentDisk:
-            pdName: nfs-codesuggestions-fauxpilot-disk
-            fsType: ext4
-        
+            pdName: nfs-code-suggestions-models-disk
+            fsType: ext4        
 ---
 apiVersion: v1
 kind: Service
 metadata:
-  name: model-nfs-k8s-server
+  name: models-nfs-k8s-server-v2
   labels:
     app: model-nfs-server
     {{- include "ai-assist.labels" . | nindent 4 }}
+    version: v2
 spec:
   ports:
     - name: nfs
@@ -56,4 +59,5 @@ spec:
       port: 111
   selector:
     app: model-nfs-server
+    version: v2
     {{- include "ai-assist.selectorLabels" . | nindent 4 }}
