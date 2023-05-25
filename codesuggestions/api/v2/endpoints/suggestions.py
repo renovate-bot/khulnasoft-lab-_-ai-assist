@@ -8,6 +8,8 @@ from codesuggestions.api.timing import timing
 from codesuggestions.deps import CodeSuggestionsContainer
 from codesuggestions.suggestions import CodeSuggestionsUseCaseV2
 
+from starlette.concurrency import run_in_threadpool
+
 __all__ = [
     "router",
 ]
@@ -52,7 +54,7 @@ async def completions(
         Provide[CodeSuggestionsContainer.usecase_v2]
     ),
 ):
-    suggestion = get_suggestions(code_suggestions, req)
+    suggestion = await run_in_threadpool(get_suggestions, code_suggestions, req)
 
     return SuggestionsResponse(
         id="id",
