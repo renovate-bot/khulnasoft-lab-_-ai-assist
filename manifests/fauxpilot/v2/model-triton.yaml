@@ -3,8 +3,20 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: model-triton
+  annotations:
+    meta.helm.sh/release-name: ai-assist
+    meta.helm.sh/release-namespace: fauxpilot
   labels:
     app: model-triton
+    helm.sh/chart: ai-assist-0.1.0
+    app.kubernetes.io/name: ai-assist
+    app.kubernetes.io/instance: ai-assist
+    app.kubernetes.io/version: "0.1.0"
+    app.kubernetes.io/managed-by: Helm
+    shard: "default"
+    stage: "main"
+    tier: "sv"
+    type: "ai-assist"
 spec:
   replicas: 1
   strategy:
