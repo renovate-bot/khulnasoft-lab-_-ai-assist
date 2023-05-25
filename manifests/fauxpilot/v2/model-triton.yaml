@@ -18,12 +18,12 @@ metadata:
     tier: "sv"
     type: "ai-assist"
 spec:
-  replicas: 1
+  replicas: 12
   strategy:
     type: RollingUpdate
     rollingUpdate:
-      maxSurge: 3
-      maxUnavailable: 0
+      maxSurge: 25%
+      maxUnavailable: 25%
   selector:
     matchLabels:
       app: model-triton
@@ -58,14 +58,6 @@ spec:
           resources:
             limits:
               nvidia.com/gpu: "1"
-          readinessProbe:
-            httpGet: 
-              path: /v2/health/ready
-              port: 8000
-            periodSeconds: 10
-            initialDelaySeconds: 900
-            timeoutSeconds: 1
-            failureThreshold: 3
       volumes:
         - name: models-codesuggestions-nfc-pvc-volume
           persistentVolumeClaim:

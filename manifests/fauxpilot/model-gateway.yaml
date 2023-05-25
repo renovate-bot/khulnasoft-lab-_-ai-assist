@@ -66,7 +66,7 @@ spec:
         - name: gitlab-registry
       containers:
         - name: model-gateway
-          image: registry.gitlab.com/gitlab-org/modelops/applied-ml/code-suggestions/ai-assist/model-gateway:4863cff1
+          image: registry.gitlab.com/gitlab-org/modelops/applied-ml/code-suggestions/ai-assist/tmp/model-gateway:2e067e32
           ports:
             - name: api-port
               containerPort: 5052
@@ -74,16 +74,16 @@ spec:
               containerPort: 8082
           env:
             - name: TRITON_HOST
-              value: "model-k8s-triton"
+              value: "model-k8s-triton-headless"
             - name: TRITON_PORT
-              value: "8080"
+              value: "8001"
             - name: FASTAPI_API_PORT
               value: "5052"
             # Enable the Google Cloud Profiler
             # See https://console.cloud.google.com/profiler?referrer=search&project=unreview-poc-390200e5 
             # for profile output
-            - name: GOOGLE_CLOUD_PROFILER
-              value: "1"
+            # - name: GOOGLE_CLOUD_PROFILER
+            #   value: "1"
 ---
 # Source: ai-assist/templates/model-gateway.yaml
 apiVersion: monitoring.coreos.com/v1
