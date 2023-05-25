@@ -1,5 +1,6 @@
 import logging
 import uvicorn
+
 from logging.config import dictConfig
 from dotenv import load_dotenv
 
@@ -8,6 +9,7 @@ from codesuggestions.api import create_fast_api_server
 from codesuggestions.deps import FastApiContainer, CodeSuggestionsContainer, _PROBS_ENDPOINTS
 
 from codesuggestions.structured_logging import setup_logging
+from codesuggestions.profiling import setup_profiling
 
 from prometheus_fastapi_instrumentator import Instrumentator
 from prometheus_client import start_http_server
@@ -33,6 +35,8 @@ def main():
     app = create_fast_api_server()
     setup_logging(app, json_logs=True, log_level="INFO")
     log = logging.getLogger("uvicorn.error")
+
+    setup_profiling(config.profiling, log)
 
     @app.on_event("startup")
     def on_server_startup():

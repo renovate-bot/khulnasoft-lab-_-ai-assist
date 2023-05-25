@@ -32,6 +32,11 @@ spec:
               value: "8080"
             - name: FASTAPI_API_PORT
               value: "5052"
+            # Enable the Google Cloud Profiler
+            # See https://console.cloud.google.com/profiler?referrer=search&project=unreview-poc-390200e5 
+            # for profile output
+            - name: GOOGLE_CLOUD_PROFILER
+              value: "1"
 ---
 apiVersion: v1
 kind: Service
