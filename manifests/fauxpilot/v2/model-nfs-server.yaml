@@ -53,7 +53,7 @@ kind: Service
 metadata:
   name: models-nfs-k8s-server-v2
   labels:
-    app: models-nfs-server
+    app: model-nfs-server
     helm.sh/chart: ai-assist-0.1.0
     app.kubernetes.io/version: "0.1.0"
     app.kubernetes.io/managed-by: Helm
@@ -71,5 +71,5 @@ spec:
     - name: rpcbind
       port: 111
   selector:
-    app: models-nfs-server
+    app: model-nfs-server
     version: v2

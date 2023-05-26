@@ -6,12 +6,16 @@ from dotenv import load_dotenv
 
 from codesuggestions import Config
 from codesuggestions.api import create_fast_api_server
-from codesuggestions.deps import FastApiContainer, CodeSuggestionsContainer, _PROBS_ENDPOINTS
+from codesuggestions.deps import (
+    FastApiContainer,
+    CodeSuggestionsContainer,
+    _PROBS_ENDPOINTS,
+)
 
 from codesuggestions.structured_logging import setup_logging
 from codesuggestions.profiling import setup_profiling
 
-from prometheus_fastapi_instrumentator import Instrumentator
+from prometheus_fastapi_instrumentator import Instrumentator, metrics
 from prometheus_client import start_http_server
 
 # load env variables from .env if exists
@@ -48,7 +52,15 @@ def main():
             should_ignore_untemplated=True,
             should_respect_env_var=False,
             should_instrument_requests_inprogress=False,
-            excluded_handlers=_PROBS_ENDPOINTS
+            excluded_handlers=_PROBS_ENDPOINTS,
+        )
+        instrumentator.add(
+            metrics.latency(
+                should_include_handler=True,
+                should_include_method=True,
+                should_include_status=True,
+                buckets=(0.5, 1, 10, 30, 60, 90)
+            )
         )
         instrumentator.instrument(app)
         # https://github.com/trallnag/prometheus-fastapi-instrumentator/issues/10
@@ -57,7 +69,9 @@ def main():
             config.fastapi.metrics_host,
             config.fastapi.metrics_port,
         )
-        start_http_server(addr=config.fastapi.metrics_host, port=config.fastapi.metrics_port)
+        start_http_server(
+            addr=config.fastapi.metrics_host, port=config.fastapi.metrics_port
+        )
 
     @app.on_event("shutdown")
     def on_server_shutdown():
@@ -65,7 +79,13 @@ def main():
         code_suggestions_container.shutdown_resources()
 
     # For now, trust all IPs for proxy headers until https://github.com/encode/uvicorn/pull/1611 is available.
-    uvicorn.run(app, host=config.fastapi.api_host, port=config.fastapi.api_port, log_config=config.fastapi.uvicorn_logger, forwarded_allow_ips="*")
+    uvicorn.run(
+        app,
+        host=config.fastapi.api_host,
+        port=config.fastapi.api_port,
+        log_config=config.fastapi.uvicorn_logger,
+        forwarded_allow_ips="*",
+    )
 
 
 if __name__ == "__main__":

@@ -13,8 +13,8 @@ modelGateway:
       tritonHost: model-k8s-triton-headless
       tritonPort: "8001"
     image:
-      repository: registry.gitlab.com/gitlab-org/modelops/applied-ml/code-suggestions/ai-assist/tmp/model-gateway
-      tag: 2e067e32
+      repository: registry.gitlab.com/gitlab-org/modelops/applied-ml/code-suggestions/ai-assist/model-gateway
+      tag: eb7fdb9d
   replicas: 12
 
 modelK8SGateway: {}
