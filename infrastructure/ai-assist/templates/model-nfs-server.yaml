@@ -46,7 +46,7 @@ kind: Service
 metadata:
   name: models-nfs-k8s-server-v2
   labels:
-    app: models-nfs-server
+    app: model-nfs-server
     {{- include "ai-assist.labels" . | nindent 4 }}
     version: v2
 spec:
@@ -58,6 +58,6 @@ spec:
     - name: rpcbind
       port: 111
   selector:
-    app: models-nfs-server
+    app: model-nfs-server
     version: v2
     {{- include "ai-assist.selectorLabels" . | nindent 4 }}
