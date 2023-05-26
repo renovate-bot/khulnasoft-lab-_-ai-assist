@@ -10,12 +10,12 @@ modelGateway:
   modelGateway:
     env:
       fastapiApiPort: "5052"
-      tritonHost: model-k8s-triton
-      tritonPort: "8080"
+      tritonHost: model-k8s-triton-headless
+      tritonPort: "8001"
     image:
-      repository: registry.gitlab.com/gitlab-org/modelops/applied-ml/code-suggestions/ai-assist/model-gateway
-      tag: latest
-  replicas: 3
+      repository: registry.gitlab.com/gitlab-org/modelops/applied-ml/code-suggestions/ai-assist/tmp/model-gateway
+      tag: 2e067e32
+  replicas: 12
 
 modelK8SGateway: {}
 
@@ -40,7 +40,7 @@ modelNfsServer:
   replicas: 1
 
 modelTriton:
-  replicas: 1
+  replicas: 12
   triton:
     env:
       modelRepository: /data/models
@@ -52,4 +52,4 @@ modelTriton:
 pvc:
   modelsFauxpilotNfsPvc:
     storageClass: ""
-    storageRequest: 500Gi
+    storageRequest: 250Gi

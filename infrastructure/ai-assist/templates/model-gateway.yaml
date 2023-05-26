@@ -34,14 +34,14 @@ spec:
               value: {{ quote .Values.modelGateway.modelGateway.env.tritonPort }}
             - name: FASTAPI_API_PORT
               value: {{ quote .Values.modelGateway.modelGateway.env.fastapiApiPort }}
-          livenessProbe:
-            httpGet:
-              path: /monitoring/healthz
-              port: api-port
-            initialDelaySeconds: 10
-            periodSeconds: 10
-            timeoutSeconds: 1
-            failureThreshold: 3
+          # livenessProbe:
+          #   httpGet:
+          #     path: /monitoring/healthz
+          #     port: api-port
+          #   initialDelaySeconds: 10
+          #   periodSeconds: 10
+          #   timeoutSeconds: 1
+          #   failureThreshold: 3
 
 ---
 apiVersion: v1

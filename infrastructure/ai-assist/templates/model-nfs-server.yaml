@@ -10,13 +10,13 @@ spec:
   replicas: {{ .Values.modelNfsServer.replicas }}
   selector:
     matchLabels:
-      app: model-nfs-server
+      app: models-nfs-server
       version: v2
       {{- include "ai-assist.selectorLabels" . | nindent 6 }}
   template:
     metadata:
       labels:
-        app: model-nfs-server
+        app: models-nfs-server
         version: v2
         {{- include "ai-assist.selectorLabels" . | nindent 8 }}
     spec:

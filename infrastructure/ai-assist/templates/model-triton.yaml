@@ -10,8 +10,8 @@ spec:
   strategy:
     type: RollingUpdate
     rollingUpdate:
-      maxSurge: 3
-      maxUnavailable: 0
+      maxSurge: 25%
+      maxUnavailable: 25%
   selector:
     matchLabels:
       app: model-triton
@@ -40,7 +40,7 @@ spec:
           args:
             - "$(TRITON_BIN) --model-repository=$(MODEL_REPOSITORY)"
           volumeMounts:
-            - name: models-fauxpilot-nfc-pvc-volume
+            - name: models-codesuggestions-nfc-pvc-volume
               mountPath: /data
               readOnly: true
             - name: dshm
