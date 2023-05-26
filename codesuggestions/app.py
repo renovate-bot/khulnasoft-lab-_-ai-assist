@@ -55,8 +55,11 @@ def main():
             excluded_handlers=_PROBS_ENDPOINTS,
         )
         instrumentator.add(
-            metrics.default(
-                latency_lowr_buckets=(0.05, 0.1, 0.25, 0.5, 0.7, 1, 2.5, 5, 10, 25)
+            metrics.latency(
+                should_include_handler=True,
+                should_include_method=True,
+                should_include_status=True,
+                buckets=(0.5, 1, 10, 30, 60, 90)
             )
         )
         instrumentator.instrument(app)
