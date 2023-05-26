@@ -1,3 +1,4 @@
+---
 # Source: ai-assist/templates/model-loader.yaml
 apiVersion: batch/v1
 kind: Job

@@ -70,6 +70,7 @@ spec:
           emptyDir:
             sizeLimit: "2Gi"
             medium: "Memory"
+---
 # Source: ai-assist/templates/model-triton.yaml
 apiVersion: v1
 kind: Service

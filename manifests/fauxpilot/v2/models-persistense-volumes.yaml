@@ -1,3 +1,4 @@
+---
 # Source: ai-assist/templates/models-persistense-volumes.yaml
 apiVersion: v1
 kind: PersistentVolume

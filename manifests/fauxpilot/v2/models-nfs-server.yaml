@@ -46,6 +46,7 @@ spec:
           gcePersistentDisk:
             pdName: nfs-code-suggestions-models-disk
             fsType: ext4
+---
 # Source: ai-assist/templates/models-nfs-server.yaml
 apiVersion: v1
 kind: Service
