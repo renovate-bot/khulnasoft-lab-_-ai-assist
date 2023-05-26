@@ -1,7 +1,16 @@
+# Source: ai-assist/templates/model-loader.yaml
 apiVersion: batch/v1
 kind: Job
 metadata:
-  name: model-loader-job-v2
+  name: model-loader-job
+  labels:
+    helm.sh/chart: ai-assist-0.1.0
+    app.kubernetes.io/version: "0.1.0"
+    app.kubernetes.io/managed-by: Helm
+    shard: "default"
+    stage: "main"
+    tier: "sv"
+    type: "ai-assist"
 spec:
   ttlSecondsAfterFinished: 100
   template:
@@ -14,11 +23,9 @@ spec:
           env:
             - name: MODEL_ARCHIVE_NAME
               value: "1-gpu.tar.zst"
-          command: [ "/bin/sh", "-c", "--" ]
+          command: ["/bin/sh", "-c", "--"]
           args:
-            - rm -f ${MODEL_ARCHIVE_NAME};
-              gcloud auth activate-service-account --key-file=/etc/gcp-storage-credentials/key.json;
-              gsutil -m cp gs://code-suggestions/model-deployments/16b_v5/${MODEL_ARCHIVE_NAME} /data/;
+            - rm -f ${MODEL_ARCHIVE_NAME}; gcloud auth activate-service-account --key-file=/etc/gcp-storage-credentials/key.json; gsutil -m cp gs://code-suggestions/model-deployments/16b_v5/${MODEL_ARCHIVE_NAME} /data/;
           volumeMounts:
             - name: models-codesuggestions-nfc-pvc-volume
               mountPath: /data
@@ -39,15 +46,9 @@ spec:
               value: "/data/models/fastertransformer/1/1-gpu"
             - name: MODEL_FT_CONFIG
               value: "/data/models/fastertransformer/config.pbtxt"
-          command: [ "/bin/sh", "-c", "--" ]
+          command: ["/bin/sh", "-c", "--"]
           args:
-            - rm -rf ${MODELS_DIR} && mkdir -p ${MODELS_DIR};
-              rm -rf ${MODEL_WEIGHTS_DIR} && mkdir -p ${MODEL_WEIGHTS_DIR};
-              cp -r /model/* ${MODELS_DIR};
-              sed -e 's@${MODELS_DIR}@'"$MODELS_DIR"'@' -e 's@${MODEL_NUM_GPU}@'"$MODEL_NUM_GPUS"'@' $(MODEL_FT_CONFIG) > $(MODEL_FT_CONFIG).tmp;
-              mv $(MODEL_FT_CONFIG).tmp $(MODEL_FT_CONFIG);
-              zstd -dc ${MODEL_ARCHIVE} | tar -xf - -C "${MODEL_WEIGHTS_DIR}" --strip-components=1;
-              rm -f ${MODEL_ARCHIVE};
+            - rm -rf ${MODELS_DIR} && mkdir -p ${MODELS_DIR}; rm -rf ${MODEL_WEIGHTS_DIR} && mkdir -p ${MODEL_WEIGHTS_DIR}; cp -r /model/* ${MODELS_DIR}; sed -e 's@${MODELS_DIR}@'"$MODELS_DIR"'@' -e 's@${MODEL_NUM_GPU}@'"$MODEL_NUM_GPUS"'@' $(MODEL_FT_CONFIG) > $(MODEL_FT_CONFIG).tmp; mv $(MODEL_FT_CONFIG).tmp $(MODEL_FT_CONFIG); zstd -dc ${MODEL_ARCHIVE} | tar -xf - -C "${MODEL_WEIGHTS_DIR}" --strip-components=1; rm -f ${MODEL_ARCHIVE};
           volumeMounts:
             - name: models-codesuggestions-nfc-pvc-volume
               mountPath: /data

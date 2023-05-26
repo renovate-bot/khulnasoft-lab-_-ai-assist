@@ -1,4 +1,5 @@
 ---
+# Source: ai-assist/templates/models-nfs-server.yaml
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -6,6 +7,13 @@ metadata:
   labels:
     app: models-nfs-server
     version: v2
+    helm.sh/chart: ai-assist-0.1.0
+    app.kubernetes.io/version: "0.1.0"
+    app.kubernetes.io/managed-by: Helm
+    shard: "default"
+    stage: "main"
+    tier: "sv"
+    type: "ai-assist"
 spec:
   replicas: 1
   selector:
@@ -38,13 +46,20 @@ spec:
           gcePersistentDisk:
             pdName: nfs-code-suggestions-models-disk
             fsType: ext4
----
+# Source: ai-assist/templates/models-nfs-server.yaml
 apiVersion: v1
 kind: Service
 metadata:
   name: models-nfs-k8s-server-v2
   labels:
     app: models-nfs-server
+    helm.sh/chart: ai-assist-0.1.0
+    app.kubernetes.io/version: "0.1.0"
+    app.kubernetes.io/managed-by: Helm
+    shard: "default"
+    stage: "main"
+    tier: "sv"
+    type: "ai-assist"
     version: v2
 spec:
   ports:

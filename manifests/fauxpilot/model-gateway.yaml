@@ -1,12 +1,20 @@
 ---
+# Source: ai-assist/templates/model-gateway.yaml
 apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: model-gateway
   labels:
     app: model-gateway
+    helm.sh/chart: ai-assist-0.1.0
+    app.kubernetes.io/version: "0.1.0"
+    app.kubernetes.io/managed-by: Helm
+    shard: "default"
+    stage: "main"
+    tier: "sv"
+    type: "ai-assist"
 spec:
-  replicas: 1
+  replicas: 12
   selector:
     matchLabels:
       app: model-gateway
@@ -37,13 +45,28 @@ spec:
             # for profile output
             - name: GOOGLE_CLOUD_PROFILER
               value: "1"
----
+              # livenessProbe:
+              #   httpGet:
+              #     path: /monitoring/healthz
+              #     port: api-port
+              #   initialDelaySeconds: 10
+              #   periodSeconds: 10
+              #   timeoutSeconds: 1
+              #   failureThreshold: 3
+# Source: ai-assist/templates/model-gateway.yaml
 apiVersion: v1
 kind: Service
 metadata:
   name: model-k8s-gateway
   labels:
     app: model-gateway
+    helm.sh/chart: ai-assist-0.1.0
+    app.kubernetes.io/version: "0.1.0"
+    app.kubernetes.io/managed-by: Helm
+    shard: "default"
+    stage: "main"
+    tier: "sv"
+    type: "ai-assist"
 spec:
   type: ClusterIP
   ports:
@@ -56,12 +79,20 @@ spec:
   selector:
     app: model-gateway
 ---
+# Source: ai-assist/templates/model-gateway.yaml
 apiVersion: monitoring.coreos.com/v1
 kind: ServiceMonitor
 metadata:
   name: model-gateway-servicemonitor
   labels:
     release: prometheus
+    helm.sh/chart: ai-assist-0.1.0
+    app.kubernetes.io/version: "0.1.0"
+    app.kubernetes.io/managed-by: Helm
+    shard: "default"
+    stage: "main"
+    tier: "sv"
+    type: "ai-assist"
 spec:
   endpoints:
     - interval: 30s

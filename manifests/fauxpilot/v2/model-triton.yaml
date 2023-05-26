@@ -1,12 +1,20 @@
 ---
+# Source: ai-assist/templates/model-triton.yaml
 apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: model-triton
   labels:
     app: model-triton
+    helm.sh/chart: ai-assist-0.1.0
+    app.kubernetes.io/version: "0.1.0"
+    app.kubernetes.io/managed-by: Helm
+    shard: "default"
+    stage: "main"
+    tier: "sv"
+    type: "ai-assist"
 spec:
-  replicas: 1
+  replicas: 12
   strategy:
     type: RollingUpdate
     rollingUpdate:
@@ -47,7 +55,7 @@ spec:
             limits:
               nvidia.com/gpu: "1"
           readinessProbe:
-            httpGet: 
+            httpGet:
               path: /v2/health/ready
               port: 8000
             periodSeconds: 10
@@ -62,13 +70,20 @@ spec:
           emptyDir:
             sizeLimit: "2Gi"
             medium: "Memory"
----
+# Source: ai-assist/templates/model-triton.yaml
 apiVersion: v1
 kind: Service
 metadata:
   name: model-k8s-triton
   labels:
     app: model-triton
+    helm.sh/chart: ai-assist-0.1.0
+    app.kubernetes.io/version: "0.1.0"
+    app.kubernetes.io/managed-by: Helm
+    shard: "default"
+    stage: "main"
+    tier: "sv"
+    type: "ai-assist"
 spec:
   type: ClusterIP
   ports:
@@ -81,10 +96,21 @@ spec:
   selector:
     app: model-triton
 ---
+# Source: ai-assist/templates/model-triton.yaml
+# Headless service for GRPC
 apiVersion: v1
 kind: Service
 metadata:
   name: model-k8s-triton-headless
+  labels:
+    app: model-triton-headless
+    helm.sh/chart: ai-assist-0.1.0
+    app.kubernetes.io/version: "0.1.0"
+    app.kubernetes.io/managed-by: Helm
+    shard: "default"
+    stage: "main"
+    tier: "sv"
+    type: "ai-assist"
 spec:
   clusterIP: None
   ports:
@@ -94,12 +120,20 @@ spec:
   selector:
     app: model-triton
 ---
+# Source: ai-assist/templates/model-triton.yaml
 apiVersion: monitoring.coreos.com/v1
 kind: ServiceMonitor
 metadata:
   name: model-triton
   labels:
     release: prometheus
+    helm.sh/chart: ai-assist-0.1.0
+    app.kubernetes.io/version: "0.1.0"
+    app.kubernetes.io/managed-by: Helm
+    shard: "default"
+    stage: "main"
+    tier: "sv"
+    type: "ai-assist"
 spec:
   endpoints:
     - interval: 30s

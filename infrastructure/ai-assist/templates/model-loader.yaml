@@ -28,7 +28,7 @@ spec:
               mountPath: "/etc/gcp-storage-credentials"
               readOnly: true
       containers:
-        - name: model-loader
+        - name: unpack-model-gcs
           image: {{ .Values.modelLoaderJob.modelLoader.image.repository }}:{{ .Values.modelLoaderJob.modelLoader.image.tag | default .Chart.AppVersion }}
           env:
             - name: MODEL_NUM_GPU

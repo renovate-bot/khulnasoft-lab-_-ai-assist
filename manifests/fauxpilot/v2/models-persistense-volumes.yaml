@@ -1,4 +1,4 @@
----
+# Source: ai-assist/templates/models-persistense-volumes.yaml
 apiVersion: v1
 kind: PersistentVolume
 metadata:
@@ -6,6 +6,13 @@ metadata:
   labels:
     app: models-codesuggestions-nfs-pv
     version: v2
+    helm.sh/chart: ai-assist-0.1.0
+    app.kubernetes.io/version: "0.1.0"
+    app.kubernetes.io/managed-by: Helm
+    shard: "default"
+    stage: "main"
+    tier: "sv"
+    type: "ai-assist"
 spec:
   capacity:
     storage: 250Gi
@@ -14,8 +21,8 @@ spec:
   nfs:
     server: models-nfs-k8s-server-v2.fauxpilot.svc.cluster.local
     path: "/"
-
 ---
+# Source: ai-assist/templates/models-persistense-volumes.yaml
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
@@ -23,13 +30,20 @@ metadata:
   labels:
     app: models-codesuggestions-nfs-pvc
     version: v2
+    helm.sh/chart: ai-assist-0.1.0
+    app.kubernetes.io/version: "0.1.0"
+    app.kubernetes.io/managed-by: Helm
+    shard: "default"
+    stage: "main"
+    tier: "sv"
+    type: "ai-assist"
 spec:
   accessModes:
     - ReadWriteMany
   storageClassName: ""
   resources:
     requests:
-      storage: 250Gi
+      storage: "250Gi"
   selector:
     matchLabels:
       app: models-codesuggestions-nfs-pv

@@ -3,7 +3,7 @@ kind: Deployment
 metadata:
   name: models-nfs-server-v2
   labels:
-    app: model-nfs-server
+    app: models-nfs-server
     version: v2
     {{- include "ai-assist.labels" . | nindent 4 }}
 spec:
@@ -21,7 +21,7 @@ spec:
         {{- include "ai-assist.selectorLabels" . | nindent 8 }}
     spec:
       containers:
-        - name: model-nfs-server
+        - name: models-nfs-server
           image: {{ .Values.modelNfsServer.modelNfsServer.image.repository }}:{{ .Values.modelNfsServer.modelNfsServer.image.tag | default .Chart.AppVersion }}
           ports:
             - name: nfs
@@ -46,7 +46,7 @@ kind: Service
 metadata:
   name: models-nfs-k8s-server-v2
   labels:
-    app: model-nfs-server
+    app: models-nfs-server
     {{- include "ai-assist.labels" . | nindent 4 }}
     version: v2
 spec:
@@ -58,6 +58,6 @@ spec:
     - name: rpcbind
       port: 111
   selector:
-    app: model-nfs-server
+    app: models-nfs-server
     version: v2
     {{- include "ai-assist.selectorLabels" . | nindent 4 }}
