@@ -1,68 +1,19 @@
-# Source: ai-assist/templates/model-triton.yaml
-apiVersion: v1
-kind: Service
-metadata:
-  name: model-k8s-triton
-  annotations:
-    meta.helm.sh/release-name: ai-assist
-    meta.helm.sh/release-namespace: fauxpilot
-  labels:
-    app: model-triton
-    helm.sh/chart: ai-assist-0.1.0
-    app.kubernetes.io/name: ai-assist
-    app.kubernetes.io/instance: ai-assist
-    app.kubernetes.io/version: "0.1.0"
-    app.kubernetes.io/managed-by: Helm
-    shard: "default"
-    stage: "main"
-    tier: "sv"
-    type: "ai-assist"
-spec:
-  type: ClusterIP
-  selector:
-    app: model-triton
-    # app.kubernetes.io/name: ai-assist
-    # app.kubernetes.io/instance: ai-assist
-  ports:
-    - name: api
-      port: 8080
-      targetPort: 8001
-    - name: metrics
-      port: 8082
-      targetPort: 8002
 ---
-# Source: ai-assist/templates/model-triton.yaml
 apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: model-triton
-  annotations:
-    meta.helm.sh/release-name: ai-assist
-    meta.helm.sh/release-namespace: fauxpilot
   labels:
     app: model-triton
-    helm.sh/chart: ai-assist-0.1.0
-    app.kubernetes.io/name: ai-assist
-    app.kubernetes.io/instance: ai-assist
-    app.kubernetes.io/version: "0.1.0"
-    app.kubernetes.io/managed-by: Helm
-    shard: "default"
-    stage: "main"
-    tier: "sv"
-    type: "ai-assist"
 spec:
   replicas: 1
   selector:
     matchLabels:
       app: model-triton
-      # app.kubernetes.io/name: ai-assist
-      # app.kubernetes.io/instance: ai-assist
   template:
     metadata:
       labels:
         app: model-triton
-        # app.kubernetes.io/name: ai-assist
-        # app.kubernetes.io/instance: ai-assist
     spec:
       imagePullSecrets:
         - name: gitlab-registry
@@ -99,25 +50,30 @@ spec:
             sizeLimit: "2Gi"
             medium: "Memory"
 ---
-# Source: ai-assist/templates/model-triton.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: model-k8s-triton
+  labels:
+    app: model-triton
+spec:
+  type: ClusterIP
+  ports:
+    - name: api
+      port: 8080
+      targetPort: 8001
+    - name: metrics
+      port: 8082
+      targetPort: 8002
+  selector:
+    app: model-triton
+---
 apiVersion: monitoring.coreos.com/v1
 kind: ServiceMonitor
 metadata:
   name: model-triton
-  annotations:
-    meta.helm.sh/release-name: ai-assist
-    meta.helm.sh/release-namespace: fauxpilot
   labels:
     release: prometheus
-    helm.sh/chart: ai-assist-0.1.0
-    app.kubernetes.io/name: ai-assist
-    app.kubernetes.io/instance: ai-assist
-    app.kubernetes.io/version: "0.1.0"
-    app.kubernetes.io/managed-by: Helm
-    shard: "default"
-    stage: "main"
-    tier: "sv"
-    type: "ai-assist"
 spec:
   endpoints:
     - interval: 30s

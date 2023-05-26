@@ -3,27 +3,15 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: model-triton
-  annotations:
-    meta.helm.sh/release-name: ai-assist
-    meta.helm.sh/release-namespace: fauxpilot
   labels:
     app: model-triton
-    helm.sh/chart: ai-assist-0.1.0
-    app.kubernetes.io/name: ai-assist
-    app.kubernetes.io/instance: ai-assist
-    app.kubernetes.io/version: "0.1.0"
-    app.kubernetes.io/managed-by: Helm
-    shard: "default"
-    stage: "main"
-    tier: "sv"
-    type: "ai-assist"
 spec:
-  replicas: 12
+  replicas: 1
   strategy:
     type: RollingUpdate
     rollingUpdate:
-      maxSurge: 25%
-      maxUnavailable: 25%
+      maxSurge: 3
+      maxUnavailable: 0
   selector:
     matchLabels:
       app: model-triton
@@ -58,6 +46,14 @@ spec:
           resources:
             limits:
               nvidia.com/gpu: "1"
+          readinessProbe:
+            httpGet: 
+              path: /v2/health/ready
+              port: 8000
+            periodSeconds: 10
+            initialDelaySeconds: 900
+            timeoutSeconds: 1
+            failureThreshold: 3
       volumes:
         - name: models-codesuggestions-nfc-pvc-volume
           persistentVolumeClaim:
@@ -71,20 +67,8 @@ apiVersion: v1
 kind: Service
 metadata:
   name: model-k8s-triton
-  annotations:
-    meta.helm.sh/release-name: ai-assist
-    meta.helm.sh/release-namespace: fauxpilot
   labels:
     app: model-triton
-    helm.sh/chart: ai-assist-0.1.0
-    app.kubernetes.io/name: ai-assist
-    app.kubernetes.io/instance: ai-assist
-    app.kubernetes.io/version: "0.1.0"
-    app.kubernetes.io/managed-by: Helm
-    shard: "default"
-    stage: "main"
-    tier: "sv"
-    type: "ai-assist"
 spec:
   type: ClusterIP
   ports:
@@ -97,24 +81,25 @@ spec:
   selector:
     app: model-triton
 ---
+apiVersion: v1
+kind: Service
+metadata:
+  name: model-k8s-triton-headless
+spec:
+  clusterIP: None
+  ports:
+    - name: api
+      port: 8001
+      targetPort: 8001
+  selector:
+    app: model-triton
+---
 apiVersion: monitoring.coreos.com/v1
 kind: ServiceMonitor
 metadata:
   name: model-triton
-  annotations:
-    meta.helm.sh/release-name: ai-assist
-    meta.helm.sh/release-namespace: fauxpilot
   labels:
     release: prometheus
-    helm.sh/chart: ai-assist-0.1.0
-    app.kubernetes.io/name: ai-assist
-    app.kubernetes.io/instance: ai-assist
-    app.kubernetes.io/version: "0.1.0"
-    app.kubernetes.io/managed-by: Helm
-    shard: "default"
-    stage: "main"
-    tier: "sv"
-    type: "ai-assist"
 spec:
   endpoints:
     - interval: 30s

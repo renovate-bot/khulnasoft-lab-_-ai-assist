@@ -3,21 +3,9 @@ apiVersion: v1
 kind: PersistentVolume
 metadata:
   name: models-codesuggestions-nfs-pv-v2
-  annotations:
-    meta.helm.sh/release-name: ai-assist
-    meta.helm.sh/release-namespace: fauxpilot
   labels:
     app: models-codesuggestions-nfs-pv
     version: v2
-    helm.sh/chart: ai-assist-0.1.0
-    app.kubernetes.io/name: ai-assist
-    app.kubernetes.io/instance: ai-assist
-    app.kubernetes.io/version: "0.1.0"
-    app.kubernetes.io/managed-by: Helm
-    shard: "default"
-    stage: "main"
-    tier: "sv"
-    type: "ai-assist"
 spec:
   capacity:
     storage: 250Gi
@@ -32,21 +20,9 @@ apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
   name: models-codesuggestions-nfs-pvc-v2
-  annotations:
-    meta.helm.sh/release-name: ai-assist
-    meta.helm.sh/release-namespace: fauxpilot
   labels:
     app: models-codesuggestions-nfs-pvc
     version: v2
-    helm.sh/chart: ai-assist-0.1.0
-    app.kubernetes.io/name: ai-assist
-    app.kubernetes.io/instance: ai-assist
-    app.kubernetes.io/version: "0.1.0"
-    app.kubernetes.io/managed-by: Helm
-    shard: "default"
-    stage: "main"
-    tier: "sv"
-    type: "ai-assist"
 spec:
   accessModes:
     - ReadWriteMany

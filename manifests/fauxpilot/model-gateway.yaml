@@ -1,66 +1,19 @@
-# Source: ai-assist/templates/model-gateway.yaml
-apiVersion: v1
-kind: Service
-metadata:
-  name: model-k8s-gateway
-  annotations:
-    meta.helm.sh/release-name: ai-assist
-    meta.helm.sh/release-namespace: fauxpilot
-  labels:
-    app: model-gateway
-    helm.sh/chart: ai-assist-0.1.0
-    app.kubernetes.io/name: ai-assist
-    app.kubernetes.io/instance: ai-assist
-    app.kubernetes.io/version: "0.1.0"
-    app.kubernetes.io/managed-by: Helm
-    shard: "default"
-    stage: "main"
-    tier: "sv"
-    type: "ai-assist"
-spec:
-  type: ClusterIP
-  ports:
-    - name: api
-      port: 8080
-      targetPort: api-port
-    - name: metrics
-      port: 8081
-      targetPort: metrics-port
-  selector:
-    app: model-gateway
 ---
-# Source: ai-assist/templates/model-gateway.yaml
 apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: model-gateway
-  annotations:
-    meta.helm.sh/release-name: ai-assist
-    meta.helm.sh/release-namespace: fauxpilot
   labels:
     app: model-gateway
-    helm.sh/chart: ai-assist-0.1.0
-    app.kubernetes.io/name: ai-assist
-    app.kubernetes.io/instance: ai-assist
-    app.kubernetes.io/version: "0.1.0"
-    app.kubernetes.io/managed-by: Helm
-    shard: "default"
-    stage: "main"
-    tier: "sv"
-    type: "ai-assist"
 spec:
-  replicas: 12
+  replicas: 1
   selector:
     matchLabels:
       app: model-gateway
-      # app.kubernetes.io/name: ai-assist
-      # app.kubernetes.io/instance: ai-assist
   template:
     metadata:
       labels:
         app: model-gateway
-        # app.kubernetes.io/name: ai-assist
-        # app.kubernetes.io/instance: ai-assist
     spec:
       imagePullSecrets:
         - name: gitlab-registry
@@ -82,28 +35,33 @@ spec:
             # Enable the Google Cloud Profiler
             # See https://console.cloud.google.com/profiler?referrer=search&project=unreview-poc-390200e5 
             # for profile output
-            # - name: GOOGLE_CLOUD_PROFILER
-            #   value: "1"
+            - name: GOOGLE_CLOUD_PROFILER
+              value: "1"
 ---
-# Source: ai-assist/templates/model-gateway.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: model-k8s-gateway
+  labels:
+    app: model-gateway
+spec:
+  type: ClusterIP
+  ports:
+    - name: api
+      port: 8080
+      targetPort: api-port
+    - name: metrics
+      port: 8081
+      targetPort: metrics-port
+  selector:
+    app: model-gateway
+---
 apiVersion: monitoring.coreos.com/v1
 kind: ServiceMonitor
 metadata:
   name: model-gateway-servicemonitor
-  annotations:
-    meta.helm.sh/release-name: ai-assist
-    meta.helm.sh/release-namespace: fauxpilot
   labels:
     release: prometheus
-    helm.sh/chart: ai-assist-0.1.0
-    app.kubernetes.io/name: ai-assist
-    app.kubernetes.io/instance: ai-assist
-    app.kubernetes.io/version: "0.1.0"
-    app.kubernetes.io/managed-by: Helm
-    shard: "default"
-    stage: "main"
-    tier: "sv"
-    type: "ai-assist"
 spec:
   endpoints:
     - interval: 30s
@@ -111,4 +69,3 @@ spec:
   selector:
     matchLabels:
       app: model-gateway
----

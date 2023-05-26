@@ -1,67 +1,19 @@
-# Source: ai-assist/templates/model-nfs-server.yaml
-apiVersion: v1
-kind: Service
-metadata:
-  name: model-nfs-k8s-server
-  annotations:
-    meta.helm.sh/release-name: ai-assist
-    meta.helm.sh/release-namespace: fauxpilot
-  labels:
-    app: model-nfs-server
-    helm.sh/chart: ai-assist-0.1.0
-    app.kubernetes.io/name: ai-assist
-    app.kubernetes.io/instance: ai-assist
-    app.kubernetes.io/version: "0.1.0"
-    app.kubernetes.io/managed-by: Helm
-    shard: "default"
-    stage: "main"
-    tier: "sv"
-    type: "ai-assist"
-spec:
-  ports:
-    - name: nfs
-      port: 2049
-    - name: mountd
-      port: 20048
-    - name: rpcbind
-      port: 111
-  selector:
-    app: model-nfs-server
-    app.kubernetes.io/name: ai-assist
-    app.kubernetes.io/instance: ai-assist
 ---
-# Source: ai-assist/templates/model-nfs-server.yaml
 apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: model-nfs-server
-  annotations:
-    meta.helm.sh/release-name: ai-assist
-    meta.helm.sh/release-namespace: fauxpilot
   labels:
     app: model-nfs-server
-    helm.sh/chart: ai-assist-0.1.0
-    app.kubernetes.io/name: ai-assist
-    app.kubernetes.io/instance: ai-assist
-    app.kubernetes.io/version: "0.1.0"
-    app.kubernetes.io/managed-by: Helm
-    shard: "default"
-    stage: "main"
-    tier: "sv"
-    type: "ai-assist"
 spec:
   replicas: 1
   selector:
     matchLabels:
       app: model-nfs-server
-      # app.kubernetes.io/name: ai-assist
-      # app.kubernetes.io/instance: ai-assist
   template:
     metadata:
       labels:
         app: model-nfs-server
-        # app.kubernetes.io/name: ai-assist
-        # app.kubernetes.io/instance: ai-assist
     spec:
       containers:
         - name: model-nfs-server
@@ -84,3 +36,19 @@ spec:
             pdName: nfs-codesuggestions-fauxpilot-disk
             fsType: ext4
 ---
+apiVersion: v1
+kind: Service
+metadata:
+  name: model-nfs-k8s-server
+  labels:
+    app: model-nfs-server
+spec:
+  ports:
+    - name: nfs
+      port: 2049
+    - name: mountd
+      port: 20048
+    - name: rpcbind
+      port: 111
+  selector:
+    app: model-nfs-server

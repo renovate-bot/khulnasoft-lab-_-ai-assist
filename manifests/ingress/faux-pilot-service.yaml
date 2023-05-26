@@ -1,21 +1,9 @@
-# Source: ai-assist/templates/faux-pilot-service.yaml
-apiVersion: v1
 kind: Service
+apiVersion: v1
 metadata:
   name: faux-pilot
-  labels:
-    helm.sh/chart: ai-assist-0.1.0
-    app.kubernetes.io/name: ai-assist
-    app.kubernetes.io/instance: ai-assist
-    app.kubernetes.io/version: "0.1.0"
-    app.kubernetes.io/managed-by: Helm
-    shard: "default"
-    stage: "main"
-    tier: "sv"
-    type: "ai-assist"
 spec:
   type: ExternalName
   externalName: model-k8s-gateway.fauxpilot.svc.cluster.local
   ports:
     - port: 8080
----
