@@ -2,7 +2,7 @@
 apiVersion: batch/v1
 kind: Job
 metadata:
-  name: model-loader-job-v2
+  name: model-loader-job
   labels:
     {{- include "ai-assist.labels" . | nindent 4 }}
 spec:
@@ -30,7 +30,7 @@ spec:
               mountPath: "/etc/gcp-storage-credentials"
               readOnly: true
       containers:
-        - name: unpack-model-gcs
+        - name: model-loader
           image: {{ .Values.modelLoaderJob.modelLoader.image.repository }}:{{ .Values.modelLoaderJob.modelLoader.image.tag | default .Chart.AppVersion }}
           env:
             - name: MODEL_NUM_GPU

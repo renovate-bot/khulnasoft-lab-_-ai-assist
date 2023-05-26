@@ -1,11 +1,11 @@
 ---
-# Source: ai-assist/templates/models-nfs-server.yaml
+# Source: ai-assist/templates/model-nfs-server.yaml
 apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: models-nfs-server-v2
   labels:
-    app: models-nfs-server
+    app: model-nfs-server
     version: v2
     helm.sh/chart: ai-assist-0.1.0
     app.kubernetes.io/version: "0.1.0"
@@ -47,7 +47,7 @@ spec:
             pdName: nfs-code-suggestions-models-disk
             fsType: ext4
 ---
-# Source: ai-assist/templates/models-nfs-server.yaml
+# Source: ai-assist/templates/model-nfs-server.yaml
 apiVersion: v1
 kind: Service
 metadata:

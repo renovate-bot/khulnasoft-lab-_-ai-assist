@@ -18,8 +18,8 @@ spec:
   strategy:
     type: RollingUpdate
     rollingUpdate:
-      maxSurge: 3
-      maxUnavailable: 0
+      maxSurge: 25%
+      maxUnavailable: 25%
   selector:
     matchLabels:
       app: model-triton
@@ -87,6 +87,8 @@ metadata:
     type: "ai-assist"
 spec:
   type: ClusterIP
+  selector:
+    app: model-triton
   ports:
     - name: api
       port: 8080
@@ -94,8 +96,6 @@ spec:
     - name: metrics
       port: 8082
       targetPort: 8002
-  selector:
-    app: model-triton
 ---
 # Source: ai-assist/templates/model-triton.yaml
 # Headless service for GRPC

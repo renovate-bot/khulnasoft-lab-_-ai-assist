@@ -1,5 +1,5 @@
 ---
-# Source: ai-assist/templates/models-persistense-volumes.yaml
+# Source: ai-assist/templates/model-persistense-volumes.yaml
 apiVersion: v1
 kind: PersistentVolume
 metadata:
@@ -23,7 +23,7 @@ spec:
     server: models-nfs-k8s-server-v2.fauxpilot.svc.cluster.local
     path: "/"
 ---
-# Source: ai-assist/templates/models-persistense-volumes.yaml
+# Source: ai-assist/templates/model-persistense-volumes.yaml
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:

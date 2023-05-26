@@ -3,7 +3,7 @@ kind: Deployment
 metadata:
   name: models-nfs-server-v2
   labels:
-    app: models-nfs-server
+    app: model-nfs-server
     version: v2
     {{- include "ai-assist.labels" . | nindent 4 }}
 spec:

@@ -3,7 +3,7 @@
 apiVersion: batch/v1
 kind: Job
 metadata:
-  name: model-loader-job-v2
+  name: model-loader-job
   labels:
     helm.sh/chart: ai-assist-0.1.0
     app.kubernetes.io/version: "0.1.0"
@@ -37,7 +37,7 @@ spec:
               mountPath: "/etc/gcp-storage-credentials"
               readOnly: true
       containers:
-        - name: unpack-model-gcs
+        - name: model-loader
           image: registry.gitlab.com/gitlab-org/modelops/applied-ml/code-suggestions/ai-assist/model-fauxpilot:latest
           env:
             - name: MODEL_NUM_GPU
