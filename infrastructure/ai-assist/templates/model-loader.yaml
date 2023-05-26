@@ -2,7 +2,7 @@
 apiVersion: batch/v1
 kind: Job
 metadata:
-  name: model-loader-job
+  name: model-loader-job-v2
   labels:
     {{- include "ai-assist.labels" . | nindent 4 }}
 spec:
@@ -19,7 +19,8 @@ spec:
               value: "1-gpu.tar.zst"
           command: [ "/bin/sh", "-c", "--" ]
           args:
-            - rm -f ${MODEL_ARCHIVE_NAME};
+            - |
+              rm -f ${MODEL_ARCHIVE_NAME};
               gcloud auth activate-service-account --key-file=/etc/gcp-storage-credentials/key.json;
               gsutil -m cp gs://code-suggestions/model-deployments/16b_v5/${MODEL_ARCHIVE_NAME} /data/;
           volumeMounts:
@@ -44,7 +45,8 @@ spec:
               value: {{ quote .Values.modelLoaderJob.modelLoader.env.modelFtConfig }}
           command: [ "/bin/sh", "-c", "--" ]
           args:
-            - rm -rf ${MODELS_DIR} && mkdir -p ${MODELS_DIR};
+            - |
+              rm -rf ${MODELS_DIR} && mkdir -p ${MODELS_DIR};
               rm -rf ${MODEL_WEIGHTS_DIR} && mkdir -p ${MODEL_WEIGHTS_DIR};
               cp -r /model/* ${MODELS_DIR};
               sed -e 's@${MODELS_DIR}@'"$MODELS_DIR"'@' -e 's@${MODEL_NUM_GPU}@'"$MODEL_NUM_GPUS"'@' $(MODEL_FT_CONFIG) > $(MODEL_FT_CONFIG).tmp;
