@@ -38,6 +38,7 @@ modelNfsServer:
       repository: gcr.io/google_containers/volume-nfs
       tag: "0.8"
   replicas: 1
+  gcePersistentDiskName: nfs-code-suggestions-models-disk
 
 modelTriton:
   replicas: 12

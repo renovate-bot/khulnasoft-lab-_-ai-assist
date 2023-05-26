@@ -1,7 +1,7 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: models-nfs-server-v2
+  name: model-nfs-server-v2
   labels:
     app: model-nfs-server
     version: v2
@@ -10,13 +10,13 @@ spec:
   replicas: {{ .Values.modelNfsServer.replicas }}
   selector:
     matchLabels:
-      app: models-nfs-server
+      app: model-nfs-server
       version: v2
       {{- include "ai-assist.selectorLabels" . | nindent 6 }}
   template:
     metadata:
       labels:
-        app: models-nfs-server
+        app: model-nfs-server
         version: v2
         {{- include "ai-assist.selectorLabels" . | nindent 8 }}
     spec:
@@ -38,7 +38,7 @@ spec:
       volumes:
         - name: nfs-models-volume
           gcePersistentDisk:
-            pdName: nfs-code-suggestions-models-disk
+            pdName: {{ .Values.modelNfsServer.gcePersistentDiskName }}
             fsType: ext4        
 ---
 apiVersion: v1

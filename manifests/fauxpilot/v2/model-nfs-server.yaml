@@ -18,12 +18,12 @@ spec:
   replicas: 1
   selector:
     matchLabels:
-      app: models-nfs-server
+      app: model-nfs-server
       version: v2
   template:
     metadata:
       labels:
-        app: models-nfs-server
+        app: model-nfs-server
         version: v2
     spec:
       containers:
@@ -73,3 +73,4 @@ spec:
   selector:
     app: model-nfs-server
     version: v2
+  
