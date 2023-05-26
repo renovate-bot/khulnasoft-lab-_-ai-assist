@@ -27,7 +27,7 @@ spec:
         version: v2
     spec:
       containers:
-        - name: models-nfs-server
+        - name: model-nfs-server
           image: gcr.io/google_containers/volume-nfs:0.8
           ports:
             - name: nfs

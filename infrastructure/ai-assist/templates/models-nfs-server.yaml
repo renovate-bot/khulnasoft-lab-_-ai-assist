@@ -21,7 +21,7 @@ spec:
         {{- include "ai-assist.selectorLabels" . | nindent 8 }}
     spec:
       containers:
-        - name: models-nfs-server
+        - name: model-nfs-server
           image: {{ .Values.modelNfsServer.modelNfsServer.image.repository }}:{{ .Values.modelNfsServer.modelNfsServer.image.tag | default .Chart.AppVersion }}
           ports:
             - name: nfs
