@@ -1,5 +1,2 @@
-modelNfsServer:
-  gcePersistentDiskName: nfs-code-suggestions-models-disk-tst
-
 modelTriton:
   replicas: 1
