@@ -1,6 +1,7 @@
 import logging
 import structlog
 import time
+import traceback
 
 from asgi_correlation_id.context import correlation_id
 
@@ -67,9 +68,10 @@ class MiddlewareLogRequest(Middleware):
             response = Response(status_code=500)
             try:
                 response = await call_next(request)
-            except Exception:
+            except Exception as e:
                 # TODO: Validate that we don't swallow exceptions (unit test?)
-                structlog.stdlib.get_logger("api.error").exception("Uncaught exception")
+                context.data['exception.message'] = str(e)
+                context.data['exception.backtrace'] = traceback.format_exc()
                 raise
             finally:
                 elapsed_time = time.perf_counter() - start_time_total
