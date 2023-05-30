@@ -146,7 +146,7 @@ parameters {
 parameters {
   key: "pipeline_para_size"
   value: {
-    string_value: "1"
+    string_value: "${PIPELINE_PARA_SIZE}"
   }
 }
 parameters {
