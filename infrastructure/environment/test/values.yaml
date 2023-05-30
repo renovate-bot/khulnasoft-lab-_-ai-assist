@@ -1,2 +1,6 @@
 modelTriton:
   replicas: 1
+  triton:
+    resources:
+      limits:
+        gpu: 2

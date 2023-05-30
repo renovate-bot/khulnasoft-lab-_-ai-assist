@@ -30,3 +30,6 @@ modelTriton:
     image:
       repository: registry.gitlab.com/gitlab-org/modelops/applied-ml/code-suggestions/ai-assist/tmp/triton-server
       tag: 363a6123
+    resources:
+      limits:
+        gpu: 1
