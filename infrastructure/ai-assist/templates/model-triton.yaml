@@ -37,9 +37,17 @@ spec:
               value: {{ quote .Values.modelTriton.triton.env.modelRepository }}
             - name: TRITON_BIN
               value: {{ quote .Values.modelTriton.triton.env.tritonBin }}
-          command: ["/bin/bash", "-c", "--"]
+          command: ["/bin/bash", "-x", "-c", "--"]
+          # Metrics options are documented here:
+          # https://github.com/triton-inference-server/server/blob/main/docs/user_guide/metrics.md
+          # TODO: add --allow-cpu-metrics true 
+          # TODO: add --metrics-config summary_latencies=true
           args:
-            - "$(TRITON_BIN) --model-repository=$(MODEL_REPOSITORY)"
+            - |
+              $(TRITON_BIN) \
+                --model-repository=$(MODEL_REPOSITORY) \
+                --allow-metrics true \
+                --allow-gpu-metrics true
           volumeMounts:
             - name: model-storage-volume
               mountPath: /data
