@@ -1,72 +1,76 @@
----
-# Source: ai-assist/templates/model-loader.yaml
 apiVersion: batch/v1
 kind: Job
 metadata:
   name: model-loader-job
-  labels:
-    helm.sh/chart: ai-assist-0.1.0
-    app.kubernetes.io/version: "0.1.0"
-    app.kubernetes.io/managed-by: Helm
-    shard: "default"
-    stage: "main"
-    tier: "sv"
-    type: "ai-assist"
 spec:
   ttlSecondsAfterFinished: 100
   template:
     spec:
       imagePullSecrets:
         - name: gitlab-registry
-      initContainers:
-        - name: download-model-gcs
-          image: google/cloud-sdk:429.0.0-alpine
-          env:
-            - name: MODEL_ARCHIVE_NAME
-              value: "1-gpu.tar.zst"
-          command: ["/bin/sh", "-c", "--"]
-          args:
-            - |
-              rm -f ${MODEL_ARCHIVE_NAME};
-              gcloud auth activate-service-account --key-file=/etc/gcp-storage-credentials/key.json;
-              gsutil -m cp gs://code-suggestions/model-deployments/16b_v5/${MODEL_ARCHIVE_NAME} /data/;
-          volumeMounts:
-            - name: models-codesuggestions-nfc-pvc-volume
-              mountPath: /data
-            - name: gcp-storage-credentials
-              mountPath: "/etc/gcp-storage-credentials"
-              readOnly: true
       containers:
         - name: model-loader
           image: registry.gitlab.com/gitlab-org/modelops/applied-ml/code-suggestions/ai-assist/model-fauxpilot:latest
           env:
             - name: MODEL_NUM_GPU
               value: "1"
+            - name: MODEL_ARCHIVE_NAME
+              value: "1-gpu.tar.zst"
             - name: MODEL_ARCHIVE
               value: "/data/1-gpu.tar.zst"
             - name: MODELS_DIR
-              value: "/data/models"
+              value: /data/models
             - name: MODEL_WEIGHTS_DIR
               value: "/data/models/fastertransformer/1/1-gpu"
             - name: MODEL_FT_CONFIG
-              value: "/data/models/fastertransformer/config.pbtxt"
-          command: ["/bin/sh", "-c", "--"]
+              value: /data/models/fastertransformer/config.pbtxt
+          command: [ "/bin/sh", "-x", "-c", "--" ]
           args:
             - |
-              rm -rf ${MODELS_DIR} && mkdir -p ${MODELS_DIR};
-              rm -rf ${MODEL_WEIGHTS_DIR} && mkdir -p ${MODEL_WEIGHTS_DIR};
-              cp -r /model/* ${MODELS_DIR};
-              sed -e 's@${MODELS_DIR}@'"$MODELS_DIR"'@' -e 's@${MODEL_NUM_GPU}@'"$MODEL_NUM_GPUS"'@' $(MODEL_FT_CONFIG) > $(MODEL_FT_CONFIG).tmp;
-              mv $(MODEL_FT_CONFIG).tmp $(MODEL_FT_CONFIG);
-              zstd -dc ${MODEL_ARCHIVE} | tar -xf - -C "${MODEL_WEIGHTS_DIR}" --strip-components=1;
-              rm -f ${MODEL_ARCHIVE};
+              set -euo pipefail
+
+              apk add --no-cache python3
+
+              # Install gcloud (TODO: move this into the Docker image)
+              curl https://dl.google.com/dl/cloudsdk/release/google-cloud-sdk.tar.gz > /tmp/google-cloud-sdk.tar.gz
+              mkdir -p /usr/local/gcloud 
+              tar -C /usr/local/gcloud -xvf /tmp/google-cloud-sdk.tar.gz >/dev/null
+              /usr/local/gcloud/google-cloud-sdk/install.sh
+              export PATH=$PATH:/usr/local/gcloud/google-cloud-sdk/bin
+
+              echo "Performing gcloud auth...";
+              gcloud auth activate-service-account --key-file=/etc/gcp-storage-credentials/key.json;
+
+              mkdir -p /data/downloading
+              download_dir=$(mktemp -d -p /data/downloading)
+              trap "rm -rf ${download_dir}" EXIT
+
+              downloaded_weights_file=${download_dir}/${MODEL_ARCHIVE_NAME}
+              
+              echo "Copying model from GCS...";
+              gsutil -m cp "gs://code-suggestions/model-deployments/16b_v5/${MODEL_ARCHIVE_NAME}" "${downloaded_weights_file}";
+
+              echo "Copy complete, processing model...";
+              rm -rf "${MODELS_DIR}" && mkdir -p "${MODELS_DIR}";
+              rm -rf "${MODEL_WEIGHTS_DIR}" && mkdir -p "${MODEL_WEIGHTS_DIR}";
+              cp -r /model/* "${MODELS_DIR}";
+              sed -e 's@${MODELS_DIR}@'"$MODELS_DIR"'@' -e 's@${MODEL_NUM_GPU}@'"$MODEL_NUM_GPUS"'@' "${MODEL_FT_CONFIG}" > "${MODEL_FT_CONFIG}.tmp";
+              mv "${MODEL_FT_CONFIG}.tmp" "${MODEL_FT_CONFIG}";
+
+              zstd -dc "${downloaded_weights_file}" | tar -xf - -C "${MODEL_WEIGHTS_DIR}" --strip-components=1;
+
+              echo "Copy complete..."
           volumeMounts:
-            - name: models-codesuggestions-nfc-pvc-volume
+            # Shared volume containing downloaded models
+            - name: model-storage-volume
               mountPath: /data
+            - name: gcp-storage-credentials
+              mountPath: "/etc/gcp-storage-credentials"
+              readOnly: true
       volumes:
-        - name: models-codesuggestions-nfc-pvc-volume
+        - name: model-storage-volume
           persistentVolumeClaim:
-            claimName: models-codesuggestions-nfs-pvc-v2
+            claimName: model-storage-pvc
         - name: gcp-storage-credentials
           secret:
             secretName: gcp-storage-credentials
