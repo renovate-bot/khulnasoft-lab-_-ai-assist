@@ -1,20 +1,13 @@
 ---
-# Source: ai-assist/templates/model-triton.yaml
 apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: model-triton
   labels:
     app: model-triton
-    helm.sh/chart: ai-assist-0.1.0
-    app.kubernetes.io/version: "0.1.0"
-    app.kubernetes.io/managed-by: Helm
-    shard: "default"
-    stage: "main"
-    tier: "sv"
-    type: "ai-assist"
+    {{- include "ai-assist.labels" . | nindent 4 }}
 spec:
-  replicas: 12
+  replicas: {{ .Values.modelTriton.replicas }}
   strategy:
     type: RollingUpdate
     rollingUpdate:
@@ -23,25 +16,27 @@ spec:
   selector:
     matchLabels:
       app: model-triton
+    {{- include "ai-assist.selectorLabels" . | nindent 6 }}
   template:
     metadata:
       labels:
         app: model-triton
+      {{- include "ai-assist.selectorLabels" . | nindent 8 }}
     spec:
       imagePullSecrets:
         - name: gitlab-registry
       containers:
         - name: triton
-          image: registry.gitlab.com/gitlab-org/modelops/applied-ml/code-suggestions/ai-assist/tmp/triton-server:363a6123
+          image: {{ .Values.modelTriton.triton.image.repository }}:{{ .Values.modelTriton.triton.image.tag | default .Chart.AppVersion }}
           ports:
             - containerPort: 8000
             - containerPort: 8001
             - containerPort: 8002
           env:
             - name: MODEL_REPOSITORY
-              value: "/data/models"
+              value: {{ quote .Values.modelTriton.triton.env.modelRepository }}
             - name: TRITON_BIN
-              value: "/opt/tritonserver/bin/tritonserver"
+              value: {{ quote .Values.modelTriton.triton.env.tritonBin }}
           command: ["/bin/bash", "-c", "--"]
           args:
             - "$(TRITON_BIN) --model-repository=$(MODEL_REPOSITORY)"
@@ -55,7 +50,7 @@ spec:
             limits:
               nvidia.com/gpu: "1"
           readinessProbe:
-            httpGet:
+            httpGet: 
               path: /v2/health/ready
               port: 8000
             periodSeconds: 10
@@ -71,24 +66,18 @@ spec:
             sizeLimit: "2Gi"
             medium: "Memory"
 ---
-# Source: ai-assist/templates/model-triton.yaml
 apiVersion: v1
 kind: Service
 metadata:
   name: model-k8s-triton
   labels:
     app: model-triton
-    helm.sh/chart: ai-assist-0.1.0
-    app.kubernetes.io/version: "0.1.0"
-    app.kubernetes.io/managed-by: Helm
-    shard: "default"
-    stage: "main"
-    tier: "sv"
-    type: "ai-assist"
+    {{- include "ai-assist.labels" . | nindent 4 }}
 spec:
   type: ClusterIP
   selector:
     app: model-triton
+    {{- include "ai-assist.selectorLabels" . | nindent 4 }}
   ports:
     - name: api
       port: 8080
@@ -97,7 +86,6 @@ spec:
       port: 8082
       targetPort: 8002
 ---
-# Source: ai-assist/templates/model-triton.yaml
 # Headless service for GRPC
 apiVersion: v1
 kind: Service
@@ -105,13 +93,7 @@ metadata:
   name: model-k8s-triton-headless
   labels:
     app: model-triton-headless
-    helm.sh/chart: ai-assist-0.1.0
-    app.kubernetes.io/version: "0.1.0"
-    app.kubernetes.io/managed-by: Helm
-    shard: "default"
-    stage: "main"
-    tier: "sv"
-    type: "ai-assist"
+    {{- include "ai-assist.labels" . | nindent 4 }}
 spec:
   clusterIP: None
   ports:
@@ -120,21 +102,15 @@ spec:
       targetPort: 8001
   selector:
     app: model-triton
+    {{- include "ai-assist.selectorLabels" . | nindent 4 }}
 ---
-# Source: ai-assist/templates/model-triton.yaml
 apiVersion: monitoring.coreos.com/v1
 kind: ServiceMonitor
 metadata:
   name: model-triton
   labels:
     release: prometheus
-    helm.sh/chart: ai-assist-0.1.0
-    app.kubernetes.io/version: "0.1.0"
-    app.kubernetes.io/managed-by: Helm
-    shard: "default"
-    stage: "main"
-    tier: "sv"
-    type: "ai-assist"
+    {{- include "ai-assist.labels" . | nindent 4 }}
 spec:
   endpoints:
     - interval: 30s
@@ -142,3 +118,4 @@ spec:
   selector:
     matchLabels:
       app: model-triton
+      {{- include "ai-assist.selectorLabels" . | nindent 4 }}

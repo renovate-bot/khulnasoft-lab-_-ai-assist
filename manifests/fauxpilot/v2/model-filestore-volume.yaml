@@ -1,0 +1,43 @@
+---
+# Source: ai-assist/templates/model-filestore-volume.yaml
+kind: PersistentVolumeClaim
+apiVersion: v1
+metadata:
+  name: model-storage-pvc
+  labels:
+    helm.sh/chart: ai-assist-0.1.0
+    app.kubernetes.io/version: "0.1.0"
+    app.kubernetes.io/managed-by: Helm
+    shard: "default"
+    stage: "main"
+    tier: "sv"
+    type: "ai-assist"
+spec:
+  accessModes:
+    - ReadWriteMany
+  storageClassName: model-storageclass
+  resources:
+    requests:
+      storage: 1Ti
+---
+# Source: ai-assist/templates/model-filestore-volume.yaml
+# Create a StorageClass for a Google FileStore Volume
+# https://cloud.google.com/filestore/docs/csi-driver
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: model-storageclass
+  labels:
+    helm.sh/chart: ai-assist-0.1.0
+    app.kubernetes.io/version: "0.1.0"
+    app.kubernetes.io/managed-by: Helm
+    shard: "default"
+    stage: "main"
+    tier: "sv"
+    type: "ai-assist"
+provisioner: filestore.csi.storage.gke.io
+volumeBindingMode: Immediate # Filestore is cross-AZ, no need to wait for binding
+allowVolumeExpansion: true
+parameters:
+  tier: standard
+  network: gitlab-ai-assist-network # This is the VPC the FileStore NFS server should be hosted on

@@ -1,0 +1,7 @@
+apiVersion: v2
+name: ai-assist
+description: This package deploys the model gateway and triton for code suggestions.
+icon: https://about.gitlab.com/images/press/logo/png/gitlab-logo-100.png
+type: application
+version: 0.1.0
+appVersion: "0.1.0"

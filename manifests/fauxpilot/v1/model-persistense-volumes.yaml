@@ -13,7 +13,6 @@ spec:
   nfs:
     server: model-nfs-k8s-server.fauxpilot.svc.cluster.local
     path: "/"
-
 ---
 apiVersion: v1
 kind: PersistentVolumeClaim

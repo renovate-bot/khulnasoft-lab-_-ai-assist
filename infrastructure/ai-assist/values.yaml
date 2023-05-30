@@ -1,0 +1,32 @@
+commonLabels:
+  tier: "sv"
+  type: "ai-assist"
+  stage: "main"
+  shard: "default"
+
+fauxPilot: {}
+
+modelGateway:
+  modelGateway:
+    env:
+      fastapiApiPort: "5052"
+      tritonHost: model-k8s-triton-headless
+      tritonPort: "8001"
+    image:
+      repository: registry.gitlab.com/gitlab-org/modelops/applied-ml/code-suggestions/ai-assist/model-gateway
+      tag: eb7fdb9d
+  replicas: 12
+
+modelK8SGateway: {}
+
+modelK8STriton: {}
+
+modelTriton:
+  replicas: 12
+  triton:
+    env:
+      modelRepository: /data/models
+      tritonBin: /opt/tritonserver/bin/tritonserver
+    image:
+      repository: registry.gitlab.com/gitlab-org/modelops/applied-ml/code-suggestions/ai-assist/tmp/triton-server
+      tag: 363a6123

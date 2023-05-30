@@ -5,21 +5,24 @@ metadata:
   name: model-gateway
   labels:
     app: model-gateway
+    {{- include "ai-assist.labels" . | nindent 4 }}
 spec:
-  replicas: 1
+  replicas: {{ .Values.modelGateway.replicas }}
   selector:
     matchLabels:
       app: model-gateway
+      {{- include "ai-assist.selectorLabels" . | nindent 6 }}
   template:
     metadata:
       labels:
         app: model-gateway
+        {{- include "ai-assist.selectorLabels" . | nindent 8 }}
     spec:
       imagePullSecrets:
         - name: gitlab-registry
       containers:
         - name: model-gateway
-          image: registry.gitlab.com/gitlab-org/modelops/applied-ml/code-suggestions/ai-assist/model-gateway:eb7fdb9d
+          image: {{ .Values.modelGateway.modelGateway.image.repository }}:{{ .Values.modelGateway.modelGateway.image.tag | default .Chart.AppVersion }}
           ports:
             - name: api-port
               containerPort: 5052
@@ -27,16 +30,24 @@ spec:
               containerPort: 8082
           env:
             - name: TRITON_HOST
-              value: "model-k8s-triton-headless"
+              value: {{ quote .Values.modelGateway.modelGateway.env.tritonHost }}
             - name: TRITON_PORT
-              value: "8001"
+              value: {{ quote .Values.modelGateway.modelGateway.env.tritonPort }}
             - name: FASTAPI_API_PORT
-              value: "5052"
+              value: {{ quote .Values.modelGateway.modelGateway.env.fastapiApiPort }}
             # Enable the Google Cloud Profiler
             # See https://console.cloud.google.com/profiler?referrer=search&project=unreview-poc-390200e5 
             # for profile output
             - name: GOOGLE_CLOUD_PROFILER
               value: "1"
+          # livenessProbe:
+          #   httpGet:
+          #     path: /monitoring/healthz
+          #     port: api-port
+          #   initialDelaySeconds: 10
+          #   periodSeconds: 10
+          #   timeoutSeconds: 1
+          #   failureThreshold: 3
 ---
 apiVersion: v1
 kind: Service
@@ -44,6 +55,7 @@ metadata:
   name: model-k8s-gateway
   labels:
     app: model-gateway
+    {{- include "ai-assist.labels" . | nindent 4 }}
 spec:
   type: ClusterIP
   ports:
@@ -62,6 +74,7 @@ metadata:
   name: model-gateway-servicemonitor
   labels:
     release: prometheus
+    {{- include "ai-assist.labels" . | nindent 4 }}
 spec:
   endpoints:
     - interval: 30s
