@@ -319,12 +319,7 @@ on any other clusters is not guaranteed.
    kubectl apply -f https://raw.githubusercontent.com/GoogleCloudPlatform/container-engine-accelerators/master/nvidia-driver-installer/cos/daemonset-preloaded-latest.yaml
    ```
 
-3. Provision GCP persistence disk to store AI Assist models:
-   ```shell
-   gcloud compute disks create --size=500GB --zone=us-central1-c nfs-ai-assist-models-disk
-   ```
-
-4. Install [`cert-manager`](https://cert-manager.io/docs/):
+3. Install [`cert-manager`](https://cert-manager.io/docs/):
    ```shell
    kubectl create namespace cert-manager
    kubectl config set-context --current --namespace cert-manager
@@ -332,7 +327,7 @@ on any other clusters is not guaranteed.
    kubectl apply -f ./manifests/cert-manager/cluster-issuer.yaml
    ```
 
-5. Install the Ingress [`NGINX`](https://kubernetes.github.io/ingress-nginx/) controller:
+4. Install the Ingress [`NGINX`](https://kubernetes.github.io/ingress-nginx/) controller:
    ```shell
    kubectl create namespace nginx
    kubectl config set-context --current --namespace nginx
@@ -350,14 +345,14 @@ on any other clusters is not guaranteed.
      --set controller.metrics.serviceMonitor.additionalLabels.release="prometheus"
    ```
 
-6. Create the `ai-assist` namespace and update the current context
+5. Create the `ai-assist` namespace and update the current context
    ```shell
    export KUBERNETES_AI_ASSIST_NAMESPACE=ai-assist
    kubectl create namespace $KUBERNETES_AI_ASSIST_NAMESPACE
    kubectl config set-context --current --namespace $KUBERNETES_AI_ASSIST_NAMESPACE
    ```
 
-7. Create the `docker-registry` secret to pull private images from GitLab AI Assist registry:
+6. Create the `docker-registry` secret to pull private images from GitLab AI Assist registry:
    ```shell
    export DEPLOY_TOKEN_USERNAME=<USERNAME>
    export DEPLOY_TOKEN_PASSWORD=<PASSWORD>
@@ -367,31 +362,40 @@ on any other clusters is not guaranteed.
       --docker-password="$DEPLOY_TOKEN_PASSWORD"
    ```
 
-8. Deploy NFS server and model persistence volume:
+7. Deploy the `ai-assist` helm chart
    ```shell
-   kubectl apply -f ./manifests/model-nfs-server.yaml
-   kubectl apply -f ./manifests/model-persistense-volumes.yaml
+   cd infrastructure
+
+   # For Production...
+   helm upgrade ai-assist ai-assist --values environment/test/values.yaml
+
+   # For Staging
+   helm upgrade ai-assist ai-assist --values environment/test/values.yaml
    ```
 
-9. Run the k8s job to fetch the `codegen-16B-multi` model from Hugging Face:
+8. Run the k8s job to fetch the `codegen-16B-multi` model from Hugging Face and store it in Google FileStore:
    ```shell
-   kubectl apply -f ./manifests/model-loader.yaml
-   kubectl wait --for=condition=complete --timeout=30m job/model-loader-job
+   ./infrastructure/scripts/load-model.sh
    ```
 
-10. Deploy Triton Inference server including API service:
+9.  Reload Triton to fetch the newer model after the batch job:
     ```shell
-    kubectl apply -f ./manifests/model-serving.yaml
+    kubectl rollout restart deployment model-triton
     ```
 
-11. Deploy the NGINX ingress resource with TLS enabled:
+10. Deploy the NGINX ingress resource with TLS enabled:
    ```shell
    kubectl apply -f ./manifests/ingress/ingress-nginx.yaml
    ```
 
 ## Monitoring
 
-Proper observability is a corner stone of a well engineered, production worthy system. So like any such system we have monitoring too.
+The following monitoring and observability resources are available:
+
+1. [`code_suggestions` Service Overview Dashboard in Grafana](https://dashboards.gitlab.net/d/code_suggestions-main/code-suggestions-overview?orgId=1)
+1. [Triton Server Dashboard in Grafana](https://dashboards.gitlab.net/d/code_suggestions-triton/code-suggestions-triton-server?orgId=1)
+1. [Model Gateway Continuous Profiling](https://console.cloud.google.com/profiler/model-gateway;type=CPU/cpu?referrer=search&project=unreview-poc-390200e5)
+1. [Code Suggestions Kibana Dashboard](https://log.gprd.gitlab.net/goto/b34327f0-feb2-11ed-8afc-c9851e4645c0)
 
 ### Prerequisites
 

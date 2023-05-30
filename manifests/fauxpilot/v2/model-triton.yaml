@@ -46,7 +46,7 @@ spec:
           args:
             - "$(TRITON_BIN) --model-repository=$(MODEL_REPOSITORY)"
           volumeMounts:
-            - name: models-codesuggestions-nfc-pvc-volume
+            - name: model-storage-volume
               mountPath: /data
               readOnly: true
             - name: dshm
@@ -63,9 +63,9 @@ spec:
             timeoutSeconds: 1
             failureThreshold: 3
       volumes:
-        - name: models-codesuggestions-nfc-pvc-volume
+        - name: model-storage-volume
           persistentVolumeClaim:
-            claimName: models-codesuggestions-nfs-pvc-v2
+            claimName: model-storage-pvc
         - name: dshm
           emptyDir:
             sizeLimit: "2Gi"
