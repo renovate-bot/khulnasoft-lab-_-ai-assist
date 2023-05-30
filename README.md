@@ -306,6 +306,16 @@ To successfully deploy AI Assist to a k8s cluster, please, make sure your cluste
 Below, we give a guideline tested specifically on the GKE cluster in the Applied ML group. Successful work
 on any other clusters is not guaranteed.
 
+1. Enable the following APIs in the Google Cloud Project:
+
+    ```shell
+    # Enable Cloud Profiler for Continuous Profiling
+    gcloud services enable cloudprofiler.googleapis.com
+
+    # Enable Google FileStore (managed NFS)
+    gcloud services enable file.googleapis.com
+    ```
+
 1. Create a GKE cluster with the following configuration:
    - gke version `1.24.5-gke.600`
    - image type `container-optimized OS with containerd.`
@@ -314,12 +324,18 @@ on any other clusters is not guaranteed.
    - 1 Nvidia T4 GPU 16 GB GDDR6
    - Nvidia driver version: 510.47.03, CUDA version: 11.7
 
-2. Install NVIDIA GPU device drivers (more [info](https://cloud.google.com/kubernetes-engine/docs/how-to/gpus#installing_drivers)):
+1. Enable the `GcpFilestoreCsiDriver` Addon, to allow GKE to provision volumes on FileStore:
+
+    ```shell
+     gcloud container clusters update <GKE_CLUSTER_NAME> --update-addons=GcpFilestoreCsiDriver=ENABLED --region <REGION>
+     ```
+
+1. Install NVIDIA GPU device drivers (more [info](https://cloud.google.com/kubernetes-engine/docs/how-to/gpus#installing_drivers)):
    ```shell
    kubectl apply -f https://raw.githubusercontent.com/GoogleCloudPlatform/container-engine-accelerators/master/nvidia-driver-installer/cos/daemonset-preloaded-latest.yaml
    ```
 
-3. Install [`cert-manager`](https://cert-manager.io/docs/):
+1. Install [`cert-manager`](https://cert-manager.io/docs/):
    ```shell
    kubectl create namespace cert-manager
    kubectl config set-context --current --namespace cert-manager
@@ -327,7 +343,7 @@ on any other clusters is not guaranteed.
    kubectl apply -f ./manifests/cert-manager/cluster-issuer.yaml
    ```
 
-4. Install the Ingress [`NGINX`](https://kubernetes.github.io/ingress-nginx/) controller:
+1. Install the Ingress [`NGINX`](https://kubernetes.github.io/ingress-nginx/) controller:
    ```shell
    kubectl create namespace nginx
    kubectl config set-context --current --namespace nginx
@@ -345,14 +361,14 @@ on any other clusters is not guaranteed.
      --set controller.metrics.serviceMonitor.additionalLabels.release="prometheus"
    ```
 
-5. Create the `ai-assist` namespace and update the current context
+1. Create the `ai-assist` namespace and update the current context
    ```shell
    export KUBERNETES_AI_ASSIST_NAMESPACE=ai-assist
    kubectl create namespace $KUBERNETES_AI_ASSIST_NAMESPACE
    kubectl config set-context --current --namespace $KUBERNETES_AI_ASSIST_NAMESPACE
    ```
 
-6. Create the `docker-registry` secret to pull private images from GitLab AI Assist registry:
+1. Create the `docker-registry` secret to pull private images from GitLab AI Assist registry:
    ```shell
    export DEPLOY_TOKEN_USERNAME=<USERNAME>
    export DEPLOY_TOKEN_PASSWORD=<PASSWORD>
@@ -362,7 +378,7 @@ on any other clusters is not guaranteed.
       --docker-password="$DEPLOY_TOKEN_PASSWORD"
    ```
 
-7. Deploy the `ai-assist` helm chart
+1. Deploy the `ai-assist` helm chart
    ```shell
    cd infrastructure
 
@@ -373,17 +389,17 @@ on any other clusters is not guaranteed.
    helm upgrade ai-assist ai-assist --values environment/test/values.yaml
    ```
 
-8. Run the k8s job to fetch the `codegen-16B-multi` model from Hugging Face and store it in Google FileStore:
+1.  Run the k8s job to fetch the `codegen-16B-multi` model from Hugging Face and store it in Google FileStore:
    ```shell
    ./infrastructure/scripts/load-model.sh
    ```
 
-9.  Reload Triton to fetch the newer model after the batch job:
+1. Reload Triton to fetch the newer model after the batch job:
     ```shell
     kubectl rollout restart deployment model-triton
     ```
 
-10. Deploy the NGINX ingress resource with TLS enabled:
+1. Deploy the NGINX ingress resource with TLS enabled:
    ```shell
    kubectl apply -f ./manifests/ingress/ingress-nginx.yaml
    ```
