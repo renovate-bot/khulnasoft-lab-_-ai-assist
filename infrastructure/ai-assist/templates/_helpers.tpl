@@ -40,9 +40,7 @@ helm.sh/chart: {{ include "ai-assist.chart" . }}
 app.kubernetes.io/version: {{ .Chart.AppVersion | quote }}
 {{- end }}
 app.kubernetes.io/managed-by: {{ .Release.Service }}
-{{- range $key, $value := .Values.commonLabels }}
-{{ $key }}: {{ $value | quote }}
-{{- end }}
+{{ include "common.tplvalues.render" (dict "value" .Values.commonLabels "context" $) }}
 {{- end }}
 
 {{/*
@@ -66,3 +64,16 @@ Create the name of the service account to use
 {{- default "default" .Values.serviceAccount.name }}
 {{- end }}
 {{- end }}
+
+{{/*
+Renders a value that contains template.
+Usage:
+{{ include "common.tplvalues.render" ( dict "value" .Values.path.to.the.Value "context" $) }}
+*/}}
+{{- define "common.tplvalues.render" -}}
+    {{- if typeIs "string" .value }}
+        {{- tpl .value .context }}
+    {{- else }}
+        {{- tpl (.value | toYaml) .context }}
+    {{- end }}
+{{- end -}}
