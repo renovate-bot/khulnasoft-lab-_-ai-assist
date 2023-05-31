@@ -26,7 +26,7 @@ spec:
               value: /data/models/fastertransformer/config.pbtxt
             # Change PIPELINE_PARA_SIZE to 2 when starting this job in the stg cluster
             - name: PIPELINE_PARA_SIZE
-              value: 1
+              value: "1"
           command: [ "/bin/sh", "-x", "-c", "--" ]
           args:
             - |
