@@ -1,12 +1,15 @@
 commonLabels:
   tier: "sv"
-  type: "ai-assist"
   stage: "main"
   shard: "default"
 
-fauxPilot: {}
+fauxPilot:
+  labels:
+    type: "code_suggestions"
 
 modelGateway:
+  labels:
+    type: "code_suggestions"
   modelGateway:
     env:
       fastapiApiPort: "5052"
@@ -17,11 +20,17 @@ modelGateway:
       tag: eb7fdb9d
   replicas: 12
 
-modelK8SGateway: {}
+modelK8SGateway:
+  labels:
+    type: "code_suggestions"
 
-modelK8STriton: {}
+modelK8STriton:
+  labels:
+    type: "code_suggestions"
 
 modelTriton:
+  labels:
+    type: "code_suggestions"
   replicas: 7
   triton:
     env:
@@ -33,3 +42,7 @@ modelTriton:
     resources:
       limits:
         gpu: 2
+
+modelStorage:
+  labels:
+    type: "code_suggestions"

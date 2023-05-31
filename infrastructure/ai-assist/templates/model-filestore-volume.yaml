@@ -7,6 +7,7 @@ metadata:
   name: model-storageclass
   labels:
     {{- include "ai-assist.labels" . | nindent 4 }}
+    {{ include "common.tplvalues.render" (dict "value" .Values.modelStorage.labels "context" $) }}
 provisioner: filestore.csi.storage.gke.io
 volumeBindingMode: Immediate # Filestore is cross-AZ, no need to wait for binding
 allowVolumeExpansion: true
@@ -20,6 +21,7 @@ metadata:
   name: model-storage-pvc
   labels:
     {{- include "ai-assist.labels" . | nindent 4 }}
+    {{ include "common.tplvalues.render" (dict "value" .Values.modelStorage.labels "context" $) }}
 spec:
   accessModes:
   - ReadWriteMany
