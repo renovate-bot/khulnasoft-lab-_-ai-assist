@@ -358,7 +358,8 @@ on any other clusters is not guaranteed.
      --namespace nginx \
      --set controller.metrics.enabled=true \
      --set controller.metrics.serviceMonitor.enabled=true \
-     --set controller.metrics.serviceMonitor.additionalLabels.release="prometheus"
+     --set controller.metrics.serviceMonitor.additionalLabels.release="prometheus" \
+     --set controller.extraArgs.time-buckets="0.5\,1\,2.5\,5\,10\,30\,60"
    ```
 
 1. Create the `ai-assist` namespace and update the current context
