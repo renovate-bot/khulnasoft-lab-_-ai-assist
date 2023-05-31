@@ -49,7 +49,8 @@ app.kubernetes.io/managed-by: {{ .Release.Service }}
 Selector labels
 */}}
 {{- define "ai-assist.selectorLabels" -}}
-{{/*
+{{/* These are currently commented out because we can't apply selector labels without
+downtime. Still deciding if we need them in https://gitlab.com/gitlab-com/gl-infra/reliability/-/issues/23724#note_1413210936
 # app.kubernetes.io/name: {{ include "ai-assist.name" . }}
 # app.kubernetes.io/instance: {{ .Release.Name }}
 */}}

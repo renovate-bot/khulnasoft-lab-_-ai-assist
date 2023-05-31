@@ -16,12 +16,12 @@ spec:
   selector:
     matchLabels:
       app: model-triton
-    {{- include "ai-assist.selectorLabels" . | nindent 6 }}
+      {{- include "ai-assist.selectorLabels" . | nindent 6 }}
   template:
     metadata:
       labels:
         app: model-triton
-      {{- include "ai-assist.selectorLabels" . | nindent 8 }}
+        {{- include "ai-assist.selectorLabels" . | nindent 8 }}
     spec:
       imagePullSecrets:
         - name: gitlab-registry
