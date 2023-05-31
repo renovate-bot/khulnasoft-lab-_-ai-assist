@@ -140,7 +140,7 @@ instance_group [
 parameters {
   key: "tensor_para_size"
   value: {
-    string_value: "1"
+    string_value: "${TENSOR_PARA_SIZE}"
   }
 }
 parameters {

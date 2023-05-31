@@ -27,6 +27,8 @@ spec:
             # Change PIPELINE_PARA_SIZE to 2 when starting this job in the stg cluster
             - name: PIPELINE_PARA_SIZE
               value: "1"
+            - name: TENSOR_PARA_SIZE
+              value: "1"
           command: [ "/bin/sh", "-x", "-c", "--" ]
           args:
             - |
@@ -57,7 +59,7 @@ spec:
               rm -rf "${MODELS_DIR}" && mkdir -p "${MODELS_DIR}";
               rm -rf "${MODEL_WEIGHTS_DIR}" && mkdir -p "${MODEL_WEIGHTS_DIR}";
               cp -r /model/* "${MODELS_DIR}";
-              sed -e 's@${MODELS_DIR}@'"$MODELS_DIR"'@' -e 's@${MODEL_NUM_GPU}@'"$MODEL_NUM_GPUS"'@' -e 's@${PIPELINE_PARA_SIZE}@'"$PIPELINE_PARA_SIZE"'@' "${MODEL_FT_CONFIG}" > "${MODEL_FT_CONFIG}.tmp";
+              sed -e 's@${MODELS_DIR}@'"$MODELS_DIR"'@' -e 's@${MODEL_NUM_GPU}@'"$MODEL_NUM_GPUS"'@' -e 's@${PIPELINE_PARA_SIZE}@'"$PIPELINE_PARA_SIZE"'@' -e 's@${TENSOR_PARA_SIZE}@'"$TENSOR_PARA_SIZE"'@' "${MODEL_FT_CONFIG}" > "${MODEL_FT_CONFIG}.tmp";
               mv "${MODEL_FT_CONFIG}.tmp" "${MODEL_FT_CONFIG}";
 
               zstd -dc "${downloaded_weights_file}" | tar -xf - -C "${MODEL_WEIGHTS_DIR}" --strip-components=1;
