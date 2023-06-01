@@ -42,7 +42,7 @@ spec:
             # See https://console.cloud.google.com/profiler?referrer=search&project=unreview-poc-390200e5
             # for profile output
             - name: GOOGLE_CLOUD_PROFILER
-              value: "1"
+              value: {{ quote .Values.modelGateway.modelGateway.env.googleCloudProfiler }}
           # livenessProbe:
           #   httpGet:
           #     path: /monitoring/healthz

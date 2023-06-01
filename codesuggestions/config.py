@@ -80,7 +80,7 @@ class Config:
     @property
     def profiling(self) -> ProfilingConfig:
         return ProfilingConfig(
-            enabled=Config._get_value("GOOGLE_CLOUD_PROFILER", False),
+            enabled=Config._str_to_bool(Config._get_value("GOOGLE_CLOUD_PROFILER", "False")),
             verbose=int(Config._get_value("GOOGLE_CLOUD_PROFILER_VERBOSE", 2)),
             period_ms=int(Config._get_value("GOOGLE_CLOUD_PROFILER_PERIOD_MS", 10)),
         )
