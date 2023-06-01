@@ -379,15 +379,22 @@ on any other clusters is not guaranteed.
       --docker-password="$DEPLOY_TOKEN_PASSWORD"
    ```
 
-1. Deploy the `ai-assist` helm chart
+1. Install the `helm-diff` plugin:
+   ```shell
+   helm plugin install https://github.com/databus23/helm-diff
+   ```
+
+1. Deploy the `ai-assist` helm chart:
    ```shell
    cd infrastructure
 
-   # For Production...
-   helm upgrade ai-assist ai-assist --values environment/test/values.yaml
-
    # For Staging
-   helm upgrade ai-assist ai-assist --values environment/test/values.yaml
+   helm --kube-context gke_unreview-poc-390200e5_us-central1-c_ai-assist-test diff upgrade ai-assist ai-assist -n fauxpilot -f environment/test/values.yaml
+   helm --kube-context gke_unreview-poc-390200e5_us-central1-c_ai-assist-test upgrade ai-assist ai-assist -n fauxpilot -f environment/test/values.yaml
+
+   # For Production...
+   helm --kube-context gke_unreview-poc-390200e5_us-central1-c_ai-assist diff upgrade ai-assist ai-assist -n fauxpilot -f ai-assist/values.yaml
+   helm --kube-context gke_unreview-poc-390200e5_us-central1-c_ai-assist upgrade ai-assist ai-assist -n fauxpilot -f ai-assist/values.yaml
    ```
 
 1.  Run the k8s job to fetch the `codegen-16B-multi` model from Hugging Face and store it in Google FileStore:
