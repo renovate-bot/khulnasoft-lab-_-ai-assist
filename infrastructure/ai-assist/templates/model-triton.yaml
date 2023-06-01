@@ -56,7 +56,7 @@ spec:
               mountPath: /dev/shm
           resources:
             limits:
-              nvidia.com/gpu: "1"
+              nvidia.com/gpu: {{ quote .Values.modelTriton.triton.resources.limits.gpu }}
           readinessProbe:
             httpGet: 
               path: /v2/health/ready
