@@ -29,7 +29,8 @@ spec:
               value: "1"
             - name: TENSOR_PARA_SIZE
               value: "2"
-            # 
+
+            # Set SKIP_FT_WEIGHTS_DOWNLOAD to one to skip the download
             - name: SKIP_FT_WEIGHTS_DOWNLOAD
               value: "0"
           command: [ "/bin/sh", "-x", "-c", "--" ]
@@ -55,7 +56,7 @@ spec:
 
               downloaded_weights_file=${download_dir}/${MODEL_ARCHIVE_NAME}
               
-              if [ "$SKIP_FT_WEIGHTS_DOWNLOAD" == "1" ]; then
+              if [ "${SKIP_FT_WEIGHTS_DOWNLOAD-}" != "1" ]; then
                 echo "Copying model from GCS...";
                 gsutil -m cp "gs://code-suggestions/model-deployments/16b_v5/${MODEL_ARCHIVE_NAME}" "${downloaded_weights_file}";
 
