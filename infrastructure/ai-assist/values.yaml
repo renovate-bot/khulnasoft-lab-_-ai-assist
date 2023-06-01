@@ -46,3 +46,14 @@ modelTriton:
 modelStorage:
   labels:
     type: "code_suggestions"
+
+prometheus-stackdriver-exporter:
+  stackdriver:
+    projectId: unreview-poc-390200e5
+    metrics:
+      typePrefixes: 'file.googleapis.com'
+  serviceMonitor:
+    enabled: true
+    namespace: fauxpilot
+    additionalLabels:
+      release: prometheus

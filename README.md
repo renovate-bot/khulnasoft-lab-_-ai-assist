@@ -384,6 +384,11 @@ on any other clusters is not guaranteed.
    helm plugin install https://github.com/databus23/helm-diff
    ```
 
+1. Install chart dependencies
+  ```
+  helm dep build infrastructure/ai-assist
+  ```
+
 1. Deploy the `ai-assist` helm chart:
    ```shell
    cd infrastructure

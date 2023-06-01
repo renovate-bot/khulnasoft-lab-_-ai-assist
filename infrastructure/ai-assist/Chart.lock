@@ -1,0 +1,6 @@
+dependencies:
+- name: prometheus-stackdriver-exporter
+  repository: https://prometheus-community.github.io/helm-charts
+  version: 4.3.0
+digest: sha256:b5f6d673a2c2eac551038205150ad47740c832c030cdff180437d74e08a24d13
+generated: "2023-06-01T16:27:00.207242-04:00"
