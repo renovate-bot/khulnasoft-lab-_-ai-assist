@@ -73,7 +73,7 @@ spec:
                  "${MODEL_FT_CONFIG}" > "${MODEL_FT_CONFIG}.tmp";
               mv "${MODEL_FT_CONFIG}.tmp" "${MODEL_FT_CONFIG}";
 
-              if [ "$SKIP_FT_WEIGHTS_DOWNLOAD" == "1" ]; then
+              if [ "${SKIP_FT_WEIGHTS_DOWNLOAD-}" != "1" ]; then
                 zstd -dc "${downloaded_weights_file}" | tar -xf - -C "${MODEL_WEIGHTS_DIR}" --strip-components=1;
               fi 
 
