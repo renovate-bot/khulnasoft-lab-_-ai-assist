@@ -22,7 +22,7 @@ modelK8SGateway: {}
 modelK8STriton: {}
 
 modelTriton:
-  replicas: 12
+  replicas: 4
   triton:
     env:
       modelRepository: /data/models
@@ -32,4 +32,4 @@ modelTriton:
       tag: 363a6123
     resources:
       limits:
-        gpu: 1
+        gpu: 2
