@@ -13,22 +13,25 @@ spec:
           image: registry.gitlab.com/gitlab-org/modelops/applied-ml/code-suggestions/ai-assist/model-fauxpilot:latest
           env:
             - name: MODEL_NUM_GPU
-              value: "1"
+              value: "2"
             - name: MODEL_ARCHIVE_NAME
-              value: "1-gpu.tar.zst"
+              value: "$(MODEL_NUM_GPU)-gpu.tar.zst"
             - name: MODEL_ARCHIVE
-              value: "/data/1-gpu.tar.zst"
+              value: "/data/$(MODEL_NUM_GPU)-gpu.tar.zst"
             - name: MODELS_DIR
               value: /data/models
             - name: MODEL_WEIGHTS_DIR
-              value: "/data/models/fastertransformer/1/1-gpu"
+              value: "/data/models/fastertransformer/1/$(MODEL_NUM_GPU)-gpu"
             - name: MODEL_FT_CONFIG
               value: /data/models/fastertransformer/config.pbtxt
             # Change PIPELINE_PARA_SIZE to 2 when starting this job in the stg cluster
             - name: PIPELINE_PARA_SIZE
               value: "1"
             - name: TENSOR_PARA_SIZE
-              value: "1"
+              value: "2"
+            # 
+            - name: SKIP_FT_WEIGHTS_DOWNLOAD
+              value: "0"
           command: [ "/bin/sh", "-x", "-c", "--" ]
           args:
             - |
@@ -52,17 +55,26 @@ spec:
 
               downloaded_weights_file=${download_dir}/${MODEL_ARCHIVE_NAME}
               
-              echo "Copying model from GCS...";
-              gsutil -m cp "gs://code-suggestions/model-deployments/16b_v5/${MODEL_ARCHIVE_NAME}" "${downloaded_weights_file}";
+              if [ "$SKIP_FT_WEIGHTS_DOWNLOAD" == "1" ]; then
+                echo "Copying model from GCS...";
+                gsutil -m cp "gs://code-suggestions/model-deployments/16b_v5/${MODEL_ARCHIVE_NAME}" "${downloaded_weights_file}";
+
+                rm -rf "${MODELS_DIR}" && mkdir -p "${MODELS_DIR}";
+                rm -rf "${MODEL_WEIGHTS_DIR}" && mkdir -p "${MODEL_WEIGHTS_DIR}";
+              fi
 
               echo "Copy complete, processing model...";
-              rm -rf "${MODELS_DIR}" && mkdir -p "${MODELS_DIR}";
-              rm -rf "${MODEL_WEIGHTS_DIR}" && mkdir -p "${MODEL_WEIGHTS_DIR}";
               cp -r /model/* "${MODELS_DIR}";
-              sed -e 's@${MODELS_DIR}@'"$MODELS_DIR"'@' -e 's@${MODEL_NUM_GPU}@'"$MODEL_NUM_GPUS"'@' -e 's@${PIPELINE_PARA_SIZE}@'"$PIPELINE_PARA_SIZE"'@' -e 's@${TENSOR_PARA_SIZE}@'"$TENSOR_PARA_SIZE"'@' "${MODEL_FT_CONFIG}" > "${MODEL_FT_CONFIG}.tmp";
+              sed -e 's@${MODELS_DIR}@'"$MODELS_DIR"'@' \
+                 -e 's@${MODEL_NUM_GPU}@'"$MODEL_NUM_GPU"'@' \
+                 -e 's@${PIPELINE_PARA_SIZE}@'"$PIPELINE_PARA_SIZE"'@' \
+                 -e 's@${TENSOR_PARA_SIZE}@'"$TENSOR_PARA_SIZE"'@' \
+                 "${MODEL_FT_CONFIG}" > "${MODEL_FT_CONFIG}.tmp";
               mv "${MODEL_FT_CONFIG}.tmp" "${MODEL_FT_CONFIG}";
 
-              zstd -dc "${downloaded_weights_file}" | tar -xf - -C "${MODEL_WEIGHTS_DIR}" --strip-components=1;
+              if [ "$SKIP_FT_WEIGHTS_DOWNLOAD" == "1" ]; then
+                zstd -dc "${downloaded_weights_file}" | tar -xf - -C "${MODEL_WEIGHTS_DIR}" --strip-components=1;
+              fi 
 
               echo "Copy complete..."
           volumeMounts:
