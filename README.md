@@ -389,12 +389,14 @@ on any other clusters is not guaranteed.
    cd infrastructure
 
    # For Staging
-   helm --kube-context gke_unreview-poc-390200e5_us-central1-c_ai-assist-test diff upgrade ai-assist ai-assist -n fauxpilot -f environment/test/values.yaml
-   helm --kube-context gke_unreview-poc-390200e5_us-central1-c_ai-assist-test upgrade ai-assist ai-assist -n fauxpilot -f environment/test/values.yaml
+   scripts/helm-deploy.sh gstg diff
+   scripts/helm-deploy.sh gstg upgrade
+   scripts/helm-deploy.sh gstg upgrade --no-dry-run
 
    # For Production...
-   helm --kube-context gke_unreview-poc-390200e5_us-central1-c_ai-assist diff upgrade ai-assist ai-assist -n fauxpilot -f ai-assist/values.yaml
-   helm --kube-context gke_unreview-poc-390200e5_us-central1-c_ai-assist upgrade ai-assist ai-assist -n fauxpilot -f ai-assist/values.yaml
+   scripts/helm-deploy.sh gprd diff
+   scripts/helm-deploy.sh gprd upgrade
+   scripts/helm-deploy.sh gprd upgrade --no-dry-run
    ```
 
 1.  Run the k8s job to fetch the `codegen-16B-multi` model from Hugging Face and store it in Google FileStore:
