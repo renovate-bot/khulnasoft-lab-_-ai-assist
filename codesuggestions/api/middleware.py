@@ -1,3 +1,4 @@
+import json
 import logging
 import structlog
 import time
@@ -84,6 +85,8 @@ class MiddlewareLogRequest(Middleware):
                 http_version = request.scope["http_version"]
 
                 if 400 <= status_code < 500:
+                    await self._extract_project_keys(request)
+
                     # StreamingResponse is received from the MiddlewareAuthentication, so
                     # we need to read the response ourselves.
                     response_body = [section async for section in response.body_iterator]
@@ -111,6 +114,19 @@ class MiddlewareLogRequest(Middleware):
                     **fields)
                 response.headers["X-Process-Time"] = str(elapsed_time)
                 return response
+
+        async def _extract_project_keys(self, request: Request):
+            if request.headers.get('Content-Type') != 'application/json':
+                return
+
+            try:
+                body = await request.body()
+                payload = json.loads(body)
+                for key, value in payload.items():
+                    if key.startswith('project_'):
+                        context.data["meta." + key] = value
+            except json.decoder.JSONDecodeError:
+                return
 
     def __init__(self, skip_endpoints: Optional[list] = None):
         path_resolver = _PathResolver.from_optional_list(skip_endpoints)
