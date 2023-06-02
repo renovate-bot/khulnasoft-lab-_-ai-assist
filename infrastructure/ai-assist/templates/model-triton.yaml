@@ -6,6 +6,7 @@ metadata:
   labels:
     app: model-triton
     {{- include "ai-assist.labels" . | nindent 4 }}
+    {{ include "common.tplvalues.render" (dict "value" .Values.modelTriton.labels "context" $) }}
 spec:
   replicas: {{ .Values.modelTriton.replicas }}
   strategy:
@@ -16,12 +17,14 @@ spec:
   selector:
     matchLabels:
       app: model-triton
-    {{- include "ai-assist.selectorLabels" . | nindent 6 }}
+      {{- include "ai-assist.selectorLabels" . | nindent 6 }}
   template:
     metadata:
       labels:
         app: model-triton
-      {{- include "ai-assist.selectorLabels" . | nindent 8 }}
+        {{- include "ai-assist.selectorLabels" . | nindent 8 }}
+        {{- include "ai-assist.labels" . | nindent 8 }}
+        {{ include "common.tplvalues.render" (dict "value" .Values.modelTriton.labels "context" $) }}
     spec:
       imagePullSecrets:
         - name: gitlab-registry
@@ -40,7 +43,7 @@ spec:
           command: ["/bin/bash", "-x", "-c", "--"]
           # Metrics options are documented here:
           # https://github.com/triton-inference-server/server/blob/main/docs/user_guide/metrics.md
-          # TODO: add --allow-cpu-metrics true 
+          # TODO: add --allow-cpu-metrics true
           # TODO: add --metrics-config summary_latencies=true
           args:
             - |
@@ -58,7 +61,7 @@ spec:
             limits:
               nvidia.com/gpu: {{ quote .Values.modelTriton.triton.resources.limits.gpu }}
           readinessProbe:
-            httpGet: 
+            httpGet:
               path: /v2/health/ready
               port: 8000
             periodSeconds: 10
@@ -81,6 +84,7 @@ metadata:
   labels:
     app: model-triton
     {{- include "ai-assist.labels" . | nindent 4 }}
+    {{ include "common.tplvalues.render" (dict "value" .Values.modelK8STriton.labels "context" $) }}
 spec:
   type: ClusterIP
   selector:
@@ -102,6 +106,7 @@ metadata:
   labels:
     app: model-triton-headless
     {{- include "ai-assist.labels" . | nindent 4 }}
+    {{ include "common.tplvalues.render" (dict "value" .Values.modelK8STriton.labels "context" $) }}
 spec:
   clusterIP: None
   ports:
@@ -119,6 +124,7 @@ metadata:
   labels:
     release: prometheus
     {{- include "ai-assist.labels" . | nindent 4 }}
+    type: monitoring
 spec:
   endpoints:
     - interval: 30s
@@ -126,4 +132,4 @@ spec:
   selector:
     matchLabels:
       app: model-triton
-      {{- include "ai-assist.selectorLabels" . | nindent 4 }}
+      {{- include "ai-assist.selectorLabels" . | nindent 6 }}
