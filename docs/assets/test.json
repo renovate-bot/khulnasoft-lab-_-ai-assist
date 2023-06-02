@@ -1,0 +1,46 @@
+{
+  "data": [
+    {
+      "prompt": {
+        "content": [
+          "<python>def is_even(na: int) ->"
+        ],
+        "shape": [
+          1
+        ]
+      },
+      "request_output_len": {
+        "content": [
+          32
+        ],
+        "shape": [
+          1
+        ]
+      },
+      "temperature": [
+        0.20000000298023224
+      ],
+      "repetition_penalty": [
+        1.0
+      ],
+      "runtime_top_k": [
+        0
+      ],
+      "runtime_top_p": [
+        0.9800000190734863
+      ],
+      "start_id": [
+        50256
+      ],
+      "end_id": [
+        50256
+      ],
+      "random_seed": [
+        1594506369
+      ],
+      "is_return_log_probs": [
+        true
+      ]
+    }
+  ]
+}
