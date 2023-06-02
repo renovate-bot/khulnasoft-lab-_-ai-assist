@@ -7,6 +7,8 @@ ENV PYTHONUNBUFFERED=1 \
 
 WORKDIR /app
 RUN pip install "poetry==$POETRY_VERSION"
+
+# For some reason, poetry install fails unless this is installed first
 RUN pip install "lockfile"
 
 # Install all dependencies into /opt/venv

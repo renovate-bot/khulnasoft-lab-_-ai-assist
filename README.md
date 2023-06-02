@@ -550,3 +550,57 @@ Once port forwarding is setup, Targets can be found under the Status tab or one 
 Targets are useful for debugging. Below are examples of two ServiceMonitors, connecting to a golang and python service respectively, that are not configured for scraping and do not expose a `/metrics` endpoint.
 
 ![README.PrometheusUI](./docs/assets/README.PrometheusUI.png)
+
+## Private Runner Fleet
+
+Some of the docker image builds are two large to process on standard shared GitLab runners, and for these tasks, a private runner fleet has been deployed into the `ai-assist-test` cluster.
+
+Any builds in this project tagged with the `ai-assist-container-build` build tag will run on the dedicated fleet, but this tag is intended for resource intensive docker image builds.
+
+```yaml
+  tags:
+    # This tag will tell gitlab to use the private runners
+    - ai-assist-container-build
+```
+
+### Deploying the GitLab Runner
+
+The GitLab runner is deployed using `helmfile`. 
+
+```shell
+helmfile --environment test apply -f infrastructure/helmfile.yaml
+```
+
+This will deploy the runner into the `gitlab-runner` namespace on the `ai-assist` test cluster. [View current workloads in the GCP Console](https://console.cloud.google.com/kubernetes/workload/overview?project=unreview-poc-390200e5&pageState=(%22savedViews%22:(%22i%22:%2207b618eaed634ba0811c01e6244fd02f%22,%22c%22:%5B%22gke%2Fus-central1-c%2Fai-assist-test%22%5D,%22n%22:%5B%22gitlab-runner%22%5D))).
+
+### Deploying the Runner Node Pool
+
+The runner fleet uses a dedicated node pool, `ai-assisted-gitlab-runner-pool`. For now (until proper IaC is deployed) this fleet was created with the following `gcloud` command (this is for reference, and only done once-off).
+
+This node pool is accessible from within the [Google Cloud Console](https://console.cloud.google.com/kubernetes/nodepool/us-central1-c/ai-assist-test/ai-assisted-gitlab-runner-pool?project=unreview-poc-390200e5).
+
+```shell
+# Requires this node pool:
+gcloud beta container --project "unreview-poc-390200e5" \
+  node-pools create "ai-assisted-gitlab-runner-pool" \
+    --cluster "ai-assist-test" \
+    --zone "us-central1-c" \
+    --node-version "1.25.8-gke.500" \
+    --machine-type "e2-standard-8" \
+    --image-type "COS_CONTAINERD" \
+    --disk-type "pd-balanced" \
+    --disk-size "100" \
+    --metadata disable-legacy-endpoints=true \
+    --node-taints type=ci-runners:NoSchedule \
+    --scopes "https://www.googleapis.com/auth/devstorage.read_only","https://www.googleapis.com/auth/logging.write","https://www.googleapis.com/auth/monitoring","https://www.googleapis.com/auth/servicecontrol","https://www.googleapis.com/auth/service.management.readonly","https://www.googleapis.com/auth/trace.append" \
+    --num-nodes "1" \
+    --enable-autoscaling \
+    --total-min-nodes "0" \
+    --total-max-nodes "1" \
+    --location-policy "BALANCED" \
+    --enable-autoupgrade \
+    --enable-autorepair \
+    --max-surge-upgrade 1 \
+    --max-unavailable-upgrade 0
+```
+
