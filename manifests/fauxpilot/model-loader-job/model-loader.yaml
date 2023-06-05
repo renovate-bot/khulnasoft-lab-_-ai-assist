@@ -10,7 +10,7 @@ spec:
         - name: gitlab-registry
       containers:
         - name: model-loader
-          image: registry.gitlab.com/gitlab-org/modelops/applied-ml/code-suggestions/ai-assist/tmp/model-fauxpilot:5cdb9464
+          image: registry.gitlab.com/gitlab-org/modelops/applied-ml/code-suggestions/ai-assist/tmp/model-fauxpilot:e8276d47
           env:
             - name: MODEL_NUM_GPU
               value: "2"
