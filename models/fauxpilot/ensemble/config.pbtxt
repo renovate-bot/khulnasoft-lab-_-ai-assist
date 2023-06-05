@@ -1,6 +1,6 @@
 name: "ensemble"
 platform: "ensemble"
-max_batch_size: 1024
+max_batch_size: 128
 
 input [
   {

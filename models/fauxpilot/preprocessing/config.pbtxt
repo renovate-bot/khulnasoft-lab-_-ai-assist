@@ -1,6 +1,10 @@
 name: "preprocessing"
 backend: "python"
-max_batch_size: 1024
+max_batch_size: 128
+dynamic_batching {
+  max_queue_delay_microseconds: 350000
+}
+
 input [
     {
         name: "PROMPT"
