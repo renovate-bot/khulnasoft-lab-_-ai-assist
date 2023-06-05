@@ -41,7 +41,7 @@ class TritonPythonModel:
                     )
 
         self.tokenizer = AutoTokenizer.from_pretrained("Salesforce/codegen-16B-multi")
-        self.tokenizer.padding_side = 'left'
+        self.tokenizer.padding_side = 'right'
         self.tokenizer.pad_token = PAD_ID
 
   
@@ -76,18 +76,19 @@ class TritonPythonModel:
 
             prompts.append(prompt[0, 0].decode())
 
-        # Pad input tensors
-        all_input_ids = self.tokenizer(
+        # Tokenize and pad input tensors
+        tokenized = self.tokenizer(
             prompts,
             padding='longest',
-            return_attention_mask=False,
+            return_attention_mask=True,
             return_tensors="pt"
-        )["input_ids"]
+        )
 
         # Create output tensors
         for idx, request in enumerate(requests):
-            input_ids = all_input_ids[idx].reshape(1, -1)
-            input_lengths = [[all_input_ids.shape[1]]]
+            input_ids = tokenized["input_ids"][idx].reshape(1, -1)
+            mask = tokenized["attention_mask"][idx]
+            input_lengths = [[len(mask[mask != 0])]]
             request_output_len = pb_utils.get_input_tensor_by_name(request, 'REQUEST_OUTPUT_LEN').as_numpy()
 
             input_id_tensor = pb_utils.Tensor(
