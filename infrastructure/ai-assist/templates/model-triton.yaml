@@ -60,12 +60,21 @@ spec:
           resources:
             limits:
               nvidia.com/gpu: {{ quote .Values.modelTriton.triton.resources.limits.gpu }}
+              
+          # Give the triton container 20m (1200s, 120*10s)
+          # to startup...
+          startupProbe:
+            httpGet:
+              path: /v2/health/ready
+              port: 8000
+            failureThreshold: 120
+            periodSeconds: 10
+
           readinessProbe:
             httpGet:
               path: /v2/health/ready
               port: 8000
             periodSeconds: 10
-            initialDelaySeconds: 900
             timeoutSeconds: 1
             failureThreshold: 3
       volumes:
