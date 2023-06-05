@@ -74,3 +74,27 @@ gcloud --project unreview-poc-390200e5 projects add-iam-policy-binding unreview-
 gcloud --project unreview-poc-390200e5 iam service-accounts add-iam-policy-binding ai-assist-fauxpilot@unreview-poc-390200e5.iam.gserviceaccount.com \
   --role roles/iam.workloadIdentityUser \
   --member "serviceAccount:unreview-poc-390200e5.svc.id.goog[fauxpilot/model-gateway-serviceaccount]"
+
+#-------------------------------------------------------------------
+
+# Project wide
+
+# Create a google service account for the GCP quota exporter
+gcloud --project unreview-poc-390200e5 iam service-accounts create gcp-quota-exporter \
+       --display-name="Service account for GCP quota exporter"
+
+# Create a custom role with just the required permissions
+gcloud --project unreview-poc-390200e5 iam roles create gcp_quota_exporter_role \
+       --title="GCP Quota exporter role" \
+       --description="Role used for the GCP quota exporter" \
+       --permissions="compute.projects.get,compute.regions.list,compute.instances.list,serviceusage.quotas.get"
+
+# Assign it to the the Google Service account
+gcloud --project unreview-poc-390200e5 projects add-iam-policy-binding unreview-poc-390200e5 \
+       --role "projects/unreview-poc-390200e5/roles/gcp_quota_exporter_role" \
+       --member "serviceAccount:gcp-quota-exporter@unreview-poc-390200e5.iam.gserviceaccount.com"
+
+# Allow the Kubernetes service account to impersonate the Google service account
+gcloud --project unreview-poc-390200e5 iam service-accounts add-iam-policy-binding gcp-quota-exporter@unreview-poc-390200e5.iam.gserviceaccount.com \
+  --role roles/iam.workloadIdentityUser \
+  --member "serviceAccount:unreview-poc-390200e5.svc.id.goog[fauxpilot/gcp-quota-exporter]"

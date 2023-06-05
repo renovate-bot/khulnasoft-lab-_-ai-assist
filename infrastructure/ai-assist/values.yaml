@@ -72,3 +72,12 @@ serviceAccount:
     type: "code_suggestions"
   # The service account email to use with this account
   iamServiceAccountEmail:
+
+gcpQuotaExporter:
+  projectId: unreview-poc-390200e5
+  port: 9592
+  serviceAccount:
+    create: true
+    name: 'gcp-quota-exporter'
+  labels:
+    type: 'monitoring'
