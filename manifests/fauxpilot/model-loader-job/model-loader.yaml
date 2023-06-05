@@ -10,7 +10,7 @@ spec:
         - name: gitlab-registry
       containers:
         - name: model-loader
-          image: registry.gitlab.com/gitlab-org/modelops/applied-ml/code-suggestions/ai-assist/tmp/model-fauxpilot:0af52830
+          image: registry.gitlab.com/gitlab-org/modelops/applied-ml/code-suggestions/ai-assist/tmp/model-fauxpilot:5cdb9464
           env:
             - name: MODEL_NUM_GPU
               value: "2"
@@ -32,7 +32,7 @@ spec:
 
             # Set SKIP_FT_WEIGHTS_DOWNLOAD to one to skip the download
             - name: SKIP_FT_WEIGHTS_DOWNLOAD
-              value: "0"
+              value: "1"
           command: [ "/bin/sh", "-x", "-c", "--" ]
           args:
             - |

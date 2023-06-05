@@ -41,7 +41,10 @@ class TritonPythonModel:
                     )
 
         self.tokenizer = AutoTokenizer.from_pretrained("Salesforce/codegen-16B-multi")
+        self.tokenizer.padding_side = 'left'
+        self.tokenizer.pad_token = PAD_ID
 
+  
     def execute(self, requests):
         """`execute` must be implemented in every Python model. `execute`
         function receives a list of pb_utils.InferenceRequest as the only
@@ -63,23 +66,33 @@ class TritonPythonModel:
         """
 
         responses = []
+        prompts = []
 
         # Every Python backend must iterate over everyone of the requests
         # and create a pb_utils.InferenceResponse for each of them.
         for idx, request in enumerate(requests):
             # Get input tensors
             prompt = pb_utils.get_input_tensor_by_name(request, 'PROMPT').as_numpy()
+
+            prompts.append(prompt[0, 0].decode())
+
+        # Pad input tensors
+        all_input_ids = self.tokenizer(
+            prompts,
+            padding='longest',
+            return_attention_mask=False,
+            return_tensors="pt"
+        )["input_ids"]
+
+        # Create output tensors
+        for idx, request in enumerate(requests):
+            input_ids = all_input_ids[idx].reshape(1, -1)
+            input_lengths = [[all_input_ids.shape[1]]]
             request_output_len = pb_utils.get_input_tensor_by_name(request, 'REQUEST_OUTPUT_LEN').as_numpy()
 
-            # Preprocessing input data
-            input_ids = [torch.IntTensor(self.tokenizer.encode(s[0].decode())) for s in prompt]
-            input_lengths = torch.IntTensor([[len(ids)] for ids in input_ids])
-            input_ids = pad_sequence(input_ids, batch_first=True, padding_value=PAD_ID)
-
-            # Create output tensors
             input_id_tensor = pb_utils.Tensor(
                 'INPUT_IDS',
-                np.array(input_ids).astype(self.input_ids_dtype)
+                input_ids.numpy().astype(self.input_ids_dtype)
             )
             request_input_len_tensor = pb_utils.Tensor(
                 'REQUEST_INPUT_LEN',
