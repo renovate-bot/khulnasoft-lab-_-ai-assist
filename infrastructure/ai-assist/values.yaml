@@ -31,7 +31,7 @@ modelK8STriton:
 modelTriton:
   labels:
     type: "code_suggestions"
-  replicas: 7
+  replicas: 4
   triton:
     env:
       modelRepository: /data/models
