@@ -7,6 +7,7 @@ ENV PYTHONUNBUFFERED=1 \
 
 WORKDIR /app
 RUN pip install "poetry==$POETRY_VERSION"
+RUN pip install "lockfile"
 
 # Install all dependencies into /opt/venv
 # so that we can copy these resources between 
