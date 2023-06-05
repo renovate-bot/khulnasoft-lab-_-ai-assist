@@ -5,3 +5,7 @@ icon: https://about.gitlab.com/images/press/logo/png/gitlab-logo-100.png
 type: application
 version: 0.1.0
 appVersion: "0.1.0"
+dependencies:
+  - name: prometheus-stackdriver-exporter
+    version: 4.3.0
+    repository: https://prometheus-community.github.io/helm-charts
