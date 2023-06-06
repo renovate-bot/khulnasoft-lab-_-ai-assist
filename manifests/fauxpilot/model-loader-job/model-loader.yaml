@@ -33,7 +33,7 @@ spec:
             # Set SKIP_FT_WEIGHTS_DOWNLOAD to one to skip the download
             - name: SKIP_FT_WEIGHTS_DOWNLOAD
               value: "1"
-          command: [ "/bin/sh", "-x", "-c", "--" ]
+          command: ["/bin/sh", "-x", "-c", "--"]
           args:
             - |
               set -euo pipefail
@@ -55,10 +55,10 @@ spec:
               trap "rm -rf ${download_dir}" EXIT
 
               downloaded_weights_file=${download_dir}/${MODEL_ARCHIVE_NAME}
-              
+
               if [ "${SKIP_FT_WEIGHTS_DOWNLOAD-}" != "1" ]; then
                 echo "Copying model from GCS...";
-                gsutil -m cp "gs://code-suggestions/model-deployments/16b_v5/${MODEL_ARCHIVE_NAME}" "${downloaded_weights_file}";
+                gsutil -m cp "gs://code-suggestions/model-deployments/codegen-v2/16b-multi/${MODEL_ARCHIVE_NAME}" "${downloaded_weights_file}";
 
                 rm -rf "${MODELS_DIR}" && mkdir -p "${MODELS_DIR}";
                 rm -rf "${MODEL_WEIGHTS_DIR}" && mkdir -p "${MODEL_WEIGHTS_DIR}";
