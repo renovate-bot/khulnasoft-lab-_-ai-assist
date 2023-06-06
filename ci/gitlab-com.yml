@@ -32,6 +32,12 @@ include:
   - template: Jobs/SAST.gitlab-ci.yml
   - template: Jobs/Secret-Detection.gitlab-ci.yml
 
+  # Includes a base template for running kaniko easily
+  # see https://gitlab.com/gitlab-com/gl-infra/common-ci-tasks/-/blob/main/kaniko.md
+  - project: 'gitlab-com/gl-infra/common-ci-tasks'
+    ref: v1.73.0  # renovate:managed
+    file: 'kaniko.yml'
+
 cache:
   key:
     files:
@@ -82,52 +88,52 @@ install:
     - poetry install
 
 build-docker-model-gateway-tmp:
-  extends: .docker
   stage: build
-  cache: {}
+  extends:
+    - .kaniko_base
+  tags:
+    # This tag will tell gitlab to use the private runners
+    - ai-assist-container-build
   variables:
-    TARGET_IMAGE: "$DOCKER_MODEL_GATEWAY_TMP:$CI_COMMIT_SHORT_SHA"
-  script:
-    - docker build -t $TARGET_IMAGE .
-    - docker push $TARGET_IMAGE
+    KANIKO_BUILD_FILE: Dockerfile
+    KANIKO_DESTINATION: "${DOCKER_MODEL_GATEWAY_TMP}:${CI_COMMIT_SHORT_SHA}"
 
 build-docker-model-codegen-tmp:
-  extends: .docker
   stage: build
-  cache: {}
+  extends:
+    - .kaniko_base
+  tags:
+    # This tag will tell gitlab to use the private runners
+    - ai-assist-container-build
+  variables:
+    KANIKO_BUILD_FILE: models/codegen/Dockerfile.model
+    KANIKO_BUILD_CONTEXT: models/codegen/
+    KANIKO_EXTRA_ARGS: |
+      --build-arg MODEL_NAME
+      --build-arg MODEL_ID
   parallel:
     matrix:
       - MODEL_NAME: Salesforce/codegen-350M-multi
         MODEL_ID: codegen-350M-multi
-        TARGET_IMAGE: "$DOCKER_MODEL_CODEGEN_TMP:350m-multi-$CI_COMMIT_SHORT_SHA"
+        KANIKO_DESTINATION: "${DOCKER_MODEL_CODEGEN_TMP}:350m-multi-${CI_COMMIT_SHORT_SHA}"
       - MODEL_NAME: Salesforce/codegen-16B-multi
         MODEL_ID: codegen-16b-multi
-        TARGET_IMAGE: "$DOCKER_MODEL_CODEGEN_TMP:16b-multi-$CI_COMMIT_SHORT_SHA"
-  script:
-    - |
-      docker build -t $TARGET_IMAGE \
-          -f models/codegen/Dockerfile.model \
-          --build-arg MODEL_NAME=$MODEL_NAME --build-arg MODEL_ID=$MODEL_ID \
-          models/codegen/.
-    - docker push $TARGET_IMAGE
+        KANIKO_DESTINATION: "${DOCKER_MODEL_CODEGEN_TMP}:16b-multi-${CI_COMMIT_SHORT_SHA}"
   rules:
-    - if: $CI_API_V4_URL == "https://ops.gitlab.net/api/v4"
-      when: never
     - changes:
         - models/codegen/**/*
 
 build-docker-model-fauxpilot-tmp:
-  extends: .docker
   stage: build
-  cache: {}
+  extends:
+    - .kaniko_base
+  tags:
+    # This tag will tell gitlab to use the private runners
+    - ai-assist-container-build
   variables:
-    TARGET_IMAGE: "$DOCKER_MODEL_FAUXPILOT_TMP:$CI_COMMIT_SHORT_SHA"
-  script:
-    - |
-      docker build -t $TARGET_IMAGE \
-          -f models/fauxpilot/Dockerfile.model \
-          models/fauxpilot/.
-    - docker push $TARGET_IMAGE
+    KANIKO_BUILD_FILE: models/fauxpilot/Dockerfile.model
+    KANIKO_BUILD_CONTEXT: models/fauxpilot/
+    KANIKO_DESTINATION: "${DOCKER_MODEL_FAUXPILOT_TMP}:${CI_COMMIT_SHORT_SHA}"
   rules:
     - changes:
         - models/fauxpilot/**/*

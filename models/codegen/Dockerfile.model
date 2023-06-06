@@ -1,4 +1,4 @@
-FROM alpine:3.17.0
+FROM alpine:3.18
 
 ARG MODEL_ID="codegen"
 ARG MODEL_VERSION="1"
