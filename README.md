@@ -553,7 +553,7 @@ Targets are useful for debugging. Below are examples of two ServiceMonitors, con
 
 ## Private Runner Fleet
 
-Some of the docker image builds are two large to process on standard shared GitLab runners, and for these tasks, a private runner fleet has been deployed into the `ai-assist-test` cluster.
+Some of the docker image builds are too large to process on standard shared GitLab runners, and for these tasks, a private runner fleet has been deployed into the `ai-assist-test` cluster.
 
 Any builds in this project tagged with the `ai-assist-container-build` build tag will run on the dedicated fleet, but this tag is intended for resource intensive docker image builds.
 
@@ -575,7 +575,7 @@ This will deploy the runner into the `gitlab-runner` namespace on the `ai-assist
 
 ### Deploying the Runner Node Pool
 
-The runner fleet uses a dedicated node pool, `ai-assisted-gitlab-runner-pool`. For now (until proper IaC is deployed) this fleet was created with the following `gcloud` command (this is for reference, and only done once-off).
+The runner fleet uses a dedicated node pool, `ai-assisted-gitlab-runner-pool`. For now (until proper Infrastructure as Code is deployed), this fleet is created with the following `gcloud` command (this is for reference, and only done once-off).
 
 This node pool is accessible from within the [Google Cloud Console](https://console.cloud.google.com/kubernetes/nodepool/us-central1-c/ai-assist-test/ai-assisted-gitlab-runner-pool?project=unreview-poc-390200e5).
 
