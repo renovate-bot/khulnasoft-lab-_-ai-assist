@@ -1,0 +1,81 @@
+---
+image: python:3.9.13
+
+stages:
+  - validate
+  - release
+
+include:
+  - project: 'gitlab-com/gl-infra/common-ci-tasks'
+    ref: v1.72.1  # renovate:managed
+    file: 'oidc.yml'
+
+variables:
+  # renovate: datasource=docker depName=registry.gitlab.com/gitlab-com/gl-infra/k8s-workloads/common/k8-helm-ci versioning=docker
+  CI_IMAGE_VERSION: v18.1.1
+
+  # oidc
+  GCP_OIDC_WORKLOAD_ID_POOL_PROVIDER_NAME: projects/402231234223/locations/global/workloadIdentityPools/gitlab-pool-oidc-729/providers/gitlab-jwt-729
+  GCP_OIDC_SERVICE_ACCOUNT_EMAIL: ai-assist-ci@unreview-poc-390200e5.iam.gserviceaccount.com
+  GCP_PROJECT: unreview-poc-390200e5
+
+helm-diff-gstg:
+  resource_group: gstg
+  stage: validate
+  image: "${CI_REGISTRY}/gitlab-com/gl-infra/k8s-workloads/common/k8-helm-ci:${CI_IMAGE_VERSION}"
+  extends:
+    - .oidc_base_gcp
+  script:
+    - cd infrastructure
+    - scripts/helm-deploy.sh gstg init
+    - scripts/helm-deploy.sh gstg diff
+  tags:
+      - k8s-workloads
+  rules:
+    - if: $CI_COMMIT_BRANCH != $CI_DEFAULT_BRANCH
+
+helm-upgrade-gstg:
+  resource_group: gstg
+  stage: release
+  image: "${CI_REGISTRY}/gitlab-com/gl-infra/k8s-workloads/common/k8-helm-ci:${CI_IMAGE_VERSION}"
+  extends:
+    - .oidc_base_gcp
+  script:
+    - cd infrastructure
+    - scripts/helm-deploy.sh gstg init
+    - scripts/helm-deploy.sh gstg upgrade --no-dry-run
+  tags:
+      - k8s-workloads
+  rules:
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+
+helm-diff-gprd:
+  resource_group: gprd
+  stage: validate
+  image: "${CI_REGISTRY}/gitlab-com/gl-infra/k8s-workloads/common/k8-helm-ci:${CI_IMAGE_VERSION}"
+  extends:
+    - .oidc_base_gcp
+  script:
+    - cd infrastructure
+    - scripts/helm-deploy.sh gprd init
+    - scripts/helm-deploy.sh gprd diff
+  tags:
+      - k8s-workloads
+  rules:
+    - if: $CI_COMMIT_BRANCH != $CI_DEFAULT_BRANCH
+
+helm-upgrade-gprd:
+  needs: [helm-upgrade-gstg]
+  resource_group: gprd
+  stage: release
+  image: "${CI_REGISTRY}/gitlab-com/gl-infra/k8s-workloads/common/k8-helm-ci:${CI_IMAGE_VERSION}"
+  extends:
+    - .oidc_base_gcp
+  script:
+    - cd infrastructure
+    - scripts/helm-deploy.sh gprd init
+    - scripts/helm-deploy.sh gprd upgrade --no-dry-run
+  tags:
+      - k8s-workloads
+  rules:
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH

@@ -30,12 +30,19 @@ function fail() {
 }
 
 
+export HELM_DIFF_COLOR=true
+
 INFRA_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+
+GCP_PROJECT="unreview-poc-390200e5"
+GCP_ZONE="us-central1-c"
 
 GSTG_KUBE_CTX="gke_unreview-poc-390200e5_us-central1-c_ai-assist-test"
 GPRD_KUBE_CTX="gke_unreview-poc-390200e5_us-central1-c_ai-assist"
 GSTG_VALUES="$INFRA_DIR/environment/test/values.yaml"
 GPRD_VALUES="$INFRA_DIR/ai-assist/values.yaml"
+GSTG_CLUSTER_NAME="ai-assist-test"
+GPRD_CLUSTER_NAME="ai-assist"
 
 if ! hash helm > /dev/null; then
     fail "helm is required"
@@ -50,10 +57,12 @@ case $DEPLOY_ENV in
     gprd)
         KUBE_CTX=$GPRD_KUBE_CTX
         VALUES_FILE=$GPRD_VALUES
+        CLUSTER_NAME=$GPRD_CLUSTER_NAME
         ;;
     gstg)
         KUBE_CTX=$GSTG_KUBE_CTX
         VALUES_FILE=$GSTG_VALUES
+        CLUSTER_NAME=$GSTG_CLUSTER_NAME
         ;;
     *)
         fail "Deploy env needs to one of [gprd, gstg], given $DEPLOY_ENV"
@@ -62,29 +71,29 @@ esac
 
 COMMAND=$2
 case $COMMAND in
+    init)
+        gcloud container clusters get-credentials $CLUSTER_NAME --zone $GCP_ZONE --project $GCP_PROJECT
+        ;;
     diff)
-        COMMAND_EXTRA="diff"
-        DRY_RUN_OPT=""
+        HELM_CMD="helm diff upgrade --kube-context $KUBE_CTX ai-assist ai-assist -n fauxpilot -f $VALUES_FILE"
+        echo "> $HELM_CMD"
+        eval "${HELM_CMD}"
         ;;
     upgrade)
-        COMMAND_EXTRA=""
         DRY_RUN_OPT="--dry-run"
+        if [ -n "${3+x}" ]; then
+            if [ "$3" == "--no-dry-run" ]; then
+                DRY_RUN_OPT=""
+            else
+                fail "only '--no-dry-run' supported as 3rd argument inconjunction with upgrade"
+            fi
+        fi
+
+        HELM_CMD="helm upgrade --kube-context $KUBE_CTX ai-assist ai-assist -n fauxpilot -f $VALUES_FILE $DRY_RUN_OPT"
+        echo "> $HELM_CMD"
+        eval "${HELM_CMD}"
         ;;
     *)
         fail "only diff and upgrade commands are allowed"
         ;;
 esac
-
-if [ -n "${3+x}" ]; then
-    if [ "$3" == "--no-dry-run" ] && [ "$COMMAND" == "upgrade" ]; then
-        DRY_RUN_OPT=""
-    else
-        fail "only '--no-dry-run' supported as 3rd argument inconjunction with upgrade"
-    fi
-fi
-
-HELM_CMD="helm $COMMAND_EXTRA upgrade --kube-context $KUBE_CTX ai-assist ai-assist -n fauxpilot -f $VALUES_FILE $DRY_RUN_OPT"
-
-echo "> $HELM_CMD"
-
-eval "${HELM_CMD}"

@@ -1,0 +1,236 @@
+---
+image: python:3.9.13
+
+stages:
+  - lint
+  - build
+  - test
+  - deploy-review
+  - validate
+  - release
+
+variables:
+  PIP_CACHE_DIR: "$CI_PROJECT_DIR/.cache/pip"
+  POETRY_CACHE_DIR: "$CI_PROJECT_DIR/.cache/poetry"
+
+  DOCKER_VERSION: "20.10.23"
+  DOCKER_TLS_CERTDIR: "/certs"
+  DOCKER_MODEL_GATEWAY: "$CI_REGISTRY_IMAGE/model-gateway"
+  DOCKER_MODEL_GATEWAY_TMP: "$CI_REGISTRY_IMAGE/tmp/model-gateway"
+
+  DOCKER_MODEL_CODEGEN: "$CI_REGISTRY_IMAGE/model-codegen"
+  DOCKER_MODEL_CODEGEN_TMP: "$CI_REGISTRY_IMAGE/tmp/model-codegen"
+
+  DOCKER_MODEL_FAUXPILOT: "$CI_REGISTRY_IMAGE/model-fauxpilot"
+  DOCKER_MODEL_FAUXPILOT_TMP: "$CI_REGISTRY_IMAGE/tmp/model-fauxpilot"
+
+  SAST_EXCLUDED_PATHS: "tests, tmp, api, converter, model-loader"
+
+include:
+  - template: Jobs/Dependency-Scanning.gitlab-ci.yml
+  - template: Jobs/License-Scanning.gitlab-ci.yml
+  - template: Jobs/SAST.gitlab-ci.yml
+  - template: Jobs/Secret-Detection.gitlab-ci.yml
+
+cache:
+  key:
+    files:
+      - poetry.lock
+      - .gitlab-ci.yml
+  paths:
+    - $PIP_CACHE_DIR
+    - $POETRY_CACHE_DIR
+    - requirements.txt
+
+.poetry:
+  before_script:
+    - pip install poetry==1.3.1
+    - poetry config virtualenvs.in-project true
+    - poetry config cache-dir ${POETRY_CACHE_DIR}
+    - poetry export -f requirements.txt --output requirements.txt --without-hashes
+    - poetry config --list
+
+.docker:
+  image: docker:${DOCKER_VERSION}
+  services:
+    - docker:${DOCKER_VERSION}-dind
+  before_script:
+    - docker login -u "$CI_REGISTRY_USER" -p "$CI_REGISTRY_PASSWORD" "$CI_REGISTRY"
+
+.docker-release-latest:
+  extends: .docker
+  script:
+    - docker pull $TARGET_IMAGE
+    - docker tag $TARGET_IMAGE $RELEASED_IMAGE_COMMIT
+    - docker push $RELEASED_IMAGE_COMMIT
+    - docker tag $RELEASED_IMAGE_COMMIT $RELEASED_IMAGE_LATEST
+    - docker push $RELEASED_IMAGE_LATEST
+
+lint:
+  extends: .poetry
+  stage: lint
+  script:
+    - poetry install --with lint
+    - poetry run flake8 codesuggestions
+    - poetry lock --no-update
+    - git diff --exit-code
+
+install:
+  extends: .poetry
+  stage: build
+  script:
+    - poetry install
+
+build-docker-model-gateway-tmp:
+  extends: .docker
+  stage: build
+  cache: {}
+  variables:
+    TARGET_IMAGE: "$DOCKER_MODEL_GATEWAY_TMP:$CI_COMMIT_SHORT_SHA"
+  script:
+    - docker build -t $TARGET_IMAGE .
+    - docker push $TARGET_IMAGE
+
+build-docker-model-codegen-tmp:
+  extends: .docker
+  stage: build
+  cache: {}
+  parallel:
+    matrix:
+      - MODEL_NAME: Salesforce/codegen-350M-multi
+        MODEL_ID: codegen-350M-multi
+        TARGET_IMAGE: "$DOCKER_MODEL_CODEGEN_TMP:350m-multi-$CI_COMMIT_SHORT_SHA"
+      - MODEL_NAME: Salesforce/codegen-16B-multi
+        MODEL_ID: codegen-16b-multi
+        TARGET_IMAGE: "$DOCKER_MODEL_CODEGEN_TMP:16b-multi-$CI_COMMIT_SHORT_SHA"
+  script:
+    - |
+      docker build -t $TARGET_IMAGE \
+          -f models/codegen/Dockerfile.model \
+          --build-arg MODEL_NAME=$MODEL_NAME --build-arg MODEL_ID=$MODEL_ID \
+          models/codegen/.
+    - docker push $TARGET_IMAGE
+  rules:
+    - if: $CI_API_V4_URL == "https://ops.gitlab.net/api/v4"
+      when: never
+    - changes:
+        - models/codegen/**/*
+
+build-docker-model-fauxpilot-tmp:
+  extends: .docker
+  stage: build
+  cache: {}
+  variables:
+    TARGET_IMAGE: "$DOCKER_MODEL_FAUXPILOT_TMP:$CI_COMMIT_SHORT_SHA"
+  script:
+    - |
+      docker build -t $TARGET_IMAGE \
+          -f models/fauxpilot/Dockerfile.model \
+          models/fauxpilot/.
+    - docker push $TARGET_IMAGE
+  rules:
+    - changes:
+        - models/fauxpilot/**/*
+
+tests:
+  extends: .poetry
+  stage: test
+  needs:
+    - install
+  script:
+    - poetry install --with test
+    - poetry run pytest --junitxml=".test-reports/tests.xml"
+  artifacts:
+    when: always
+    expire_in: 1 weeks
+    reports:
+      junit:
+        - .test-reports/*.xml
+
+gemnasium-python-dependency_scanning:
+  stage: test
+  needs:
+    - install
+  rules:
+    - if: $DEPENDENCY_SCANNING_DISABLED
+      when: never
+    - if: $CI_COMMIT_BRANCH && $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+    - if: $CI_MERGE_REQUEST_IID
+    - if: $CI_COMMIT_TAG
+
+license_scanning:
+  stage: test
+  needs:
+    - install
+  rules:
+    - if: $LICENSE_MANAGEMENT_DISABLED
+      when: never
+    - if: $CI_COMMIT_BRANCH && $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+    - if: $CI_MERGE_REQUEST_IID
+    - if: $CI_COMMIT_TAG
+
+secret_detection:
+  stage: test
+  needs:
+    - install
+  cache: {}
+  rules:
+    - if: $SECRET_DETECTION_DISABLED
+      when: never
+    - if: $CI_COMMIT_BRANCH && $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+    - if: $CI_MERGE_REQUEST_IID
+    - if: $CI_COMMIT_TAG
+
+semgrep-sast:
+  stage: test
+  needs:
+    - install
+  rules:
+    - if: $SAST_DISABLED
+      when: never
+    - if: $CI_COMMIT_BRANCH && $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+    - if: $CI_MERGE_REQUEST_IID
+    - if: $CI_COMMIT_TAG
+
+release-docker-model-gateway:
+  stage: release
+  extends: .docker-release-latest
+  cache: {}
+  variables:
+    TARGET_IMAGE: "$DOCKER_MODEL_GATEWAY_TMP:$CI_COMMIT_SHORT_SHA"
+    RELEASED_IMAGE_COMMIT: "$DOCKER_MODEL_GATEWAY:$CI_COMMIT_SHORT_SHA"
+    RELEASED_IMAGE_LATEST: "$DOCKER_MODEL_GATEWAY:latest"
+  rules:
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+
+release-docker-model-codegen:
+  stage: release
+  extends: .docker-release-latest
+  cache: {}
+  parallel:
+    matrix:
+      # release codegen-small
+      - TARGET_IMAGE: "$DOCKER_MODEL_CODEGEN_TMP:350m-multi-$CI_COMMIT_SHORT_SHA"
+        RELEASED_IMAGE_COMMIT: "$DOCKER_MODEL_CODEGEN:350m-multi-$CI_COMMIT_SHORT_SHA"
+        RELEASED_IMAGE_LATEST: "$DOCKER_MODEL_CODEGEN:350m-multi-latest"
+      # release codegen-large
+      - TARGET_IMAGE: "$DOCKER_MODEL_CODEGEN_TMP:16b-multi-$CI_COMMIT_SHORT_SHA"
+        RELEASED_IMAGE_COMMIT: "$DOCKER_MODEL_CODEGEN:16b-multi-$CI_COMMIT_SHORT_SHA"
+        RELEASED_IMAGE_LATEST: "$DOCKER_MODEL_CODEGEN:16b-multi-latest"
+  rules:
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+      changes:
+        - models/codegen/**/*
+
+release-docker-model-fauxpilot:
+  stage: release
+  extends: .docker-release-latest
+  cache: {}
+  variables:
+    TARGET_IMAGE: "$DOCKER_MODEL_FAUXPILOT_TMP:$CI_COMMIT_SHORT_SHA"
+    RELEASED_IMAGE_COMMIT: "$DOCKER_MODEL_FAUXPILOT:$CI_COMMIT_SHORT_SHA"
+    RELEASED_IMAGE_LATEST: "$DOCKER_MODEL_FAUXPILOT:latest"
+  rules:
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+      changes:
+        - models/fauxpilot/**/*
