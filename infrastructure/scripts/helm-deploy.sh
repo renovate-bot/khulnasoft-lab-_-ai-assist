@@ -89,6 +89,9 @@ case $COMMAND in
             fi
         fi
 
+        echo "> helm dependency update ai-assist"
+        helm dependency update ai-assist
+
         HELM_CMD="helm upgrade --kube-context $KUBE_CTX ai-assist ai-assist -n fauxpilot -f $VALUES_FILE $DRY_RUN_OPT"
         echo "> $HELM_CMD"
         eval "${HELM_CMD}"
