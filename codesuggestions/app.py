@@ -59,7 +59,7 @@ def main():
                 should_include_handler=True,
                 should_include_method=True,
                 should_include_status=True,
-                buckets=(0.5, 1, 10, 30, 60, 90)
+                buckets=(0.5, 1, 2.5, 5, 10, 30, 60)
             )
         )
         instrumentator.instrument(app)
