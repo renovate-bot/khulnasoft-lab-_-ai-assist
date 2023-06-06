@@ -3,13 +3,10 @@ FROM python:3.9.16-slim AS base-image
 ENV PYTHONUNBUFFERED=1 \
   PIP_NO_CACHE_DIR=1 \
   PIP_DISABLE_PIP_VERSION_CHECK=1 \
-  POETRY_VERSION=1.3
+  POETRY_VERSION=1.5.1
 
 WORKDIR /app
 RUN pip install "poetry==$POETRY_VERSION"
-
-# For some reason, poetry install fails unless this is installed first
-RUN pip install "lockfile"
 
 # Install all dependencies into /opt/venv
 # so that we can copy these resources between 
