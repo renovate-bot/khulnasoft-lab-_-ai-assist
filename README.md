@@ -419,6 +419,20 @@ on any other clusters is not guaranteed.
    kubectl apply -f ./manifests/ingress/ingress-nginx.yaml
    ```
 
+### Loading the Model
+
+Triton loads the model from [Google Filestore](https://console.cloud.google.com/filestore/instances?project=unreview-poc-390200e5) on startup. 
+
+When a new model is generated, it needs to be loaded from [Google Cloud Storage](https://console.cloud.google.com/storage/browser/code-suggestions/model-deployments?project=unreview-poc-390200e5&pageState=(%22StorageObjectListTable%22:(%22f%22:%22%255B%255D%22))&prefix=&forceOnObjectsSortingFiltering=false), decompressed, processed and saved to Google FileStore.
+
+To load the model, you need to run the following command:
+
+**Note**: the `load-model.sh` script will run on the current Kubernetes context, so be sure to have selected the correct context before running `load-model.sh`.
+
+```shell
+infrastructure/scripts/load-model.sh
+```
+
 ## Monitoring
 
 The following monitoring and observability resources are available:
@@ -603,4 +617,3 @@ gcloud beta container --project "unreview-poc-390200e5" \
     --max-surge-upgrade 1 \
     --max-unavailable-upgrade 0
 ```
-
