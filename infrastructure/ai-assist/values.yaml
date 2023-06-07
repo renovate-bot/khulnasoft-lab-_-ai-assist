@@ -15,6 +15,7 @@ modelGateway:
       fastapiApiPort: "5052"
       tritonHost: model-k8s-triton-headless
       tritonPort: "8001"
+      googleCloudProfiler: true
     image:
       repository: registry.gitlab.com/gitlab-org/modelops/applied-ml/code-suggestions/ai-assist/model-gateway
       tag: eb7fdb9d
