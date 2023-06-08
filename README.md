@@ -156,14 +156,14 @@ curl --request POST \
 
 You'll need:
 
-* Docker
-* `docker compose` >= 1.28
-* An NVIDIA GPU with Compute Capability >= 6.0 and enough VRAM to run the model you want.
-* [`nvidia-docker`](https://github.com/NVIDIA/nvidia-docker)
-* `curl` and `zstd` for downloading and unpacking the models.
+- Docker
+- `docker compose` >= 1.28
+- An NVIDIA GPU with Compute Capability >= 6.0 and enough VRAM to run the model you want.
+- [`nvidia-docker`](https://github.com/NVIDIA/nvidia-docker)
+- `curl` and `zstd` for downloading and unpacking the models.
 
-Note that the VRAM requirements listed by `setup.sh` are *total* -- if you have multiple GPUs, you can split the model
-across them. So, if you have two NVIDIA RTX 3080 GPUs, you *should* be able to run the 6B model by putting half on each
+Note that the VRAM requirements listed by `setup.sh` are _total_ -- if you have multiple GPUs, you can split the model
+across them. So, if you have two NVIDIA RTX 3080 GPUs, you _should_ be able to run the 6B model by putting half on each
 GPU.
 
 ## Configuration
@@ -203,8 +203,9 @@ value `'None'`.
 ## How to run the server locally
 
 1. Create virtualenv and init shell: `poetry shell`
-2. Install dependencies: `poetry install`
-3. Update the `.env` file in the root folder with the following variables:
+1. Install dependencies: `poetry install`
+1. Update the `.env` file in the root folder with the following variables:
+
    ```
    AUTH_BYPASS_EXTERNAL=true
    TRITON_HOST=localhost
@@ -213,20 +214,20 @@ value `'None'`.
    FASTAPI_OPENAPI_URL=/openapi.json
    FASTAPI_API_PORT=5052
    ```
-4. Get k8s credentials to access our k8s cluster:
-   `gcloud container clusters get-credentials ai-assist --zone us-central1-c --project unreview-poc-390200e5`
-5. Port-forward the triton server to access it locally:
-   `kubectl port-forward svc/model-k8s-triton -n fauxpilot 8080:8080 --address='0.0.0.0'`
-6. Start the model-gateway server locally: `poetry run codesuggestions`
-7. Open `http://0.0.0.0:5052/docs` in your browser and run any requests to the codegen model
 
+1. Get k8s credentials to access our k8s cluster:
+   `gcloud container clusters get-credentials ai-assist --zone us-central1-c --project unreview-poc-390200e5`
+1. Port-forward the triton server to access it locally:
+   `kubectl port-forward svc/model-k8s-triton -n fauxpilot 8080:8080 --address='0.0.0.0'`
+1. Start the model-gateway server locally: `poetry run codesuggestions`
+1. Open `http://0.0.0.0:5052/docs` in your browser and run any requests to the codegen model
 
 ## Local development using GDK
 
 If you are on Apple Silicon, you will need to host Triton somewhere else as there is a dependency on Nvidia GPU and
 architecture.
 
-You can either run `make develop-local` or  `docker-compose -f docker-compose.dev.yaml up --build --remove-orphans` this
+You can either run `make develop-local` or `docker-compose -f docker-compose.dev.yaml up --build --remove-orphans` this
 will run the API.
 
 Next open the VS Code extension project, and run the development version of the GitLab Workflow extension locally.
@@ -234,6 +235,7 @@ Next open the VS Code extension project, and run the development version of the 
 In VS Code code need to set the const `AI_ASSISTED_CODE_SUGGESTIONS_API_URL` constant to `http://localhost:5000/completions`.
 
 Since the feature is only for SaaS, you need to run GDK in SaaS mode:
+
 ```bash
 export GITLAB_SIMULATE_SAAS=1
 gdk restart
@@ -245,6 +247,7 @@ You also need to make sure that the group you are allowing, is actually `ultimat
 go to `admin/overview/groups` select `edit` on the group, set `plan` to `ultimate`.
 
 In GDK you need to enable the feature flags:
+
 ```ruby
 rails console
 
@@ -267,7 +270,7 @@ to not burden the Rails API with an excessive amount of calls.
 
 Below diagram described the authentication flow in blue.
 
-![Diagram](https://docs.google.com/drawings/d/e/2PACX-1vQyFs0-irUGf_t6imgBiVSfnMf4oh45w4QEusVvwlGZy22tyCErG7JV2IC87e7DvT7b8_Ni8V77BkUW/pub?w=1022&amp;h=390)
+![Diagram](https://docs.google.com/drawings/d/e/2PACX-1vQyFs0-irUGf_t6imgBiVSfnMf4oh45w4QEusVvwlGZy22tyCErG7JV2IC87e7DvT7b8_Ni8V77BkUW/pub?w=1022&h=390)
 
 ## Component overview
 
@@ -276,6 +279,7 @@ In above diagram the main components are shown.
 ### VS Code extension
 
 The VS Code extension has the following functions:
+
 1. Determine input parameters
    1. Stop sequences
    1. Gather code for the prompt
@@ -308,15 +312,16 @@ on any other clusters is not guaranteed.
 
 1. Enable the following APIs in the Google Cloud Project:
 
-    ```shell
-    # Enable Cloud Profiler for Continuous Profiling
-    gcloud services enable cloudprofiler.googleapis.com
+   ```shell
+   # Enable Cloud Profiler for Continuous Profiling
+   gcloud services enable cloudprofiler.googleapis.com
 
-    # Enable Google FileStore (managed NFS)
-    gcloud services enable file.googleapis.com
-    ```
+   # Enable Google FileStore (managed NFS)
+   gcloud services enable file.googleapis.com
+   ```
 
 1. Create a GKE cluster with the following configuration:
+
    - gke version `1.24.5-gke.600`
    - image type `container-optimized OS with containerd.`
    - machine type `n1-standard-2` machines,
@@ -326,16 +331,18 @@ on any other clusters is not guaranteed.
 
 1. Enable the `GcpFilestoreCsiDriver` Addon, to allow GKE to provision volumes on FileStore:
 
-    ```shell
-     gcloud container clusters update <GKE_CLUSTER_NAME> --update-addons=GcpFilestoreCsiDriver=ENABLED --region <REGION>
-     ```
+   ```shell
+    gcloud container clusters update <GKE_CLUSTER_NAME> --update-addons=GcpFilestoreCsiDriver=ENABLED --region <REGION>
+   ```
 
 1. Install NVIDIA GPU device drivers (more [info](https://cloud.google.com/kubernetes-engine/docs/how-to/gpus#installing_drivers)):
+
    ```shell
    kubectl apply -f https://raw.githubusercontent.com/GoogleCloudPlatform/container-engine-accelerators/master/nvidia-driver-installer/cos/daemonset-preloaded-latest.yaml
    ```
 
 1. Install [`cert-manager`](https://cert-manager.io/docs/):
+
    ```shell
    kubectl create namespace cert-manager
    kubectl config set-context --current --namespace cert-manager
@@ -344,6 +351,7 @@ on any other clusters is not guaranteed.
    ```
 
 1. Install the Ingress [`NGINX`](https://kubernetes.github.io/ingress-nginx/) controller:
+
    ```shell
    kubectl create namespace nginx
    kubectl config set-context --current --namespace nginx
@@ -351,7 +359,7 @@ on any other clusters is not guaranteed.
    helm install nginx ingress-nginx/ingress-nginx --set controller.config.use-forwarded-headers=true
    ```
 
-   To enable monitoring on ingress-nginx:
+1. To enable monitoring on ingress-nginx:
 
    ```shell
    helm upgrade nginx ingress-nginx/ingress-nginx \
@@ -363,6 +371,7 @@ on any other clusters is not guaranteed.
    ```
 
 1. Create the `ai-assist` namespace and update the current context
+
    ```shell
    export KUBERNETES_AI_ASSIST_NAMESPACE=ai-assist
    kubectl create namespace $KUBERNETES_AI_ASSIST_NAMESPACE
@@ -370,6 +379,7 @@ on any other clusters is not guaranteed.
    ```
 
 1. Create the `docker-registry` secret to pull private images from GitLab AI Assist registry:
+
    ```shell
    export DEPLOY_TOKEN_USERNAME=<USERNAME>
    export DEPLOY_TOKEN_PASSWORD=<PASSWORD>
@@ -380,16 +390,19 @@ on any other clusters is not guaranteed.
    ```
 
 1. Install the `helm-diff` plugin:
+
    ```shell
    helm plugin install https://github.com/databus23/helm-diff
    ```
 
 1. Install chart dependencies
-  ```
-  helm dep build infrastructure/ai-assist
-  ```
+
+   ```shell
+   helm dep build infrastructure/ai-assist
+   ```
 
 1. Deploy the `ai-assist` helm chart:
+
    ```shell
    cd infrastructure
 
@@ -404,26 +417,29 @@ on any other clusters is not guaranteed.
    scripts/helm-deploy.sh gprd upgrade --no-dry-run
    ```
 
-1.  Run the k8s job to fetch the `codegen-16B-multi` model from Hugging Face and store it in Google FileStore:
+1. Run the k8s job to fetch the `codegen-16B-multi` model from Hugging Face and store it in Google FileStore:
+
    ```shell
    ./infrastructure/scripts/load-model.sh
    ```
 
 1. Reload Triton to fetch the newer model after the batch job:
-    ```shell
-    kubectl rollout restart deployment model-triton
-    ```
+
+   ```shell
+   kubectl rollout restart deployment model-triton
+   ```
 
 1. Deploy the NGINX ingress resource with TLS enabled:
+
    ```shell
    kubectl apply -f ./manifests/ingress/ingress-nginx.yaml
    ```
 
 ### Loading the Model
 
-Triton loads the model from [Google Filestore](https://console.cloud.google.com/filestore/instances?project=unreview-poc-390200e5) on startup. 
+Triton loads the model from [Google Filestore](https://console.cloud.google.com/filestore/instances?project=unreview-poc-390200e5) on startup.
 
-When a new model is generated, it needs to be loaded from [Google Cloud Storage](https://console.cloud.google.com/storage/browser/code-suggestions/model-deployments?project=unreview-poc-390200e5&pageState=(%22StorageObjectListTable%22:(%22f%22:%22%255B%255D%22))&prefix=&forceOnObjectsSortingFiltering=false), decompressed, processed and saved to Google FileStore.
+When a new model is generated, it needs to be loaded from [Google Cloud Storage](<https://console.cloud.google.com/storage/browser/code-suggestions/model-deployments?project=unreview-poc-390200e5&pageState=(%22StorageObjectListTable%22:(%22f%22:%22%255B%255D%22))&prefix=&forceOnObjectsSortingFiltering=false>), decompressed, processed and saved to Google FileStore.
 
 To load the model, you need to run the following command:
 
@@ -460,9 +476,9 @@ Other useful tools:
 1. Navigate to the cluster (for example: `ai-assist`) to which you want to connect.
 1. Click on `Connect`. You should see a command in the form:
 
-    ```shell
-    gcloud container clusters get-credentials ai-assist --zone us-central1-c --project unreview-poc-390200e5
-    ```
+   ```shell
+   gcloud container clusters get-credentials ai-assist --zone us-central1-c --project unreview-poc-390200e5
+   ```
 
 1. Run that command on your terminal. This will set the current Kubernetes context to that cluster.
 1. For the `ai-assist` cluster, add your local IP to the `Control plane authorized networks`. This restricts `kubectl` access
@@ -531,8 +547,8 @@ metadata:
     release: prometheus
 spec:
   endpoints:
-  - interval: 30s
-    port: web
+    - interval: 30s
+      port: web
   selector:
     matchLabels:
       app: clickhouse-exploration-go
@@ -547,12 +563,11 @@ spec:
   selector:
     app: clickhouse-exploration-go
   ports:
-  - protocol: "TCP"
-    name: web
-    port: 4444
-    targetPort: 4444
+    - protocol: "TCP"
+      name: web
+      port: 4444
+      targetPort: 4444
   type: LoadBalancer
-
 ```
 
 Service Discovery only tells you if Prometheus can see the ServiceMonitor, in order to determine if the metrics can be pulled from the service you need to check the targets page.
@@ -572,20 +587,20 @@ Some of the docker image builds are too large to process on standard shared GitL
 Any builds in this project tagged with the `ai-assist-container-build` build tag will run on the dedicated fleet, but this tag is intended for resource intensive docker image builds.
 
 ```yaml
-  tags:
-    # This tag will tell gitlab to use the private runners
-    - ai-assist-container-build
+tags:
+  # This tag will tell gitlab to use the private runners
+  - ai-assist-container-build
 ```
 
 ### Deploying the GitLab Runner
 
-The GitLab runner is deployed using `helmfile`. 
+The GitLab runner is deployed using `helmfile`.
 
 ```shell
 helmfile --environment test apply -f infrastructure/helmfile.yaml
 ```
 
-This will deploy the runner into the `gitlab-runner` namespace on the `ai-assist` test cluster. [View current workloads in the GCP Console](https://console.cloud.google.com/kubernetes/workload/overview?project=unreview-poc-390200e5&pageState=(%22savedViews%22:(%22i%22:%2207b618eaed634ba0811c01e6244fd02f%22,%22c%22:%5B%22gke%2Fus-central1-c%2Fai-assist-test%22%5D,%22n%22:%5B%22gitlab-runner%22%5D))).
+This will deploy the runner into the `gitlab-runner` namespace on the `ai-assist` test cluster. [View current workloads in the GCP Console](<https://console.cloud.google.com/kubernetes/workload/overview?project=unreview-poc-390200e5&pageState=(%22savedViews%22:(%22i%22:%2207b618eaed634ba0811c01e6244fd02f%22,%22c%22:%5B%22gke%2Fus-central1-c%2Fai-assist-test%22%5D,%22n%22:%5B%22gitlab-runner%22%5D))>).
 
 ### Deploying the Runner Node Pool
 
