@@ -6,7 +6,7 @@ import traceback
 
 from asgi_correlation_id.context import correlation_id
 
-from typing import Optional
+from typing import Optional, Tuple
 
 from fastapi import Response
 from fastapi.encoders import jsonable_encoder
@@ -15,16 +15,18 @@ from starlette.middleware import Middleware
 from starlette.authentication import AuthenticationError, HTTPConnection
 from starlette.concurrency import iterate_in_threadpool
 from starlette.middleware.authentication import AuthenticationMiddleware, AuthenticationBackend
+from starlette.authentication import AuthCredentials, BaseUser
 from starlette.middleware.base import BaseHTTPMiddleware, Request
 from starlette.responses import JSONResponse
 
 from uvicorn.protocols.utils import get_path_with_query_string
 
-from codesuggestions.auth import AuthProvider
+from codesuggestions.auth import AuthProvider, UserClaims
 from codesuggestions.api.timing import timing
 from starlette_context import context
 
 __all__ = [
+    "GitLabUser",
     "MiddlewareLogRequest",
     "MiddlewareAuthentication",
 ]
@@ -45,6 +47,30 @@ class _PathResolver:
 
     def skip_path(self, path: str) -> bool:
         return path in self.endpoints
+
+
+class GitLabUser(BaseUser):
+    def __init__(
+        self,
+        authenticated: bool,
+        is_debug: bool = False,
+        claims: Optional[UserClaims] = None
+    ):
+        self._authenticated = authenticated
+        self._is_debug = is_debug
+        self._claims = claims
+
+    @property
+    def claims(self) -> Optional[UserClaims]:
+        return self._claims
+
+    @property
+    def is_debug(self) -> bool:
+        return self._is_debug
+
+    @property
+    def is_authenticated(self) -> bool:
+        return self._authenticated
 
 
 class MiddlewareLogRequest(Middleware):
@@ -163,7 +189,7 @@ class MiddlewareAuthentication(Middleware):
 
             if self.bypass_auth:
                 log.critical("Auth is disabled, all users allowed")
-                return
+                return AuthCredentials(), GitLabUser(authenticated=True, is_debug=True)
 
             if self.AUTH_HEADER not in conn.headers:
                 raise AuthenticationError("No authorization header presented")
@@ -173,15 +199,19 @@ class MiddlewareAuthentication(Middleware):
             if bearer.lower() != self.PREFIX_BEARER_HEADER:
                 raise AuthenticationError('Invalid authorization header')
 
-            self.authenticate_with_token(conn.headers, token)
+            authenticated, claims = self.authenticate_with_token(conn.headers, token)
+
+            return AuthCredentials(), GitLabUser(authenticated, claims=claims)
 
         @timing("auth_duration_s")
-        def authenticate_with_token(self, headers, token):
+        def authenticate_with_token(self, headers, token) -> Tuple[bool, UserClaims]:
             auth_provider = self._auth_provider(headers)
 
-            is_auth = auth_provider.authenticate(token)
-            if not is_auth:
+            user = auth_provider.authenticate(token)
+            if not user.authenticated:
                 raise AuthenticationError("Forbidden by auth provider")
+
+            return user.authenticated, user.claims
 
         def _auth_provider(self, headers):
             auth_type = headers.get(self.AUTH_TYPE_HEADER)

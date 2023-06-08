@@ -2,7 +2,7 @@ import pathlib
 
 from typing import List, Dict, Optional
 
-from codesuggestions.models import Codegen
+from codesuggestions.models import TextGenBaseModel
 from codesuggestions.suggestions.detectors import (
     DetectorRegexEmail,
     DetectorRegexIPV4,
@@ -119,21 +119,43 @@ class PromptEngineMixin:
 
 
 class CodeSuggestionsUseCase:
-    def __init__(self, model: Codegen):
+    def __init__(self, model: TextGenBaseModel):
         self.model = model
 
     def __call__(self, prompt: str) -> str:
-        return self.model(prompt)
+        if res := self.model.generate(prompt):
+            return res.text
+        return ""
 
 
 class CodeSuggestionsUseCaseV2(PromptEngineMixin):
-    def __init__(self, model: Codegen):
+    # TODO: we probably need to create a pool of models with custom routing rules
+    def __init__(self, model_codegen: TextGenBaseModel, model_palm: TextGenBaseModel):
         PromptEngineMixin.__init__(self)
-        self.model = model
+        self.model_codegen = model_codegen
+        self.model_palm = model_palm
 
-    def __call__(self, content: str, file_name: str) -> str:
-        prompt = self.build_prompt(content, file_name)
-        completion = self.model(prompt)
-        completion = remove_incomplete_lines(completion)
+    def _route_request(self, third_party: bool) -> TextGenBaseModel:
+        model = self.model_palm if third_party else self.model_codegen
+        return model
 
-        return completion
+    def _trim_prompt_max_len(self, prompt: str, max_context_size: int) -> str:
+        return prompt[-max_context_size:]
+
+    def _clean_completions(self, text: str, third_party: bool) -> str:
+        text = text if third_party else remove_incomplete_lines(text)
+        return text
+
+    def __call__(self, content: str, file_name: str, third_party: bool = False) -> str:
+        model = self._route_request(third_party)
+
+        prompt = self.build_prompt(
+            self._trim_prompt_max_len(content, model.MAX_MODEL_LEN),
+            file_name
+        )
+
+        if res := model.generate(prompt):
+            completion = self._clean_completions(res.text, third_party)
+            return completion
+
+        return ""

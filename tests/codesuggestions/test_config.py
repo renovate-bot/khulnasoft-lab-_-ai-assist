@@ -18,7 +18,13 @@ test_data = dict(
     redoc_url="redoc",
 
     bypass_auth=True,
-    gitlab_url="gitlab"
+    gitlab_url="gitlab",
+
+    palm_text_model="palm_model",
+    palm_text_project="palm_project",
+    palm_text_location="palm_location",
+
+    is_third_party_ai_default=True,
 )
 
 
@@ -38,7 +44,13 @@ def mock_env_vars(request):
         "FASTAPI_REDOC_URL": request.param["redoc_url"],
 
         "AUTH_BYPASS_EXTERNAL": str(int(request.param["bypass_auth"])),
-        "GITLAB_API_URL": request.param["gitlab_url"]
+        "GITLAB_API_URL": request.param["gitlab_url"],
+
+        "PALM_TEXT_MODEL_NAME": request.param["palm_text_model"],
+        "PALM_TEXT_PROJECT": request.param["palm_text_project"],
+        "PALM_TEXT_LOCATION": request.param["palm_text_location"],
+
+        "F_IS_THIRD_PARTY_AI_DEFAULT": str(int(request.param["is_third_party_ai_default"])),
     }
 
     with mock.patch.dict(os.environ, envs):
@@ -65,3 +77,9 @@ def test_config(mock_env_vars, configuration):
 
     assert config.auth.bypass == configuration["bypass_auth"]
     assert config.auth.gitlab_api_base_url == configuration["gitlab_url"]
+
+    assert config.palm_text_model.name == configuration["palm_text_model"]
+    assert config.palm_text_model.project == configuration["palm_text_project"]
+    assert config.palm_text_model.location == configuration["palm_text_location"]
+
+    assert config.feature_flags.is_third_party_ai_default == configuration["is_third_party_ai_default"]

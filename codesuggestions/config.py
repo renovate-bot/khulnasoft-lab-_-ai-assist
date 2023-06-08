@@ -7,6 +7,8 @@ __all__ = [
     "TritonConfig",
     "FastApiConfig",
     "AuthConfig",
+    "PalmTextModelConfig",
+    "FeatureFlags",
 ]
 
 
@@ -36,6 +38,16 @@ class ProfilingConfig(NamedTuple):
     enabled: bool
     verbose: int
     period_ms: int
+
+
+class PalmTextModelConfig(NamedTuple):
+    name: str
+    project: str
+    location: str
+
+
+class FeatureFlags(NamedTuple):
+    is_third_party_ai_default: bool
 
 
 class Config:
@@ -83,6 +95,20 @@ class Config:
             enabled=Config._str_to_bool(Config._get_value("GOOGLE_CLOUD_PROFILER", "False")),
             verbose=int(Config._get_value("GOOGLE_CLOUD_PROFILER_VERBOSE", 2)),
             period_ms=int(Config._get_value("GOOGLE_CLOUD_PROFILER_PERIOD_MS", 10)),
+        )
+
+    @property
+    def feature_flags(self) -> FeatureFlags:
+        return FeatureFlags(
+            is_third_party_ai_default=Config._str_to_bool(Config._get_value("F_IS_THIRD_PARTY_AI_DEFAULT", "False")),
+        )
+
+    @property
+    def palm_text_model(self) -> PalmTextModelConfig:
+        return PalmTextModelConfig(
+            name=Config._get_value("PALM_TEXT_MODEL_NAME", "text-bison@001"),
+            project=Config._get_value("PALM_TEXT_PROJECT", "unreview-poc-390200e5"),
+            location=Config._get_value("PALM_TEXT_LOCATION", "us-central1"),
         )
 
     @staticmethod

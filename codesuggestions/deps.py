@@ -2,7 +2,12 @@ from dependency_injector import containers, providers
 
 from codesuggestions.auth import GitLabAuthProvider, GitLabOidcProvider
 from codesuggestions.api import middleware
-from codesuggestions.models import grpc_connect_triton, Codegen
+from codesuggestions.models import (
+    grpc_connect_triton,
+    GitLabCodeGen,
+    PalmTextGenModel,
+    vertex_ai_init,
+)
 from codesuggestions.suggestions import (
     CodeSuggestionsUseCase,
     CodeSuggestionsUseCaseV2,
@@ -23,6 +28,20 @@ def _init_triton_grpc_client(host: str, port: int):
     client = grpc_connect_triton(host, port)
     yield client
     client.close()
+
+
+def _init_vertex_ai(project: str, location: str, is_third_party_ai_default: bool):
+    if is_third_party_ai_default:
+        vertex_ai_init(project, location)
+
+
+def _init_palm_text_gen_model(model_name: str, is_third_party_ai_default: bool):
+    if is_third_party_ai_default:
+        return PalmTextGenModel(
+            model_name=model_name,
+        )
+
+    return None
 
 
 class FastApiContainer(containers.DeclarativeContainer):
@@ -71,9 +90,22 @@ class CodeSuggestionsContainer(containers.DeclarativeContainer):
         port=config.triton.port,
     )
 
+    _ = providers.Resource(
+        _init_vertex_ai,
+        project=config.palm_text_model.project,
+        location=config.palm_text_model.location,
+        is_third_party_ai_default=config.feature_flags.is_third_party_ai_default,
+    )
+
     model_codegen = providers.Singleton(
-        Codegen,
+        GitLabCodeGen,
         grpc_client=grpc_client,
+    )
+
+    model_palm = providers.Singleton(
+        _init_palm_text_gen_model,
+        model_name=config.palm_text_model.name,
+        is_third_party_ai_default=config.feature_flags.is_third_party_ai_default,
     )
 
     usecase = providers.Singleton(
@@ -83,5 +115,6 @@ class CodeSuggestionsContainer(containers.DeclarativeContainer):
 
     usecase_v2 = providers.Singleton(
         CodeSuggestionsUseCaseV2,
-        model=model_codegen,
+        model_codegen=model_codegen,
+        model_palm=model_palm,
     )
