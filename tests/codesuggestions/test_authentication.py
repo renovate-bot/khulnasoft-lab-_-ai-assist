@@ -1,4 +1,5 @@
 from codesuggestions.api.middleware import MiddlewareAuthentication, MiddlewareLogRequest
+from codesuggestions.auth import User, UserClaims
 
 from starlette.applications import Starlette
 from starlette.authentication import requires
@@ -20,7 +21,12 @@ def homepage(request):
 
 class StubKeyAuthProvider:
     def authenticate(self, token):
-        return False
+        return User(
+            authenticated=False,
+            claims=UserClaims(
+                is_third_party_ai_default=False,
+            )
+        )
 
 
 app = Starlette(

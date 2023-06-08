@@ -4,6 +4,7 @@ import urllib.parse
 from abc import ABC, abstractmethod
 from datetime import datetime, timedelta
 from hashlib import pbkdf2_hmac
+from typing import NamedTuple
 
 import requests
 from jose import JWTError, jwt
@@ -11,6 +12,8 @@ from jose import JWTError, jwt
 from codesuggestions.auth.cache import LocalAuthCache
 
 __all__ = [
+    "User",
+    "UserClaims",
     "AuthProvider",
     "GitLabAuthProvider",
     "GitLabOidcProvider",
@@ -19,9 +22,18 @@ __all__ = [
 REQUEST_TIMEOUT_SECONDS = 10
 
 
+class UserClaims(NamedTuple):
+    is_third_party_ai_default: bool
+
+
+class User(NamedTuple):
+    authenticated: bool
+    claims: UserClaims
+
+
 class AuthProvider(ABC):
     @abstractmethod
-    def authenticate(self, *args, **kwargs):
+    def authenticate(self, *args, **kwargs) -> User:
         pass
 
 
@@ -70,7 +82,7 @@ class GitLabAuthProvider(AuthProvider):
     def _hash_token(self, token: str) -> str:
         return pbkdf2_hmac("sha256", token.encode(), self.salt, 10_000).hex()
 
-    def authenticate(self, token: str) -> bool:
+    def authenticate(self, token: str) -> User:
         """
         Checks if the user is allowed to use Code Suggestions
         :param token: Users Personal Access Token or OAuth token
@@ -78,14 +90,26 @@ class GitLabAuthProvider(AuthProvider):
         """
         key = self._hash_token(token)
         if not self._is_auth_required(key):
-            return True
+            return User(
+                authenticated=True,
+                claims=UserClaims(
+                    # TODO: update this field to the required value based on the GitLab settings
+                    is_third_party_ai_default=False,
+                )
+            )
 
         # authenticate user sending the GitLab API request
         is_allowed = self._request_code_suggestions_allowed(token)
         if is_allowed:
             self._cache_auth(key, token)
 
-        return is_allowed
+        return User(
+            authenticated=is_allowed,
+            claims=UserClaims(
+                # TODO: update this field to the required value based on the GitLab settings
+                is_third_party_ai_default=False,
+            )
+        )
 
 
 class GitLabOidcProvider(AuthProvider):
@@ -98,7 +122,7 @@ class GitLabOidcProvider(AuthProvider):
         self.expiry_seconds = expiry_seconds
         self.cache = LocalAuthCache()
 
-    def authenticate(self, token: str) -> bool:
+    def authenticate(self, token: str) -> User:
         jwks = self._jwks()
 
         is_allowed = True
@@ -110,7 +134,13 @@ class GitLabOidcProvider(AuthProvider):
             logging.error(f"Failed to decode JWT token: {err}")
             is_allowed = False
 
-        return is_allowed
+        return User(
+            authenticated=is_allowed,
+            claims=UserClaims(
+                # TODO: update this field to the required value based on the GitLab settings
+                is_third_party_ai_default=False,
+            )
+        )
 
     def _jwks(self) -> dict:
         jwks_record = self.cache.get(self.CACHE_KEY)

@@ -35,6 +35,8 @@ def main():
 
     code_suggestions_container = CodeSuggestionsContainer()
     code_suggestions_container.config.triton.from_value(config.triton._asdict())
+    code_suggestions_container.config.palm_text_model.from_value(config.palm_text_model._asdict())
+    code_suggestions_container.config.feature_flags.from_value(config.feature_flags._asdict())
 
     app = create_fast_api_server()
     setup_logging(app, json_logs=True, log_level="INFO")
