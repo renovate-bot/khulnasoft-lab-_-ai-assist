@@ -30,18 +30,8 @@ def _init_triton_grpc_client(host: str, port: int):
     client.close()
 
 
-def _init_vertex_ai(project: str, location: str, is_third_party_ai_default: bool):
-    if is_third_party_ai_default:
-        vertex_ai_init(project, location)
-
-
-def _init_palm_text_gen_model(model_name: str, is_third_party_ai_default: bool):
-    if is_third_party_ai_default:
-        return PalmTextGenModel(
-            model_name=model_name,
-        )
-
-    return None
+def _init_vertex_ai(project: str, location: str, credential_path: str):
+    vertex_ai_init(project, location, credential_path)
 
 
 class FastApiContainer(containers.DeclarativeContainer):
@@ -94,7 +84,7 @@ class CodeSuggestionsContainer(containers.DeclarativeContainer):
         _init_vertex_ai,
         project=config.palm_text_model.project,
         location=config.palm_text_model.location,
-        is_third_party_ai_default=config.feature_flags.is_third_party_ai_default,
+        credential_path=config.palm_text_model.credential_path
     )
 
     model_codegen = providers.Singleton(
@@ -103,9 +93,8 @@ class CodeSuggestionsContainer(containers.DeclarativeContainer):
     )
 
     model_palm = providers.Singleton(
-        _init_palm_text_gen_model,
+        PalmTextGenModel,
         model_name=config.palm_text_model.name,
-        is_third_party_ai_default=config.feature_flags.is_third_party_ai_default,
     )
 
     usecase = providers.Singleton(

@@ -6,6 +6,8 @@ from unittest import mock
 from codesuggestions import Config
 
 test_data = dict(
+    google_vertex_ai_credentials="path/key.json",
+
     triton_host="localhost",
     triton_port=5000,
 
@@ -25,12 +27,14 @@ test_data = dict(
     palm_text_location="palm_location",
 
     is_third_party_ai_default=True,
+    limited_access_third_party_ai={123, 456, 768},
 )
 
 
 @pytest.fixture
 def mock_env_vars(request):
     envs = {
+        "GOOGLE_VERTEX_AI_CREDENTIALS": request.param["google_vertex_ai_credentials"],
         "TRITON_HOST": request.param["triton_host"],
         "TRITON_PORT": str(request.param["triton_port"]),
 
@@ -50,6 +54,7 @@ def mock_env_vars(request):
         "PALM_TEXT_PROJECT": request.param["palm_text_project"],
         "PALM_TEXT_LOCATION": request.param["palm_text_location"],
 
+        "F_THIRD_PARTY_AI_LIMITED_ACCESS": ",".join(map(str, request.param["limited_access_third_party_ai"])),
         "F_IS_THIRD_PARTY_AI_DEFAULT": str(int(request.param["is_third_party_ai_default"])),
     }
 
@@ -82,4 +87,5 @@ def test_config(mock_env_vars, configuration):
     assert config.palm_text_model.project == configuration["palm_text_project"]
     assert config.palm_text_model.location == configuration["palm_text_location"]
 
+    assert config.feature_flags.limited_access_third_party_ai == configuration["limited_access_third_party_ai"]
     assert config.feature_flags.is_third_party_ai_default == configuration["is_third_party_ai_default"]
