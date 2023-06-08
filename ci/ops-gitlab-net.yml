@@ -27,14 +27,14 @@ helm-diff-gstg:
     - .oidc_base_gcp
   script:
     - cd infrastructure
-    - scripts/helm-deploy.sh gstg init
-    - scripts/helm-deploy.sh gstg diff
+    - scripts/deploy init gstg
+    - scripts/deploy diff gstg
   tags:
       - k8s-workloads
   rules:
     - if: $CI_COMMIT_BRANCH != $CI_DEFAULT_BRANCH
 
-helm-upgrade-gstg:
+helm-apply-gstg:
   resource_group: gstg
   stage: release
   image: "${CI_REGISTRY}/gitlab-com/gl-infra/k8s-workloads/common/k8-helm-ci:${CI_IMAGE_VERSION}"
@@ -42,12 +42,30 @@ helm-upgrade-gstg:
     - .oidc_base_gcp
   script:
     - cd infrastructure
-    - scripts/helm-deploy.sh gstg init
-    - scripts/helm-deploy.sh gstg upgrade --no-dry-run
+    - scripts/deploy init gstg
+    - scripts/deploy sync gstg --no-dry-run
   tags:
       - k8s-workloads
   rules:
     - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+
+helm-deploy-gstg:
+  parallel:
+    matrix:
+      - DEPLOYMENT: ["model-gateway", "triton"]
+  resource_group: gstg
+  stage: release
+  image: "${CI_REGISTRY}/gitlab-com/gl-infra/k8s-workloads/common/k8-helm-ci:${CI_IMAGE_VERSION}"
+  extends:
+    - .oidc_base_gcp
+  script:
+    - cd infrastructure
+    - scripts/deploy init gstg
+    - scripts/deploy sync gstg --no-dry-run --deploy ${DEPLOYMENT}=${CI_COMMIT_SHORT_SHA}
+  tags:
+      - k8s-workloads
+  rules:
+    - when: manual
 
 helm-diff-gprd:
   resource_group: gprd
@@ -57,15 +75,15 @@ helm-diff-gprd:
     - .oidc_base_gcp
   script:
     - cd infrastructure
-    - scripts/helm-deploy.sh gprd init
-    - scripts/helm-deploy.sh gprd diff
+    - scripts/deploy init gprd
+    - scripts/deploy diff gprd
   tags:
       - k8s-workloads
   rules:
     - if: $CI_COMMIT_BRANCH != $CI_DEFAULT_BRANCH
 
-helm-upgrade-gprd:
-  needs: [helm-upgrade-gstg]
+helm-apply-gprd:
+  needs: [helm-apply-gstg]
   resource_group: gprd
   stage: release
   image: "${CI_REGISTRY}/gitlab-com/gl-infra/k8s-workloads/common/k8-helm-ci:${CI_IMAGE_VERSION}"
@@ -73,9 +91,28 @@ helm-upgrade-gprd:
     - .oidc_base_gcp
   script:
     - cd infrastructure
-    - scripts/helm-deploy.sh gprd init
-    - scripts/helm-deploy.sh gprd upgrade --no-dry-run
+    - scripts/deploy init gprd
+    - scripts/deploy sync gprd --no-dry-run
   tags:
       - k8s-workloads
   rules:
     - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+
+helm-deploy-gprd:
+  parallel:
+    matrix:
+      - DEPLOYMENT: ["model-gateway", "triton"]
+  resource_group: gprd
+  stage: release
+  image: "${CI_REGISTRY}/gitlab-com/gl-infra/k8s-workloads/common/k8-helm-ci:${CI_IMAGE_VERSION}"
+  extends:
+    - .oidc_base_gcp
+  script:
+    - cd infrastructure
+    - scripts/deploy init gprd
+    - scripts/deploy sync gprd --no-dry-run --deploy ${DEPLOYMENT}=${CI_COMMIT_SHORT_SHA}
+  tags:
+      - k8s-workloads
+  rules:
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+      when: manual

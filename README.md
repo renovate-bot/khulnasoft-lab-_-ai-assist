@@ -390,18 +390,35 @@ on any other clusters is not guaranteed.
   ```
 
 1. Deploy the `ai-assist` helm chart:
+
    ```shell
    cd infrastructure
 
    # For Staging
-   scripts/helm-deploy.sh gstg diff
-   scripts/helm-deploy.sh gstg upgrade
-   scripts/helm-deploy.sh gstg upgrade --no-dry-run
+   scripts/deploy diff gstg
+   scripts/deploy sync gstg
+   scripts/deploy sync gstg --no-dry-run
 
    # For Production...
-   scripts/helm-deploy.sh gprd diff
-   scripts/helm-deploy.sh gprd upgrade
-   scripts/helm-deploy.sh gprd upgrade --no-dry-run
+   scripts/deploy diff gprd
+   scripts/deploy sync gprd
+   scripts/deploy sync gprd --no-dry-run
+   ```
+
+1. Deploy a new version of the Triton server using the `ai-assist` helm chart. Note that this should normally be done via the CI job.
+
+   ```shell
+   cd infrastructure
+   # Deploy the Triton container with tag `deadbeef`...
+   scripts/deploy sync gprd --no-dry-run --deploy triton=deadbeef
+   ```
+
+1. Deploy a new version of the Model-Gateway using the `ai-assist` helm chart. Note that this should normally be done via the CI job.
+
+   ```shell
+   cd infrastructure
+   # Deploy the Model-Gateway container with tag `deadbeef`...
+   scripts/deploy sync gprd --no-dry-run --deploy model-gateway=deadbeef
    ```
 
 1.  Run the k8s job to fetch the `codegen-16B-multi` model from Hugging Face and store it in Google FileStore:
@@ -418,6 +435,27 @@ on any other clusters is not guaranteed.
    ```shell
    kubectl apply -f ./manifests/ingress/ingress-nginx.yaml
    ```
+
+### Deploying the Application from CI/CD
+
+Deployments can be controlled via manual CI/CD jobs running in pipelines on [ops.gitlab.net](https://ops.gitlab.net/gitlab-org/modelops/applied-ml/code-suggestions/ai-assist).
+
+#### How to deploy a new version to staging
+
+1. Looking at the pipeline on gitlab.com, ensure that the new registry image has been built and pushed to registry.gitlab.com
+1. Look for the Woodhouse notification for the pipeline running on ops.gitlab.net, and navigate to the pipeline.
+1. You will find two manual jobs, `helm-deploy-gstg: [triton]` for deploying Triton, and `helm-deploy-gstg: [model-gateway]` for deploying the Model Gateway.
+1. Click the "play" button to deploy the new CI image to the [`ai-assist-test`](https://console.cloud.google.com/kubernetes/clusters/details/us-central1-c/ai-assist-test/nodes?project=unreview-poc-390200e5) Cluster.
+1. The job will complete when the deployment completes.
+
+#### How to deploy a new version to production
+
+1. Merge your merge request and ensure that the pipeline on the `main` branch completes successfully.
+1. Ensure that the new registry image has been built and pushed to registry.gitlab.com
+1. Visit <https://ops.gitlab.net/gitlab-org/modelops/applied-ml/code-suggestions/ai-assist/-/pipelines> and navigate to the latest `main` branch pipeline.
+1. You will find two manual jobs, `helm-deploy-gprd: [triton]` for deploying Triton, and `helm-deploy-gprd: [model-gateway]` for deploying the Model Gateway.
+1. Click the "play" button to deploy the new CI image to the [`ai-assist` Cluster](https://console.cloud.google.com/kubernetes/clusters/details/us-central1-c/ai-assist/details?project=unreview-poc-390200e5).
+1. The job will complete when the deployment completes.
 
 ### Loading the Model
 

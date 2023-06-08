@@ -1,8 +1,0 @@
-modelGateway:
-  modelGateway:
-    env:
-      googleCloudProfiler: false
-
-modelTriton:
-  replicas: 1
-

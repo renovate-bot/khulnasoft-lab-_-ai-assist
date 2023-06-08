@@ -25,7 +25,7 @@ spec:
         - name: gitlab-registry
       containers:
         - name: model-gateway
-          image: {{ .Values.modelGateway.modelGateway.image.repository }}:{{ .Values.modelGateway.modelGateway.image.tag | default .Chart.AppVersion }}
+          image: {{ .Values.modelGateway.modelGateway.image.repository }}:{{ .Values.modelGateway.modelGateway.image.tag }}
           ports:
             - name: api-port
               containerPort: 5052
