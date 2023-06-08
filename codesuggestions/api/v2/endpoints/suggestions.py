@@ -61,7 +61,9 @@ async def completions(
 ):
     f_third_party_ai_default = resolve_third_party_ai_default(
         req.user,
+        payload.project_id,
         f_flags["is_third_party_ai_default"],
+        f_flags["limited_access_third_party_ai"],
     )
     suggestion = await run_in_threadpool(
         get_suggestions,
@@ -79,9 +81,19 @@ async def completions(
     )
 
 
-def resolve_third_party_ai_default(user: GitLabUser, f_third_party_ai_default: bool) -> bool:
+def resolve_third_party_ai_default(
+    user: GitLabUser,
+    project_id: int,
+    f_third_party_ai_default: bool,
+    f_limited_access_third_party_ai: set[int],
+) -> bool:
     if is_debug := user.is_debug:
         return is_debug and f_third_party_ai_default
+
+    # Hack: Manually activate third-party AI service
+    # for selected testers by project_id
+    if project_id in f_limited_access_third_party_ai:
+        return True
 
     if claims := user.claims:
         return claims.is_third_party_ai_default and f_third_party_ai_default

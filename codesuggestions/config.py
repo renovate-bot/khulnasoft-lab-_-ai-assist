@@ -44,10 +44,12 @@ class PalmTextModelConfig(NamedTuple):
     name: str
     project: str
     location: str
+    credential_path: str
 
 
 class FeatureFlags(NamedTuple):
     is_third_party_ai_default: bool
+    limited_access_third_party_ai: set[int]
 
 
 class Config:
@@ -99,16 +101,27 @@ class Config:
 
     @property
     def feature_flags(self) -> FeatureFlags:
+        limited_access = set()
+        if env_limited_access := Config._get_value("F_THIRD_PARTY_AI_LIMITED_ACCESS", ""):
+            limited_access = set(map(int, env_limited_access.split(",")))
+
         return FeatureFlags(
             is_third_party_ai_default=Config._str_to_bool(Config._get_value("F_IS_THIRD_PARTY_AI_DEFAULT", "False")),
+            limited_access_third_party_ai=limited_access,
         )
 
     @property
     def palm_text_model(self) -> PalmTextModelConfig:
+        # always require to set the GOOGLE_VERTEX_AI_CREDENTIALS env variable
+        filename = Config._get_value("GOOGLE_VERTEX_AI_CREDENTIALS", None)
+        if not filename:
+            raise ValueError("env GOOGLE_VERTEX_AI_CREDENTIALS not specified")
+
         return PalmTextModelConfig(
             name=Config._get_value("PALM_TEXT_MODEL_NAME", "text-bison@001"),
             project=Config._get_value("PALM_TEXT_PROJECT", "unreview-poc-390200e5"),
             location=Config._get_value("PALM_TEXT_LOCATION", "us-central1"),
+            credential_path=filename
         )
 
     @staticmethod

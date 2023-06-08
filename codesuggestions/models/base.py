@@ -1,4 +1,5 @@
 from abc import ABC, abstractmethod
+from google.oauth2 import service_account
 from typing import NamedTuple
 
 import numpy as np
@@ -65,5 +66,6 @@ def grpc_connect_triton(host: str, port: int, verbose: bool = False) -> triton_g
     )
 
 
-def vertex_ai_init(project: str, location: str):
-    vertexai.init(project=project, location=location)
+def vertex_ai_init(project: str, location: str, credential_path: str):
+    credentials = service_account.Credentials.from_service_account_file(credential_path)
+    vertexai.init(project=project, location=location, credentials=credentials)
