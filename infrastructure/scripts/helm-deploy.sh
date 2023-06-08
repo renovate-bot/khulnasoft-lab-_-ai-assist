@@ -75,6 +75,8 @@ case $COMMAND in
         gcloud container clusters get-credentials $CLUSTER_NAME --zone $GCP_ZONE --project $GCP_PROJECT
         ;;
     diff)
+        echo "> helm dependency update ai-assist"
+        helm dependency update ai-assist
         HELM_CMD="helm diff upgrade --kube-context $KUBE_CTX ai-assist ai-assist -n fauxpilot -f $VALUES_FILE"
         echo "> $HELM_CMD"
         eval "${HELM_CMD}"
