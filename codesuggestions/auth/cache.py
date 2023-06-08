@@ -2,6 +2,8 @@ from datetime import datetime
 from typing import Optional, NamedTuple
 from abc import ABC, abstractmethod
 
+from codesuggestions.auth.user import User
+
 __all__ = [
     "AuthRecord",
     "BaseAuthCache",
@@ -10,7 +12,7 @@ __all__ = [
 
 
 class AuthRecord(NamedTuple):
-    value: str
+    value: User
     exp: datetime
 
 
@@ -36,7 +38,7 @@ class LocalAuthCache(BaseAuthCache):
         super().__init__()
         self.in_memory_cache = dict()
 
-    def set(self, k: str, val: str, exp: datetime):
+    def set(self, k: str, val: User, exp: datetime):
         self.in_memory_cache[k] = AuthRecord(
             value=val,
             exp=exp,

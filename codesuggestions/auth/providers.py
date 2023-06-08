@@ -4,31 +4,20 @@ import urllib.parse
 from abc import ABC, abstractmethod
 from datetime import datetime, timedelta
 from hashlib import pbkdf2_hmac
-from typing import NamedTuple
 
 import requests
 from jose import JWTError, jwt
 
-from codesuggestions.auth.cache import LocalAuthCache
+from codesuggestions.auth.cache import LocalAuthCache, AuthRecord
+from codesuggestions.auth.user import User, UserClaims
 
 __all__ = [
-    "User",
-    "UserClaims",
     "AuthProvider",
     "GitLabAuthProvider",
     "GitLabOidcProvider",
 ]
 
 REQUEST_TIMEOUT_SECONDS = 10
-
-
-class UserClaims(NamedTuple):
-    is_third_party_ai_default: bool
-
-
-class User(NamedTuple):
-    authenticated: bool
-    claims: UserClaims
 
 
 class AuthProvider(ABC):
@@ -46,26 +35,33 @@ class GitLabAuthProvider(AuthProvider):
         self.cache = LocalAuthCache()
         self.salt = os.urandom(16)
 
-    def _request_code_suggestions_allowed(self, token: str) -> bool:
+    def _request_code_suggestions_allowed(self, token: str) -> User:
         end_point = "ml/ai-assist"
         url = urllib.parse.urljoin(self.base_url, end_point)
         headers = dict(Authorization=f"Bearer {token}")
 
-        is_allowed = False
+        user_authenticated = False
+        third_party_enabled = False
 
         try:
-            res = requests.get(url=url, headers=headers, timeout=self.REQUEST_TIMEOUT_SECONDS)
-            if not (200 <= res.status_code < 300):
-                is_allowed = False
-            else:
-                is_allowed = res.json().get("user_is_allowed", False)
+            res = requests.get(
+                url=url, headers=headers, timeout=self.REQUEST_TIMEOUT_SECONDS
+            )
+            if 200 <= res.status_code < 300:
+                res_body = res.json()
+                user_authenticated = res_body.get("user_is_allowed", False)
+                third_party_enabled = res_body.get(
+                    "third_party_ai_features_enabled", False
+                )
         except requests.exceptions.RequestException as e:
             logging.error(f"Unable to authenticate user with GitLab API: {e}")
 
-        return is_allowed
+        return User(
+            authenticated=user_authenticated,
+            claims=UserClaims(is_third_party_ai_default=third_party_enabled),
+        )
 
-    def _is_auth_required(self, key: str) -> bool:
-        record = self.cache.get(key)
+    def _is_auth_required(self, record: AuthRecord) -> bool:
         if record is None:
             return True
 
@@ -75,9 +71,9 @@ class GitLabAuthProvider(AuthProvider):
 
         return False
 
-    def _cache_auth(self, key: str, token: str):
+    def _cache_auth(self, key: str, user: User):
         exp = datetime.now() + timedelta(seconds=self.expiry_seconds)
-        self.cache.set(key, token, exp)
+        self.cache.set(key, user, exp)
 
     def _hash_token(self, token: str) -> str:
         return pbkdf2_hmac("sha256", token.encode(), self.salt, 10_000).hex()
@@ -89,27 +85,15 @@ class GitLabAuthProvider(AuthProvider):
         :return: bool
         """
         key = self._hash_token(token)
-        if not self._is_auth_required(key):
-            return User(
-                authenticated=True,
-                claims=UserClaims(
-                    # TODO: update this field to the required value based on the GitLab settings
-                    is_third_party_ai_default=False,
-                )
-            )
+        record = self.cache.get(key)
+        if not self._is_auth_required(record):
+            return record.value
 
         # authenticate user sending the GitLab API request
-        is_allowed = self._request_code_suggestions_allowed(token)
-        if is_allowed:
-            self._cache_auth(key, token)
+        user = self._request_code_suggestions_allowed(token)
+        self._cache_auth(key, user)
 
-        return User(
-            authenticated=is_allowed,
-            claims=UserClaims(
-                # TODO: update this field to the required value based on the GitLab settings
-                is_third_party_ai_default=False,
-            )
-        )
+        return user
 
 
 class GitLabOidcProvider(AuthProvider):
@@ -126,9 +110,13 @@ class GitLabOidcProvider(AuthProvider):
         jwks = self._jwks()
 
         is_allowed = True
+        third_party_ai_features_enabled = False
         try:
-            _ = jwt.decode(
+            jwt_claims = jwt.decode(
                 token, jwks, audience=self.AUDIENCE, algorithms=[self.ALGORITHM]
+            )
+            third_party_ai_features_enabled = jwt_claims.get(
+                "third_party_ai_features_enabled", False
             )
         except JWTError as err:
             logging.error(f"Failed to decode JWT token: {err}")
@@ -137,9 +125,8 @@ class GitLabOidcProvider(AuthProvider):
         return User(
             authenticated=is_allowed,
             claims=UserClaims(
-                # TODO: update this field to the required value based on the GitLab settings
-                is_third_party_ai_default=False,
-            )
+                is_third_party_ai_default=third_party_ai_features_enabled,
+            ),
         )
 
     def _jwks(self) -> dict:
