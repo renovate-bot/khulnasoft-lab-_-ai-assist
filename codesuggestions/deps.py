@@ -30,8 +30,8 @@ def _init_triton_grpc_client(host: str, port: int):
     client.close()
 
 
-def _init_vertex_ai(project: str, location: str, credential_path: str):
-    vertex_ai_init(project, location, credential_path)
+def _init_vertex_ai(project: str, location: str):
+    vertex_ai_init(project, location)
 
 
 class FastApiContainer(containers.DeclarativeContainer):
@@ -88,8 +88,7 @@ class CodeSuggestionsContainer(containers.DeclarativeContainer):
     _ = providers.Resource(
         _init_vertex_ai,
         project=config.palm_text_model.project,
-        location=config.palm_text_model.location,
-        credential_path=config.palm_text_model.credential_path
+        location=config.palm_text_model.location
     )
 
     model_codegen = providers.Singleton(
