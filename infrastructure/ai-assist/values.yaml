@@ -58,3 +58,9 @@ prometheus-stackdriver-exporter:
     namespace: fauxpilot
     additionalLabels:
       release: prometheus
+
+serviceAccount:
+  labels:
+    type: "code_suggestions"
+  # The service account email to use with this account
+  iamServiceAccountEmail:

@@ -21,6 +21,12 @@ spec:
         {{- include "ai-assist.labels" . | nindent 8 }}
         {{ include "common.tplvalues.render" (dict "value" .Values.modelGateway.labels "context" $) }}
     spec:
+      # Allow these pods access to an IAM service account
+      serviceAccountName: model-gateway-serviceaccount
+      nodeSelector:
+        # Only run on nodes where the GKE Metadata server is enabled
+        # (the CPU node pool is configured to use GKE Metadata)
+        iam.gke.io/gke-metadata-server-enabled: "true"
       imagePullSecrets:
         - name: gitlab-registry
       containers:
