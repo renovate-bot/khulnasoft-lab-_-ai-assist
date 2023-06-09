@@ -61,20 +61,25 @@ def test_telemetry_capture_without_headers(mock_counter):
 
     assert response.status_code == 200
 
-    assert cap_logs == [
-        {
-            "accepted_request_count": 0,
-            "total_request_count": 0,
-            "error_request_count": 0,
-            "event": "telemetry",
-            "log_level": "info",
-        }
-    ]
+    assert len(cap_logs) == 0
+    assert mock_counter.call_count == 0
 
-    mock_counter.assert_has_calls(
-        [
-            mock.call(0),
-            mock.call(0),
-            mock.call(0),
-        ]
-    )
+
+@mock.patch("prometheus_client.Counter.inc")
+def test_telemetry_capture_invalid_headers(mock_counter):
+    headers = {
+        "X-GitLab-CS-Accepts": "one",
+        "X-GitLab-CS-Requests": "more",
+        "X-GitLab-CS-Errors": "time",
+    }
+
+    with capture_logs() as cap_logs:
+        response = client.post("/", headers=headers, data={"foo": "bar"})
+
+    assert response.status_code == 200
+
+    assert len(cap_logs) == 1
+    assert cap_logs[0]["event"].startswith("failed to capture model telemetry")
+    assert cap_logs[0]["log_level"] == "error"
+
+    assert mock_counter.call_count == 0

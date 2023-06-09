@@ -274,12 +274,15 @@ class MiddlewareModelTelemetry(Middleware):
             if self.path_resolver.skip_path(request.url.path):
                 return await call_next(request)
 
+            headers = request.headers
+            if self._missing_header(headers):
+                return await call_next(request)
+
             try:
-                headers = request.headers
                 fields = ModelTelemetry(
-                    accepted_request_count=headers.get("X-GitLab-CS-Accepts", 0),
-                    total_request_count=headers.get("X-GitLab-CS-Requests", 0),
-                    error_request_count=headers.get("X-GitLab-CS-Errors", 0),
+                    accepted_request_count=headers.get("X-GitLab-CS-Accepts"),
+                    total_request_count=headers.get("X-GitLab-CS-Requests"),
+                    error_request_count=headers.get("X-GitLab-CS-Errors"),
                 )
 
                 telemetry_logger.info("telemetry", **fields.dict())
@@ -289,6 +292,16 @@ class MiddlewareModelTelemetry(Middleware):
                 telemetry_logger.error(f"failed to capture model telemetry: {exc}")
 
             return await call_next(request)
+
+        def _missing_header(self, headers: list) -> bool:
+            return any(
+                value is None
+                for value in [
+                    headers.get("X-GitLab-CS-Accepts"),
+                    headers.get("X-GitLab-CS-Requests"),
+                    headers.get("X-GitLab-CS-Errors"),
+                ]
+            )
 
         def _track_prometheus(self, field: ModelTelemetry):
             ACCEPTS_COUNTER.inc(field.accepted_request_count)
