@@ -1,11 +1,8 @@
-import structlog
 import time
 
 from contextlib import contextmanager
-
+from starlette_context import context
 from prometheus_client import Counter, Histogram
-
-access_logger = structlog.stdlib.get_logger("api.access")
 
 METRIC_LABELS = ["model_engine", "model_name"]
 
@@ -27,9 +24,10 @@ class TextGenModelInstrumentator:
     @contextmanager
     def watch(self, prompt: str):
         prompt_length = len(prompt)
-        log_labels = self.labels | {"prompt_length": prompt_length}
 
-        access_logger.info("Starting inference request", **log_labels)
+        context["model_engine"] = self.labels["model_engine"]
+        context["model_name"] = self.labels["model_name"]
+        context["prompt_length"] = prompt_length
 
         INFERENCE_PROMPT_HISTOGRAM.labels(**self.labels).observe(prompt_length)
         INFERENCE_COUNTER.labels(**self.labels).inc()
@@ -42,5 +40,4 @@ class TextGenModelInstrumentator:
             duration = time.perf_counter() - start_time
             INFERENCE_HISTOGRAM.labels(**self.labels).observe(duration)
 
-            log_labels = log_labels | {"inference_duration_s": duration}
-            access_logger.info("Finished inference request", **log_labels)
+            context["inference_duration_s"] = duration
