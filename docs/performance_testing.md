@@ -9,7 +9,25 @@ of using [`perf_analyzer`](https://github.com/triton-inference-server/client/blo
 Log in to the Triton server and save the following to [`test.json`](assets/test.json) to be used as input data:
 
 ```json
-{"data": [{"prompt": {"content": ["<python>def is_even(na: int) ->"], "shape": [1]}, "request_output_len": {"content": [32], "shape": [1]}, "temperature": [0.20000000298023224], "repetition_penalty": [1.0], "runtime_top_k": [0], "runtime_top_p": [0.9800000190734863], "start_id": [50256], "end_id": [50256], "random_seed": [1594506369], "is_return_log_probs": [true]}]}
+{
+  "data": [
+    {
+      "prompt": {
+        "content": ["<python>def is_even(na: int) ->"],
+        "shape": [1]
+      },
+      "request_output_len": { "content": [32], "shape": [1] },
+      "temperature": [0.20000000298023224],
+      "repetition_penalty": [1.0],
+      "runtime_top_k": [0],
+      "runtime_top_p": [0.9800000190734863],
+      "start_id": [50256],
+      "end_id": [50256],
+      "random_seed": [1594506369],
+      "is_return_log_probs": [true]
+    }
+  ]
+}
 ```
 
 Run `perf_analyzer`:
@@ -20,7 +38,7 @@ perf_analyzer -m ensemble --percentile=95 --concurrency-range 1:4 --input-data t
 
 The output will end with a summary similar to:
 
-```text
+```plaintext
 Inferences/Second vs. Client p95 Batch Latency
 Concurrency: 1, throughput: 2.44411 infer/sec, latency 409016 usec
 Concurrency: 2, throughput: 2.44411 infer/sec, latency 813556 usec
@@ -29,10 +47,10 @@ Concurrency: 4, throughput: 2.44411 infer/sec, latency 1627208 usec
 ```
 
 <details>
-    <summary>Expand for a complete example of the report</summary>
+<summary>Expand for a complete example of the report</summary>
 
-```
-> perf_analyzer -m ensemble --percentile=95 --concurrency-range 1:4 --input-data test
+```shell
+$ perf_analyzer -m ensemble --percentile=95 --concurrency-range 1:4 --input-data test
 
  Successfully read data for 1 stream/streams with 1 step/steps.
 *** Measurement Settings ***
@@ -185,9 +203,8 @@ Concurrency: 1, throughput: 2.44411 infer/sec, latency 409016 usec
 Concurrency: 2, throughput: 2.44411 infer/sec, latency 813556 usec
 Concurrency: 3, throughput: 2.44409 infer/sec, latency 1220557 usec
 Concurrency: 4, throughput: 2.44411 infer/sec, latency 1627208 usec
-
 ```
-    
+
 </details>
 
 ## Increasing concurrency
@@ -195,9 +212,8 @@ Concurrency: 4, throughput: 2.44411 infer/sec, latency 1627208 usec
 [Concurrent model execution](https://github.com/triton-inference-server/tutorials/tree/main/Conceptual_Guide/Part_2-improving_resource_utilization#concurrent-model-execution)
 can be evaluated by [increasing concurrency levels](https://github.com/triton-inference-server/client/blob/main/src/c%2B%2B/perf_analyzer/docs/cli.md#--concurrency-rangestartendstep). For example:
 
-
 ```shell
-perf_analyzer -m ensemble --percentile=95 --concurrency-range 1:91:10 --input-data test.json
+$ perf_analyzer -m ensemble --percentile=95 --concurrency-range 1:91:10 --input-data test.json
 
 ...
 
