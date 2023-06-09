@@ -9,6 +9,12 @@ environments:
     kubeContext: gke_unreview-poc-390200e5_us-central1-c_ai-assist
     values:
       - environment/gprd/values.yaml
+
+  runner:
+    kubeContext: gke_unreview-poc-390200e5_us-central1-c_ai-assist-test
+    values:
+      - environment/runner/values.yaml
+
 ---
 
 helmDefaults:
@@ -30,36 +36,10 @@ releases:
       - {{ .Values.aiassist | toYaml | indent 8 | trim}}
 
   - name: gitlab-runner
-    installed: {{ eq .Environment.Name "gstg" | toYaml }}
+    installed: {{ eq .Environment.Name "runner" | toYaml }}
     namespace: gitlab-runner
     createNamespace: true
     chart: gitlab/gitlab-runner
     version: 0.52.0
     values:
-      - runnerRegistrationToken: {{ requiredEnv "RUNNER_REGISTRATION_TOKEN" }}
-        gitlabUrl: https://gitlab.com
-        rbac:
-          create: true
-        runners:
-          config: |
-            [[runners]]
-              [runners.kubernetes]
-                namespace = "gitlab-runner"
-                image = "ubuntu:22.04"
-                allowed_pull_policies = ["always", "if-not-present", "never"]
-                pull_policy = ["if-not-present"]
-
-                # Very high resource usage to allow these jobs to 
-                # handle resource intensive builds
-                memory_request = "1Gi"
-                memory_limit = "30Gi"
-
-                cpu_limit = "4"
-                cpu_request = "2"
-
-                ephemeral_storage_request = "40Gi"
-                ephemeral_storage_limit = "100Gi"
-
-                [runners.kubernetes.node_tolerations]
-                  "type=ci-runners" = "NoSchedule"
-
+      - {{ .Values.runner | toYaml | indent 8 | trim}}
