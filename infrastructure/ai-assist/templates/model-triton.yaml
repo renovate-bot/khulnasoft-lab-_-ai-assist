@@ -30,7 +30,7 @@ spec:
         - name: gitlab-registry
       containers:
         - name: triton
-          image: {{ .Values.modelTriton.triton.image.repository }}:{{ .Values.modelTriton.triton.image.tag | default .Chart.AppVersion }}
+          image: {{ .Values.modelTriton.triton.image.repository }}:{{ .Values.modelTriton.triton.image.tag }}
           ports:
             - containerPort: 8000
             - containerPort: 8001

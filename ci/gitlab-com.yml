@@ -16,7 +16,6 @@ variables:
   DOCKER_VERSION: "20.10.23"
   DOCKER_TLS_CERTDIR: "/certs"
   DOCKER_MODEL_GATEWAY: "$CI_REGISTRY_IMAGE/model-gateway"
-  DOCKER_MODEL_GATEWAY_TMP: "$CI_REGISTRY_IMAGE/tmp/model-gateway"
 
   DOCKER_MODEL_CODEGEN: "$CI_REGISTRY_IMAGE/model-codegen"
   DOCKER_MODEL_CODEGEN_TMP: "$CI_REGISTRY_IMAGE/tmp/model-codegen"
@@ -67,8 +66,11 @@ cache:
   extends: .docker
   script:
     - docker pull $TARGET_IMAGE
-    - docker tag $TARGET_IMAGE $RELEASED_IMAGE_COMMIT
-    - docker push $RELEASED_IMAGE_COMMIT
+    - |
+      if [ -n "$RELEASED_IMAGE_COMMIT" ]; then
+        docker tag $TARGET_IMAGE $RELEASED_IMAGE_COMMIT
+        docker push $RELEASED_IMAGE_COMMIT
+      fi
     - docker tag $RELEASED_IMAGE_COMMIT $RELEASED_IMAGE_LATEST
     - docker push $RELEASED_IMAGE_LATEST
 
@@ -87,7 +89,7 @@ install:
   script:
     - poetry install
 
-build-docker-model-gateway-tmp:
+build-docker-model-gateway:
   stage: build
   extends:
     - .kaniko_base
@@ -96,7 +98,7 @@ build-docker-model-gateway-tmp:
     - ai-assist-container-build
   variables:
     KANIKO_BUILD_FILE: Dockerfile
-    KANIKO_DESTINATION: "${DOCKER_MODEL_GATEWAY_TMP}:${CI_COMMIT_SHORT_SHA}"
+    KANIKO_DESTINATION: "${DOCKER_MODEL_GATEWAY}:${CI_COMMIT_SHORT_SHA}"
 
 build-docker-model-codegen-tmp:
   stage: build
@@ -203,8 +205,7 @@ release-docker-model-gateway:
   extends: .docker-release-latest
   cache: {}
   variables:
-    TARGET_IMAGE: "$DOCKER_MODEL_GATEWAY_TMP:$CI_COMMIT_SHORT_SHA"
-    RELEASED_IMAGE_COMMIT: "$DOCKER_MODEL_GATEWAY:$CI_COMMIT_SHORT_SHA"
+    TARGET_IMAGE: "$DOCKER_MODEL_GATEWAY:$CI_COMMIT_SHORT_SHA"
     RELEASED_IMAGE_LATEST: "$DOCKER_MODEL_GATEWAY:latest"
   rules:
     - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
