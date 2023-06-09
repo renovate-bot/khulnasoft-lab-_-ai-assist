@@ -7,6 +7,7 @@ from starlette_context.middleware import RawContextMiddleware
 from codesuggestions.api.middleware import (
     MiddlewareAuthentication,
     MiddlewareLogRequest,
+    MiddlewareModelTelemetry,
 )
 from codesuggestions.api.monitoring import router as http_monitoring_router
 from codesuggestions.api.suggestions import router as http_suggestions_router
@@ -25,8 +26,10 @@ def create_fast_api_server(
         FastApiContainer.auth_middleware
     ],
     log_middleware: MiddlewareLogRequest = Provide[FastApiContainer.log_middleware],
+    telemetry_middleware: MiddlewareModelTelemetry = Provide[
+        FastApiContainer.telemetry_middleware
+    ],
 ):
-
     context_middleware = Middleware(RawContextMiddleware)
     cors_middleware = Middleware(
         CORSMiddleware,
@@ -47,6 +50,7 @@ def create_fast_api_server(
             cors_middleware,
             log_middleware,
             auth_middleware,
+            telemetry_middleware,
         ],
     )
 

@@ -72,6 +72,11 @@ class FastApiContainer(containers.DeclarativeContainer):
         skip_endpoints=_PROBS_ENDPOINTS,
     )
 
+    telemetry_middleware = providers.Factory(
+        middleware.MiddlewareModelTelemetry,
+        skip_endpoints=_PROBS_ENDPOINTS,
+    )
+
 
 class CodeSuggestionsContainer(containers.DeclarativeContainer):
     wiring_config = containers.WiringConfiguration(
