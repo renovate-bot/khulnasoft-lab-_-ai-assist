@@ -1,14 +1,9 @@
-import json
 from unittest import mock
 
-import pytest
 from starlette.applications import Starlette
-from starlette.authentication import requires
-from starlette.middleware import Middleware
 from starlette.responses import JSONResponse
 from starlette.routing import Route
 from starlette.testclient import TestClient
-from starlette_context.middleware import RawContextMiddleware
 from structlog.testing import capture_logs
 
 from codesuggestions.api.middleware import MiddlewareModelTelemetry
