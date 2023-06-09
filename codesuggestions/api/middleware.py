@@ -8,8 +8,6 @@ import structlog
 from asgi_correlation_id.context import correlation_id
 from fastapi import Response
 from fastapi.encoders import jsonable_encoder
-from prometheus_client import Counter
-from pydantic import BaseModel, ValidationError
 from starlette.authentication import (
     AuthCredentials,
     AuthenticationError,
@@ -29,12 +27,7 @@ from uvicorn.protocols.utils import get_path_with_query_string
 
 from codesuggestions.api.timing import timing
 from codesuggestions.auth import AuthProvider, UserClaims
-
-
-ACCEPTS_COUNTER = Counter("code_suggestions_accepts", "Accepts count by number")
-REQUESTS_COUNTER = Counter("code_suggestions_requests", "Requests count by number")
-ERRORS_COUNTER = Counter("code_suggestions_errors", "Errors count by number")
-
+from codesuggestions.instrumentators.base import TelemetryInstrumentator
 
 __all__ = [
     "GitLabUser",
@@ -45,7 +38,6 @@ __all__ = [
 
 
 log = logging.getLogger("codesuggestions")
-telemetry_logger = structlog.stdlib.get_logger("telemetry")
 access_logger = structlog.stdlib.get_logger("api.access")
 
 
@@ -258,12 +250,6 @@ class MiddlewareAuthentication(Middleware):
         )
 
 
-class ModelTelemetry(BaseModel):
-    accepted_request_count: int = 0
-    total_request_count: int = 0
-    error_request_count: int = 0
-
-
 class MiddlewareModelTelemetry(Middleware):
     class TelemetryHeadersMiddleware(BaseHTTPMiddleware):
         def __init__(self, path_resolver: _PathResolver, *args, **kwargs):
@@ -278,20 +264,10 @@ class MiddlewareModelTelemetry(Middleware):
             if self._missing_header(headers):
                 return await call_next(request)
 
-            try:
-                fields = ModelTelemetry(
-                    accepted_request_count=headers.get("X-GitLab-CS-Accepts"),
-                    total_request_count=headers.get("X-GitLab-CS-Requests"),
-                    error_request_count=headers.get("X-GitLab-CS-Errors"),
-                )
-
-                telemetry_logger.info("telemetry", **fields.dict())
-
-                self._track_prometheus(fields)
-            except ValidationError as exc:
-                telemetry_logger.error(f"failed to capture model telemetry: {exc}")
-
-            return await call_next(request)
+            with TelemetryInstrumentator(headers.get("X-GitLab-CS-Accepts"),
+                                         headers.get("X-GitLab-CS-Requests"),
+                                         headers.get("X-GitLab-CS-Errors")):
+                return await call_next(request)
 
         def _missing_header(self, headers: list) -> bool:
             return any(
@@ -302,11 +278,6 @@ class MiddlewareModelTelemetry(Middleware):
                     headers.get("X-GitLab-CS-Errors"),
                 ]
             )
-
-        def _track_prometheus(self, field: ModelTelemetry):
-            ACCEPTS_COUNTER.inc(field.accepted_request_count)
-            REQUESTS_COUNTER.inc(field.total_request_count)
-            ERRORS_COUNTER.inc(field.error_request_count)
 
     def __init__(self, skip_endpoints: Optional[list] = None):
         path_resolver = _PathResolver.from_optional_list(skip_endpoints)
