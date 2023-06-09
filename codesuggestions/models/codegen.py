@@ -102,7 +102,7 @@ class GitLabCodeGen(TextGenBaseModel):
         )
         outputs_model = self._model_outputs()
 
-        with self.instrumentator:
+        with self.instrumentator.watch(prompt):
             response = self.client.infer(
                 GitLabCodeGen.MODEL_NAME,
                 inputs_model,

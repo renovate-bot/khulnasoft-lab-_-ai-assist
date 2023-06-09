@@ -38,7 +38,7 @@ class PalmTextGenModel(TextGenBaseModel):
             "topP": top_p,
         }
 
-        with self.instrumentator:
+        with self.instrumentator.watch(prompt):
             response = self.endpoint.predict(
                 instances=instances,
                 parameters=prediction_parameters,
