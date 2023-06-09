@@ -1,37 +1,51 @@
 import json
 import logging
-import structlog
 import time
 import traceback
-
-from asgi_correlation_id.context import correlation_id
-
 from typing import Optional, Tuple
 
+import structlog
+from asgi_correlation_id.context import correlation_id
 from fastapi import Response
 from fastapi.encoders import jsonable_encoder
-
-from starlette.middleware import Middleware
-from starlette.authentication import AuthenticationError, HTTPConnection
+from prometheus_client import Counter
+from pydantic import BaseModel, ValidationError
+from starlette.authentication import (
+    AuthCredentials,
+    AuthenticationError,
+    BaseUser,
+    HTTPConnection,
+)
 from starlette.concurrency import iterate_in_threadpool
-from starlette.middleware.authentication import AuthenticationMiddleware, AuthenticationBackend
-from starlette.authentication import AuthCredentials, BaseUser
+from starlette.middleware import Middleware
+from starlette.middleware.authentication import (
+    AuthenticationBackend,
+    AuthenticationMiddleware,
+)
 from starlette.middleware.base import BaseHTTPMiddleware, Request
 from starlette.responses import JSONResponse
-
+from starlette_context import context
 from uvicorn.protocols.utils import get_path_with_query_string
 
-from codesuggestions.auth import AuthProvider, UserClaims
 from codesuggestions.api.timing import timing
-from starlette_context import context
+from codesuggestions.auth import AuthProvider, UserClaims
+
+
+ACCEPTS_COUNTER = Counter("code_suggestions_accepts", "Accepts count by number")
+REQUESTS_COUNTER = Counter("code_suggestions_requests", "Requests count by number")
+ERRORS_COUNTER = Counter("code_suggestions_errors", "Errors count by number")
+
 
 __all__ = [
     "GitLabUser",
     "MiddlewareLogRequest",
     "MiddlewareAuthentication",
+    "MiddlewareModelTelemetry",
 ]
 
+
 log = logging.getLogger("codesuggestions")
+telemetry_logger = structlog.stdlib.get_logger("telemetry")
 access_logger = structlog.stdlib.get_logger("api.access")
 
 
@@ -241,4 +255,63 @@ class MiddlewareAuthentication(Middleware):
                 key_auth_provider, oidc_auth_provider, bypass_auth, path_resolver
             ),
             on_error=MiddlewareAuthentication.on_auth_error,
+        )
+
+
+class ModelTelemetry(BaseModel):
+    accepted_request_count: int = 0
+    total_request_count: int = 0
+    error_request_count: int = 0
+
+
+class MiddlewareModelTelemetry(Middleware):
+    class TelemetryHeadersMiddleware(BaseHTTPMiddleware):
+        def __init__(self, path_resolver: _PathResolver, *args, **kwargs):
+            self.path_resolver = path_resolver
+            super().__init__(*args, **kwargs)
+
+        async def dispatch(self, request, call_next):
+            if self.path_resolver.skip_path(request.url.path):
+                return await call_next(request)
+
+            headers = request.headers
+            if self._missing_header(headers):
+                return await call_next(request)
+
+            try:
+                fields = ModelTelemetry(
+                    accepted_request_count=headers.get("X-GitLab-CS-Accepts"),
+                    total_request_count=headers.get("X-GitLab-CS-Requests"),
+                    error_request_count=headers.get("X-GitLab-CS-Errors"),
+                )
+
+                telemetry_logger.info("telemetry", **fields.dict())
+
+                self._track_prometheus(fields)
+            except ValidationError as exc:
+                telemetry_logger.error(f"failed to capture model telemetry: {exc}")
+
+            return await call_next(request)
+
+        def _missing_header(self, headers: list) -> bool:
+            return any(
+                value is None
+                for value in [
+                    headers.get("X-GitLab-CS-Accepts"),
+                    headers.get("X-GitLab-CS-Requests"),
+                    headers.get("X-GitLab-CS-Errors"),
+                ]
+            )
+
+        def _track_prometheus(self, field: ModelTelemetry):
+            ACCEPTS_COUNTER.inc(field.accepted_request_count)
+            REQUESTS_COUNTER.inc(field.total_request_count)
+            ERRORS_COUNTER.inc(field.error_request_count)
+
+    def __init__(self, skip_endpoints: Optional[list] = None):
+        path_resolver = _PathResolver.from_optional_list(skip_endpoints)
+
+        super().__init__(
+            MiddlewareModelTelemetry.TelemetryHeadersMiddleware,
+            path_resolver=path_resolver,
         )
