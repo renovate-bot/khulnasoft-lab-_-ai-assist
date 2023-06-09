@@ -3,6 +3,7 @@ from typing import Optional
 from vertexai.preview.language_models import TextGenerationModel
 
 from codesuggestions.models import TextGenBaseModel, TextGenModelOutput
+from codesuggestions.models.instrumentators import TextGenModelInstrumentator
 
 __all__ = [
     "PalmTextGenModel",
@@ -19,6 +20,7 @@ class PalmTextGenModel(TextGenBaseModel):
         # Access the endpoint object directly to adjust timeout
         self.endpoint = TextGenerationModel.from_pretrained(model_name)._endpoint
         self.timeout = timeout
+        self.instrumentator = TextGenModelInstrumentator("vertex-ai", model_name)
 
     def generate(
         self,
@@ -36,11 +38,12 @@ class PalmTextGenModel(TextGenBaseModel):
             "topP": top_p,
         }
 
-        response = self.endpoint.predict(
-            instances=instances,
-            parameters=prediction_parameters,
-            timeout=self.timeout,
-        )
+        with self.instrumentator.watch(prompt):
+            response = self.endpoint.predict(
+                instances=instances,
+                parameters=prediction_parameters,
+                timeout=self.timeout,
+            )
 
         if len(response.predictions) > 0:
             prediction = response.predictions.pop()

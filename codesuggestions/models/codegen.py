@@ -11,6 +11,8 @@ from codesuggestions.models.base import (
     grpc_requested_output,
 )
 
+from codesuggestions.models.instrumentators import TextGenModelInstrumentator
+
 __all__ = [
     "GitLabCodeGen",
 ]
@@ -39,6 +41,7 @@ class GitLabCodeGen(TextGenBaseModel):
     ):
         self.client = grpc_client
         self.timeout = timeout
+        self.instrumentator = TextGenModelInstrumentator("codegen", GitLabCodeGen.MODEL_NAME)
 
     def _model_inputs(self, model_input: GitLabCodeGenModelInput) -> list:
         prompt_np = np.array([[model_input.prompt]], dtype=object)
@@ -99,13 +102,14 @@ class GitLabCodeGen(TextGenBaseModel):
         )
         outputs_model = self._model_outputs()
 
-        response = self.client.infer(
-            GitLabCodeGen.MODEL_NAME,
-            inputs_model,
-            request_id=uuid.uuid4().hex,
-            outputs=outputs_model,
-            client_timeout=self.timeout,
-        )
+        with self.instrumentator.watch(prompt):
+            response = self.client.infer(
+                GitLabCodeGen.MODEL_NAME,
+                inputs_model,
+                request_id=uuid.uuid4().hex,
+                outputs=outputs_model,
+                client_timeout=self.timeout,
+            )
 
         completion = response.as_numpy("completions")[0].decode("utf-8")
 
