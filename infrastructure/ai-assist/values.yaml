@@ -16,6 +16,12 @@ modelGateway:
       tritonHost: model-k8s-triton-headless
       tritonPort: "8001"
       googleCloudProfiler: true
+
+    flags:
+      # See https://gitlab.com/gitlab-org/modelops/applied-ml/code-suggestions/ai-assist/-/issues/146#note_1424962628
+      # for details of the chosen projects
+      third_party_limited_ai_access: "46709700"
+
     image:
       repository: registry.gitlab.com/gitlab-org/modelops/applied-ml/code-suggestions/ai-assist/model-gateway
       tag: "" # this is set via helm command line arguments
@@ -58,3 +64,9 @@ prometheus-stackdriver-exporter:
     namespace: fauxpilot
     additionalLabels:
       release: prometheus
+
+serviceAccount:
+  labels:
+    type: "code_suggestions"
+  # The service account email to use with this account
+  iamServiceAccountEmail:

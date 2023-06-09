@@ -34,7 +34,6 @@ test_data = dict(
 @pytest.fixture
 def mock_env_vars(request):
     envs = {
-        "GOOGLE_VERTEX_AI_CREDENTIALS": request.param["google_vertex_ai_credentials"],
         "TRITON_HOST": request.param["triton_host"],
         "TRITON_PORT": str(request.param["triton_port"]),
 
