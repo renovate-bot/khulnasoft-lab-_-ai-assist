@@ -65,14 +65,14 @@ cache:
 .docker-release-latest:
   extends: .docker
   script:
-    - docker pull $TARGET_IMAGE
+    - docker pull "${TARGET_IMAGE}"
     - |
-      if [ -n "$RELEASED_IMAGE_COMMIT" ]; then
-        docker tag $TARGET_IMAGE $RELEASED_IMAGE_COMMIT
-        docker push $RELEASED_IMAGE_COMMIT
+      if [ -n "${RELEASED_IMAGE_COMMIT}" ]; then
+        docker tag "${TARGET_IMAGE}" "${RELEASED_IMAGE_COMMIT}"
+        docker push "${RELEASED_IMAGE_COMMIT}"
       fi
-    - docker tag $RELEASED_IMAGE_COMMIT $RELEASED_IMAGE_LATEST
-    - docker push $RELEASED_IMAGE_LATEST
+    - docker tag "${TARGET_IMAGE}" "${RELEASED_IMAGE_LATEST}"
+    - docker push "${RELEASED_IMAGE_LATEST}"
 
 lint:
   extends: .poetry
@@ -203,7 +203,6 @@ semgrep-sast:
 release-docker-model-gateway:
   stage: release
   extends: .docker-release-latest
-  cache: {}
   variables:
     TARGET_IMAGE: "$DOCKER_MODEL_GATEWAY:$CI_COMMIT_SHORT_SHA"
     RELEASED_IMAGE_LATEST: "$DOCKER_MODEL_GATEWAY:latest"
