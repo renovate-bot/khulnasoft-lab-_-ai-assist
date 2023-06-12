@@ -1,14 +1,9 @@
 ---
 environments:
-  gstg:
+  runner:
     kubeContext: gke_unreview-poc-390200e5_us-central1-c_ai-assist-test
     values:
-      - environment/gstg/values.yaml
-
-  gprd:
-    kubeContext: gke_unreview-poc-390200e5_us-central1-c_ai-assist
-    values:
-      - environment/gprd/values.yaml
+      - environment/runner/values.yaml
 
 ---
 
@@ -24,8 +19,11 @@ repositories:
     url: https://prometheus-community.github.io/helm-charts
 
 releases:
-  - name: ai-assist
-    namespace: fauxpilot
-    chart: ./ai-assist
+  - name: gitlab-runner
+    namespace: gitlab-runner
+    createNamespace: true
+    chart: gitlab/gitlab-runner
+    version: 0.52.0
     values:
-      - {{ .Values.aiassist | toYaml | indent 8 | trim}}
+      - {{ .Values.runner | toYaml | indent 8 | trim}}
+      - runnerRegistrationToken: '{{ requiredEnv "RUNNER_REGISTRATION_TOKEN" }}'
