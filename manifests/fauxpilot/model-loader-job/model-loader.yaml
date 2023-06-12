@@ -32,7 +32,7 @@ spec:
 
             # Set SKIP_FT_WEIGHTS_DOWNLOAD to one to skip the download
             - name: SKIP_FT_WEIGHTS_DOWNLOAD
-              value: "1"
+              value: "0"
           command: ["/bin/sh", "-x", "-c", "--"]
           args:
             - |
@@ -42,7 +42,7 @@ spec:
 
               # Install gcloud (TODO: move this into the Docker image)
               curl https://dl.google.com/dl/cloudsdk/release/google-cloud-sdk.tar.gz > /tmp/google-cloud-sdk.tar.gz
-              mkdir -p /usr/local/gcloud 
+              mkdir -p /usr/local/gcloud
               tar -C /usr/local/gcloud -xvf /tmp/google-cloud-sdk.tar.gz >/dev/null
               /usr/local/gcloud/google-cloud-sdk/install.sh
               export PATH=$PATH:/usr/local/gcloud/google-cloud-sdk/bin
@@ -75,7 +75,7 @@ spec:
 
               if [ "${SKIP_FT_WEIGHTS_DOWNLOAD-}" != "1" ]; then
                 zstd -dc "${downloaded_weights_file}" | tar -xf - -C "${MODEL_WEIGHTS_DIR}" --strip-components=1;
-              fi 
+              fi
 
               echo "Copy complete..."
           volumeMounts:

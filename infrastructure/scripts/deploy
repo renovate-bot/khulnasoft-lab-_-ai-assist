@@ -15,15 +15,21 @@ namespace = 'fauxpilot'
 env_configs = {
     'gprd': {
         'kube_ctx': 'gke_unreview-poc-390200e5_us-central1-c_ai-assist',
-        'cluster_name': 'ai-assist'
+        'cluster_name': 'ai-assist',
+        'helmfile': 'helmfile.yaml',
+        'resolve_deploys': True
     },
     'gstg': {
         'kube_ctx': 'gke_unreview-poc-390200e5_us-central1-c_ai-assist-test',
         'cluster_name': 'ai-assist-test',
+        'helmfile': 'helmfile.yaml',
+        'resolve_deploys': True
     },
     'runner': {
         'kube_ctx': 'gke_unreview-poc-390200e5_us-central1-c_ai-assist-test',
         'cluster_name': 'ai-assist-test',
+        'helmfile': 'helmfile-runner.yaml',
+        'resolve_deploys': False
     }
 }
 
@@ -41,10 +47,10 @@ def init_command(opts):
 # Runs helmfile diff...
 def diff_command(opts):
     env_config = env_configs[opts.env]
-    kube_ctx = env_config["kube_ctx"]
+    helmfile = env_config["helmfile"]
 
-    set_args = get_helm_deployment_values(kube_ctx, opts.deploy)
-    cmd = f"helmfile diff -f '{infra_dir}/helmfile.yaml' --environment '{opts.env}' {' '.join(set_args)}"
+    set_args = get_helm_deployment_values(opts.env, opts.deploy)
+    cmd = f"helmfile diff -f '{infra_dir}/{helmfile}' --environment '{opts.env}' {' '.join(set_args)}"
 
     logging.info("Running: %s", cmd)
     subprocess.run(cmd, check=True, shell=True)
@@ -58,10 +64,10 @@ def sync_command(opts):
         return
 
     env_config = env_configs[opts.env]
-    kube_ctx = env_config["kube_ctx"]
+    helmfile = env_config["helmfile"]
 
-    set_args = get_helm_deployment_values(kube_ctx, opts.deploy)
-    cmd = f"helmfile sync -f '{infra_dir}/helmfile.yaml' --environment '{opts.env}' {' '.join(set_args)}"
+    set_args = get_helm_deployment_values(opts.env, opts.deploy)
+    cmd = f"helmfile sync -f '{infra_dir}/{helmfile}' --environment '{opts.env}' {' '.join(set_args)}"
 
     logging.info("Running: %s", cmd)
     subprocess.run(cmd, check=True, shell=True)
@@ -69,7 +75,15 @@ def sync_command(opts):
 
 # Extracts the current values for deployment tags to
 # set them for the next deployment
-def get_helm_deployment_values(kube_ctx, deploy_args):
+def get_helm_deployment_values(env, deploy_args):
+    env_config = env_configs[env]
+    kube_ctx = env_config["kube_ctx"]
+    resolve_deploys = env_config["resolve_deploys"]
+
+    # Skip for runners
+    if not resolve_deploys:
+        return []
+
     cmd = f"helm get values -n '{namespace}' ai-assist -o json --all --kube-context '{kube_ctx}'"
     values_json = subprocess.check_output(cmd, shell=True)
 
