@@ -48,13 +48,11 @@ def grpc_requested_output(name: str) -> triton_grpc_util.InferRequestedOutput:
 
 
 def grpc_connect_triton(host: str, port: int, verbose: bool = False) -> triton_grpc_util.InferenceServerClient:
+    # These settings MUST be kept in sync with the Triton server config:
+    # https://grpc.github.io/grpc/cpp/md_doc_keepalive.html
     channel_opt = [
         ("grpc.max_send_message_length", triton_grpc_util.MAX_GRPC_MESSAGE_SIZE),
         ("grpc.max_receive_message_length", triton_grpc_util.MAX_GRPC_MESSAGE_SIZE),
-        ("grpc.keepalive_time_ms", 30_000),
-        ("grpc.keepalive_timeout_ms", 20_000),
-        ("grpc.keepalive_permit_without_calls", 2),
-        ("grpc.http2.max_pings_without_data", False),
         ("grpc.lb_policy_name", "round_robin"),
     ]
 
