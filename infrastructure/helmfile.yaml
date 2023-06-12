@@ -30,6 +30,7 @@ repositories:
 
 releases:
   - name: ai-assist
+    installed: {{ ne .Environment.Name "runner" | toYaml }}
     namespace: fauxpilot
     chart: ./ai-assist
     values:
@@ -43,3 +44,6 @@ releases:
     version: 0.52.0
     values:
       - {{ .Values.runner | toYaml | indent 8 | trim}}
+      # We can't use requiredEnv for RUNNER_REGISTRATION_TOKEN as
+      # we only have this value in CI, so can't test changes locally.
+      - runnerRegistrationToken: '{{ env "RUNNER_REGISTRATION_TOKEN" }}'
