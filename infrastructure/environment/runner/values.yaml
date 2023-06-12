@@ -1,6 +1,5 @@
 aiassist: {}
 runner:
-  runnerRegistrationToken: "{{ requiredEnv 'RUNNER_REGISTRATION_TOKEN' }}"
   gitlabUrl: https://gitlab.com
   rbac:
     create: true
