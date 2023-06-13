@@ -93,9 +93,6 @@ build-docker-model-gateway:
   stage: build
   extends:
     - .kaniko_base
-  tags:
-    # This tag will tell gitlab to use the private runners
-    - ai-assist-container-build
   variables:
     KANIKO_BUILD_FILE: Dockerfile
     KANIKO_DESTINATION: "${DOCKER_MODEL_GATEWAY}:${CI_COMMIT_SHORT_SHA}"
