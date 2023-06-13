@@ -11,7 +11,7 @@ from codesuggestions.models.base import (
     grpc_requested_output,
 )
 
-from codesuggestions.models.instrumentators import TextGenModelInstrumentator
+from codesuggestions.instrumentators.base import TextGenModelInstrumentator
 
 __all__ = [
     "GitLabCodeGen",

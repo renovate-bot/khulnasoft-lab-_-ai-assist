@@ -3,7 +3,7 @@ from typing import Optional
 from vertexai.preview.language_models import TextGenerationModel
 
 from codesuggestions.models import TextGenBaseModel, TextGenModelOutput
-from codesuggestions.models.instrumentators import TextGenModelInstrumentator
+from codesuggestions.instrumentators.base import TextGenModelInstrumentator
 
 __all__ = [
     "PalmTextGenModel",

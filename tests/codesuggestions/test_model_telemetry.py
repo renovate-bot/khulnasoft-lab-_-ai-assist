@@ -1,5 +1,6 @@
 from unittest import mock
 
+from starlette_context import request_cycle_context
 from starlette.applications import Starlette
 from starlette.responses import JSONResponse
 from starlette.routing import Route
@@ -20,6 +21,7 @@ app = Starlette(
     routes=[Route("/", endpoint=homepage, methods=["POST"])],
 )
 client = TestClient(app)
+context = {"model_engine": "codegen", "model_name": "ensemble"}
 
 
 @mock.patch("prometheus_client.Counter.inc")
@@ -30,7 +32,7 @@ def test_telemetry_capture_with_headers(mock_counter):
         "X-GitLab-CS-Errors": "1",
     }
 
-    with capture_logs() as cap_logs:
+    with capture_logs() as cap_logs, request_cycle_context(context):
         response = client.post("/", headers=headers, data={"foo": "bar"})
 
     assert response.status_code == 200
@@ -42,6 +44,8 @@ def test_telemetry_capture_with_headers(mock_counter):
             "error_request_count": 1,
             "event": "telemetry",
             "log_level": "info",
+            "model_engine": "codegen",
+            "model_name": "ensemble",
         }
     ]
 
@@ -56,7 +60,7 @@ def test_telemetry_capture_with_headers(mock_counter):
 
 @mock.patch("prometheus_client.Counter.inc")
 def test_telemetry_capture_without_headers(mock_counter):
-    with capture_logs() as cap_logs:
+    with capture_logs() as cap_logs, request_cycle_context(context):
         response = client.post("/", headers={}, data={"foo": "bar"})
 
     assert response.status_code == 200
@@ -73,7 +77,7 @@ def test_telemetry_capture_invalid_headers(mock_counter):
         "X-GitLab-CS-Errors": "time",
     }
 
-    with capture_logs() as cap_logs:
+    with capture_logs() as cap_logs, request_cycle_context(context):
         response = client.post("/", headers=headers, data={"foo": "bar"})
 
     assert response.status_code == 200
