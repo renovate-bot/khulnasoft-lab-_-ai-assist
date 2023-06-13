@@ -11,6 +11,7 @@ from codesuggestions.api.middleware import GitLabUser
         (123, False, {456, 123, 889}, True),
 
         # `project_id` does not exist in the `limited_access` list
+        (None, True, {456, 123, 889}, False),
         (999, True, {456, 123, 889}, False),
         (999, False, {456, 123, 889}, False),
         (888, True, {}, False),
