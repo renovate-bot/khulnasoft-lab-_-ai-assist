@@ -1,3 +1,5 @@
+from pathlib import Path
+
 from dependency_injector import containers, providers
 
 from codesuggestions.auth import GitLabAuthProvider, GitLabOidcProvider
@@ -7,6 +9,10 @@ from codesuggestions.models import (
     GitLabCodeGen,
     PalmTextGenModel,
     vertex_ai_init,
+)
+from codesuggestions.suggestions.processing import (
+    ModelEngineCodegen,
+    ModelEnginePalm,
 )
 from codesuggestions.suggestions import (
     CodeSuggestionsUseCase,
@@ -96,9 +102,20 @@ class CodeSuggestionsContainer(containers.DeclarativeContainer):
         grpc_client=grpc_client,
     )
 
+    engine_codegen = providers.Singleton(
+        ModelEngineCodegen.from_local_templates,
+        tpl_dir=Path(__file__).parent / "_assets" / "tpl" / "codegen",
+        model=model_codegen,
+    )
+
     model_palm = providers.Singleton(
         PalmTextGenModel,
         model_name=config.palm_text_model.name,
+    )
+
+    engine_palm = providers.Singleton(
+        ModelEnginePalm,
+        model=model_palm,
     )
 
     usecase = providers.Singleton(
@@ -108,6 +125,6 @@ class CodeSuggestionsContainer(containers.DeclarativeContainer):
 
     usecase_v2 = providers.Singleton(
         CodeSuggestionsUseCaseV2,
-        model_codegen=model_codegen,
-        model_palm=model_palm,
+        engine_codegen=engine_codegen,
+        engine_palm=engine_palm,
     )

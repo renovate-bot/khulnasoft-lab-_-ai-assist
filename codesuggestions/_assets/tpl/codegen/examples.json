@@ -1,0 +1,12 @@
+{
+  "python": [
+    {
+      "lang": "python",
+      "code": "# create a string value\ns = \"Hello World!\""
+    },
+    {
+      "lang": "python",
+      "code": "# a function that prints hello word\ndef func():\n\tprint(\"hello world\")"
+    }
+  ]
+}
