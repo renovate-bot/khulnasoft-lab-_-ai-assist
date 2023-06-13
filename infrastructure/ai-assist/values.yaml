@@ -64,6 +64,8 @@ prometheus-stackdriver-exporter:
     namespace: fauxpilot
     additionalLabels:
       release: prometheus
+  serviceAccount:
+    name: model-gateway-serviceaccount
 
 serviceAccount:
   labels:

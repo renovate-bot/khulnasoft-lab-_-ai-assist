@@ -30,6 +30,11 @@ gcloud --project unreview-poc-390200e5 projects add-iam-policy-binding unreview-
   --member "serviceAccount:ai-assist-test-fauxpilot@unreview-poc-390200e5.iam.gserviceaccount.com" \
   --role "roles/aiplatform.user"
 
+# Allow Access as a Monitoring viewer for the stackdriver exporter
+gcloud --project unreview-poc-390200e5 projects add-iam-policy-binding unreview-poc-390200e5 \
+  --member "serviceAccount:ai-assist-test-fauxpilot@unreview-poc-390200e5.iam.gserviceaccount.com" \
+  --role "roles/monitoring.viewer"
+
 # Create the Model-Gateway Kubernetes Service Account access to this service account...
 gcloud --project unreview-poc-390200e5 iam service-accounts add-iam-policy-binding ai-assist-test-fauxpilot@unreview-poc-390200e5.iam.gserviceaccount.com \
   --role roles/iam.workloadIdentityUser \
@@ -59,6 +64,11 @@ gcloud --project unreview-poc-390200e5 projects add-iam-policy-binding unreview-
 gcloud --project unreview-poc-390200e5 projects add-iam-policy-binding unreview-poc-390200e5 \
   --member "serviceAccount:ai-assist-fauxpilot@unreview-poc-390200e5.iam.gserviceaccount.com" \
   --role "roles/aiplatform.user"
+
+# Allow Access as a Monitoring viewer for the stackdriver exporter
+gcloud --project unreview-poc-390200e5 projects add-iam-policy-binding unreview-poc-390200e5 \
+  --member "serviceAccount:ai-assist-fauxpilot@unreview-poc-390200e5.iam.gserviceaccount.com" \
+  --role "roles/monitoring.viewer"
 
 # Create the Model-Gateway Kubernetes Service Account access to this service account...
 gcloud --project unreview-poc-390200e5 iam service-accounts add-iam-policy-binding ai-assist-fauxpilot@unreview-poc-390200e5.iam.gserviceaccount.com \
