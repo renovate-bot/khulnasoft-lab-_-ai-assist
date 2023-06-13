@@ -1,4 +1,5 @@
 from time import time
+from typing import Optional
 
 from dependency_injector.wiring import Provide, inject
 from fastapi import APIRouter, Depends, Request
@@ -29,8 +30,8 @@ class CurrentFile(BaseModel):
 
 class SuggestionsRequest(BaseModel):
     prompt_version: int = 1
-    project_path: constr(strip_whitespace=True, max_length=255)
-    project_id: int
+    project_path: Optional[constr(strip_whitespace=True, max_length=255)]
+    project_id: Optional[int]
     current_file: CurrentFile
 
 

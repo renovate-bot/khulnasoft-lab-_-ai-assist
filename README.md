@@ -58,8 +58,8 @@ POST v2/completions
 | Attribute                           | Type   | Required | Description                                     | Example                   |
 | ----------------------------------- | ------ | -------- | ----------------------------------------------- | ------------------------- |
 | `prompt_version`                    | int    | no       | The version of the prompt                       | `1`                       |
-| `project_path`                      | string | yes      | The name of the project (max_len: **255**)      | `gitlab-orb/gitlab-shell` |
-| `project_id`                        | int    | yes      | The id of the project (max_len: **255**)        | `33191677`                |
+| `project_path`                      | string | no       | The name of the project (max_len: **255**)      | `gitlab-orb/gitlab-shell` |
+| `project_id`                        | int    | no       | The id of the project (max_len: **255**)        | `33191677`                |
 | `current_file.file_name`            | string | yes      | The name of the current file (max_len: **255**) | `README.md`               |
 | `current_file.content_above_cursor` | string | yes      | The content above cursor (max_len: **100,000**) | `import numpy as np`      |
 | `current_file.content_below_cursor` | string | yes      | The content below cursor (max_len: **100,000**) | `def __main__:\n`         |
