@@ -67,7 +67,7 @@ def sync_command(opts):
     helmfile = env_config["helmfile"]
 
     set_args = get_helm_deployment_values(opts.env, opts.deploy)
-    cmd = f"helmfile sync -f '{infra_dir}/{helmfile}' --environment '{opts.env}' {' '.join(set_args)}"
+    cmd = f"helmfile sync -f '{infra_dir}/{helmfile}' --debug --environment '{opts.env}' {' '.join(set_args)}"
 
     logging.info("Running: %s", cmd)
     subprocess.run(cmd, check=True, shell=True)
