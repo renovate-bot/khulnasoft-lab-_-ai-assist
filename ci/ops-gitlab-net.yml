@@ -44,7 +44,7 @@ helm-apply-gstg:
     - cd infrastructure
     - scripts/deploy init gstg
     - scripts/deploy diff gstg
-    - scripts/deploy sync gstg --no-dry-run
+    - scripts/deploy --debug sync gstg --no-dry-run
   tags:
       - k8s-workloads
   rules:
@@ -66,7 +66,7 @@ helm-deploy-gstg:
     - cd infrastructure
     - scripts/deploy init gstg
     - scripts/deploy diff gstg --deploy ${DEPLOYMENT}=${TAG}
-    - scripts/deploy sync gstg --no-dry-run --deploy ${DEPLOYMENT}=${TAG}
+    - scripts/deploy --debug sync gstg --no-dry-run --deploy ${DEPLOYMENT}=${TAG}
   tags:
       - k8s-workloads
   rules:
@@ -98,7 +98,7 @@ helm-apply-gprd:
     - cd infrastructure
     - scripts/deploy init gprd
     - scripts/deploy diff gprd
-    - scripts/deploy sync gprd --no-dry-run
+    - scripts/deploy --debug sync gprd --no-dry-run
   tags:
       - k8s-workloads
   rules:
@@ -120,7 +120,7 @@ helm-deploy-gprd:
     - cd infrastructure
     - scripts/deploy init gprd
     - scripts/deploy diff gprd --deploy ${DEPLOYMENT}=${TAG}
-    - scripts/deploy sync gprd --no-dry-run --deploy ${DEPLOYMENT}=${TAG}
+    - scripts/deploy --debug sync gprd --no-dry-run --deploy ${DEPLOYMENT}=${TAG}
   tags:
       - k8s-workloads
   rules:
@@ -152,7 +152,7 @@ helm-apply-runner:
     - cd infrastructure
     - scripts/deploy init runner
     - scripts/deploy diff runner
-    - scripts/deploy sync runner --no-dry-run
+    - scripts/deploy --debug sync runner --no-dry-run
   tags:
       - k8s-workloads
   rules:

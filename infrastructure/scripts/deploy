@@ -43,14 +43,19 @@ def init_command(opts):
     cmd = f"gcloud container clusters get-credentials '{cluster_name}' --zone '{gcp_zone}' --project '{gcp_project}'"
     subprocess.run(cmd, check=True, shell=True)
 
+# Get a helm command
+def get_helmfile_cmd(opts, subcommand):
+    env_config = env_configs[opts.env]
+    helmfile = env_config["helmfile"]
+    debug_flag = "--debug" if opts.debug else ""
+
+    set_args = get_helm_deployment_values(opts.env, opts.deploy)
+    return f"helmfile {subcommand} -f '{infra_dir}/{helmfile}' {debug_flag} --environment '{opts.env}' {' '.join(set_args)}"
+
 
 # Runs helmfile diff...
 def diff_command(opts):
-    env_config = env_configs[opts.env]
-    helmfile = env_config["helmfile"]
-
-    set_args = get_helm_deployment_values(opts.env, opts.deploy)
-    cmd = f"helmfile diff -f '{infra_dir}/{helmfile}' --environment '{opts.env}' {' '.join(set_args)}"
+    cmd = get_helmfile_cmd(opts, "diff")
 
     logging.info("Running: %s", cmd)
     subprocess.run(cmd, check=True, shell=True)
@@ -63,11 +68,7 @@ def sync_command(opts):
         diff_command(opts)
         return
 
-    env_config = env_configs[opts.env]
-    helmfile = env_config["helmfile"]
-
-    set_args = get_helm_deployment_values(opts.env, opts.deploy)
-    cmd = f"helmfile sync -f '{infra_dir}/{helmfile}' --debug --environment '{opts.env}' {' '.join(set_args)}"
+    cmd = get_helmfile_cmd(opts, "sync")
 
     logging.info("Running: %s", cmd)
     subprocess.run(cmd, check=True, shell=True)
@@ -115,6 +116,7 @@ class ParseDeployKwargs(argparse.Action):
 
 def create_arg_parser():
     parser = argparse.ArgumentParser()
+    parser.add_argument('--debug', help='debug', action=argparse.BooleanOptionalAction, default=False)
 
     subparsers = parser.add_subparsers(title='subcommands',
                                     description='valid subcommands',
