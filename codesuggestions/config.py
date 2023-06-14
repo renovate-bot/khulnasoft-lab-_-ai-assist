@@ -1,4 +1,5 @@
 import os
+from pathlib import Path
 
 from typing import Optional, Any, NamedTuple
 
@@ -8,6 +9,7 @@ __all__ = [
     "FastApiConfig",
     "AuthConfig",
     "PalmTextModelConfig",
+    "Project",
     "FeatureFlags",
 ]
 
@@ -46,9 +48,14 @@ class PalmTextModelConfig(NamedTuple):
     location: str
 
 
+class Project(NamedTuple):
+    id: int
+    full_name: str
+
+
 class FeatureFlags(NamedTuple):
     is_third_party_ai_default: bool
-    limited_access_third_party_ai: set[int]
+    limited_access_third_party_ai: dict[int, Project]
 
 
 class Config:
@@ -100,9 +107,10 @@ class Config:
 
     @property
     def feature_flags(self) -> FeatureFlags:
-        limited_access = set()
-        if env_limited_access := Config._get_value("F_THIRD_PARTY_AI_LIMITED_ACCESS", ""):
-            limited_access = set(map(int, env_limited_access.split(",")))
+        limited_access = dict()
+        if file_path := Config._get_value("F_THIRD_PARTY_AI_LIMITED_ACCESS", ""):
+            projects = _read_projects_from_file(Path(file_path))
+            limited_access = {project.id: project for project in projects}
 
         return FeatureFlags(
             is_third_party_ai_default=Config._str_to_bool(Config._get_value("F_IS_THIRD_PARTY_AI_DEFAULT", "False")),
@@ -126,3 +134,16 @@ class Config:
         if value.lower() not in Config.BOOLEAN_STATES:
             raise ValueError('Not a boolean: %s' % value)
         return Config.BOOLEAN_STATES[value.lower()]
+
+
+def _read_projects_from_file(file_path: Path, sep: str = ",") -> list[Project]:
+    projects = []
+    with open(str(file_path), "r") as f:
+        for line in f.readlines():
+            line_split = line.strip().split(sep, maxsplit=2)
+            projects.append(Project(
+                id=int(line_split[0]),
+                full_name=line_split[1],
+            ))
+
+    return projects

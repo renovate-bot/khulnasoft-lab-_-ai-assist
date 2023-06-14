@@ -1,6 +1,7 @@
 from time import time
 from typing import Optional
 
+import structlog
 from dependency_injector.wiring import Provide, inject
 from fastapi import APIRouter, Depends, Request
 from pydantic import BaseModel, constr
@@ -9,12 +10,15 @@ from codesuggestions.api.timing import timing
 from codesuggestions.deps import CodeSuggestionsContainer
 from codesuggestions.suggestions import CodeSuggestionsUseCaseV2
 from codesuggestions.api.middleware import GitLabUser
+from codesuggestions.config import Project
 
 from starlette.concurrency import run_in_threadpool
 
 __all__ = [
     "router",
 ]
+
+log = structlog.stdlib.get_logger("codesuggestions")
 
 router = APIRouter(
     prefix="/completions",
@@ -86,14 +90,18 @@ def resolve_third_party_ai_default(
     user: GitLabUser,
     project_id: int,
     f_third_party_ai_default: bool,
-    f_limited_access_third_party_ai: set[int],
+    f_limited_access_third_party_ai: dict[int, Project],
 ) -> bool:
     if is_debug := user.is_debug:
         return is_debug and f_third_party_ai_default
 
     # Hack: Manually activate third-party AI service
     # for selected testers by project_id
-    if project_id in f_limited_access_third_party_ai:
+    if project := f_limited_access_third_party_ai.get(project_id, None):
+        log.info(
+            "Redirect request to the third-party model",
+            project_id=project.id, project_name=project.full_name,
+        )
         return True
 
     if claims := user.claims:
