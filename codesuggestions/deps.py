@@ -1,4 +1,5 @@
 from dependency_injector import containers, providers
+from py_grpc_prometheus.prometheus_client_interceptor import PromClientInterceptor
 
 from codesuggestions.auth import GitLabAuthProvider, GitLabOidcProvider
 from codesuggestions.api import middleware
@@ -24,8 +25,8 @@ _PROBS_ENDPOINTS = [
 ]
 
 
-def _init_triton_grpc_client(host: str, port: int):
-    client = grpc_connect_triton(host, port)
+def _init_triton_grpc_client(host: str, port: int, interceptor: PromClientInterceptor):
+    client = grpc_connect_triton(host, port, interceptor)
     yield client
     client.close()
 
@@ -79,10 +80,18 @@ class CodeSuggestionsContainer(containers.DeclarativeContainer):
 
     config = providers.Configuration()
 
+    interceptor = providers.Resource(
+        PromClientInterceptor,
+        enable_client_handling_time_histogram=True,
+        enable_client_stream_receive_time_histogram=True,
+        enable_client_stream_send_time_histogram=True,
+    )
+
     grpc_client = providers.Resource(
         _init_triton_grpc_client,
         host=config.triton.host,
         port=config.triton.port,
+        interceptor=interceptor,
     )
 
     _ = providers.Resource(

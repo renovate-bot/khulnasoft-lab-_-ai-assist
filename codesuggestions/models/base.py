@@ -50,18 +50,12 @@ def grpc_requested_output(name: str) -> triton_grpc_util.InferRequestedOutput:
     return triton_grpc_util.InferRequestedOutput(name)
 
 
-def instrument_triton_client(client: triton_grpc_util.InferenceServerClient):
-    interceptor = PromClientInterceptor(enable_client_handling_time_histogram=True,
-                                        enable_client_stream_receive_time_histogram=True,
-                                        enable_client_stream_send_time_histogram=True)
-    # Unfortunately we have to reach into the internals of the client in order
-    # to instrument it. If these internals ever change, GRPC client instrumentation
-    # may no longer work.
-    client._channel = grpc.intercept_channel(client._channel, interceptor)
-    client._client_stub = service_pb2_grpc.GRPCInferenceServiceStub(client._channel)
-
-
-def grpc_connect_triton(host: str, port: int, verbose: bool = False) -> triton_grpc_util.InferenceServerClient:
+def grpc_connect_triton(
+        host: str,
+        port: int,
+        interceptor: PromClientInterceptor,
+        verbose: bool = False
+) -> triton_grpc_util.InferenceServerClient:
     # These settings MUST be kept in sync with the Triton server config:
     # https://grpc.github.io/grpc/cpp/md_doc_keepalive.html
     channel_opt = [
@@ -75,7 +69,11 @@ def grpc_connect_triton(host: str, port: int, verbose: bool = False) -> triton_g
         verbose=verbose,
         channel_args=channel_opt,
     )
-    instrument_triton_client(client)
+    # Unfortunately we have to reach into the internals of the client in order
+    # to instrument it. If these internals ever change, GRPC client instrumentation
+    # may no longer work.
+    client._channel = grpc.intercept_channel(client._channel, interceptor)
+    client._client_stub = service_pb2_grpc.GRPCInferenceServiceStub(client._channel)
 
     return client
 
