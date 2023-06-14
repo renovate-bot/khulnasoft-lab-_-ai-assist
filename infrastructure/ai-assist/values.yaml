@@ -18,9 +18,9 @@ modelGateway:
       googleCloudProfiler: true
 
     flags:
-      # See https://gitlab.com/gitlab-org/modelops/applied-ml/code-suggestions/ai-assist/-/issues/146#note_1424962628
+      # See https://gitlab.com/gitlab-org/modelops/applied-ml/code-suggestions/ai-assist/-/issues/156#note_1429416583
       # for details of the chosen projects
-      third_party_limited_ai_access: "46709700"
+      third_party_limited_ai_access: "/etc/third-party-ai-limited-access/list.txt"
 
     image:
       repository: registry.gitlab.com/gitlab-org/modelops/applied-ml/code-suggestions/ai-assist/model-gateway

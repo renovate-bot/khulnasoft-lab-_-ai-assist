@@ -37,6 +37,10 @@ spec:
               containerPort: 5052
             - name: metrics-port
               containerPort: 8082
+          volumeMounts:
+            - name: third-party-ai-limited-access
+              mountPath: "/etc/third-party-ai-limited-access"
+              readOnly: true
           env:
             - name: TRITON_HOST
               value: {{ quote .Values.modelGateway.modelGateway.env.tritonHost }}
@@ -54,6 +58,10 @@ spec:
             # GitLab.com
             - name: F_THIRD_PARTY_AI_LIMITED_ACCESS
               value: {{ quote .Values.modelGateway.modelGateway.flags.third_party_limited_ai_access }}
+      volumes:
+        - name: third-party-ai-limited-access
+          secret:
+            secretName: third-party-ai-limited-access
 
           # livenessProbe:
           #   httpGet:

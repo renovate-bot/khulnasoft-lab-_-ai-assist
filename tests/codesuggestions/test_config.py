@@ -1,9 +1,10 @@
 import os
+from pathlib import Path
 
 import pytest
 from unittest import mock
 
-from codesuggestions import Config
+from codesuggestions import Config, Project
 
 test_data = dict(
     google_vertex_ai_credentials="path/key.json",
@@ -27,12 +28,25 @@ test_data = dict(
     palm_text_location="palm_location",
 
     is_third_party_ai_default=True,
-    limited_access_third_party_ai={123, 456, 768},
+    limited_access_third_party_ai={
+        123: Project(id=123, full_name="full_name_1"),
+        456: Project(id=456, full_name="full_name_2"),
+        768: Project(id=768, full_name="full_name_3"),
+    }
 )
 
 
 @pytest.fixture
-def mock_env_vars(request):
+def mock_env_vars(tmp_path, request):
+    lines = [
+        ",".join([str(project.id), project.full_name])
+        for project in request.param["limited_access_third_party_ai"].values()
+    ]
+
+    tmp_file_limited_access = Path(tmp_path) / "limited_access.txt"
+    text = "\n".join(lines)
+    tmp_file_limited_access.write_text(text)
+
     envs = {
         "TRITON_HOST": request.param["triton_host"],
         "TRITON_PORT": str(request.param["triton_port"]),
@@ -53,7 +67,7 @@ def mock_env_vars(request):
         "PALM_TEXT_PROJECT": request.param["palm_text_project"],
         "PALM_TEXT_LOCATION": request.param["palm_text_location"],
 
-        "F_THIRD_PARTY_AI_LIMITED_ACCESS": ",".join(map(str, request.param["limited_access_third_party_ai"])),
+        "F_THIRD_PARTY_AI_LIMITED_ACCESS": str(tmp_file_limited_access),
         "F_IS_THIRD_PARTY_AI_DEFAULT": str(int(request.param["is_third_party_ai_default"])),
     }
 

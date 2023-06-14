@@ -389,6 +389,19 @@ on any other clusters is not guaranteed.
       --docker-password="$DEPLOY_TOKEN_PASSWORD"
    ```
 
+1. (Optional) In case of testing a redirect to a third-party AI service, create a file with the required project 
+   identifiers and deploy it as a secret:
+
+   ```shell
+   # each line contains one project in the format: <project_id>,<project_full_name>
+   # E.g.:
+   # 250833,gitlab-org/gitlab-runner
+   # 13284652,gitlab-org/git
+   export THIRD_PARTY_AI_LIMITED_ACCESS=<path to the file>
+   kubectl create secret generic third-party-ai-limited-access \
+      --from-file=list.txt="${THIRD_PARTY_AI_LIMITED_ACCESS}"
+   ```
+
 1. Install the `helm-diff` plugin:
 
    ```shell
