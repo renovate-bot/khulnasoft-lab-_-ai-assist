@@ -13,6 +13,7 @@ from codesuggestions.api.middleware import GitLabUser
 from codesuggestions.config import Project
 
 from starlette.concurrency import run_in_threadpool
+from starlette_context import context
 
 __all__ = [
     "router",
@@ -45,8 +46,12 @@ class SuggestionsResponse(BaseModel):
         index: int = 0
         finish_reason: str = "length"
 
+    class Model(BaseModel):
+        engine: str
+        name: str
+
     id: str
-    model: str = "codegen"
+    model: Model
     object: str = "text_completion"
     created: int
     choices: list[Choice]
@@ -80,6 +85,9 @@ async def completions(
     return SuggestionsResponse(
         id="id",
         created=int(time()),
+        model=SuggestionsResponse.Model(
+            engine=context.get("model_engine", ""), name=context.get("model_name", "")
+        ),
         choices=[
             SuggestionsResponse.Choice(text=suggestion),
         ],
