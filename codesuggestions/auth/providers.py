@@ -100,6 +100,7 @@ class GitLabOidcProvider(AuthProvider):
     CACHE_KEY = "jwks"
     AUDIENCE = "gitlab-code-suggestions"
     ALGORITHM = "RS256"
+    DEFAULT_REALM = "saas"
 
     def __init__(self, base_url: str, expiry_seconds: int = 86400):
         self.base_url = base_url
@@ -111,6 +112,7 @@ class GitLabOidcProvider(AuthProvider):
 
         is_allowed = True
         third_party_ai_features_enabled = False
+        gitlab_realm = self.DEFAULT_REALM
         try:
             jwt_claims = jwt.decode(
                 token, jwks, audience=self.AUDIENCE, algorithms=[self.ALGORITHM]
@@ -118,6 +120,7 @@ class GitLabOidcProvider(AuthProvider):
             third_party_ai_features_enabled = jwt_claims.get(
                 "third_party_ai_features_enabled", False
             )
+            gitlab_realm = jwt_claims.get("gitlab_realm", self.DEFAULT_REALM)
         except JWTError as err:
             logging.error(f"Failed to decode JWT token: {err}")
             is_allowed = False
@@ -126,6 +129,7 @@ class GitLabOidcProvider(AuthProvider):
             authenticated=is_allowed,
             claims=UserClaims(
                 is_third_party_ai_default=third_party_ai_features_enabled,
+                gitlab_realm=gitlab_realm
             ),
         )
 

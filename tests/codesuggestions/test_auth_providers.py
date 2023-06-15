@@ -111,7 +111,10 @@ cmOY8Rcamyo/giOO9+jYMaU=
         auth_provider = GitLabOidcProvider(base_url="http://test.com")
 
         token = jwt.encode(
-            {"third_party_ai_features_enabled": True},
+            {
+                "third_party_ai_features_enabled": True,
+                "gitlab_realm": "self-managed",
+            },
             self.private_key,
             algorithm="RS256",
         )
@@ -120,6 +123,7 @@ cmOY8Rcamyo/giOO9+jYMaU=
         assert user is not None
         assert user.authenticated is True
         assert user.claims.is_third_party_ai_default is True
+        assert user.claims.gitlab_realm == "self-managed"
 
         assert well_known_response.call_count == 1
         assert jwks_response.call_count == 1
@@ -150,6 +154,7 @@ cmOY8Rcamyo/giOO9+jYMaU=
         assert user is not None
         assert user.authenticated is True
         assert user.claims.is_third_party_ai_default is False
+        assert user.claims.gitlab_realm == "saas"
 
         assert well_known_response.call_count == 1
         assert jwks_response.call_count == 1
