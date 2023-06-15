@@ -8,6 +8,7 @@ __all__ = [
 
 class UserClaims(NamedTuple):
     is_third_party_ai_default: bool
+    gitlab_realm: str = 'saas'
 
 
 class User(NamedTuple):

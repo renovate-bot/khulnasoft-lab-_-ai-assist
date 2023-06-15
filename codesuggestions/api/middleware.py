@@ -136,7 +136,7 @@ class MiddlewareLogRequest(Middleware):
                     client_port=client_port,
                     duration_s=elapsed_time,
                     cpu_s=cpu_time,
-                    user_agent=request.headers.get('User-Agent')
+                    user_agent=request.headers.get('User-Agent'),
                 )
                 fields.update(context.data)
 
@@ -214,6 +214,8 @@ class MiddlewareAuthentication(Middleware):
             auth_provider = self._auth_provider(headers)
 
             user = auth_provider.authenticate(token)
+            context["gitlab_realm"] = user.claims.gitlab_realm
+
             if not user.authenticated:
                 raise AuthenticationError("Forbidden by auth provider")
 

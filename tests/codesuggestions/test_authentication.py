@@ -38,23 +38,24 @@ app = Starlette(
     ]
 )
 client = TestClient(app)
-expected_log_keys = ['url', 'path', 'status_code', 'method', 'correlation_id', 'http_version', 'client_ip', 'client_port', 'duration_s', 'cpu_s', 'user_agent', 'event', 'log_level']
+expected_log_keys = ['url', 'path', 'status_code', 'method', 'correlation_id', 'http_version', 'client_ip', 'client_port',
+                     'duration_s', 'cpu_s', 'user_agent', 'event', 'log_level']
 forbidden_error = {'error': 'Forbidden by auth provider'}
 
 @pytest.mark.parametrize(("headers", "data", "expected_response", "log_keys"), [
     (None, None, {'error': 'No authorization header presented'}, []),
     ({'Authorization': 'invalid'}, None,  {'error': 'Invalid authorization header'}, []),
-    ({'Authorization': 'Bearer 12345'}, None, forbidden_error, ['auth_duration_s']),
+    ({'Authorization': 'Bearer 12345'}, None, forbidden_error, ['auth_duration_s', 'gitlab_realm']),
     # With project_id
     ({'Authorization': 'Bearer 12345', 'X-Gitlab-Authentication-Type': '1', 'Content-Type': 'application/json'},
      json.dumps({'project_id': 12345, 'project_path': 'a/b/c'}),
      forbidden_error,
-     ['auth_duration_s', 'meta.project_id', 'meta.project_path']),
+     ['auth_duration_s', 'gitlab_realm', 'meta.project_id', 'meta.project_path']),
     # Invalid JSON payload
     ({'Authorization': 'Bearer 12345', 'X-Gitlab-Authentication-Type': '1', 'Content-Type': 'application/json'},
      "this is not JSON{",
      forbidden_error,
-     ['auth_duration_s'])
+     ['auth_duration_s', 'gitlab_realm'])
 ])
 def test_failed_authorization_logging(headers, data, expected_response, log_keys):
     with capture_logs() as cap_logs:
