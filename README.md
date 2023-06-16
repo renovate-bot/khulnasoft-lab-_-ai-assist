@@ -222,6 +222,15 @@ value `'None'`.
 1. Start the model-gateway server locally: `poetry run codesuggestions`
 1. Open `http://0.0.0.0:5052/docs` in your browser and run any requests to the codegen model
 
+### Faking out AI models
+
+If you do not require real models to run and evaluate inputs, you can fake out these dependencies
+by setting the `USE_FAKE_MODELS` environment variable. This will return a canned response for
+code suggestions, while allowing you to run an otherwise fully functional model gateway.
+
+This can be useful for testing middleware, request/response interface contracts, logging, and other
+uses cases that do not require an AI model to execute.
+
 ## Local development using GDK
 
 If you are on Apple Silicon, you will need to host Triton somewhere else as there is a dependency on Nvidia GPU and

@@ -9,6 +9,8 @@ from codesuggestions.models import (
     grpc_connect_triton,
     GitLabCodeGen,
     PalmTextGenModel,
+    FakeGitLabCodeGenModel,
+    FakePalmTextGenModel,
     vertex_ai_init,
 )
 from codesuggestions.suggestions.processing import (
@@ -106,9 +108,13 @@ class CodeSuggestionsContainer(containers.DeclarativeContainer):
         location=config.palm_text_model.location
     )
 
-    model_codegen = providers.Singleton(
-        GitLabCodeGen,
-        grpc_client=grpc_client,
+    model_codegen = providers.Selector(
+        config.gitlab_codegen_model.real_or_fake,
+        real=providers.Singleton(
+            GitLabCodeGen,
+            grpc_client=grpc_client,
+        ),
+        fake=providers.Singleton(FakeGitLabCodeGenModel),
     )
 
     engine_codegen = providers.Singleton(
@@ -117,10 +123,14 @@ class CodeSuggestionsContainer(containers.DeclarativeContainer):
         model=model_codegen,
     )
 
-    model_palm = providers.Singleton(
-        PalmTextGenModel,
-        model_name=config.palm_text_model.name,
-    )
+    model_palm = providers.Selector(
+        config.palm_text_model.real_or_fake,
+        real=providers.Singleton(
+            PalmTextGenModel,
+            model_name=config.palm_text_model.name,
+        ),
+        fake=providers.Singleton(FakePalmTextGenModel),
+     )
 
     engine_palm = providers.Singleton(
         ModelEnginePalm,

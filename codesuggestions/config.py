@@ -46,6 +46,11 @@ class PalmTextModelConfig(NamedTuple):
     name: str
     project: str
     location: str
+    real_or_fake: str
+
+
+class GitLabCodegenModelConfig(NamedTuple):
+    real_or_fake: str
 
 
 class Project(NamedTuple):
@@ -122,7 +127,18 @@ class Config:
         return PalmTextModelConfig(
             name=Config._get_value("PALM_TEXT_MODEL_NAME", "text-bison@001"),
             project=Config._get_value("PALM_TEXT_PROJECT", "unreview-poc-390200e5"),
-            location=Config._get_value("PALM_TEXT_LOCATION", "us-central1")
+            location=Config._get_value("PALM_TEXT_LOCATION", "us-central1"),
+            real_or_fake=Config._parse_fake_models(
+                Config._get_value("USE_FAKE_MODELS", "False")
+            ),
+        )
+
+    @property
+    def gitlab_codegen_model(self) -> GitLabCodegenModelConfig:
+        return GitLabCodegenModelConfig(
+            real_or_fake=Config._parse_fake_models(
+                Config._get_value("USE_FAKE_MODELS", "False")
+            ),
         )
 
     @staticmethod
@@ -134,6 +150,10 @@ class Config:
         if value.lower() not in Config.BOOLEAN_STATES:
             raise ValueError('Not a boolean: %s' % value)
         return Config.BOOLEAN_STATES[value.lower()]
+
+    @staticmethod
+    def _parse_fake_models(value: str) -> str:
+        return "fake" if Config._str_to_bool(value) else "real"
 
 
 def _read_projects_from_file(file_path: Path, sep: str = ",") -> list[Project]:

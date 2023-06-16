@@ -102,3 +102,17 @@ def test_config(mock_env_vars, configuration):
 
     assert config.feature_flags.limited_access_third_party_ai == configuration["limited_access_third_party_ai"]
     assert config.feature_flags.is_third_party_ai_default == configuration["is_third_party_ai_default"]
+
+@pytest.mark.parametrize(
+    "use_fake_models,expected",
+    [
+        ("false", "real"),
+        ("true", "fake"),
+    ],
+)
+def test_config_fake_models(use_fake_models, expected):
+    with mock.patch.dict(os.environ, {"USE_FAKE_MODELS": use_fake_models}):
+        config = Config()
+
+        assert config.gitlab_codegen_model.real_or_fake == expected
+        assert config.palm_text_model.real_or_fake == expected
