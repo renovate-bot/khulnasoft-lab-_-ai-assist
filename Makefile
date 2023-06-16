@@ -1,17 +1,22 @@
 MONITORING_NAMESPACE ?= monitoring
 
 APPDIR := $(shell pwd)
+COMPOSE := docker-compose -f docker-compose.dev.yaml
 
 .PHONY: develop-local
 develop-local:
-	docker-compose -f docker-compose.dev.yaml up --build --remove-orphans
+	$(COMPOSE) up --build --remove-orphans
 
 .PHONY: test-local
 test-local:
-	docker-compose -f docker-compose.dev.yaml run -v "$(APPDIR):/app" api bash -c 'poetry install --with test && poetry run pytest'
+	$(COMPOSE) run -v "$(APPDIR):/app" api bash -c 'poetry install --with test && poetry run pytest'
+
+.PHONY: lint
+lint:
+	$(COMPOSE) run -v "$(APPDIR):/app" api bash -c 'poetry install --with lint && poetry run flake8 codesuggestions'
 
 clean:
-	docker-compose -f docker-compose.dev.yaml rm -s -v -f
+	$(COMPOSE) rm -s -v -f
 
 .PHONY: nuke
 nuke: monitoring-teardown monitoring-nuke
