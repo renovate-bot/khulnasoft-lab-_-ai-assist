@@ -1,12 +1,12 @@
 from abc import ABC, abstractmethod
-from tritonclient.grpc import service_pb2_grpc
 from typing import NamedTuple
 
 import grpc
 import numpy as np
 import tritonclient.grpc as triton_grpc_util
-import vertexai
+from tritonclient.grpc import service_pb2_grpc
 from tritonclient.utils import np_to_triton_dtype
+from google.cloud.aiplatform.gapic import PredictionServiceClient
 from py_grpc_prometheus.prometheus_client_interceptor import PromClientInterceptor
 
 __all__ = [
@@ -15,7 +15,7 @@ __all__ = [
     "grpc_input_from_np",
     "grpc_requested_output",
     "grpc_connect_triton",
-    "vertex_ai_init",
+    "grpc_connect_vertex",
 ]
 
 
@@ -78,5 +78,5 @@ def grpc_connect_triton(
     return client
 
 
-def vertex_ai_init(project: str, location: str):
-    vertexai.init(project=project, location=location)
+def grpc_connect_vertex(client_options: dict) -> PredictionServiceClient:
+    return PredictionServiceClient(client_options=client_options)

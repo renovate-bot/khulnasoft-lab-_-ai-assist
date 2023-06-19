@@ -19,7 +19,7 @@ router = APIRouter(
 
 @inject
 def is_triton_server_live(
-    grpc_client: triton_grpc_util.InferenceServerClient = Depends(Provide[CodeSuggestionsContainer.grpc_client])
+    grpc_client: triton_grpc_util.InferenceServerClient = Depends(Provide[CodeSuggestionsContainer.grpc_client_triton])
 ):
     try:
         return monitoring.is_triton_server_live(grpc_client)

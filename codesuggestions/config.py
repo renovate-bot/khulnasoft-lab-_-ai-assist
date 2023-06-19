@@ -46,6 +46,7 @@ class PalmTextModelConfig(NamedTuple):
     name: str
     project: str
     location: str
+    vertex_api_endpoint: str
     real_or_fake: str
 
 
@@ -128,6 +129,7 @@ class Config:
             name=Config._get_value("PALM_TEXT_MODEL_NAME", "text-bison@001"),
             project=Config._get_value("PALM_TEXT_PROJECT", "unreview-poc-390200e5"),
             location=Config._get_value("PALM_TEXT_LOCATION", "us-central1"),
+            vertex_api_endpoint=Config._get_value("VERTEX_API_ENDPOINT", "us-central1-aiplatform.googleapis.com"),
             real_or_fake=Config._parse_fake_models(
                 Config._get_value("USE_FAKE_MODELS", "False")
             ),
