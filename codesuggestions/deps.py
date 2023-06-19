@@ -7,11 +7,11 @@ from codesuggestions.auth import GitLabAuthProvider, GitLabOidcProvider
 from codesuggestions.api import middleware
 from codesuggestions.models import (
     grpc_connect_triton,
+    grpc_connect_vertex,
     GitLabCodeGen,
-    PalmTextGenModel,
+    PalmCodeGenModel,
     FakeGitLabCodeGenModel,
     FakePalmTextGenModel,
-    vertex_ai_init,
 )
 from codesuggestions.suggestions.processing import (
     ModelEngineCodegen,
@@ -39,8 +39,12 @@ def _init_triton_grpc_client(host: str, port: int, interceptor: PromClientInterc
     client.close()
 
 
-def _init_vertex_ai(project: str, location: str):
-    vertex_ai_init(project, location)
+def _init_vertex_grpc_client(api_endpoint: str):
+    client = grpc_connect_vertex({
+        "api_endpoint": api_endpoint,
+    })
+    yield client
+    client.transport.close()
 
 
 class FastApiContainer(containers.DeclarativeContainer):
@@ -95,24 +99,23 @@ class CodeSuggestionsContainer(containers.DeclarativeContainer):
         enable_client_stream_send_time_histogram=True,
     )
 
-    grpc_client = providers.Resource(
+    grpc_client_triton = providers.Resource(
         _init_triton_grpc_client,
         host=config.triton.host,
         port=config.triton.port,
         interceptor=interceptor,
     )
 
-    _ = providers.Resource(
-        _init_vertex_ai,
-        project=config.palm_text_model.project,
-        location=config.palm_text_model.location
+    grpc_client_vertex = providers.Resource(
+        _init_vertex_grpc_client,
+        api_endpoint=config.palm_text_model.vertex_api_endpoint,
     )
 
     model_codegen = providers.Selector(
         config.gitlab_codegen_model.real_or_fake,
         real=providers.Singleton(
             GitLabCodeGen,
-            grpc_client=grpc_client,
+            grpc_client=grpc_client_triton,
         ),
         fake=providers.Singleton(FakeGitLabCodeGenModel),
     )
@@ -126,8 +129,11 @@ class CodeSuggestionsContainer(containers.DeclarativeContainer):
     model_palm = providers.Selector(
         config.palm_text_model.real_or_fake,
         real=providers.Singleton(
-            PalmTextGenModel,
-            model_name=config.palm_text_model.name,
+            PalmCodeGenModel.from_model_name,
+            name=config.palm_text_model.name,
+            client=grpc_client_vertex,
+            project=config.palm_text_model.project,
+            location=config.palm_text_model.location,
         ),
         fake=providers.Singleton(FakePalmTextGenModel),
      )
