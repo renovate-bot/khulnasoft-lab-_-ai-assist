@@ -3,14 +3,14 @@ from typing import Optional
 
 import structlog
 from dependency_injector.wiring import Provide, inject
+from dependency_injector.providers import FactoryAggregate, Factory
 from fastapi import APIRouter, Depends, Request
 from pydantic import BaseModel, constr
 
 from codesuggestions.api.timing import timing
 from codesuggestions.deps import CodeSuggestionsContainer
 from codesuggestions.suggestions import CodeSuggestionsUseCaseV2
-from codesuggestions.api.middleware import GitLabUser
-from codesuggestions.config import Project
+from codesuggestions.api.rollout import ModelRolloutPlan
 
 from starlette.concurrency import run_in_threadpool
 from starlette_context import context
@@ -62,24 +62,23 @@ class SuggestionsResponse(BaseModel):
 async def completions(
     req: Request,
     payload: SuggestionsRequest,
-    f_flags: dict = Depends(
-        Provide[CodeSuggestionsContainer.config.feature_flags]
+    model_rollout_plan: ModelRolloutPlan = Depends(
+        Provide[CodeSuggestionsContainer.model_rollout_plan]
     ),
-    code_suggestions: CodeSuggestionsUseCaseV2 = Depends(
-        Provide[CodeSuggestionsContainer.usecase_v2]
+    engine_factory: FactoryAggregate = Depends(
+        Provide[CodeSuggestionsContainer.engine_factory.provider]
+    ),
+    code_suggestions: Factory[CodeSuggestionsUseCaseV2] = Depends(
+        Provide[CodeSuggestionsContainer.usecase_v2.provider]
     ),
 ):
-    f_third_party_ai_default = resolve_third_party_ai_default(
-        req.user,
-        payload.project_id,
-        f_flags["is_third_party_ai_default"],
-        f_flags["limited_access_third_party_ai"],
-    )
+    model_name = model_rollout_plan.route(req.user, payload.project_id)
+    usecase = code_suggestions(engine=engine_factory(model_name))
+
     suggestion = await run_in_threadpool(
         get_suggestions,
-        code_suggestions,
+        usecase,
         payload,
-        f_third_party_ai_default,
     )
 
     return SuggestionsResponse(
@@ -94,38 +93,12 @@ async def completions(
     )
 
 
-def resolve_third_party_ai_default(
-    user: GitLabUser,
-    project_id: int,
-    f_third_party_ai_default: bool,
-    f_limited_access_third_party_ai: dict[int, Project],
-) -> bool:
-    if is_debug := user.is_debug:
-        return is_debug and f_third_party_ai_default
-
-    # Hack: Manually activate third-party AI service
-    # for selected testers by project_id
-    if project := f_limited_access_third_party_ai.get(project_id, None):
-        log.info(
-            "Redirect request to the third-party model",
-            project_id=project.id, project_name=project.full_name,
-        )
-        return True
-
-    if claims := user.claims:
-        return claims.is_third_party_ai_default and f_third_party_ai_default
-
-    return False
-
-
 @timing("get_suggestions_duration_s")
 def get_suggestions(
-    code_suggestions: CodeSuggestionsUseCaseV2,
+    usecase: CodeSuggestionsUseCaseV2,
     req: SuggestionsRequest,
-    f_third_party_ai_default: bool,
 ):
-    return code_suggestions(
+    return usecase(
         req.current_file.content_above_cursor,
         req.current_file.file_name,
-        third_party=f_third_party_ai_default,
     )

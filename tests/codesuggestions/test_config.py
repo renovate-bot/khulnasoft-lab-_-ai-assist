@@ -23,7 +23,7 @@ test_data = dict(
     bypass_auth=True,
     gitlab_url="gitlab",
 
-    palm_text_model="palm_model",
+    palm_text_models=["palm_model1", "palm_model2"],
     palm_text_project="palm_project",
     palm_text_location="palm_location",
 
@@ -32,7 +32,8 @@ test_data = dict(
         123: Project(id=123, full_name="full_name_1"),
         456: Project(id=456, full_name="full_name_2"),
         768: Project(id=768, full_name="full_name_3"),
-    }
+    },
+    third_party_rollout_percentage=50,
 )
 
 
@@ -63,12 +64,17 @@ def mock_env_vars(tmp_path, request):
         "AUTH_BYPASS_EXTERNAL": str(int(request.param["bypass_auth"])),
         "GITLAB_API_URL": request.param["gitlab_url"],
 
-        "PALM_TEXT_MODEL_NAME": request.param["palm_text_model"],
+        "PALM_TEXT_MODEL_NAME": ",".join(request.param["palm_text_models"]),
         "PALM_TEXT_PROJECT": request.param["palm_text_project"],
         "PALM_TEXT_LOCATION": request.param["palm_text_location"],
 
         "F_THIRD_PARTY_AI_LIMITED_ACCESS": str(tmp_file_limited_access),
-        "F_IS_THIRD_PARTY_AI_DEFAULT": str(int(request.param["is_third_party_ai_default"])),
+        "F_IS_THIRD_PARTY_AI_DEFAULT": str(
+            int(request.param["is_third_party_ai_default"])
+        ),
+        "F_THIRD_PARTY_ROLLOUT_PERCENTAGE": str(
+            int(request.param["third_party_rollout_percentage"])
+        ),
     }
 
     with mock.patch.dict(os.environ, envs):
@@ -96,12 +102,17 @@ def test_config(mock_env_vars, configuration):
     assert config.auth.bypass == configuration["bypass_auth"]
     assert config.auth.gitlab_api_base_url == configuration["gitlab_url"]
 
-    assert config.palm_text_model.name == configuration["palm_text_model"]
+    assert config.palm_text_model.names == configuration["palm_text_models"]
     assert config.palm_text_model.project == configuration["palm_text_project"]
     assert config.palm_text_model.location == configuration["palm_text_location"]
 
     assert config.feature_flags.limited_access_third_party_ai == configuration["limited_access_third_party_ai"]
     assert config.feature_flags.is_third_party_ai_default == configuration["is_third_party_ai_default"]
+    assert (
+        config.feature_flags.third_party_rollout_percentage
+        == configuration["third_party_rollout_percentage"]
+    )
+
 
 @pytest.mark.parametrize(
     "use_fake_models,expected",
