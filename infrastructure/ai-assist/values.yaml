@@ -21,6 +21,8 @@ modelGateway:
       # See https://gitlab.com/gitlab-org/modelops/applied-ml/code-suggestions/ai-assist/-/issues/156#note_1429416583
       # for details of the chosen projects
       third_party_limited_ai_access: "/etc/third-party-ai-limited-access/list.txt"
+      is_third_party_ai_default: "true"
+      third_party_rollout_percentage: 25
 
     image:
       repository: registry.gitlab.com/gitlab-org/modelops/applied-ml/code-suggestions/ai-assist/model-gateway
