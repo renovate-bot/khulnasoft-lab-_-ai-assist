@@ -221,4 +221,4 @@ class PalmCodeGenModel:
         if model := PalmCodeGenModel.models.get(PalmModel(model_name), None):
             return model(client, project, location, version=model_version)
 
-        raise ValueError(f"no model found by its name '{name}'")
+        raise ValueError(f"no model found by the name '{name}'")

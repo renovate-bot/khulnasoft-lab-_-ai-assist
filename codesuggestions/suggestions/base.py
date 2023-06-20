@@ -1,9 +1,7 @@
 from typing import List, Dict
 
 from codesuggestions.models import TextGenBaseModel
-from codesuggestions.suggestions.processing import (
-    ModelEngineBase,
-)
+from codesuggestions.suggestions.processing import ModelEngineBase
 from codesuggestions.suggestions.detectors import (
     DetectorRegexEmail,
     DetectorRegexIPV4,
@@ -99,17 +97,15 @@ class CodeSuggestionsUseCase:
 
 class CodeSuggestionsUseCaseV2:
     # TODO: we probably need to create a pool of models with custom routing rules
-    def __init__(self, engine_codegen: ModelEngineBase, engine_palm: ModelEngineBase):
-        self.engine_codegen = engine_codegen
-        self.engine_palm = engine_palm
+    def __init__(
+        self,
+        engine: ModelEngineBase,
+    ):
+        self.engine = engine
 
-    def _route_request(self, third_party: bool) -> ModelEngineBase:
-        engine = self.engine_palm if third_party else self.engine_codegen
-
-        return engine
-
-    def __call__(self, content: str, file_name: str, third_party: bool = False) -> str:
-        engine = self._route_request(third_party)
-        completion = engine.generate_completion(content, file_name)
-
-        return completion
+    def __call__(
+        self,
+        content: str,
+        file_name: str,
+    ) -> str:
+        return self.engine.generate_completion(content, file_name)

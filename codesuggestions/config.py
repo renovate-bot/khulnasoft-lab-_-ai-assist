@@ -43,7 +43,7 @@ class ProfilingConfig(NamedTuple):
 
 
 class PalmTextModelConfig(NamedTuple):
-    name: str
+    names: list[str]
     project: str
     location: str
     vertex_api_endpoint: str
@@ -62,6 +62,7 @@ class Project(NamedTuple):
 class FeatureFlags(NamedTuple):
     is_third_party_ai_default: bool
     limited_access_third_party_ai: dict[int, Project]
+    third_party_rollout_percentage: int
 
 
 class Config:
@@ -121,12 +122,19 @@ class Config:
         return FeatureFlags(
             is_third_party_ai_default=Config._str_to_bool(Config._get_value("F_IS_THIRD_PARTY_AI_DEFAULT", "False")),
             limited_access_third_party_ai=limited_access,
+            third_party_rollout_percentage=int(
+                Config._get_value("F_THIRD_PARTY_ROLLOUT_PERCENTAGE", 0)
+            ),
         )
 
     @property
     def palm_text_model(self) -> PalmTextModelConfig:
+        names = []
+        if s := Config._get_value("PALM_TEXT_MODEL_NAME", "text-bison,code-bison,code-gecko"):
+            names = s.split(",")
+
         return PalmTextModelConfig(
-            name=Config._get_value("PALM_TEXT_MODEL_NAME", "text-bison@001"),
+            names=names,
             project=Config._get_value("PALM_TEXT_PROJECT", "unreview-poc-390200e5"),
             location=Config._get_value("PALM_TEXT_LOCATION", "us-central1"),
             vertex_api_endpoint=Config._get_value("VERTEX_API_ENDPOINT", "us-central1-aiplatform.googleapis.com"),

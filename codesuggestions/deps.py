@@ -17,6 +17,9 @@ from codesuggestions.suggestions.processing import (
     ModelEngineCodegen,
     ModelEnginePalm,
 )
+from codesuggestions.api.rollout.model import (
+    ModelRolloutPlan, ModelRollout,
+)
 from codesuggestions.suggestions import (
     CodeSuggestionsUseCase,
     CodeSuggestionsUseCaseV2,
@@ -45,6 +48,42 @@ def _init_vertex_grpc_client(api_endpoint: str):
     })
     yield client
     client.transport.close()
+
+
+def _create_gitlab_codegen_model_provider(grpc_client_triton, real_or_fake):
+    return (
+        providers.Selector(
+            real_or_fake,
+            real=providers.Singleton(
+                GitLabCodeGen,
+                grpc_client=grpc_client_triton,
+            ),
+            fake=providers.Singleton(FakeGitLabCodeGenModel),
+        )
+    )
+
+
+def _create_palm_codegen_model_providers(grpc_client_vertex, project, location, real_or_fake):
+    model_names = [
+        ModelRollout.GOOGLE_TEXT_BISON,
+        ModelRollout.GOOGLE_CODE_BISON,
+        ModelRollout.GOOGLE_CODE_GECKO
+    ]
+
+    return {
+        name: providers.Selector(
+            real_or_fake,
+            real=providers.Singleton(
+                PalmCodeGenModel.from_model_name,
+                client=grpc_client_vertex,
+                project=project,
+                location=location,
+                name=name,
+            ),
+            fake=providers.Singleton(FakePalmTextGenModel),
+        )
+        for name in model_names
+    }
 
 
 class FastApiContainer(containers.DeclarativeContainer):
@@ -111,45 +150,56 @@ class CodeSuggestionsContainer(containers.DeclarativeContainer):
         api_endpoint=config.palm_text_model.vertex_api_endpoint,
     )
 
-    model_codegen = providers.Selector(
-        config.gitlab_codegen_model.real_or_fake,
-        real=providers.Singleton(
-            GitLabCodeGen,
-            grpc_client=grpc_client_triton,
-        ),
-        fake=providers.Singleton(FakeGitLabCodeGenModel),
+    palm_models_rollout = providers.Callable(
+        lambda model_names: [ModelRollout(name) for name in model_names],
+        model_names=config.palm_text_model.names,
     )
 
-    engine_codegen = providers.Singleton(
+    model_rollout_plan = providers.Resource(
+        ModelRolloutPlan,
+        third_party_ai_models=palm_models_rollout,
+        rollout_percentage=config.feature_flags.third_party_rollout_percentage,
+        f_third_party_ai_default=config.feature_flags.is_third_party_ai_default,
+        f_limited_access_third_party_ai=config.feature_flags.limited_access_third_party_ai,
+    )
+
+    model_gitlab_codegen = _create_gitlab_codegen_model_provider(
+        grpc_client_triton,
+        config.gitlab_codegen_model.real_or_fake,
+    )
+
+    models_palm_codegen = _create_palm_codegen_model_providers(
+        grpc_client_vertex,
+        config.palm_text_model.project,
+        config.palm_text_model.location,
+        config.palm_text_model.real_or_fake
+    )
+
+    engine_codegen_factory_template = providers.Callable(
         ModelEngineCodegen.from_local_templates,
         tpl_dir=Path(__file__).parent / "_assets" / "tpl" / "codegen",
-        model=model_codegen,
     )
 
-    model_palm = providers.Selector(
-        config.palm_text_model.real_or_fake,
-        real=providers.Singleton(
-            PalmCodeGenModel.from_model_name,
-            name=config.palm_text_model.name,
-            client=grpc_client_vertex,
-            project=config.palm_text_model.project,
-            location=config.palm_text_model.location,
+    engine_factory = providers.FactoryAggregate(**{
+        ModelRollout.GITLAB_CODEGEN: providers.Singleton(
+            engine_codegen_factory_template,
+            model=model_gitlab_codegen,
         ),
-        fake=providers.Singleton(FakePalmTextGenModel),
-     )
+        **{
+            ModelRollout(name): providers.Singleton(
+                ModelEnginePalm,
+                model=model,
+            )
+            for name, model in models_palm_codegen.items()
+        },
+    })
 
-    engine_palm = providers.Singleton(
-        ModelEnginePalm,
-        model=model_palm,
-    )
-
-    usecase = providers.Singleton(
+    # Deprecated
+    usecase = providers.Factory(
         CodeSuggestionsUseCase,
-        model=model_codegen,
+        model=model_gitlab_codegen,
     )
 
-    usecase_v2 = providers.Singleton(
+    usecase_v2 = providers.Factory(
         CodeSuggestionsUseCaseV2,
-        engine_codegen=engine_codegen,
-        engine_palm=engine_palm,
     )
