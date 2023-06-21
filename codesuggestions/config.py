@@ -130,7 +130,7 @@ class Config:
     @property
     def palm_text_model(self) -> PalmTextModelConfig:
         names = []
-        if s := Config._get_value("PALM_TEXT_MODEL_NAME", "text-bison,code-bison,code-gecko"):
+        if s := Config._get_value("PALM_TEXT_MODEL_NAME", "text-bison,code-gecko"):
             names = s.split(",")
 
         return PalmTextModelConfig(
