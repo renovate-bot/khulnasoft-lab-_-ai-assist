@@ -56,7 +56,7 @@ helm-deploy-gstg:
       - DEPLOYMENT: "model-gateway"
         TAG: "${CI_COMMIT_SHORT_SHA}"
       - DEPLOYMENT: "triton"
-        TAG: "97623ee0"
+        TAG: "363a6123"
   resource_group: gstg
   stage: release
   image: "${CI_REGISTRY}/gitlab-com/gl-infra/k8s-workloads/common/k8-helm-ci:${CI_IMAGE_VERSION}"
