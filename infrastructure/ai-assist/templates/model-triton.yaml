@@ -94,8 +94,12 @@ metadata:
     app: model-triton
     {{- include "ai-assist.labels" . | nindent 4 }}
     {{ include "common.tplvalues.render" (dict "value" .Values.modelK8STriton.labels "context" $) }}
+{{- if ne (include "common.tplvalues.render" (dict "value" .Values.modelK8STriton.service.annotations "context" $)) "null" }}
+  annotations:
+    {{- include "common.tplvalues.render" (dict "value" .Values.modelK8STriton.service.annotations "context" $) | nindent 4 }}
+{{- end }}
 spec:
-  type: ClusterIP
+  type: {{ .Values.modelK8STriton.service.type }}
   selector:
     app: model-triton
     {{- include "ai-assist.selectorLabels" . | nindent 4 }}

@@ -11,3 +11,10 @@ aiassist:
   serviceAccount:
     # The service account email to use with this account
     iamServiceAccountEmail: ai-assist-test-fauxpilot@unreview-poc-390200e5.iam.gserviceaccount.com
+
+  modelK8STriton:
+    service:
+      annotations:
+        networking.gke.io/internal-load-balancer-allow-global-access: "true"
+        networking.gke.io/load-balancer-type: Internal
+      type: LoadBalancer
