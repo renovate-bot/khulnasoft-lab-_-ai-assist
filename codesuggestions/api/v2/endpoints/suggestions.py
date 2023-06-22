@@ -5,12 +5,13 @@ import structlog
 from dependency_injector.wiring import Provide, inject
 from dependency_injector.providers import FactoryAggregate, Factory
 from fastapi import APIRouter, Depends, Request
-from pydantic import BaseModel, constr
+from pydantic import BaseModel, constr, conlist
 
 from codesuggestions.api.timing import timing
 from codesuggestions.deps import CodeSuggestionsContainer
 from codesuggestions.suggestions import CodeSuggestionsUseCaseV2
 from codesuggestions.api.rollout import ModelRolloutPlan
+from codesuggestions.instrumentators.base import Telemetry, TelemetryInstrumentator
 
 from starlette.concurrency import run_in_threadpool
 from starlette_context import context
@@ -38,6 +39,7 @@ class SuggestionsRequest(BaseModel):
     project_path: Optional[constr(strip_whitespace=True, max_length=255)]
     project_id: Optional[int]
     current_file: CurrentFile
+    telemetry: conlist(Telemetry, max_items=10) = []
 
 
 class SuggestionsResponse(BaseModel):
@@ -75,11 +77,12 @@ async def completions(
     model_name = model_rollout_plan.route(req.user, payload.project_id)
     usecase = code_suggestions(engine=engine_factory(model_name))
 
-    suggestion = await run_in_threadpool(
-        get_suggestions,
-        usecase,
-        payload,
-    )
+    with TelemetryInstrumentator().watch(payload.telemetry):
+        suggestion = await run_in_threadpool(
+            get_suggestions,
+            usecase,
+            payload,
+        )
 
     return SuggestionsResponse(
         id="id",

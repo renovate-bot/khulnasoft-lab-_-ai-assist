@@ -8,6 +8,7 @@ import structlog
 from asgi_correlation_id.context import correlation_id
 from fastapi import Response
 from fastapi.encoders import jsonable_encoder
+from pydantic import ValidationError
 from starlette.authentication import (
     AuthCredentials,
     AuthenticationError,
@@ -27,7 +28,7 @@ from uvicorn.protocols.utils import get_path_with_query_string
 
 from codesuggestions.api.timing import timing
 from codesuggestions.auth import AuthProvider, UserClaims
-from codesuggestions.instrumentators.base import TelemetryInstrumentator
+from codesuggestions.instrumentators.base import Telemetry, TelemetryInstrumentator
 
 __all__ = [
     "GitLabUser",
@@ -256,6 +257,7 @@ class MiddlewareModelTelemetry(Middleware):
     class TelemetryHeadersMiddleware(BaseHTTPMiddleware):
         def __init__(self, path_resolver: _PathResolver, *args, **kwargs):
             self.path_resolver = path_resolver
+            self.instrumentator = TelemetryInstrumentator()
             super().__init__(*args, **kwargs)
 
         async def dispatch(self, request, call_next):
@@ -266,9 +268,17 @@ class MiddlewareModelTelemetry(Middleware):
             if self._missing_header(headers):
                 return await call_next(request)
 
-            with TelemetryInstrumentator(headers.get("X-GitLab-CS-Accepts"),
-                                         headers.get("X-GitLab-CS-Requests"),
-                                         headers.get("X-GitLab-CS-Errors")):
+            try:
+                telemetry = Telemetry(
+                    accepts=headers.get("X-GitLab-CS-Accepts"),
+                    requests=headers.get("X-GitLab-CS-Requests"),
+                    errors=headers.get("X-GitLab-CS-Errors"),
+                )
+
+                with self.instrumentator.watch([telemetry]):
+                    return await call_next(request)
+            except ValidationError as e:
+                access_logger.error(f"failed to capture model telemetry: {e}")
                 return await call_next(request)
 
         def _missing_header(self, headers: list) -> bool:

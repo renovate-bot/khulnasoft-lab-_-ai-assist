@@ -3,8 +3,9 @@ import time
 
 from contextlib import contextmanager
 from starlette_context import context
+from typing import Optional
 from prometheus_client import Counter, Histogram
-from pydantic import BaseModel, ValidationError
+from pydantic import BaseModel, constr
 
 METRIC_LABELS = ["model_engine", "model_name"]
 
@@ -18,8 +19,7 @@ INFERENCE_PROMPT_HISTOGRAM = Histogram("code_suggestions_inference_prompt_size_b
                                        "Size of the prompt of an inference request in bytes", METRIC_LABELS,
                                        buckets=(32, 64, 128, 256, 512, 1024, 2048, 4096))
 
-# TODO: Label accepts counter once the client starts sending model info
-ACCEPTS_COUNTER = Counter("code_suggestions_accepts", "Accepts count by number")
+ACCEPTS_COUNTER = Counter("code_suggestions_accepts", "Accepts count by number", METRIC_LABELS)
 REQUESTS_COUNTER = Counter("code_suggestions_requests", "Requests count by number", METRIC_LABELS)
 ERRORS_COUNTER = Counter("code_suggestions_errors", "Errors count by number", METRIC_LABELS)
 
@@ -52,38 +52,30 @@ class TextGenModelInstrumentator:
             context["inference_duration_s"] = duration
 
 
-class ModelTelemetry(BaseModel):
-    accepted_request_count: int = 0
-    total_request_count: int = 0
-    error_request_count: int = 0
+class Telemetry(BaseModel):
+    # TODO: Once the header telemetry format is removed, we can unmark these as optional
+    model_engine: Optional[constr(max_length=50)]
+    model_name: Optional[constr(max_length=50)]
+    requests: int
+    accepts: int
+    errors: int
 
 
 class TelemetryInstrumentator:
-    def __init__(self, accepted_request_count, total_request_count, error_request_count) -> None:
-        self.accepted_request_count = accepted_request_count
-        self.total_request_count = total_request_count
-        self.error_request_count = error_request_count
-
-    def __enter__(self):
-        pass
-
-    def __exit__(self, *exc):
-        labels = {
-            "model_engine": context.get("model_engine", ""),
-            "model_name": context.get("model_name", ""),
-        }
-
+    @contextmanager
+    def watch(self, telemetry: list[Telemetry]):
         try:
-            fields = ModelTelemetry(
-                accepted_request_count=self.accepted_request_count,
-                total_request_count=self.total_request_count,
-                error_request_count=self.error_request_count,
-            )
+            yield
+        finally:
+            for stats in telemetry:
+                # TODO: Once header telemetry is deprecated, we can remove the `or`
+                labels = {
+                    "model_engine": stats.model_engine or context.get("model_engine", ""),
+                    "model_name": stats.model_name or context.get("model_name", ""),
+                }
 
-            telemetry_logger.info("telemetry", **(fields.dict() | labels))
+                telemetry_logger.info("telemetry", **(stats.dict() | labels))
 
-            ACCEPTS_COUNTER.inc(fields.accepted_request_count)
-            REQUESTS_COUNTER.labels(**labels).inc(fields.total_request_count)
-            ERRORS_COUNTER.labels(**labels).inc(fields.error_request_count)
-        except ValidationError as e:
-            telemetry_logger.error(f"failed to capture model telemetry: {e}", **labels)
+                ACCEPTS_COUNTER.labels(**labels).inc(stats.accepts)
+                REQUESTS_COUNTER.labels(**labels).inc(stats.requests)
+                ERRORS_COUNTER.labels(**labels).inc(stats.errors)

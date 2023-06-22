@@ -39,9 +39,9 @@ def test_telemetry_capture_with_headers(mock_counter):
 
     assert cap_logs == [
         {
-            "accepted_request_count": 1,
-            "total_request_count": 1,
-            "error_request_count": 1,
+            "accepts": 1,
+            "requests": 1,
+            "errors": 1,
             "event": "telemetry",
             "log_level": "info",
             "model_engine": "codegen",
