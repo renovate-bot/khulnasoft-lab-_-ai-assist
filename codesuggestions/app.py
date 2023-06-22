@@ -40,7 +40,7 @@ def main():
     code_suggestions_container.config.feature_flags.from_value(config.feature_flags._asdict())
 
     app = create_fast_api_server()
-    setup_logging(app, json_logs=True, log_level="INFO")
+    setup_logging(app, config.logging)
     log = logging.getLogger("uvicorn.error")
 
     setup_profiling(config.profiling, log)

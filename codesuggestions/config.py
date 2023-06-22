@@ -14,6 +14,11 @@ __all__ = [
 ]
 
 
+class LoggingConfig(NamedTuple):
+    level: str
+    json: bool
+
+
 class TritonConfig(NamedTuple):
     host: str
     port: int
@@ -75,6 +80,13 @@ class Config:
         "version": 1,
         "disable_existing_loggers": False
     }
+
+    @property
+    def logging(self) -> LoggingConfig:
+        return LoggingConfig(
+            level=Config._get_value("LOG_LEVEL", "INFO"),
+            json=Config._str_to_bool(Config._get_value("LOG_FORMAT_JSON", "True")),
+        )
 
     @property
     def triton(self) -> TritonConfig:

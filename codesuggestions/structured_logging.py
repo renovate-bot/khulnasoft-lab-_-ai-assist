@@ -5,6 +5,7 @@ import sys
 from structlog.types import EventDict, Processor
 from asgi_correlation_id import CorrelationIdMiddleware
 from starlette.types import ASGIApp
+from codesuggestions.config import LoggingConfig
 
 access_logger = structlog.stdlib.get_logger("api.access")
 
@@ -39,7 +40,7 @@ def add_custom_keys(_, __, event_dict: EventDict) -> EventDict:
     return event_dict
 
 
-def setup_logging(app: ASGIApp, json_logs: bool = False, log_level: str = "INFO"):
+def setup_logging(app: ASGIApp, logging_config: LoggingConfig):
     app.add_middleware(CorrelationIdMiddleware)
 
     timestamper = structlog.processors.TimeStamper(fmt="iso")
@@ -56,7 +57,7 @@ def setup_logging(app: ASGIApp, json_logs: bool = False, log_level: str = "INFO"
         structlog.processors.StackInfoRenderer(),
     ]
 
-    if json_logs:
+    if logging_config.json:
         # We rename the `event` key to `message` only in JSON logs, as Elasticsearch looks for the
         # `message` key but the pretty ConsoleRenderer looks for `event`
         shared_processors.append(rename_event_key)
@@ -75,7 +76,7 @@ def setup_logging(app: ASGIApp, json_logs: bool = False, log_level: str = "INFO"
     )
 
     log_renderer: structlog.types.Processor
-    if json_logs:
+    if logging_config.json:
         log_renderer = structlog.processors.JSONRenderer()
     else:
         log_renderer = structlog.dev.ConsoleRenderer()
@@ -97,7 +98,7 @@ def setup_logging(app: ASGIApp, json_logs: bool = False, log_level: str = "INFO"
     handler.setFormatter(formatter)
     root_logger = logging.getLogger()
     root_logger.addHandler(handler)
-    root_logger.setLevel(log_level.upper())
+    root_logger.setLevel(logging_config.level.upper())
 
     for _log in ["uvicorn", "uvicorn.error"]:
         # Clear the log handlers for uvicorn loggers, and enable propagation
