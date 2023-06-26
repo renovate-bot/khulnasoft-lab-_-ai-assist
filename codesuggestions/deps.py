@@ -18,7 +18,7 @@ from codesuggestions.suggestions.processing import (
     ModelEnginePalm,
 )
 from codesuggestions.api.rollout.model import (
-    ModelRolloutPlan, ModelRollout,
+    ModelRolloutWithFallbackPlan, ModelRollout,
 )
 from codesuggestions.suggestions import (
     CodeSuggestionsUseCase,
@@ -150,17 +150,17 @@ class CodeSuggestionsContainer(containers.DeclarativeContainer):
         api_endpoint=config.palm_text_model.vertex_api_endpoint,
     )
 
-    palm_models_rollout = providers.Callable(
-        lambda model_names: [ModelRollout(name) for name in model_names],
+    palm_model_rollout = providers.Callable(
+        # take the first model only as the primary one if several passed
+        lambda model_names: ModelRollout(model_names[0]),
         model_names=config.palm_text_model.names,
     )
 
     model_rollout_plan = providers.Resource(
-        ModelRolloutPlan,
-        third_party_ai_models=palm_models_rollout,
+        ModelRolloutWithFallbackPlan,
         rollout_percentage=config.feature_flags.third_party_rollout_percentage,
-        f_third_party_ai_default=config.feature_flags.is_third_party_ai_default,
-        f_limited_access_third_party_ai=config.feature_flags.limited_access_third_party_ai,
+        primary_model=palm_model_rollout,
+        fallback_model=ModelRollout.GITLAB_CODEGEN,
     )
 
     model_gitlab_codegen = _create_gitlab_codegen_model_provider(

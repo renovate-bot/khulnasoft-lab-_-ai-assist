@@ -2,13 +2,16 @@ import zlib
 import structlog
 from enum import Enum
 from typing import Optional
+from abc import ABC, abstractmethod
 
 from codesuggestions.api.middleware import GitLabUser
 from codesuggestions.config import Project
 
 __all__ = [
     "ModelRollout",
-    "ModelRolloutPlan",
+    "ModelRolloutBasePlan",
+    "ModelRolloutThirdPartyPlan",
+    "ModelRolloutWithFallbackPlan",
 ]
 
 log = structlog.stdlib.get_logger("codesuggestions")
@@ -21,7 +24,24 @@ class ModelRollout(str, Enum):
     GOOGLE_CODE_GECKO = "code-gecko"
 
 
-class ModelRolloutPlan:
+class ModelRolloutBasePlan(ABC):
+    def __init__(self, rollout_percentage: int):
+        self.rollout_percentage = rollout_percentage
+
+    def _is_project_included(self, checksum: int) -> bool:
+        """
+        Check if the project checksum is within the rollout percentage
+        :return bool
+        """
+
+        return checksum % (100 * 1_000) < self.rollout_percentage * 1_000
+
+    @abstractmethod
+    def route(self, user: GitLabUser, project_id: Optional[int] = None) -> ModelRollout:
+        pass
+
+
+class ModelRolloutThirdPartyPlan(ModelRolloutBasePlan):
     def __init__(
         self,
         rollout_percentage: int,
@@ -29,7 +49,8 @@ class ModelRolloutPlan:
         f_third_party_ai_default: bool,
         f_limited_access_third_party_ai: dict[int, Project]
     ):
-        self.rollout_percentage = rollout_percentage
+        super().__init__(rollout_percentage)
+
         self.third_party_models = third_party_ai_models
         self.f_third_party_ai_default = f_third_party_ai_default
         self.f_limited_access_third_party_ai = f_limited_access_third_party_ai
@@ -55,7 +76,7 @@ class ModelRolloutPlan:
 
         return False
 
-    def route(self, user: GitLabUser, project_id: Optional[int]) -> ModelRollout:
+    def route(self, user: GitLabUser, project_id: Optional[int] = None) -> ModelRollout:
         """
         This function receives a project and returns a model.
         Parameters
@@ -87,9 +108,7 @@ class ModelRolloutPlan:
 
         feature_project = f"third_party:{project_id}"
         checksum = zlib.crc32(feature_project.encode("utf-8"))
-
-        # Check if the project is within the rollout percentage
-        is_included = checksum % (100 * 1_000) < self.rollout_percentage * 1_000
+        is_included = self._is_project_included(checksum)
 
         if not (
             is_included
@@ -99,3 +118,25 @@ class ModelRolloutPlan:
 
         bucket_index = checksum % len(self.third_party_models)
         return self.third_party_models[bucket_index]
+
+
+class ModelRolloutWithFallbackPlan(ModelRolloutBasePlan):
+    def __init__(
+        self,
+        rollout_percentage: int,
+        primary_model: ModelRollout,
+        fallback_model: ModelRollout,
+    ):
+        super().__init__(rollout_percentage)
+
+        self.primary_model = primary_model
+        self.fallback_model = fallback_model
+
+    def route(self, user: GitLabUser, project_id: Optional[int] = None) -> ModelRollout:
+        project_id = project_id if project_id else -1
+
+        feature_project = f"with_fallback:{project_id}"
+        checksum = zlib.crc32(feature_project.encode("utf-8"))
+        is_included = self._is_project_included(checksum)
+
+        return self.primary_model if is_included else self.fallback_model

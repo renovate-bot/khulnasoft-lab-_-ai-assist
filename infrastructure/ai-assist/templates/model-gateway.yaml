@@ -62,6 +62,8 @@ spec:
               value: {{ quote .Values.modelGateway.modelGateway.flags.is_third_party_ai_default }}
             - name: F_THIRD_PARTY_ROLLOUT_PERCENTAGE
               value: {{ quote .Values.modelGateway.modelGateway.flags.third_party_rollout_percentage }}
+            - name: PALM_TEXT_MODEL_NAME
+              value: {{ quote .Values.modelGateway.modelGateway.env.vertex_code_model_name }}
       volumes:
         - name: third-party-ai-limited-access
           secret:
