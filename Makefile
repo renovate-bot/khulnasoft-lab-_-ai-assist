@@ -1,7 +1,13 @@
 MONITORING_NAMESPACE ?= monitoring
 
-APPDIR := $(shell pwd)
+ROOT_DIR := $(shell pwd)
+TESTS_DIR := ${ROOT_DIR}/tests
+CODE_SUGGESTIONS_DIR := ${ROOT_DIR}/codesuggestions
+
+LINT_WORKING_DIR ?= ${ROOT_DIR}
+
 COMPOSE := docker-compose -f docker-compose.dev.yaml
+
 
 .PHONY: develop-local
 develop-local:
@@ -9,14 +15,60 @@ develop-local:
 
 .PHONY: test-local
 test-local:
-	$(COMPOSE) run -v "$(APPDIR):/app" api bash -c 'poetry install --with test && poetry run pytest'
+	$(COMPOSE) run -v "$(ROOT_DIR):/app" api bash -c 'poetry install --with test && poetry run pytest'
 
 .PHONY: lint
 lint:
-	$(COMPOSE) run -v "$(APPDIR):/app" api bash -c 'poetry install --with lint && poetry run flake8 codesuggestions'
+	$(COMPOSE) run -v "$(ROOT_DIR):/app" api bash -c 'poetry install --with lint && poetry run flake8 codesuggestions'
 
 clean:
 	$(COMPOSE) rm -s -v -f
+
+.PHONY: install-lint-deps
+install-lint-deps:
+	@echo "Installing lint dependencies..."
+	@poetry install --with lint
+
+.PHONY: black
+black: install-lint-deps
+	@echo "Running black format..."
+	@poetry run black ${LINT_WORKING_DIR}
+
+.PHONY: isort
+isort: install-lint-deps
+	@echo "Running isort format..."
+	@poetry run isort ${LINT_WORKING_DIR}
+
+.PHONY: format
+format: black isort
+
+.PHONY: lint
+lint: flake8 check-black check-isort
+
+.PHONY: flake8
+flake8: install-lint-deps
+	@echo "Running flake8..."
+	@poetry run flake8 codesuggestions
+
+.PHONY: check-black
+check-black: install-lint-deps
+	@echo "Running black check..."
+	@poetry run black --check ${LINT_WORKING_DIR}
+
+.PHONY: check-isort
+check-isort: install-lint-deps
+	@echo "Running isort check..."
+	@poetry run isort --check-only ${LINT_WORKING_DIR}
+
+.PHONY: install-test-deps
+install-test-deps:
+	@echo "Installing test dependencies..."
+	@poetry install --with test
+
+.PHONY: test
+test: install-test-deps
+	@echo "Running test..."
+	@poetry run pytest
 
 .PHONY: nuke
 nuke: monitoring-teardown monitoring-nuke
