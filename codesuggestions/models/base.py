@@ -29,7 +29,8 @@ class TextGenBaseModel(ABC):
     @abstractmethod
     def generate(
         self,
-        content: str,
+        prefix: str,
+        suffix: str,
         temperature: float = 0.2,
         max_decode_steps: int = 16,
         top_p: float = 0.95,

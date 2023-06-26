@@ -105,7 +105,8 @@ class CodeSuggestionsUseCaseV2:
 
     def __call__(
         self,
-        content: str,
+        prefix: str,
+        suffix: str,
         file_name: str,
     ) -> str:
-        return self.engine.generate_completion(content, file_name)
+        return self.engine.generate_completion(prefix, suffix, file_name)

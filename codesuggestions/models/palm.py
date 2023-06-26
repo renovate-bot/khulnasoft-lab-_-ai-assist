@@ -105,6 +105,7 @@ class PalmCodeGenBaseModel(TextGenBaseModel):
     def generate(
         self,
         prompt: str,
+        suffix: str,
         temperature: float = 0.2,
         max_decode_steps: int = 32,
         top_p: float = 0.95,
@@ -130,6 +131,7 @@ class PalmTextBisonModel(PalmCodeGenBaseModel):
     def generate(
         self,
         prompt: str,
+        suffix: str,
         temperature: float = 0.2,
         max_decode_steps: int = 32,
         top_p: float = 0.95,
@@ -159,6 +161,7 @@ class PalmCodeBisonModel(PalmCodeGenBaseModel):
     def generate(
         self,
         prompt: str,
+        suffix: str,
         temperature: float = 0.2,
         max_decode_steps: int = 32,
         top_p: float = 0.95,
@@ -188,13 +191,13 @@ class PalmCodeGeckoModel(PalmCodeGenBaseModel):
     def generate(
         self,
         prompt: str,
+        suffix: str,
         temperature: float = 0.2,
         max_decode_steps: int = 32,
         top_p: float = 0.95,
         top_k: int = 40
     ) -> Optional[TextGenModelOutput]:
-        # TODO: Gecko model supports infilling when suffix is passed
-        input_data = {"prefix": prompt}
+        input_data = {"prefix": prompt, "suffix": suffix}
 
         with self.instrumentator.watch(prompt):
             res = self._generate(input_data, temperature, max_decode_steps, top_p, top_k)
