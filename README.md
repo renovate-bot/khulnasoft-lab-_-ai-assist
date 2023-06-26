@@ -166,6 +166,19 @@ Note that the VRAM requirements listed by `setup.sh` are _total_ -- if you have 
 across them. So, if you have two NVIDIA RTX 3080 GPUs, you _should_ be able to run the 6B model by putting half on each
 GPU.
 
+## Developing
+
+Before submitting merge requests, run lints and tests with the following commands
+from the root of the repository.
+
+```shell
+# Lint python files
+make lint
+
+# Run tests
+make test
+```
+
 ## Configuration
 
 Below described the configuration per component
@@ -398,7 +411,7 @@ on any other clusters is not guaranteed.
       --docker-password="$DEPLOY_TOKEN_PASSWORD"
    ```
 
-1. (Optional) In case of testing a redirect to a third-party AI service, create a file with the required project 
+1. (Optional) In case of testing a redirect to a third-party AI service, create a file with the required project
    identifiers and deploy it as a secret:
 
    ```shell
