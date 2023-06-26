@@ -13,6 +13,7 @@ class FakeGitLabCodeGenModel(TextGenBaseModel):
     def generate(
         self,
         prompt: str,
+        suffix: str,
         temperature: float = 0.0,
         max_decode_steps: int = 0,
         top_p: float = 0.0,
@@ -26,6 +27,7 @@ class FakePalmTextGenModel(TextGenBaseModel):
     def generate(
         self,
         prompt: str,
+        suffix: str,
         temperature: float = 0.0,
         max_decode_steps: int = 0,
         top_p: float = 0.0,

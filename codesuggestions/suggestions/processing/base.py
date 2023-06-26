@@ -32,7 +32,7 @@ class LanguageId(Enum):
 
 class ModelEngineBase(ABC):
     @abstractmethod
-    def generate_completion(self, content: str, file_name: str, **kwargs: Any):
+    def generate_completion(self, prefix: str, suffix: str, file_name: str, **kwargs: Any):
         pass
 
     def increment_lang_counter(self, filename: str, lang_id: Optional[LanguageId] = None):

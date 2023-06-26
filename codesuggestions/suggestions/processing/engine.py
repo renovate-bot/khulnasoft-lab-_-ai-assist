@@ -39,13 +39,13 @@ class ModelEngineCodegen(ModelEngineBase):
         self.prompt_tpls = prompt_tpls
         self.sep_code_block = sep_code_block
 
-    def generate_completion(self, content: str, file_name: str, **kwargs: Any) -> str:
+    def generate_completion(self, prefix: str, suffix: str, file_name: str, **kwargs: Any) -> str:
         # collect metrics
         lang_id = lang_from_filename(file_name)
         self.increment_lang_counter(file_name, lang_id)
 
-        prompt = self._build_prompt(content, lang_id)
-        if res := self.model.generate(prompt):
+        prompt = self._build_prompt(prefix, lang_id)
+        if res := self.model.generate(prompt, suffix):
             completion = self._clean_completions(res.text)
             return completion
 
@@ -94,21 +94,21 @@ class ModelEnginePalm(ModelEngineBase):
     def __init__(self, model: TextGenBaseModel):
         self.model = model
 
-    def generate_completion(self, content: str, file_name: str, **kwargs: Any):
+    def generate_completion(self, prefix: str, suffix: str, file_name: str, **kwargs: Any):
         # collect metrics
         lang_id = lang_from_filename(file_name)
         self.increment_lang_counter(file_name, lang_id)
 
-        prompt = self._build_prompt(content, lang_id)
-        if res := self.model.generate(prompt):
+        prompt, suffix = self._build_prompt(prefix, suffix)
+        if res := self.model.generate(prompt, suffix):
             return res.text
 
         return ""
 
-    def _build_prompt(self, content: str, lang_id: Optional[LanguageId]) -> str:
-        prompt = prepend_lang_id(
-            trim_by_max_len(content, self.model.MAX_MODEL_LEN),
-            lang_id,
-        )
+    def _build_prompt(self, prefix: str, suffix: str) -> tuple[str, str]:
+        suffix_len = min(len(suffix), self.model.MAX_MODEL_LEN // 2)
+        prompt_len = self.model.MAX_MODEL_LEN - suffix_len
 
-        return prompt
+        prompt = trim_by_max_len(prefix, prompt_len)
+
+        return prompt, suffix[:suffix_len]

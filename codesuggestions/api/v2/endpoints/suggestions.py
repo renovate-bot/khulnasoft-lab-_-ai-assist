@@ -103,5 +103,6 @@ def get_suggestions(
 ):
     return usecase(
         req.current_file.content_above_cursor,
+        req.current_file.content_below_cursor,
         req.current_file.file_name,
     )
