@@ -2,7 +2,7 @@ import pytest
 
 from codesuggestions.config import Project
 from codesuggestions.api.middleware import GitLabUser, UserClaims
-from codesuggestions.api.rollout.model import ModelRollout, ModelRolloutPlan
+from codesuggestions.api.rollout.model import ModelRollout, ModelRolloutThirdPartyPlan, ModelRolloutWithFallbackPlan
 
 
 THIRD_PARTY_AI_MODELS = [
@@ -10,6 +10,7 @@ THIRD_PARTY_AI_MODELS = [
     ModelRollout.GOOGLE_CODE_BISON,
     ModelRollout.GOOGLE_CODE_GECKO,
 ]
+
 
 @pytest.mark.parametrize(
     ("rollout_percentage", "project_id", "model", "f_third_party_ai_default", "is_third_party_ai_default"),
@@ -34,7 +35,7 @@ THIRD_PARTY_AI_MODELS = [
 def test_model_router(rollout_percentage, project_id, model, f_third_party_ai_default, is_third_party_ai_default):
     user = GitLabUser(authenticated=True, claims=UserClaims(is_third_party_ai_default=is_third_party_ai_default))
 
-    router = ModelRolloutPlan(
+    router = ModelRolloutThirdPartyPlan(
         rollout_percentage=rollout_percentage,
         f_third_party_ai_default=f_third_party_ai_default,
         f_limited_access_third_party_ai={45504302: Project(45504302, "")},
@@ -42,6 +43,7 @@ def test_model_router(rollout_percentage, project_id, model, f_third_party_ai_de
     )
 
     assert router.route(user, project_id) == model
+
 
 @pytest.mark.parametrize(
     ("project_id", "limited_access_ids", "want"),
@@ -52,7 +54,7 @@ def test_model_router(rollout_percentage, project_id, model, f_third_party_ai_de
     ],
 )
 def test_is_third_party_ai_limited_access(project_id, limited_access_ids, want):
-    router = ModelRolloutPlan(
+    router = ModelRolloutThirdPartyPlan(
         rollout_percentage=50,
         f_third_party_ai_default=True,
         f_limited_access_third_party_ai=limited_access_ids,
@@ -88,7 +90,7 @@ def test_is_third_party_ai_limited_access(project_id, limited_access_ids, want):
     ],
 )
 def test_resolve_third_party_ai_flag(user, f_third_party_ai_default, want):
-    router = ModelRolloutPlan(
+    router = ModelRolloutThirdPartyPlan(
         rollout_percentage=50,
         f_third_party_ai_default=f_third_party_ai_default,
         f_limited_access_third_party_ai={},
@@ -96,3 +98,33 @@ def test_resolve_third_party_ai_flag(user, f_third_party_ai_default, want):
     )
 
     assert router._resolve_third_party_ai_flag(user) == want
+
+
+@pytest.mark.parametrize(
+    ("rollout_percentage", "project_id", "primary_model", "fallback_model", "model"),
+    [
+        (10, None, ModelRollout.GOOGLE_CODE_GECKO, ModelRollout.GITLAB_CODEGEN, ModelRollout.GITLAB_CODEGEN),
+        (0, 45504304, ModelRollout.GOOGLE_CODE_GECKO, ModelRollout.GITLAB_CODEGEN, ModelRollout.GITLAB_CODEGEN),
+        (5, 455043, ModelRollout.GOOGLE_CODE_GECKO, ModelRollout.GITLAB_CODEGEN, ModelRollout.GITLAB_CODEGEN),
+        (80, 45504304, ModelRollout.GOOGLE_CODE_GECKO, ModelRollout.GITLAB_CODEGEN, ModelRollout.GOOGLE_CODE_GECKO),
+        (80, 455043, ModelRollout.GOOGLE_CODE_GECKO, ModelRollout.GITLAB_CODEGEN, ModelRollout.GOOGLE_CODE_GECKO),
+        (80, None, ModelRollout.GOOGLE_CODE_GECKO, ModelRollout.GITLAB_CODEGEN, ModelRollout.GITLAB_CODEGEN),
+        (100, None, ModelRollout.GOOGLE_CODE_GECKO, ModelRollout.GITLAB_CODEGEN, ModelRollout.GOOGLE_CODE_GECKO),
+    ],
+)
+def test_model_rollout_with_fallback(
+    rollout_percentage,
+    project_id,
+    primary_model,
+    fallback_model,
+    model
+):
+    user = GitLabUser(authenticated=True, claims=UserClaims(is_third_party_ai_default=False))
+
+    rollout = ModelRolloutWithFallbackPlan(
+        rollout_percentage=rollout_percentage,
+        primary_model=primary_model,
+        fallback_model=fallback_model
+    )
+
+    assert rollout.route(user, project_id) == model

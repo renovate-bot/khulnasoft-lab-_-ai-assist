@@ -16,6 +16,7 @@ modelGateway:
       tritonHost: model-k8s-triton-headless
       tritonPort: "8001"
       googleCloudProfiler: true
+      vertex_code_model_name: "code-gecko"
 
     flags:
       # See https://gitlab.com/gitlab-org/modelops/applied-ml/code-suggestions/ai-assist/-/issues/156#note_1429416583

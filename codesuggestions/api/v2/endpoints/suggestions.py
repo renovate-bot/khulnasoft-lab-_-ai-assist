@@ -10,7 +10,7 @@ from pydantic import BaseModel, constr, conlist
 from codesuggestions.api.timing import timing
 from codesuggestions.deps import CodeSuggestionsContainer
 from codesuggestions.suggestions import CodeSuggestionsUseCaseV2
-from codesuggestions.api.rollout import ModelRolloutPlan
+from codesuggestions.api.rollout import ModelRolloutBasePlan
 from codesuggestions.instrumentators.base import Telemetry, TelemetryInstrumentator
 
 from starlette.concurrency import run_in_threadpool
@@ -64,7 +64,7 @@ class SuggestionsResponse(BaseModel):
 async def completions(
     req: Request,
     payload: SuggestionsRequest,
-    model_rollout_plan: ModelRolloutPlan = Depends(
+    model_rollout_plan: ModelRolloutBasePlan = Depends(
         Provide[CodeSuggestionsContainer.model_rollout_plan]
     ),
     engine_factory: FactoryAggregate = Depends(
