@@ -42,7 +42,11 @@ def _init_triton_grpc_client(host: str, port: int, interceptor: PromClientInterc
     client.close()
 
 
-def _init_vertex_grpc_client(api_endpoint: str):
+def _init_vertex_grpc_client(api_endpoint: str, real_or_fake):
+    if real_or_fake == "fake":
+        yield None
+        return
+
     client = grpc_connect_vertex({
         "api_endpoint": api_endpoint,
     })
@@ -148,6 +152,7 @@ class CodeSuggestionsContainer(containers.DeclarativeContainer):
     grpc_client_vertex = providers.Resource(
         _init_vertex_grpc_client,
         api_endpoint=config.palm_text_model.vertex_api_endpoint,
+        real_or_fake=config.palm_text_model.real_or_fake,
     )
 
     palm_model_rollout = providers.Callable(
