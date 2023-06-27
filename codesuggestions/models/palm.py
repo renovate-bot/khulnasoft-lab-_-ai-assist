@@ -139,7 +139,10 @@ class PalmTextBisonModel(PalmCodeGenBaseModel):
     ) -> Optional[TextGenModelOutput]:
         input_data = {"content": prompt}
         with self.instrumentator.watch(prompt):
-            res = self._generate(input_data, temperature, max_output_tokens, top_p, top_k)
+            if len(prompt) > 0:
+                res = self._generate(input_data, temperature, max_output_tokens, top_p, top_k)
+            else:
+                res = TextGenModelOutput(text='')
 
         return res
 
@@ -169,7 +172,10 @@ class PalmCodeBisonModel(PalmCodeGenBaseModel):
     ) -> Optional[TextGenModelOutput]:
         input_data = {"prefix": prompt}
         with self.instrumentator.watch(prompt):
-            res = self._generate(input_data, temperature, max_output_tokens, top_p, top_k)
+            if len(prompt) > 0:
+                res = self._generate(input_data, temperature, max_output_tokens, top_p, top_k)
+            else:
+                res = TextGenModelOutput(text='')
 
         return res
 
@@ -200,7 +206,10 @@ class PalmCodeGeckoModel(PalmCodeGenBaseModel):
         input_data = {"prefix": prompt, "suffix": suffix}
 
         with self.instrumentator.watch(prompt, suffix_length=len(suffix)):
-            res = self._generate(input_data, temperature, max_output_tokens, top_p, top_k)
+            if len(prompt) > 0:
+                res = self._generate(input_data, temperature, max_output_tokens, top_p, top_k)
+            else:
+                res = TextGenModelOutput(text='')
 
         return res
 
