@@ -13,7 +13,7 @@ from pydantic.types import confloat, conint, conlist
 from codesuggestions.api.timing import timing
 from codesuggestions.deps import CodeSuggestionsContainer
 from codesuggestions.api.rollout import ModelRollout
-from codesuggestions.suggestions import CodeCompletionsInternalUseCase
+from codesuggestions.suggestions.experimental import CodeCompletionsInternalUseCase
 from codesuggestions.instrumentators.base import Telemetry, TelemetryInstrumentator
 
 from starlette.concurrency import run_in_threadpool

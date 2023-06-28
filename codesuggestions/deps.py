@@ -125,7 +125,7 @@ class CodeSuggestionsContainer(containers.DeclarativeContainer):
         modules=[
             "codesuggestions.api.suggestions",
             "codesuggestions.api.v2.endpoints.suggestions",
-            "codesuggestions.api.v2.internal.code",
+            "codesuggestions.api.v2.experimental.code",
             "codesuggestions.api.monitoring",
         ]
     )
