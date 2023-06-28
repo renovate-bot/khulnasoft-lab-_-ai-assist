@@ -8,11 +8,16 @@ from dependency_injector.providers import FactoryAggregate
 from fastapi import APIRouter, Depends
 from pydantic import BaseModel, constr
 from pydantic.fields import Field
-from pydantic.types import confloat, conint
+from pydantic.types import confloat, conint, conlist
 
+from codesuggestions.api.timing import timing
 from codesuggestions.deps import CodeSuggestionsContainer
 from codesuggestions.api.rollout import ModelRollout
 from codesuggestions.suggestions import CodeCompletionsInternalUseCase
+from codesuggestions.instrumentators.base import Telemetry, TelemetryInstrumentator
+
+from starlette.concurrency import run_in_threadpool
+
 
 __all__ = [
     "router"
@@ -89,6 +94,7 @@ class CodeCompletionsRequest(BaseModel):
     project_path: Optional[constr(strip_whitespace=True, max_length=255)]
     file_name: Optional[constr(strip_whitespace=True, max_length=255)]
     model: ModelAny = Field(..., discriminator="name")
+    telemetry: conlist(Telemetry, max_items=10) = []
 
 
 class CodeCompletionsResponse(BaseModel):
@@ -119,12 +125,12 @@ async def completions(
     engine = engine_factory(payload.model.name)
     usecase = CodeCompletionsInternalUseCase(engine)
 
-    completion = usecase(
-        _get_requested_prefix(payload.model),
-        _get_requested_suffix(payload.model),
-        file_name=payload.file_name,
-        **payload.model.parameters.dict(),
-    )
+    with TelemetryInstrumentator().watch(payload.telemetry):
+        completion = await run_in_threadpool(
+            get_code_completions,
+            usecase,
+            payload,
+        )
 
     return CodeCompletionsResponse(
         id=payload.id,
@@ -155,3 +161,16 @@ def _get_requested_suffix(model: ModelAny) -> str:
         suffix = model.suffix
 
     return suffix
+
+
+@timing("get_internal_code_completions_duration_s")
+def get_code_completions(
+    usecase: CodeCompletionsInternalUseCase,
+    req: CodeCompletionsRequest,
+):
+    return usecase(
+        _get_requested_prefix(req.model),
+        _get_requested_suffix(req.model),
+        file_name=req.file_name,
+        **req.model.parameters.dict(),
+    )
