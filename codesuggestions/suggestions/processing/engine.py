@@ -45,7 +45,7 @@ class ModelEngineCodegen(ModelEngineBase):
         self.increment_lang_counter(file_name, lang_id)
 
         prompt = self._build_prompt(prefix, lang_id)
-        if res := self.model.generate(prompt, suffix):
+        if res := self.model.generate(prompt, suffix, **kwargs):
             completion = self._clean_completions(res.text)
             return completion
 
@@ -100,7 +100,7 @@ class ModelEnginePalm(ModelEngineBase):
         self.increment_lang_counter(file_name, lang_id)
 
         prompt, suffix = self._build_prompt(prefix, suffix)
-        if res := self.model.generate(prompt, suffix):
+        if res := self.model.generate(prompt, suffix, **kwargs):
             return res.text
 
         return ""
