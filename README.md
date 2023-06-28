@@ -217,6 +217,7 @@ value `'None'`.
 
 1. Create virtualenv and init shell: `poetry shell`
 1. Install dependencies: `poetry install`
+1. Copy the `example.env` file to `.env`: `cp example.env .env`
 1. Update the `.env` file in the root folder with the following variables:
 
    ```
