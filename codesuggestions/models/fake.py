@@ -15,7 +15,7 @@ class FakeGitLabCodeGenModel(TextGenBaseModel):
         prompt: str,
         suffix: str,
         temperature: float = 0.0,
-        max_decode_steps: int = 0,
+        max_output_tokens: int = 0,
         top_p: float = 0.0,
         top_k: int = 0,
     ) -> Optional[TextGenModelOutput]:
@@ -29,7 +29,7 @@ class FakePalmTextGenModel(TextGenBaseModel):
         prompt: str,
         suffix: str,
         temperature: float = 0.0,
-        max_decode_steps: int = 0,
+        max_output_tokens: int = 0,
         top_p: float = 0.0,
         top_k: int = 0,
     ) -> Optional[TextGenModelOutput]:

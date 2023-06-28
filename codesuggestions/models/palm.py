@@ -76,13 +76,13 @@ class PalmCodeGenBaseModel(TextGenBaseModel):
         self,
         input_data: dict,
         temperature: float,
-        max_decode_steps: int,
+        max_output_tokens: int,
         top_p: float,
         top_k: int
     ) -> Optional[TextGenModelOutput]:
         instance = json_format.ParseDict(input_data, struct_pb2.Value())
         instances = [instance]
-        parameters_dict = {"temperature": temperature, "maxDecodeSteps": max_decode_steps, "topP": top_p, "topK": top_k}
+        parameters_dict = {"temperature": temperature, "maxOutputTokens": max_output_tokens, "topP": top_p, "topK": top_k}
         parameters = json_format.ParseDict(parameters_dict, struct_pb2.Value())
 
         response = self.client.predict(
@@ -107,7 +107,7 @@ class PalmCodeGenBaseModel(TextGenBaseModel):
         prompt: str,
         suffix: str,
         temperature: float = 0.2,
-        max_decode_steps: int = 32,
+        max_output_tokens: int = 32,
         top_p: float = 0.95,
         top_k: int = 40,
     ) -> Optional[TextGenModelOutput]:
@@ -133,13 +133,13 @@ class PalmTextBisonModel(PalmCodeGenBaseModel):
         prompt: str,
         suffix: str,
         temperature: float = 0.2,
-        max_decode_steps: int = 32,
+        max_output_tokens: int = 32,
         top_p: float = 0.95,
         top_k: int = 40
     ) -> Optional[TextGenModelOutput]:
         input_data = {"content": prompt}
         with self.instrumentator.watch(prompt):
-            res = self._generate(input_data, temperature, max_decode_steps, top_p, top_k)
+            res = self._generate(input_data, temperature, max_output_tokens, top_p, top_k)
 
         return res
 
@@ -163,13 +163,13 @@ class PalmCodeBisonModel(PalmCodeGenBaseModel):
         prompt: str,
         suffix: str,
         temperature: float = 0.2,
-        max_decode_steps: int = 32,
+        max_output_tokens: int = 32,
         top_p: float = 0.95,
         top_k: int = 40
     ) -> Optional[TextGenModelOutput]:
         input_data = {"prefix": prompt}
         with self.instrumentator.watch(prompt):
-            res = self._generate(input_data, temperature, max_decode_steps, top_p, top_k)
+            res = self._generate(input_data, temperature, max_output_tokens, top_p, top_k)
 
         return res
 
@@ -193,14 +193,14 @@ class PalmCodeGeckoModel(PalmCodeGenBaseModel):
         prompt: str,
         suffix: str,
         temperature: float = 0.2,
-        max_decode_steps: int = 32,
+        max_output_tokens: int = 32,
         top_p: float = 0.95,
         top_k: int = 40
     ) -> Optional[TextGenModelOutput]:
         input_data = {"prefix": prompt, "suffix": suffix}
 
         with self.instrumentator.watch(prompt):
-            res = self._generate(input_data, temperature, max_decode_steps, top_p, top_k)
+            res = self._generate(input_data, temperature, max_output_tokens, top_p, top_k)
 
         return res
 
