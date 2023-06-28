@@ -3,14 +3,16 @@ from typing import Literal, Union, Optional
 from uuid import uuid4
 
 import structlog
+from dependency_injector.wiring import Provide, inject
+from dependency_injector.providers import FactoryAggregate
 from fastapi import APIRouter, Depends
 from pydantic import BaseModel, constr
 from pydantic.fields import Field
 from pydantic.types import confloat, conint
 
-from starlette_context import context
-
+from codesuggestions.deps import CodeSuggestionsContainer
 from codesuggestions.api.rollout import ModelRollout
+from codesuggestions.suggestions import CodeCompletionsInternalUseCase
 
 __all__ = [
     "router"
@@ -27,7 +29,7 @@ router = APIRouter(
 class ModelGitLabCodegen(BaseModel):
     class Parameters(BaseModel):
         temperature: confloat(ge=0.0, le=1.0) = 0.2
-        max_decode_steps: conint(ge=1, le=64) = 32
+        max_output_tokens: conint(ge=1, le=64) = 32
         top_p: confloat(ge=0.0, le=1.0) = 0.98
         top_k: conint(ge=1, le=40) = 0
 
@@ -40,7 +42,7 @@ class ModelVertexTextBison(BaseModel):
     # Ref: https://cloud.google.com/vertex-ai/docs/generative-ai/learn/models#text_model_parameters
     class Parameters(BaseModel):
         temperature: confloat(ge=0.0, le=1.0) = 0.2
-        max_decode_steps: conint(ge=1, le=1_024) = 16
+        max_output_tokens: conint(ge=1, le=1_024) = 16
         top_p: confloat(ge=0.0, le=1.0) = 0.95
         top_k: conint(ge=1, le=40) = 40
 
@@ -53,7 +55,7 @@ class ModelVertexCodeBison(BaseModel):
     # Ref: https://cloud.google.com/vertex-ai/docs/generative-ai/learn/models#code-generation-prompt-parameters
     class Parameters(BaseModel):
         temperature: confloat(ge=0.0, le=1.0) = 0.2
-        max_decode_steps: conint(ge=1, le=2_048) = 16
+        max_output_tokens: conint(ge=1, le=2_048) = 16
 
     name: Literal[ModelRollout.GOOGLE_CODE_BISON]
     prefix: constr(max_length=100000)
@@ -64,12 +66,20 @@ class ModelVertexCodeGecko(BaseModel):
     # Ref: https://cloud.google.com/vertex-ai/docs/generative-ai/learn/models#code-completion-prompt-parameters
     class Parameters(BaseModel):
         temperature: confloat(ge=0.0, le=1.0) = 0.2
-        max_decode_steps: conint(ge=1, le=64) = 16
+        max_output_tokens: conint(ge=1, le=64) = 16
 
     name: Literal[ModelRollout.GOOGLE_CODE_GECKO]
     prefix: constr(max_length=100000)
     suffix: constr(max_length=100000)
     parameters: Parameters
+
+
+ModelAny = Union[
+    ModelVertexTextBison,
+    ModelVertexCodeBison,
+    ModelVertexCodeGecko,
+    ModelGitLabCodegen,
+]
 
 
 class CodeCompletionsRequest(BaseModel):
@@ -78,19 +88,14 @@ class CodeCompletionsRequest(BaseModel):
     project_id: Optional[int]
     project_path: Optional[constr(strip_whitespace=True, max_length=255)]
     file_name: Optional[constr(strip_whitespace=True, max_length=255)]
-    model: Union[
-        ModelVertexTextBison,
-        ModelVertexCodeBison,
-        ModelVertexCodeGecko,
-        ModelGitLabCodegen,
-    ] = Field(..., discriminator="name")
+    model: ModelAny = Field(..., discriminator="name")
 
 
 class CodeCompletionsResponse(BaseModel):
     class Choice(BaseModel):
         text: str
         index: int = 0
-        finish_reason: str = "length"
+        finish_reason: str
 
     class Model(BaseModel):
         engine: str
@@ -104,16 +109,49 @@ class CodeCompletionsResponse(BaseModel):
 
 
 @router.post("/completions", response_model=CodeCompletionsResponse)
+@inject
 async def completions(
     payload: CodeCompletionsRequest,
+    engine_factory: FactoryAggregate = Depends(
+        Provide[CodeSuggestionsContainer.engine_factory.provider]
+    ),
 ):
+    engine = engine_factory(payload.model.name)
+    usecase = CodeCompletionsInternalUseCase(engine)
+
+    completion = usecase(
+        _get_requested_prefix(payload.model),
+        _get_requested_suffix(payload.model),
+        file_name=payload.file_name,
+        **payload.model.parameters.dict(),
+    )
+
     return CodeCompletionsResponse(
         id=payload.id,
         created=int(time()),
         model=CodeCompletionsResponse.Model(
-            engine=context.get("model_engine", ""), name=context.get("model_name", "")
+            engine=completion.model.engine,
+            name=completion.model.name,
         ),
         choices=[
-            CodeCompletionsResponse.Choice(text=""),
+            CodeCompletionsResponse.Choice(
+                text=completion.text,
+                finish_reason=completion.finish_reason,
+            ),
         ],
     )
+
+
+def _get_requested_prefix(model: ModelAny) -> str:
+    if model.name == ModelRollout.GOOGLE_TEXT_BISON:
+        return model.content
+
+    return model.prefix
+
+
+def _get_requested_suffix(model: ModelAny) -> str:
+    suffix = ""
+    if model.name == ModelRollout.GOOGLE_CODE_GECKO:
+        suffix = model.suffix
+
+    return suffix
