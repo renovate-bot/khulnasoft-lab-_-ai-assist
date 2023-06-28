@@ -86,7 +86,7 @@ class GitLabCodeGen(TextGenBaseModel):
         prompt: str,
         suffix: str,
         temperature: float = 0.2,
-        max_decode_steps: int = 32,
+        max_output_tokens: int = 32,
         top_p: float = 0.98,
         top_k: int = 0,
         repetition_penalty: float = 1.0,
@@ -95,7 +95,7 @@ class GitLabCodeGen(TextGenBaseModel):
             GitLabCodeGenModelInput(
                 prompt=prompt,
                 temperature=temperature,
-                request_output_len=max_decode_steps,
+                request_output_len=max_output_tokens,
                 top_p=top_p,
                 top_k=top_k,
                 repetition_penalty=repetition_penalty,
