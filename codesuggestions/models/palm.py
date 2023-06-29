@@ -199,7 +199,7 @@ class PalmCodeGeckoModel(PalmCodeGenBaseModel):
     ) -> Optional[TextGenModelOutput]:
         input_data = {"prefix": prompt, "suffix": suffix}
 
-        with self.instrumentator.watch(prompt):
+        with self.instrumentator.watch(prompt, suffix_length=len(suffix)):
             res = self._generate(input_data, temperature, max_output_tokens, top_p, top_k)
 
         return res
