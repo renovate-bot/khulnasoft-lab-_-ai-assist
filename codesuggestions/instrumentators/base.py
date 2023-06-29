@@ -3,7 +3,7 @@ import time
 
 from contextlib import contextmanager
 from starlette_context import context
-from typing import Optional
+from typing import Optional, Any
 from prometheus_client import Counter, Histogram
 from pydantic import BaseModel, constr
 
@@ -31,12 +31,13 @@ class TextGenModelInstrumentator:
         self.labels = {"model_engine": model_engine, "model_name": model_name}
 
     @contextmanager
-    def watch(self, prompt: str):
+    def watch(self, prompt: str, **kwargs: Any):
         prompt_length = len(prompt)
 
         context["model_engine"] = self.labels["model_engine"]
         context["model_name"] = self.labels["model_name"]
         context["prompt_length"] = prompt_length
+        context.update(**kwargs)
 
         INFERENCE_PROMPT_HISTOGRAM.labels(**self.labels).observe(prompt_length)
         INFERENCE_COUNTER.labels(**self.labels).inc()
