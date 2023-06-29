@@ -8,7 +8,7 @@ metadata:
     {{- include "ai-assist.labels" . | nindent 4 }}
     {{ include "common.tplvalues.render" (dict "value" .Values.modelGateway.labels "context" $) }}
 spec:
-  replicas: {{ .Values.modelGateway.replicas }}
+  replicas: {{ .Values.modelGateway.hpa.minReplicas | int }}
   selector:
     matchLabels:
       app: model-gateway
@@ -64,6 +64,13 @@ spec:
               value: {{ quote .Values.modelGateway.modelGateway.flags.third_party_rollout_percentage }}
             - name: PALM_TEXT_MODEL_NAME
               value: {{ quote .Values.modelGateway.modelGateway.env.vertex_code_model_name }}
+          resources:
+            requests:
+              cpu: {{ quote .Values.modelGateway.modelGateway.resources.requests.cpu }}
+              memory: {{ quote .Values.modelGateway.modelGateway.resources.requests.memory }}
+            limits:
+              cpu: {{ quote .Values.modelGateway.modelGateway.resources.limits.cpu }}
+              memory: {{ quote .Values.modelGateway.modelGateway.resources.limits.memory }}
       volumes:
         - name: third-party-ai-limited-access
           secret:
@@ -102,6 +109,25 @@ spec:
   selector:
     app: model-gateway
     {{- include "ai-assist.selectorLabels" . | nindent 4 }}
+---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: model-gateway
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: model-gateway
+  minReplicas: {{ .Values.modelGateway.hpa.minReplicas | int }}
+  maxReplicas: {{ .Values.modelGateway.hpa.maxReplicas | int }}
+  metrics:
+  - type: Resource
+    resource:
+      name: cpu
+      target:
+        type: Utilization
+        averageUtilization: {{ .Values.modelGateway.hpa.cpu.targetAverageUtilization | int }}
 ---
 apiVersion: monitoring.coreos.com/v1
 kind: ServiceMonitor
