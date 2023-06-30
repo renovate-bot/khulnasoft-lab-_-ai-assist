@@ -30,6 +30,7 @@ python-jose = {extras = ["cryptography"], version = "^3.3.0"}
 starlette-context = "^0.3.6"
 google-cloud-profiler = "^4.0.0"
 py-grpc-prometheus = "^0.7.0"
+tree-sitter = "^0.20.1"
 
 [tool.poetry.group.test]
 optional = true

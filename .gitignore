@@ -309,6 +309,7 @@ dmypy.json
 .pyre/
 .pytype/
 cython_debug/
+vendor/
 
 # Chart dependencies
 infrastructure/ai-assist/charts

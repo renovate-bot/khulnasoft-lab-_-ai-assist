@@ -54,6 +54,15 @@ def _side_effect_with_suffix(content: str, suffix: str, filename: str, model_out
     return _fn
 
 
+def _side_effect_with_imports(content: str, suffix: str, filename: str, model_output: str):
+    def _fn(prompt: str, suffix: str):
+        assert content.startswith("import os\nimport pytest")
+
+        return TextGenModelOutput(text=model_output)
+
+    return _fn
+
+
 @pytest.mark.parametrize(
     "content,file_name,model_gen_func,model_output,expected_completion",
     [
@@ -155,6 +164,14 @@ def test_model_engine_codegen(
             "abc " * 4096,
             "f.py",
             _side_effect_with_suffix,
+            "random completion\nnew line",
+            "random completion\nnew line",
+        ),
+        (
+            "import os\nimport pytest\n" + "prompt" * 2048,
+            "",
+            "f.py",
+            _side_effect_with_imports,
             "random completion\nnew line",
             "random completion\nnew line",
         ),

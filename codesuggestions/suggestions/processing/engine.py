@@ -3,6 +3,7 @@ from typing import Optional, Any
 
 from codesuggestions.models import TextGenBaseModel
 from codesuggestions.prompts import PromptTemplateBase, PromptTemplate, PromptTemplateFewShot
+from codesuggestions.prompts.import_extractor import ImportExtractor
 from codesuggestions.suggestions.processing.base import LanguageId, ModelEngineBase
 from codesuggestions.suggestions.processing.ops import (
     trim_by_max_len,
@@ -99,16 +100,34 @@ class ModelEnginePalm(ModelEngineBase):
         lang_id = lang_from_filename(file_name)
         self.increment_lang_counter(file_name, lang_id)
 
-        prompt, suffix = self._build_prompt(prefix, suffix)
+        prompt, suffix = self._build_prompt(prefix, suffix, lang_id)
         if res := self.model.generate(prompt, suffix, **kwargs):
             return res.text
 
         return ""
 
-    def _build_prompt(self, prefix: str, suffix: str) -> tuple[str, str]:
+    def _build_prompt(self, prefix: str, suffix: str, lang_id: Optional[LanguageId]) -> tuple[str, str]:
         suffix_len = min(len(suffix), self.model.MAX_MODEL_LEN // 2)
         prompt_len = self.model.MAX_MODEL_LEN - suffix_len
 
         prompt = trim_by_max_len(prefix, prompt_len)
 
+        if lang_id:
+            prompt = self._add_imports(prefix, prompt, lang_id)
+
         return prompt, suffix[:suffix_len]
+
+    def _add_imports(self, content: str, prompt: str, lang_id: Optional[LanguageId]) -> str:
+        extractor = ImportExtractor(lang_id)
+        imports = extractor.extract_imports(content)
+
+        if imports is None:
+            return prompt
+
+        for text in imports:
+            # Only prepend the import statement if it's not present and we have room.
+            # The model truncates excess tokens that precede the cursor
+            if prompt.find(text) == -1 and (len(prompt) + len(text) < self.model.UPPER_BOUND_MODEL_CHARS):
+                prompt = text + prompt + "\n"
+
+        return prompt
