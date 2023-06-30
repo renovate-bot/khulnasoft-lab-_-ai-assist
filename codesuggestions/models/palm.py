@@ -8,6 +8,7 @@ from typing import (
     Union,
 )
 
+from codesuggestions.models.base import ModelInput
 from codesuggestions.models import TextGenBaseModel, TextGenModelOutput
 from codesuggestions.instrumentators.base import TextGenModelInstrumentator
 
@@ -19,8 +20,42 @@ __all__ = [
     "PalmCodeGenBaseModel",
     "PalmCodeBisonModel",
     "PalmCodeGeckoModel",
-    "PalmCodeGenModel",
+    "PalmCodeGenModel"
 ]
+
+
+class CodeBisonModelInput(ModelInput):
+    def __init__(self, prefix):
+        self.prefix = prefix
+
+    def is_valid(self) -> bool:
+        return len(self.prefix) > 0
+
+    def dict(self) -> dict:
+        return {"prefix": self.prefix}
+
+
+class TextBisonModelInput(ModelInput):
+    def __init__(self, prefix):
+        self.prefix = prefix
+
+    def is_valid(self) -> bool:
+        return len(self.prefix) > 0
+
+    def dict(self) -> dict:
+        return {"content": self.prefix}
+
+
+class CodeGeckoModelInput(ModelInput):
+    def __init__(self, prefix, suffix):
+        self.prefix = prefix
+        self.suffix = suffix
+
+    def is_valid(self) -> bool:
+        return len(self.prefix) > 0
+
+    def dict(self) -> dict:
+        return {"prefix": self.prefix, "suffix": self.suffix}
 
 
 class PalmPredictionResponse(ABC):
@@ -74,12 +109,17 @@ class PalmCodeGenBaseModel(TextGenBaseModel):
 
     def _generate(
         self,
-        input_data: dict,
+        input: ModelInput,
         temperature: float,
         max_output_tokens: int,
         top_p: float,
         top_k: int
     ) -> Optional[TextGenModelOutput]:
+        if not input.is_valid():
+            return TextGenModelOutput(text="")
+
+        input_data = input.dict()
+
         instance = json_format.ParseDict(input_data, struct_pb2.Value())
         instances = [instance]
         parameters_dict = {"temperature": temperature, "maxOutputTokens": max_output_tokens, "topP": top_p, "topK": top_k}
@@ -137,12 +177,9 @@ class PalmTextBisonModel(PalmCodeGenBaseModel):
         top_p: float = 0.95,
         top_k: int = 40
     ) -> Optional[TextGenModelOutput]:
-        input_data = {"content": prompt}
+        input = TextBisonModelInput(prompt)
         with self.instrumentator.watch(prompt):
-            if len(prompt) > 0:
-                res = self._generate(input_data, temperature, max_output_tokens, top_p, top_k)
-            else:
-                res = TextGenModelOutput(text='')
+            res = self._generate(input, temperature, max_output_tokens, top_p, top_k)
 
         return res
 
@@ -170,12 +207,9 @@ class PalmCodeBisonModel(PalmCodeGenBaseModel):
         top_p: float = 0.95,
         top_k: int = 40
     ) -> Optional[TextGenModelOutput]:
-        input_data = {"prefix": prompt}
+        input = CodeBisonModelInput(prompt)
         with self.instrumentator.watch(prompt):
-            if len(prompt) > 0:
-                res = self._generate(input_data, temperature, max_output_tokens, top_p, top_k)
-            else:
-                res = TextGenModelOutput(text='')
+            res = self._generate(input, temperature, max_output_tokens, top_p, top_k)
 
         return res
 
@@ -203,13 +237,10 @@ class PalmCodeGeckoModel(PalmCodeGenBaseModel):
         top_p: float = 0.95,
         top_k: int = 40
     ) -> Optional[TextGenModelOutput]:
-        input_data = {"prefix": prompt, "suffix": suffix}
+        input = CodeGeckoModelInput(prompt, suffix)
 
         with self.instrumentator.watch(prompt, suffix_length=len(suffix)):
-            if len(prompt) > 0:
-                res = self._generate(input_data, temperature, max_output_tokens, top_p, top_k)
-            else:
-                res = TextGenModelOutput(text='')
+            res = self._generate(input, temperature, max_output_tokens, top_p, top_k)
 
         return res
 
