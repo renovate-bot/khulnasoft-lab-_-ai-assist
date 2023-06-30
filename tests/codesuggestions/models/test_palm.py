@@ -2,7 +2,15 @@ import pytest
 
 from contextlib import contextmanager
 from unittest.mock import Mock
-from codesuggestions.models.palm import PalmTextBisonModel, PalmCodeBisonModel, PalmCodeGeckoModel, TextGenModelOutput
+from codesuggestions.models.palm import (
+    CodeBisonModelInput,
+    CodeGeckoModelInput,
+    PalmCodeBisonModel,
+    PalmCodeGeckoModel,
+    PalmTextBisonModel,
+    TextBisonModelInput,
+    TextGenModelOutput
+)
 from typing import Any
 
 
@@ -12,48 +20,52 @@ class MockInstrumentor:
         yield
 
 
+TEST_PREFIX = "random propmt"
+TEST_SUFFIX = "some suffix"
+
+
 @pytest.mark.parametrize(
     "model,prefix,suffix,expected_output,expected_generate_args",
     [
         (
             PalmTextBisonModel,
-            "random prompt",
-            "some suffix",
+            TEST_PREFIX,
+            TEST_SUFFIX,
             "some output",
-            [{"content": "random prompt"}, 0.2, 32, 0.95, 40]
+            [TextBisonModelInput(TEST_PREFIX), 0.2, 32, 0.95, 40]
         ),
         (
             PalmTextBisonModel,
             "",
-            "some suffix",
+            TEST_SUFFIX,
             "",
             None
         ),
         (
             PalmCodeBisonModel,
-            "random prompt",
-            "some suffix",
+            TEST_PREFIX,
+            TEST_SUFFIX,
             "some output",
-            [{"prefix": "random prompt"}, 0.2, 32, 0.95, 40]
+            [CodeBisonModelInput(TEST_PREFIX), 0.2, 32, 0.95, 40]
         ),
         (
             PalmCodeBisonModel,
             "",
-            "some suffix",
+            TEST_SUFFIX,
             "",
             None
         ),
         (
             PalmCodeGeckoModel,
-            "random prompt",
-            "some suffix",
+            TEST_PREFIX,
+            TEST_SUFFIX,
             "some output",
-            [{"prefix": "random prompt", "suffix": "some suffix"}, 0.2, 32, 0.95, 40]
+            [CodeGeckoModelInput(TEST_PREFIX, TEST_SUFFIX), 0.2, 32, 0.95, 40]
         ),
         (
             PalmCodeGeckoModel,
             "",
-            "some suffix",
+            TEST_SUFFIX,
             "",
             None
         )
@@ -70,5 +82,22 @@ def test_palm_code_gecko_prompt(model, prefix, suffix, expected_output, expected
 
     if expected_generate_args:
         palm_model._generate.assert_called_with(*expected_generate_args)
+        assert client.assert_called_once
     else:
-        assert not palm_model._generate.called
+        assert not client.called
+
+
+@pytest.mark.parametrize(
+    "model_input,is_valid,output_dict", [
+        (CodeBisonModelInput(TEST_PREFIX), True, {"prefix": TEST_PREFIX}),
+        (CodeBisonModelInput(""), False, None),
+        (TextBisonModelInput(TEST_PREFIX), True, {"content": TEST_PREFIX}),
+        (TextBisonModelInput(""), False, None),
+        (CodeGeckoModelInput(TEST_PREFIX, TEST_SUFFIX), True, {"prefix": TEST_PREFIX, "suffix": TEST_SUFFIX}),
+        (CodeGeckoModelInput("", ""), False, None),
+        (CodeGeckoModelInput("", TEST_SUFFIX), False, None),
+    ]
+)
+def test_palm_model_inputs(model_input, is_valid, output_dict):
+    assert model_input.is_valid() is is_valid
+    assert output_dict is None or model_input.dict() == output_dict

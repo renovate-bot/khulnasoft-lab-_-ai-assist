@@ -19,6 +19,19 @@ __all__ = [
 ]
 
 
+class ModelInput(ABC):
+    @abstractmethod
+    def is_valid(self) -> bool:
+        pass
+
+    @abstractmethod
+    def dict(self) -> dict:
+        pass
+
+    def __eq__(self, obj):
+        return self.dict() == obj.dict()
+
+
 class TextGenModelOutput(NamedTuple):
     text: str
 
