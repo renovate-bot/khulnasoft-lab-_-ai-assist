@@ -55,6 +55,8 @@ cache:
     - $PIP_CACHE_DIR
     - $POETRY_CACHE_DIR
     - requirements.txt
+    - lib/
+    - vendor/
 
 .poetry:
   before_script:
@@ -153,6 +155,9 @@ tests:
     - install
   script:
     - poetry install --with test
+    - curl -sL https://deb.nodesource.com/setup_16.x | bash -
+    - apt-get update && apt install -y nodejs build-essential git
+    - poetry run python scripts/build-tree-sitter-lib.py
     - poetry run pytest --junitxml=".test-reports/tests.xml"
   artifacts:
     when: always

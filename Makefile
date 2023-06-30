@@ -64,6 +64,8 @@ check-isort: install-lint-deps
 install-test-deps:
 	@echo "Installing test dependencies..."
 	@poetry install --with test
+	@echo 'Building tree-sitter library...'
+	@scripts/build-tree-sitter-lib.py
 
 .PHONY: test
 test: install-test-deps

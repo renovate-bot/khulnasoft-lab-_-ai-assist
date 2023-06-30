@@ -88,6 +88,9 @@ class PalmModel(str, Enum):
 class PalmCodeGenBaseModel(TextGenBaseModel):
     # Max number of tokens the model can handle
     MAX_MODEL_LEN = 2048
+    # If we assume that 4 characters per token, this gives us an upper bound of approximately
+    # how many characters should be in the prompt.
+    UPPER_BOUND_MODEL_CHARS = MAX_MODEL_LEN * 5
 
     # Separator used to version models
     # E.g.: code-bison@001

@@ -17,4 +17,5 @@ def tpl_codegen_dir() -> Path:
 def text_gen_base_model():
     model = Mock(spec=TextGenBaseModel)
     model.MAX_MODEL_LEN = 1_000
+    model.UPPER_BOUND_MODEL_CHARS = model.MAX_MODEL_LEN * 5
     return model

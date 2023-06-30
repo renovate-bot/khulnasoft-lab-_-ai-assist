@@ -162,6 +162,12 @@ You'll need:
 - [`nvidia-docker`](https://github.com/NVIDIA/nvidia-docker)
 - `curl` and `zstd` for downloading and unpacking the models.
 
+If you're working locally, you'll also need other tools to build a
+[`tree-sitter`](https://tree-sitter.github.io/tree-sitter/) library:
+
+- gcc
+- nodejs (needed for TypeScript grammar)
+
 Note that the VRAM requirements listed by `setup.sh` are _total_ -- if you have multiple GPUs, you can split the model
 across them. So, if you have two NVIDIA RTX 3080 GPUs, you _should_ be able to run the 6B model by putting half on each
 GPU.

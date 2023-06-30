@@ -1893,6 +1893,17 @@ files = [
 ]
 
 [[package]]
+name = "tree-sitter"
+version = "0.20.1"
+description = "Python bindings to the Tree-sitter parsing library"
+optional = false
+python-versions = ">=3.3"
+files = [
+    {file = "tree_sitter-0.20.1-cp39-cp39-macosx_12_0_arm64.whl", hash = "sha256:6f11a1fd909dcf569e7b1d98861a837436799e757bbbc5cd5280989050929e12"},
+    {file = "tree_sitter-0.20.1.tar.gz", hash = "sha256:e93f082c545d6649bcfb5d681ed255eb004a6ce22988971a128f40692feec60d"},
+]
+
+[[package]]
 name = "tritonclient"
 version = "2.34.0"
 description = "Python client library and utilities for communicating with Triton Inference Server"
@@ -2150,4 +2161,4 @@ files = [
 [metadata]
 lock-version = "2.0"
 python-versions = "~3.9"
-content-hash = "fcffdb4cd04463fde415f9d6ce194978c2198b9f04cfed566f4e890ae7e285ac"
+content-hash = "5d37f6c7265756d87d010b1b79c9022f240a101d83f306f7fa002f8854d3ce2b"
