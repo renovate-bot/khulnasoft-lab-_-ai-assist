@@ -38,6 +38,7 @@ optional = true
 [tool.poetry.group.test.dependencies]
 pytest = "^7.2.0"
 responses = "^0.23.1"
+pytest-cov = "^4.1.0"
 
 [tool.poetry.group.lint]
 optional = true
@@ -48,7 +49,7 @@ isort = "^5.12.0"
 black = "^23.3.0"
 
 [tool.pytest.ini_options]
-addopts = "--disable-warnings"
+addopts = "--disable-warnings --cov=codesuggestions --cov-report=term --cov-report=html"
 testpaths = ["tests/codesuggestions"]
 
 [tool.poetry.scripts]
