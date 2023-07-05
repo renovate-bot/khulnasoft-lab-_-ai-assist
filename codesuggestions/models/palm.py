@@ -87,7 +87,8 @@ class PalmModel(str, Enum):
 
 class PalmCodeGenBaseModel(TextGenBaseModel):
     # Max number of tokens the model can handle
-    MAX_MODEL_LEN = 2048
+    # Source: https://cloud.google.com/vertex-ai/docs/generative-ai/learn/models#foundation_models
+    MAX_MODEL_LEN = 2048  # for code-gecko. TODO: Allow specifying maximum number of tokens per PalmModel
     # If we assume that 4 characters per token, this gives us an upper bound of approximately
     # how many characters should be in the prompt.
     UPPER_BOUND_MODEL_CHARS = MAX_MODEL_LEN * 5

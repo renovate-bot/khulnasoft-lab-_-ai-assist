@@ -13,6 +13,8 @@ from codesuggestions.suggestions.processing.ops import (
     remove_incomplete_lines,
 )
 
+from transformers import T5Tokenizer
+
 __all__ = [
     "ModelEngineCodegen",
     "ModelEnginePalm",
@@ -94,6 +96,9 @@ class ModelEnginePalm(ModelEngineBase):
     # TODO: implement another custom prompt template here
     def __init__(self, model: TextGenBaseModel):
         self.model = model
+        # This is an informed guess on what tokenizer PaLM is using. See
+        # https://gitlab.com/gitlab-org/modelops/applied-ml/code-suggestions/ai-assist/-/merge_requests/161#note_1425488548
+        self.tokenizer = T5Tokenizer.from_pretrained("google/mt5-small")
 
     def generate_completion(self, prefix: str, suffix: str, file_name: str, **kwargs: Any):
         # collect metrics
@@ -107,15 +112,19 @@ class ModelEnginePalm(ModelEngineBase):
         return ""
 
     def _build_prompt(self, prefix: str, suffix: str, lang_id: Optional[LanguageId]) -> tuple[str, str]:
-        suffix_len = min(len(suffix), self.model.MAX_MODEL_LEN // 2)
-        prompt_len = self.model.MAX_MODEL_LEN - suffix_len
+        # We don't truncate the prefix with the tokenizer because it keeps the start of the input, we want to keep the end
+        prefix_tokens = self.tokenizer(prefix, return_length=True)
+        suffix_tokens = self.tokenizer(suffix, max_length=self.model.MAX_MODEL_LEN // 2, truncation=True, return_length=True)
+        prompt_len = self.model.MAX_MODEL_LEN - suffix_tokens['length']
 
-        prompt = trim_by_max_len(prefix, prompt_len)
+        # Truncate and remove last token (EOS)
+        prompt = self.tokenizer.decode(prefix_tokens['input_ids'][-prompt_len:-1])
+        suffix = self.tokenizer.decode(suffix_tokens['input_ids'][:-1])
 
         if lang_id:
             prompt = self._add_imports(prefix, prompt, lang_id)
 
-        return prompt, suffix[:suffix_len]
+        return prompt, suffix
 
     def _add_imports(self, content: str, prompt: str, lang_id: Optional[LanguageId]) -> str:
         extractor = ImportExtractor(lang_id)

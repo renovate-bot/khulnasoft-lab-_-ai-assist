@@ -8,6 +8,8 @@ from codesuggestions.suggestions.processing import (
     ModelEnginePalm,
 )
 
+from transformers import T5Tokenizer
+
 
 def _side_effect_few_shot_tpl(content: str, _suffix: str, filename: str, model_output: str):
     lang_id = ops.lang_from_filename(filename)
@@ -42,12 +44,17 @@ def _side_effect_lang_prepended(content: str, _suffix: str, filename: str, model
     return _fn
 
 
+def token_length(s: str):
+    tokens = T5Tokenizer.from_pretrained("google/mt5-small")(s, return_length=True)
+    return tokens['length']
+
+
 def _side_effect_with_suffix(content: str, suffix: str, filename: str, model_output: str):
     original_suffix = suffix
 
     def _fn(prompt: str, suffix: str):
         assert original_suffix.startswith(suffix)
-        assert len(prompt) + len(suffix) < PalmCodeGenBaseModel.MAX_MODEL_LEN
+        assert token_length(prompt) + token_length(suffix) < PalmCodeGenBaseModel.MAX_MODEL_LEN
 
         return TextGenModelOutput(text=model_output)
 
