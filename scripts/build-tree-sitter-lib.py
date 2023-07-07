@@ -1,57 +1,80 @@
 #!/usr/bin/env python3
 
-from tree_sitter import Language
+import contextlib
 import os
+import sys
+from collections.abc import Generator
+from pathlib import Path
 
-BASE_URL = 'https://github.com/tree-sitter'
+from tree_sitter import Language
+
+BASE_URL = "https://github.com/tree-sitter"
 
 LANGS = [
-    'tree-sitter-c',
-    'tree-sitter-c-sharp',
-    'tree-sitter-cpp',
-    'tree-sitter-go',
-    'tree-sitter-java',
-    'tree-sitter-javascript',
-    'tree-sitter-php',
-    'tree-sitter-python',
-    'tree-sitter-rust',
-    'tree-sitter-scala',
-    'tree-sitter-typescript'
+    "tree-sitter-c",
+    "tree-sitter-c-sharp",
+    "tree-sitter-cpp",
+    "tree-sitter-go",
+    "tree-sitter-java",
+    "tree-sitter-javascript",
+    "tree-sitter-php",
+    "tree-sitter-python",
+    "tree-sitter-rust",
+    "tree-sitter-scala",
+    "tree-sitter-typescript",
 ]
 
-scripts_dir = os.path.dirname(__file__)
-vendor_dir = os.path.join(scripts_dir, 'vendor')
-lib_dir = os.path.realpath(os.path.join(scripts_dir, '..', 'lib'))
-print("Checking out grammars in %s" % vendor_dir)
 
-if not os.path.exists(vendor_dir):
-    os.makedirs(vendor_dir)
+@contextlib.contextmanager
+def working_directory(path: Path) -> Generator[None, None, None]:
+    """Changes working directory and returns to previous on exit."""
+    prev_cwd = Path.cwd()
+    os.chdir(path)
+    try:
+        yield
+    finally:
+        os.chdir(prev_cwd)
 
-os.chdir(vendor_dir)
 
-for lang in LANGS:
-    if os.path.exists(lang):
-        print("Updating %s" % lang)
-        os.system("git -C %s pull" % lang)
-    else:
-        url = "%s/%s" % (BASE_URL, lang)
-        print("Cloning %s" % url)
-        os.system("git clone %s" % url)
+def main() -> int:
+    """Clone and build treesitter language libraries."""
+    scripts_dir = Path(__file__).resolve().parent
+    vendor_dir = scripts_dir / "vendor"
+    lib_dir = scripts_dir / "lib"
+    print(f"Checking out grammars in {vendor_dir}")
 
-    if lang == "tree-sitter-typescript":
-        # Recent changes to https://github.com/tree-sitter/tree-sitter-typescript broke its build.
-        # Checkout to a working version:
-        os.system(f"git -C {lang} checkout 3429d8c77d7a83e80032667f0642e6cb19d0c772")
+    if not vendor_dir.exists():
+        vendor_dir.mkdir(parents=True)
 
-os.chdir(os.path.join(vendor_dir, "tree-sitter-typescript"))
-if os.system("npm install && npm run build") != 0:
-    print('error building tree-sitter-typescript')
-    exit(1)
+    with working_directory(vendor_dir):
+        for lang in LANGS:
+            if (vendor_dir / lang).exists():
+                print(f"Updating {lang}")
+                os.system(f"git -C {lang} pull")
+            else:
+                url = f"{BASE_URL}/{lang}"
+                print(f"Cloning {url}")
+                os.system(f"git clone {url}")
 
-language_directories = ["%s" % (os.path.join(vendor_dir, lang)) for lang in LANGS if lang != 'tree-sitter-typescript']
-language_directories += [os.path.join(vendor_dir, 'tree-sitter-typescript/typescript'),
-                         os.path.join(vendor_dir, 'tree-sitter-typescript/tsx')]
+    with working_directory(vendor_dir / "tree-sitter-typescript"):
+        if os.system("npm install && npm run build") != 0:
+            print("error building tree-sitter-typescript")
+            return 1
 
-lib = os.path.join(lib_dir, 'tree-sitter-languages.so')
-print("Building %s" % lib)
-Language.build_library(lib, language_directories)
+    language_directories = [
+        str(vendor_dir / lang) for lang in LANGS if lang != "tree-sitter-typescript"
+    ]
+    language_directories += [
+        str(vendor_dir / "tree-sitter-typescript/typescript"),
+        str(vendor_dir / "tree-sitter-typescript/tsx"),
+    ]
+
+    lib = lib_dir / "tree-sitter-languages.so"
+    print(f"Building {lib}")
+    Language.build_library(lib, language_directories)
+
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())
