@@ -41,13 +41,13 @@ RUN poetry install --no-interaction --no-ansi --no-cache --no-root --only main
 COPY --from=base-image /scripts/build-tree-sitter-lib.py /tmp
 RUN poetry run python /tmp/build-tree-sitter-lib.py
 
-## 
+##
 ## Final image copies dependencies from install-image
-## 
+##
 FROM base-image as final
 
 COPY --from=install-image /opt/venv /opt/venv
-COPY --from=install-image lib/*.so ./lib/
+COPY --from=install-image /app/lib/*.so ./lib/
 
 COPY poetry.lock pyproject.toml ./
 COPY codesuggestions/ codesuggestions/
