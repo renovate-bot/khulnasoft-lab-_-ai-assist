@@ -34,7 +34,6 @@ RUN curl -sL https://deb.nodesource.com/setup_16.x | bash - \
   && apt-get install -y nodejs
 
 COPY poetry.lock pyproject.toml ./
-COPY ./scripts /scripts/
 
 RUN poetry install --no-interaction --no-ansi --no-cache --no-root --only main
 
