@@ -7,8 +7,6 @@ ENV PYTHONUNBUFFERED=1 \
 
 WORKDIR /app
 
-COPY ./scripts/ /scripts/
-
 RUN pip install "poetry==$POETRY_VERSION"
 
 # Install all dependencies into /opt/venv
@@ -38,7 +36,7 @@ COPY poetry.lock pyproject.toml ./
 RUN poetry install --no-interaction --no-ansi --no-cache --no-root --only main
 
 # Build tree-sitter library for the grammars supported
-COPY --from=base-image /scripts/build-tree-sitter-lib.py /tmp
+COPY ./scripts/ /tmp/
 RUN poetry run python /tmp/build-tree-sitter-lib.py
 
 ##
@@ -47,7 +45,7 @@ RUN poetry run python /tmp/build-tree-sitter-lib.py
 FROM base-image as final
 
 COPY --from=install-image /opt/venv /opt/venv
-COPY --from=install-image /app/lib/*.so ./lib/
+COPY --from=install-image /lib/*.so ./lib/
 
 COPY poetry.lock pyproject.toml ./
 COPY codesuggestions/ codesuggestions/
