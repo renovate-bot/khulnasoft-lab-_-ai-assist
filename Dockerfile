@@ -24,11 +24,14 @@ FROM base-image AS install-image
 
 ENV DEBIAN_FRONTEND=noninteractive
 
-RUN apt-get update
-RUN apt-get install -y build-essential git curl
-RUN curl -sL https://deb.nodesource.com/setup_16.x | bash -
-RUN apt-get update
-RUN apt-get install -y nodejs
+RUN apt-get update \
+  && apt-get install -y \
+    build-essential \
+    git \
+    curl
+
+RUN curl -sL https://deb.nodesource.com/setup_16.x | bash - \
+  && apt-get install -y nodejs
 
 COPY poetry.lock pyproject.toml ./
 COPY ./scripts /scripts/
