@@ -7,6 +7,7 @@ ENV PYTHONUNBUFFERED=1 \
 
 WORKDIR /app
 
+COPY poetry.lock pyproject.toml ./
 RUN pip install "poetry==$POETRY_VERSION"
 
 # Install all dependencies into /opt/venv
@@ -31,8 +32,6 @@ RUN apt-get update \
 RUN curl -sL https://deb.nodesource.com/setup_16.x | bash - \
   && apt-get install -y nodejs
 
-COPY poetry.lock pyproject.toml ./
-
 RUN poetry install --no-interaction --no-ansi --no-cache --no-root --only main
 
 # Build tree-sitter library for the grammars supported
@@ -47,7 +46,6 @@ FROM base-image as final
 COPY --from=install-image /opt/venv /opt/venv
 COPY --from=install-image /lib/*.so ./lib/
 
-COPY poetry.lock pyproject.toml ./
 COPY codesuggestions/ codesuggestions/
 
 CMD ["poetry", "run", "codesuggestions"]
