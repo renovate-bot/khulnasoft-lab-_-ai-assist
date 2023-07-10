@@ -11,14 +11,14 @@ COPY poetry.lock pyproject.toml ./
 RUN pip install "poetry==$POETRY_VERSION"
 
 # Install all dependencies into /opt/venv
-# so that we can copy these resources between 
+# so that we can copy these resources between
 # build stages
 RUN poetry config virtualenvs.path /opt/venv
 
-## 
-## Intermediate image contains build-essential for installing 
+##
+## Intermediate image contains build-essential for installing
 ## google-cloud-profiler's dependencies
-## 
+##
 FROM base-image AS install-image
 
 ENV DEBIAN_FRONTEND=noninteractive
