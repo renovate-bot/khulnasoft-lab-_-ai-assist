@@ -7,47 +7,45 @@ ENV PYTHONUNBUFFERED=1 \
 
 WORKDIR /app
 
-COPY ./scripts/ /scripts/
-
+COPY poetry.lock pyproject.toml ./
 RUN pip install "poetry==$POETRY_VERSION"
 
 # Install all dependencies into /opt/venv
-# so that we can copy these resources between 
+# so that we can copy these resources between
 # build stages
 RUN poetry config virtualenvs.path /opt/venv
 
-## 
-## Intermediate image contains build-essential for installing 
+##
+## Intermediate image contains build-essential for installing
 ## google-cloud-profiler's dependencies
-## 
+##
 FROM base-image AS install-image
 
 ENV DEBIAN_FRONTEND=noninteractive
 
-RUN apt-get update
-RUN apt-get install -y build-essential git curl
-RUN curl -sL https://deb.nodesource.com/setup_16.x | bash -
-RUN apt-get update
-RUN apt-get install -y nodejs
+RUN apt-get update \
+  && apt-get install -y \
+    build-essential \
+    git \
+    curl
 
-COPY poetry.lock pyproject.toml ./
-COPY ./scripts /scripts/
+RUN curl -sL https://deb.nodesource.com/setup_16.x | bash - \
+  && apt-get install -y nodejs
 
 RUN poetry install --no-interaction --no-ansi --no-cache --no-root --only main
 
 # Build tree-sitter library for the grammars supported
-COPY --from=base-image /scripts/build-tree-sitter-lib.py /tmp
+COPY ./scripts/ /tmp/
 RUN poetry run python /tmp/build-tree-sitter-lib.py
 
-## 
+##
 ## Final image copies dependencies from install-image
-## 
+##
 FROM base-image as final
 
 COPY --from=install-image /opt/venv /opt/venv
-COPY --from=install-image lib/*.so ./lib/
+COPY --from=install-image /lib/*.so ./lib/
 
-COPY poetry.lock pyproject.toml ./
 COPY codesuggestions/ codesuggestions/
 
 CMD ["poetry", "run", "codesuggestions"]
