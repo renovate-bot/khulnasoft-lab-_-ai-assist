@@ -9,12 +9,14 @@ from codesuggestions.models.palm import (
     PalmCodeGeckoModel,
     PalmTextBisonModel,
     TextBisonModelInput,
-    TextGenModelOutput
+    TextGenModelOutput,
+    VertexModelInternalError,
+    VertexModelInvalidArgument,
 )
 from typing import Any
 
 from google.cloud.aiplatform.gapic import PredictionServiceClient
-from google.api_core.exceptions import InvalidArgument
+from google.api_core.exceptions import InvalidArgument, InternalServerError
 
 
 class MockInstrumentor:
@@ -107,18 +109,26 @@ def test_palm_model_inputs(model_input, is_valid, output_dict):
 
 
 @pytest.mark.parametrize(
-    "model,exception", [
+    "model,vertex_exception,exception", [
         (
             PalmCodeGeckoModel(Mock(spec=PredictionServiceClient), "random_project", "random_location"),
             InvalidArgument("Bad argument."),
+            VertexModelInvalidArgument,
+        ),
+        (
+            PalmCodeGeckoModel(Mock(spec=PredictionServiceClient), "random_project", "random_location"),
+            InternalServerError("Internal server error."),
+            VertexModelInternalError,
         ),
     ]
 )
-def test_palm_model_api_error(model, exception):
+def test_palm_model_api_error(model, vertex_exception, exception):
     def _client_predict(*args, **kwargs):
-        raise exception
+        raise vertex_exception
 
     model.client.predict = Mock(side_effect=_client_predict)
     model.instrumentator = MockInstrumentor()
 
-    assert model.generate("random_prefix", "random_suffix") == TextGenModelOutput(text="")
+    with pytest.raises(exception) as ex:
+        model.generate("random_prefix", "random_suffix")
+        assert ex.value.code == exception.code

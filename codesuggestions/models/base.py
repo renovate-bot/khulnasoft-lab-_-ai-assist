@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import NamedTuple
+from typing import NamedTuple, Any, Optional
 
 import grpc
 import numpy as np
@@ -10,6 +10,8 @@ from google.cloud.aiplatform.gapic import PredictionServiceClient
 from py_grpc_prometheus.prometheus_client_interceptor import PromClientInterceptor
 
 __all__ = [
+    "ModelAPICallError",
+
     "TextGenModelOutput",
     "TextGenBaseModel",
     "grpc_input_from_np",
@@ -17,6 +19,29 @@ __all__ = [
     "grpc_connect_triton",
     "grpc_connect_vertex",
 ]
+
+
+class ModelAPICallError(Exception):
+    code: Optional[int] = None
+
+    def __init__(self, message: str, errors: tuple = (), details: tuple = ()):
+        self.message = message
+        self._errors = errors
+        self._details = details
+
+    def __str__(self):
+        if self.details:
+            return "{} {} {}".format(self.code, self.message, self.details)
+        else:
+            return "{} {}".format(self.code, self.message)
+
+    @property
+    def errors(self) -> list[Any]:
+        return list(self._errors)
+
+    @property
+    def details(self) -> list[Any]:
+        return list(self._details)
 
 
 class ModelInput(ABC):
