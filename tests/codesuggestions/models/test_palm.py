@@ -22,7 +22,7 @@ from google.api_core.exceptions import InvalidArgument, InternalServerError
 class MockInstrumentor:
     @contextmanager
     def watch(self, prompt: str, **kwargs: Any):
-        yield
+        yield Mock()
 
 
 TEST_PREFIX = "random propmt"
@@ -129,6 +129,5 @@ def test_palm_model_api_error(model, vertex_exception, exception):
     model.client.predict = Mock(side_effect=_client_predict)
     model.instrumentator = MockInstrumentor()
 
-    with pytest.raises(exception) as ex:
-        model.generate("random_prefix", "random_suffix")
-        assert ex.value.code == exception.code
+    actual = model.generate("random_prefix", "random_suffix")
+    assert actual == TextGenModelOutput(text="")
