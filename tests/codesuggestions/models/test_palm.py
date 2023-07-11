@@ -13,6 +13,9 @@ from codesuggestions.models.palm import (
 )
 from typing import Any
 
+from google.cloud.aiplatform.gapic import PredictionServiceClient
+from google.api_core.exceptions import InvalidArgument
+
 
 class MockInstrumentor:
     @contextmanager
@@ -101,3 +104,21 @@ def test_palm_code_gecko_prompt(model, prefix, suffix, expected_output, expected
 def test_palm_model_inputs(model_input, is_valid, output_dict):
     assert model_input.is_valid() is is_valid
     assert output_dict is None or model_input.dict() == output_dict
+
+
+@pytest.mark.parametrize(
+    "model,exception", [
+        (
+            PalmCodeGeckoModel(Mock(spec=PredictionServiceClient), "random_project", "random_location"),
+            InvalidArgument("Bad argument."),
+        ),
+    ]
+)
+def test_palm_model_api_error(model, exception):
+    def _client_predict(*args, **kwargs):
+        raise exception
+
+    model.client.predict = Mock(side_effect=_client_predict)
+    model.instrumentator = MockInstrumentor()
+
+    assert model.generate("random_prefix", "random_suffix") == TextGenModelOutput(text="")
