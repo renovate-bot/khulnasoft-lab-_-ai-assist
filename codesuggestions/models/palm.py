@@ -273,8 +273,12 @@ class PalmCodeGeckoModel(PalmCodeGenBaseModel):
     ) -> Optional[TextGenModelOutput]:
         input = CodeGeckoModelInput(prompt, suffix)
 
-        with self.instrumentator.watch(prompt, suffix_length=len(suffix)):
-            res = self._generate(input, temperature, max_output_tokens, top_p, top_k)
+        with self.instrumentator.watch(prompt, suffix_length=len(suffix)) as watch_container:
+            try:
+                res = self._generate(input, temperature, max_output_tokens, top_p, top_k)
+            except (VertexModelInvalidArgument, VertexModelInternalError) as ex:
+                res = TextGenModelOutput(text="")
+                watch_container.register_model_exception(str(ex), ex.code)
 
         return res
 
