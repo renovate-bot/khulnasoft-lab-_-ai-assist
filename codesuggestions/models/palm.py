@@ -1,3 +1,4 @@
+import structlog
 from abc import ABC, abstractmethod
 from enum import Enum
 from typing import (
@@ -14,6 +15,7 @@ from codesuggestions.instrumentators.base import TextGenModelInstrumentator
 
 from google.protobuf import json_format, struct_pb2
 from google.api_core import gapic_v1, retry as retries
+from google.api_core.exceptions import InvalidArgument
 
 __all__ = [
     "PalmModel",
@@ -22,6 +24,8 @@ __all__ = [
     "PalmCodeGeckoModel",
     "PalmCodeGenModel"
 ]
+
+log = structlog.stdlib.get_logger("codesuggestions")
 
 
 class CodeBisonModelInput(ModelInput):
@@ -128,11 +132,16 @@ class PalmCodeGenBaseModel(TextGenBaseModel):
         parameters_dict = {"temperature": temperature, "maxOutputTokens": max_output_tokens, "topP": top_p, "topK": top_k}
         parameters = json_format.ParseDict(parameters_dict, struct_pb2.Value())
 
-        response = self.client.predict(
-            endpoint=self.endpoint, instances=instances, parameters=parameters, timeout=self.timeout
-        )
+        try:
+            response = self.client.predict(
+                endpoint=self.endpoint, instances=instances, parameters=parameters, timeout=self.timeout
+            )
+            predictions = response.predictions
+        except InvalidArgument as ex:
+            message = ex.message.lower().rstrip('.')  # format message
+            log.warning(f"Vertex model API error: {message}", model_status_code=ex.code)
+            predictions = [dict(content="")]
 
-        predictions = response.predictions
         for prediction in predictions:
             return TextGenModelOutput(text=prediction.get('content'))
 
