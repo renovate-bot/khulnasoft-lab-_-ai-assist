@@ -86,8 +86,12 @@ metadata:
     app: model-gateway
     {{- include "ai-assist.labels" . | nindent 4 }}
     {{ include "common.tplvalues.render" (dict "value" .Values.modelK8SGateway.labels "context" $) }}
+{{- if ne (include "common.tplvalues.render" (dict "value" .Values.modelK8SGateway.service.annotations "context" $)) "null" }}
+  annotations:
+    {{- include "common.tplvalues.render" (dict "value" .Values.modelK8SGateway.service.annotations "context" $) | nindent 4 }}
+{{- end }}
 spec:
-  type: ClusterIP
+  type: {{ .Values.modelK8SGateway.service.type }}
   ports:
     - name: api
       port: 8080

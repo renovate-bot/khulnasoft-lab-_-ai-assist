@@ -33,6 +33,8 @@ modelGateway:
 modelK8SGateway:
   labels:
     type: "code_suggestions"
+  service:
+    type: ClusterIP
 
 modelK8STriton:
   labels:

@@ -18,3 +18,9 @@ aiassist:
         networking.gke.io/internal-load-balancer-allow-global-access: "true"
         networking.gke.io/load-balancer-type: Internal
       type: LoadBalancer
+
+  modelK8SGateway:
+    service:
+      annotations:
+        networking.gke.io/load-balancer-type: Internal
+      type: LoadBalancer
