@@ -35,8 +35,8 @@ RUN curl -sL https://deb.nodesource.com/setup_16.x | bash - \
 RUN poetry install --no-interaction --no-ansi --no-cache --no-root --only main
 
 # Build tree-sitter library for the grammars supported
-COPY ./scripts/ /tmp/
-RUN poetry run python /tmp/build-tree-sitter-lib.py
+COPY scripts /app/scripts
+RUN poetry run python /app/scripts/build-tree-sitter-lib.py
 
 ##
 ## Final image copies dependencies from install-image
@@ -44,7 +44,7 @@ RUN poetry run python /tmp/build-tree-sitter-lib.py
 FROM base-image as final
 
 COPY --from=install-image /opt/venv /opt/venv
-COPY --from=install-image /lib/*.so ./lib/
+COPY --from=install-image /app/scripts/lib/*.so ./lib/
 
 COPY codesuggestions/ codesuggestions/
 
