@@ -3,7 +3,7 @@
 from tree_sitter import Language
 import os
 
-BASE_URL = 'https://github.com/tree-sitter/'
+BASE_URL = 'https://github.com/tree-sitter'
 
 LANGS = [
     'tree-sitter-c',
@@ -37,6 +37,11 @@ for lang in LANGS:
         url = "%s/%s" % (BASE_URL, lang)
         print("Cloning %s" % url)
         os.system("git clone %s" % url)
+
+    if lang == "tree-sitter-typescript":
+        # Recent changes to https://github.com/tree-sitter/tree-sitter-typescript broke its build.
+        # Checkout to a working version:
+        os.system(f"git -C {lang} checkout 3429d8c77d7a83e80032667f0642e6cb19d0c772")
 
 os.chdir(os.path.join(vendor_dir, "tree-sitter-typescript"))
 if os.system("npm install && npm run build") != 0:
