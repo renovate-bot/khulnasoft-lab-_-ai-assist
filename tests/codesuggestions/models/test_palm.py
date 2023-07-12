@@ -9,18 +9,18 @@ from codesuggestions.models.palm import (
     PalmCodeGeckoModel,
     PalmTextBisonModel,
     TextBisonModelInput,
-    TextGenModelOutput
+    TextGenModelOutput,
 )
 from typing import Any
 
 from google.cloud.aiplatform.gapic import PredictionServiceClient
-from google.api_core.exceptions import InvalidArgument
+from google.api_core.exceptions import InvalidArgument, InternalServerError
 
 
 class MockInstrumentor:
     @contextmanager
     def watch(self, prompt: str, **kwargs: Any):
-        yield
+        yield Mock()
 
 
 TEST_PREFIX = "random propmt"
@@ -107,18 +107,23 @@ def test_palm_model_inputs(model_input, is_valid, output_dict):
 
 
 @pytest.mark.parametrize(
-    "model,exception", [
+    "model,vertex_exception", [
         (
             PalmCodeGeckoModel(Mock(spec=PredictionServiceClient), "random_project", "random_location"),
             InvalidArgument("Bad argument."),
         ),
+        (
+            PalmCodeGeckoModel(Mock(spec=PredictionServiceClient), "random_project", "random_location"),
+            InternalServerError("Internal server error."),
+        ),
     ]
 )
-def test_palm_model_api_error(model, exception):
+def test_palm_model_api_error(model, vertex_exception):
     def _client_predict(*args, **kwargs):
-        raise exception
+        raise vertex_exception
 
     model.client.predict = Mock(side_effect=_client_predict)
     model.instrumentator = MockInstrumentor()
 
-    assert model.generate("random_prefix", "random_suffix") == TextGenModelOutput(text="")
+    actual = model.generate("random_prefix", "random_suffix")
+    assert actual == TextGenModelOutput(text="")

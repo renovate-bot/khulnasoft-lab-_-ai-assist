@@ -27,6 +27,19 @@ telemetry_logger = structlog.stdlib.get_logger("telemetry")
 
 
 class TextGenModelInstrumentator:
+    class WatchContainer:
+        def __init__(self, **kwargs: Any):
+            self.__dict__.update(**kwargs)
+
+        def register_model_exception(self, message: str, status_code: int):
+            self.__dict__.update({
+                "model_exception_message": message,
+                "model_exception_status_code": status_code,
+            })
+
+        def dict(self) -> dict:
+            return self.__dict__
+
     def __init__(self, model_engine: str, model_name: str):
         self.labels = {"model_engine": model_engine, "model_name": model_name}
 
@@ -37,20 +50,21 @@ class TextGenModelInstrumentator:
         context["model_engine"] = self.labels["model_engine"]
         context["model_name"] = self.labels["model_name"]
         context["prompt_length"] = prompt_length
-        context.update(**kwargs)
 
         INFERENCE_PROMPT_HISTOGRAM.labels(**self.labels).observe(prompt_length)
         INFERENCE_COUNTER.labels(**self.labels).inc()
 
+        watch_container = TextGenModelInstrumentator.WatchContainer(**kwargs)
         start_time = time.perf_counter()
 
         try:
-            yield
+            yield watch_container
         finally:
             duration = time.perf_counter() - start_time
             INFERENCE_HISTOGRAM.labels(**self.labels).observe(duration)
 
             context["inference_duration_s"] = duration
+            context.update(watch_container.dict())
 
 
 class Telemetry(BaseModel):

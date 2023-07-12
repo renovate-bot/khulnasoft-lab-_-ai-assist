@@ -8,16 +8,24 @@ from typing import (
     Tuple,
     Union,
 )
+from http.client import (
+    BAD_REQUEST,
+    INTERNAL_SERVER_ERROR,
+)
 
-from codesuggestions.models.base import ModelInput
+from codesuggestions.models.base import ModelInput, ModelAPICallError
 from codesuggestions.models import TextGenBaseModel, TextGenModelOutput
 from codesuggestions.instrumentators.base import TextGenModelInstrumentator
 
 from google.protobuf import json_format, struct_pb2
 from google.api_core import gapic_v1, retry as retries
-from google.api_core.exceptions import InvalidArgument
+from google.api_core.exceptions import InvalidArgument, InternalServerError
 
 __all__ = [
+    "VertexModelAPICallError",
+    "VertexModelInvalidArgument",
+    "VertexModelInternalError",
+
     "PalmModel",
     "PalmCodeGenBaseModel",
     "PalmCodeBisonModel",
@@ -26,6 +34,20 @@ __all__ = [
 ]
 
 log = structlog.stdlib.get_logger("codesuggestions")
+
+
+class VertexModelAPICallError(ModelAPICallError, ):
+    def __init__(self, message: str, errors: tuple = (), details: tuple = ()):
+        message = f"Vertex model API error: {message.lower().strip('.')}"
+        super().__init__(message, errors, details)
+
+
+class VertexModelInvalidArgument(VertexModelAPICallError):
+    code = BAD_REQUEST
+
+
+class VertexModelInternalError(VertexModelAPICallError):
+    code = INTERNAL_SERVER_ERROR
 
 
 class CodeBisonModelInput(ModelInput):
@@ -138,9 +160,9 @@ class PalmCodeGenBaseModel(TextGenBaseModel):
             )
             predictions = response.predictions
         except InvalidArgument as ex:
-            message = ex.message.lower().rstrip('.')  # format message
-            log.warning(f"Vertex model API error: {message}", model_status_code=ex.code)
-            predictions = [dict(content="")]
+            raise VertexModelInvalidArgument(ex.message, errors=(ex,))
+        except InternalServerError as ex:
+            raise VertexModelInternalError(ex.message, errors=(ex,))
 
         for prediction in predictions:
             return TextGenModelOutput(text=prediction.get('content'))
@@ -251,8 +273,12 @@ class PalmCodeGeckoModel(PalmCodeGenBaseModel):
     ) -> Optional[TextGenModelOutput]:
         input = CodeGeckoModelInput(prompt, suffix)
 
-        with self.instrumentator.watch(prompt, suffix_length=len(suffix)):
-            res = self._generate(input, temperature, max_output_tokens, top_p, top_k)
+        with self.instrumentator.watch(prompt, suffix_length=len(suffix)) as watch_container:
+            try:
+                res = self._generate(input, temperature, max_output_tokens, top_p, top_k)
+            except (VertexModelInvalidArgument, VertexModelInternalError) as ex:
+                res = TextGenModelOutput(text="")
+                watch_container.register_model_exception(str(ex), ex.code)
 
         return res
 
