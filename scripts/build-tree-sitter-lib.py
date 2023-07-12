@@ -69,7 +69,7 @@ def main() -> int:
         str(vendor_dir / "tree-sitter-typescript/tsx"),
     ]
 
-    lib = lib_dir / "tree-sitter-languages.so"
+    lib = str(lib_dir / "tree-sitter-languages.so")
     print(f"Building {lib}")
     Language.build_library(lib, language_directories)
 
