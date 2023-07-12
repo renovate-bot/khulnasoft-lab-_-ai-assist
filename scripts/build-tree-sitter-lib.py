@@ -57,6 +57,10 @@ def main() -> int:
                 os.system(f"git clone {url}")
 
     with working_directory(vendor_dir / "tree-sitter-typescript"):
+        # Recent changes to https://github.com/tree-sitter/tree-sitter-typescript broke its build.
+        # Checkout to a working version:
+        os.system(f"git checkout -f 3429d8c77d7a83e80032667f0642e6cb19d0c772")
+
         if os.system("npm install && npm run build") != 0:
             print("error building tree-sitter-typescript")
             return 1
