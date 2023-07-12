@@ -30,10 +30,11 @@ class ModelAPICallError(Exception):
         self._details = details
 
     def __str__(self):
+        message = f"{self.code} {self.message}"
         if self.details:
-            return "{} {} {}".format(self.code, self.message, self.details)
-        else:
-            return "{} {}".format(self.code, self.message)
+            message = f"{message} {', '.join(self.details)}"
+
+        return message
 
     @property
     def errors(self) -> list[Any]:
