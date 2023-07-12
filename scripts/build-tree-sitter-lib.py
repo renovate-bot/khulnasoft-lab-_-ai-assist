@@ -3,7 +3,7 @@
 from tree_sitter import Language
 import os
 
-BASE_URL = 'https://github.com/tree-sitter/'
+BASE_URL = 'https://github.com/tree-sitter'
 
 LANGS = [
     'tree-sitter-c',
