@@ -10,8 +10,6 @@ from codesuggestions.models.palm import (
     PalmTextBisonModel,
     TextBisonModelInput,
     TextGenModelOutput,
-    VertexModelInternalError,
-    VertexModelInvalidArgument,
 )
 from typing import Any
 
@@ -109,20 +107,18 @@ def test_palm_model_inputs(model_input, is_valid, output_dict):
 
 
 @pytest.mark.parametrize(
-    "model,vertex_exception,exception", [
+    "model,vertex_exception", [
         (
             PalmCodeGeckoModel(Mock(spec=PredictionServiceClient), "random_project", "random_location"),
             InvalidArgument("Bad argument."),
-            VertexModelInvalidArgument,
         ),
         (
             PalmCodeGeckoModel(Mock(spec=PredictionServiceClient), "random_project", "random_location"),
             InternalServerError("Internal server error."),
-            VertexModelInternalError,
         ),
     ]
 )
-def test_palm_model_api_error(model, vertex_exception, exception):
+def test_palm_model_api_error(model, vertex_exception):
     def _client_predict(*args, **kwargs):
         raise vertex_exception
 
