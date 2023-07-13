@@ -2,6 +2,7 @@ from pathlib import Path
 
 from dependency_injector import containers, providers
 from py_grpc_prometheus.prometheus_client_interceptor import PromClientInterceptor
+from transformers import T5Tokenizer
 
 from codesuggestions.auth import GitLabAuthProvider, GitLabOidcProvider
 from codesuggestions.api import middleware
@@ -54,6 +55,13 @@ def _init_vertex_grpc_client(api_endpoint: str, real_or_fake):
     client.transport.close()
 
 
+def _init_t5_tokenizer():
+    # This is an informed guess on what tokenizer PaLM is using. See
+    # https://gitlab.com/gitlab-org/modelops/applied-ml/code-suggestions/ai-assist/-/merge_requests/161#note_1425488548
+    tokenizer = T5Tokenizer.from_pretrained("google/mt5-small")
+    yield tokenizer
+
+
 def _create_gitlab_codegen_model_provider(grpc_client_triton, real_or_fake):
     return (
         providers.Selector(
@@ -67,14 +75,14 @@ def _create_gitlab_codegen_model_provider(grpc_client_triton, real_or_fake):
     )
 
 
-def _create_palm_codegen_model_providers(grpc_client_vertex, project, location, real_or_fake):
+def _create_palm_engine_providers(grpc_client_vertex, tokenizer, project, location, real_or_fake):
     model_names = [
         ModelRollout.GOOGLE_TEXT_BISON,
         ModelRollout.GOOGLE_CODE_BISON,
         ModelRollout.GOOGLE_CODE_GECKO
     ]
 
-    return {
+    models = {
         name: providers.Selector(
             real_or_fake,
             real=providers.Singleton(
@@ -87,6 +95,15 @@ def _create_palm_codegen_model_providers(grpc_client_vertex, project, location, 
             fake=providers.Singleton(FakePalmTextGenModel),
         )
         for name in model_names
+    }
+
+    return {
+        name: providers.Singleton(
+            ModelEnginePalm,
+            model=model,
+            tokenizer=tokenizer,
+        )
+        for name, model in models.items()
     }
 
 
@@ -156,6 +173,8 @@ class CodeSuggestionsContainer(containers.DeclarativeContainer):
         real_or_fake=config.palm_text_model.real_or_fake,
     )
 
+    t5_tokenizer = providers.Resource(_init_t5_tokenizer)
+
     palm_model_rollout = providers.Callable(
         # take the first model only as the primary one if several passed
         lambda model_names: ModelRollout(model_names[0]),
@@ -174,8 +193,9 @@ class CodeSuggestionsContainer(containers.DeclarativeContainer):
         config.gitlab_codegen_model.real_or_fake,
     )
 
-    models_palm_codegen = _create_palm_codegen_model_providers(
+    engines_palm_codegen = _create_palm_engine_providers(
         grpc_client_vertex,
+        t5_tokenizer,
         config.palm_text_model.project,
         config.palm_text_model.location,
         config.palm_text_model.real_or_fake
@@ -192,11 +212,8 @@ class CodeSuggestionsContainer(containers.DeclarativeContainer):
             model=model_gitlab_codegen,
         ),
         **{
-            ModelRollout(name): providers.Singleton(
-                ModelEnginePalm,
-                model=model,
-            )
-            for name, model in models_palm_codegen.items()
+            ModelRollout(name): engine
+            for name, engine in engines_palm_codegen.items()
         },
     })
 

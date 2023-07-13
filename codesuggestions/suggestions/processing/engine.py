@@ -1,6 +1,8 @@
 from pathlib import Path
 from typing import Optional, Any
 
+from transformers import PreTrainedTokenizer
+
 from codesuggestions.models import TextGenBaseModel
 from codesuggestions.prompts import PromptTemplateBase, PromptTemplate, PromptTemplateFewShot
 from codesuggestions.prompts.import_extractor import ImportExtractor
@@ -12,8 +14,6 @@ from codesuggestions.suggestions.processing.ops import (
     prepend_lang_id,
     remove_incomplete_lines,
 )
-
-from transformers import T5Tokenizer
 
 __all__ = [
     "ModelEngineCodegen",
@@ -94,11 +94,9 @@ class ModelEngineCodegen(ModelEngineBase):
 
 class ModelEnginePalm(ModelEngineBase):
     # TODO: implement another custom prompt template here
-    def __init__(self, model: TextGenBaseModel):
+    def __init__(self, model: TextGenBaseModel, tokenizer: PreTrainedTokenizer):
         self.model = model
-        # This is an informed guess on what tokenizer PaLM is using. See
-        # https://gitlab.com/gitlab-org/modelops/applied-ml/code-suggestions/ai-assist/-/merge_requests/161#note_1425488548
-        self.tokenizer = T5Tokenizer.from_pretrained("google/mt5-small")
+        self.tokenizer = tokenizer
 
     def generate_completion(self, prefix: str, suffix: str, file_name: str, **kwargs: Any):
         # collect metrics

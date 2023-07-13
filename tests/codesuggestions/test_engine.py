@@ -10,6 +10,8 @@ from codesuggestions.suggestions.processing import (
 
 from transformers import T5Tokenizer
 
+tokenizer = T5Tokenizer.from_pretrained("google/mt5-small")
+
 
 def _side_effect_few_shot_tpl(content: str, _suffix: str, filename: str, model_output: str):
     lang_id = ops.lang_from_filename(filename)
@@ -45,7 +47,7 @@ def _side_effect_lang_prepended(content: str, _suffix: str, filename: str, model
 
 
 def token_length(s: str):
-    tokens = T5Tokenizer.from_pretrained("google/mt5-small")(s, return_length=True)
+    tokens = tokenizer(s, return_length=True)
     return tokens['length']
 
 
@@ -196,6 +198,6 @@ def test_model_engine_palm(
     _side_effect = model_gen_func(content, suffix, file_name, model_output)
     text_gen_base_model.generate = Mock(side_effect=_side_effect)
 
-    engine = ModelEnginePalm(text_gen_base_model)
+    engine = ModelEnginePalm(text_gen_base_model, tokenizer)
 
     assert engine.generate_completion(content, suffix, file_name) == expected_completion
