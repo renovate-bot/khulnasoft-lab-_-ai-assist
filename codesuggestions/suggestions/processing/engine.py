@@ -109,15 +109,16 @@ class ModelEnginePalm(ModelEngineBase):
 
         return ""
 
-    def _build_prompt(self, prefix: str, suffix: str, lang_id: Optional[LanguageId]) -> tuple[str, str]:
-        # We don't truncate the prefix with the tokenizer because it keeps the start of the input, we want to keep the end
-        prefix_tokens = self.tokenizer(prefix, return_length=True)
-        suffix_tokens = self.tokenizer(suffix, max_length=self.model.MAX_MODEL_LEN // 2, truncation=True, return_length=True)
-        prompt_len = self.model.MAX_MODEL_LEN - suffix_tokens['length']
+    def _truncate(self, str: str, max_length: int, truncation_side: str = 'left') -> tuple[str, int]:
+        self.tokenizer.truncation_side = truncation_side
+        tokens = self.tokenizer(str, max_length=max_length, truncation=True, return_length=True)
 
-        # Truncate and remove last token (EOS)
-        prompt = self.tokenizer.decode(prefix_tokens['input_ids'][-prompt_len:-1])
-        suffix = self.tokenizer.decode(suffix_tokens['input_ids'][:-1])
+        # Remove last token added by the tokenizer (EOS)
+        return self.tokenizer.decode(tokens['input_ids'][:-1]), tokens['length']
+
+    def _build_prompt(self, prefix: str, suffix: str, lang_id: Optional[LanguageId]) -> tuple[str, str]:
+        suffix, suffix_len = self._truncate(suffix, max_length=self.model.MAX_MODEL_LEN // 2)
+        prompt, _ = self._truncate(prefix, max_length=self.model.MAX_MODEL_LEN - suffix_len)
 
         if lang_id:
             prompt = self._add_imports(prefix, prompt, lang_id)
