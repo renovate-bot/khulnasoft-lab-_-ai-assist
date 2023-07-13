@@ -50,7 +50,7 @@ forbidden_error = {'error': 'Forbidden by auth provider'}
     ({'Authorization': 'Bearer 12345', 'X-Gitlab-Authentication-Type': '1', 'Content-Type': 'application/json'},
      json.dumps({'project_id': 12345, 'project_path': 'a/b/c'}),
      forbidden_error,
-     ['auth_duration_s', 'gitlab_realm', 'meta.project_id', 'meta.project_path']),
+     ['auth_duration_s', 'gitlab_realm']),
     # Invalid JSON payload
     ({'Authorization': 'Bearer 12345', 'X-Gitlab-Authentication-Type': '1', 'Content-Type': 'application/json'},
      "this is not JSON{",
@@ -68,7 +68,3 @@ def test_failed_authorization_logging(headers, data, expected_response, log_keys
         assert cap_logs[0]['status_code'] == 401
         assert cap_logs[0]['method'] == 'POST'
         assert set(cap_logs[0].keys()) == set(expected_log_keys + log_keys)
-
-        if 'project_id' in log_keys:
-            assert cap_logs[0]['meta.project_id'] == data['project_id']
-            assert cap_logs[0]['meta.project_path'] == data['project_path']
