@@ -56,7 +56,7 @@ def _side_effect_with_suffix(content: str, suffix: str, filename: str, model_out
 
     def _fn(prompt: str, suffix: str):
         assert original_suffix.startswith(suffix)
-        assert token_length(prompt) + token_length(suffix) < PalmCodeGenBaseModel.MAX_MODEL_LEN
+        assert token_length(prompt) + token_length(suffix) <= PalmCodeGenBaseModel.MAX_MODEL_LEN
 
         return TextGenModelOutput(text=model_output)
 
