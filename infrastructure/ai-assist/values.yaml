@@ -10,6 +10,11 @@ fauxPilot:
 modelGateway:
   labels:
     type: "code_suggestions"
+  hpa:
+    minReplicas: 3
+    maxReplicas: 12
+    cpu:
+      targetAverageUtilization: 60
   modelGateway:
     env:
       fastapiApiPort: "5052"
@@ -28,7 +33,14 @@ modelGateway:
     image:
       repository: registry.gitlab.com/gitlab-org/modelops/applied-ml/code-suggestions/ai-assist/model-gateway
       tag: "" # this is set via helm command line arguments
-  replicas: 12
+
+    resources:
+      requests:
+        cpu: 300m
+        memory: 300Mi
+      limits:
+        cpu: 500m
+        memory: 600Mi
 
 modelK8SGateway:
   labels:
