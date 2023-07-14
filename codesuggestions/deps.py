@@ -2,7 +2,7 @@ from pathlib import Path
 
 from dependency_injector import containers, providers
 from py_grpc_prometheus.prometheus_client_interceptor import PromClientInterceptor
-from transformers import T5Tokenizer
+from transformers import AutoTokenizer
 
 from codesuggestions.auth import GitLabAuthProvider, GitLabOidcProvider
 from codesuggestions.api import middleware
@@ -56,9 +56,10 @@ def _init_vertex_grpc_client(api_endpoint: str, real_or_fake):
 
 
 def _init_t5_tokenizer():
-    # This is an informed guess on what tokenizer PaLM is using. See
-    # https://gitlab.com/gitlab-org/modelops/applied-ml/code-suggestions/ai-assist/-/merge_requests/161#note_1425488548
-    tokenizer = T5Tokenizer.from_pretrained("google/mt5-small")
+    # T5Tokenizer ignores new lines, tabs and multiple spaces used a lot in coding.
+    # When the T5Tokenizer is applied, the output differs from input.
+    # We're switching to the Salesforce Codegen tokenizer temporarily.
+    tokenizer = AutoTokenizer.from_pretrained("Salesforce/codegen2-16B", use_fast=True)
     yield tokenizer
 
 
