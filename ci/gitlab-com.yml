@@ -43,7 +43,7 @@ include:
     file: "kaniko.yml"
 
   - project: 'gitlab-com/gl-infra/platform/runway/ci-tasks'
-    ref: main
+    ref: v1.0.0 # renovate:managed
     file: 'service-project/runway.yml'
 
 cache:
