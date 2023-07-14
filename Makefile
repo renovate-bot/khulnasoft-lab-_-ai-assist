@@ -66,6 +66,8 @@ install-test-deps:
 	@poetry install --with test
 	@echo 'Building tree-sitter library...'
 	@poetry run python scripts/build-tree-sitter-lib.py
+	@mkdir -p lib
+	@mv scripts/lib/*.so lib
 
 .PHONY: test
 test: install-test-deps
