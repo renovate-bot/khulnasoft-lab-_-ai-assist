@@ -4,6 +4,7 @@ import urllib.parse
 from abc import ABC, abstractmethod
 from datetime import datetime, timedelta
 from hashlib import pbkdf2_hmac
+from collections import defaultdict
 
 import requests
 from jose import JWTError, jwt
@@ -102,8 +103,8 @@ class GitLabOidcProvider(AuthProvider):
     ALGORITHM = "RS256"
     DEFAULT_REALM = "saas"
 
-    def __init__(self, base_url: str, expiry_seconds: int = 86400):
-        self.base_url = base_url
+    def __init__(self, oidc_providers: dict[str, str], expiry_seconds: int = 86400):
+        self.oidc_providers = oidc_providers
         self.expiry_seconds = expiry_seconds
         self.cache = LocalAuthCache()
 
@@ -139,8 +140,12 @@ class GitLabOidcProvider(AuthProvider):
         if jwks_record and jwks_record.exp > datetime.now():
             return jwks_record.value
 
-        well_known = self._fetch_well_known()
-        jwks = self._fetch_jwks(well_known)
+        jwks = defaultdict(list)
+
+        for oidc_provider, base_url in self.oidc_providers.items():
+            well_known = self._fetch_well_known(oidc_provider, base_url)
+            for k, v in self._fetch_jwks(oidc_provider, well_known).items():
+                jwks[k].extend(v)
 
         if jwks:
             self._cache_jwks(jwks)
@@ -152,20 +157,20 @@ class GitLabOidcProvider(AuthProvider):
         exp = datetime.now() + timedelta(seconds=self.expiry_seconds)
         self.cache.set(self.CACHE_KEY, jwks, exp)
 
-    def _fetch_well_known(self) -> dict:
+    def _fetch_well_known(self, oidc_provider, base_url: str) -> dict:
         end_point = "/.well-known/openid-configuration"
-        url = urllib.parse.urljoin(self.base_url, end_point)
+        url = urllib.parse.urljoin(base_url, end_point)
 
         well_known = {}
         try:
             res = requests.get(url=url, timeout=REQUEST_TIMEOUT_SECONDS)
             well_known = res.json()
         except requests.exceptions.RequestException as err:
-            logging.error(f"Unable to fetch OpenID configuration from GitLab: {err}")
+            logging.error(f"Unable to fetch OpenID configuration from {oidc_provider}: {err}")
 
         return well_known
 
-    def _fetch_jwks(self, well_known) -> dict:
+    def _fetch_jwks(self, oidc_provider, well_known) -> dict:
         url = well_known["jwks_uri"]
 
         jwks = {}
@@ -174,6 +179,6 @@ class GitLabOidcProvider(AuthProvider):
             res = requests.get(url=url, timeout=REQUEST_TIMEOUT_SECONDS)
             jwks = res.json()
         except requests.exceptions.RequestException as err:
-            logging.error(f"Unable to fetch jwks from GitLab: {err}")
+            logging.error(f"Unable to fetch jwks from {oidc_provider}: {err}")
 
         return jwks

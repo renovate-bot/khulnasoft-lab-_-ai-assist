@@ -22,6 +22,8 @@ test_data = dict(
 
     bypass_auth=True,
     gitlab_url="gitlab",
+    gitlab_api_url="gitlab/api/v4",
+    customer_portal_base_url="https://customers.gitlab.com",
 
     palm_text_models=["palm_model1", "palm_model2"],
     palm_text_project="palm_project",
@@ -62,7 +64,9 @@ def mock_env_vars(tmp_path, request):
         "FASTAPI_REDOC_URL": request.param["redoc_url"],
 
         "AUTH_BYPASS_EXTERNAL": str(int(request.param["bypass_auth"])),
-        "GITLAB_API_URL": request.param["gitlab_url"],
+        "GITLAB_API_URL": request.param["gitlab_api_url"],
+        "GITLAB_URL": request.param["gitlab_url"],
+        "CUSTOMER_PORTAL_BASE_URL": request.param["customer_portal_base_url"],
 
         "PALM_TEXT_MODEL_NAME": ",".join(request.param["palm_text_models"]),
         "PALM_TEXT_PROJECT": request.param["palm_text_project"],
@@ -100,7 +104,9 @@ def test_config(mock_env_vars, configuration):
     assert config.fastapi.uvicorn_logger is not None
 
     assert config.auth.bypass == configuration["bypass_auth"]
-    assert config.auth.gitlab_api_base_url == configuration["gitlab_url"]
+    assert config.auth.gitlab_api_base_url == configuration["gitlab_api_url"]
+    assert config.auth.gitlab_base_url == configuration["gitlab_url"]
+    assert config.auth.customer_portal_base_url == configuration["customer_portal_base_url"]
 
     assert config.palm_text_model.names == configuration["palm_text_models"]
     assert config.palm_text_model.project == configuration["palm_text_project"]

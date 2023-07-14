@@ -38,6 +38,7 @@ class FastApiConfig(NamedTuple):
 class AuthConfig(NamedTuple):
     gitlab_base_url: str
     gitlab_api_base_url: str
+    customer_portal_base_url: str
     bypass: bool
 
 
@@ -113,6 +114,7 @@ class Config:
         return AuthConfig(
             gitlab_base_url=Config._get_value("GITLAB_URL", "https://gitlab.com/"),
             gitlab_api_base_url=Config._get_value("GITLAB_API_URL", "https://gitlab.com/api/v4/"),
+            customer_portal_base_url=Config._get_value("CUSTOMER_PORTAL_BASE_URL", "https://customers.gitlab.com"),
             bypass=Config._str_to_bool(Config._get_value("AUTH_BYPASS_EXTERNAL", "False"))
         )
 
