@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import Optional, Any
+from typing import Optional, Any, NamedTuple
 
 from transformers import PreTrainedTokenizer
 
@@ -23,6 +23,11 @@ __all__ = [
 _KEY_EXAMPLE_LANG_ID = {
     "python": LanguageId.PYTHON,
 }
+
+
+class _ContentTruncated(NamedTuple):
+    val: str
+    length_tokens: int
 
 
 class ModelEngineCodegen(ModelEngineBase):
@@ -109,23 +114,31 @@ class ModelEnginePalm(ModelEngineBase):
 
         return ""
 
-    def _truncate(self, str: str, max_length: int, truncation_side: str = 'left') -> tuple[str, int]:
-        self.tokenizer.truncation_side = truncation_side
-        tokens = self.tokenizer(str, max_length=max_length, truncation=True, return_length=True)
-
-        # Remove last token added by the tokenizer (EOS)
-        return self.tokenizer.decode(tokens['input_ids'][:-1]), tokens['length']
-
     def _build_prompt(self, prefix: str, suffix: str, lang_id: Optional[LanguageId]) -> tuple[str, str]:
-        suffix, suffix_len = self._truncate(suffix, max_length=self.model.MAX_MODEL_LEN // 2)
-        prompt, _ = self._truncate(prefix, max_length=self.model.MAX_MODEL_LEN - suffix_len)
+        suffix_truncated = self._truncate_content(
+            suffix,
+            max_length=self.model.MAX_MODEL_LEN // 2,
+            truncation_side="right",
+        )
+        prefix_truncated = self._truncate_content(
+            prefix,
+            max_length=self.model.MAX_MODEL_LEN - suffix_truncated.length_tokens,
+            truncation_side="left",
+        )
 
-        if lang_id:
-            prompt = self._add_imports(prefix, prompt, lang_id)
+        # TODO: Once the tokenizer is implemented, we either take `MAX_MODEL_LEN` tokens
+        # TODO: and there is no more room for imports or the prompt already contains the import statements
+        # TODO: if the prefix is less than 2048 tokens.
+        # Wait for https://gitlab.com/gitlab-org/modelops/applied-ml/code-suggestions/ai-assist/-/issues/174
+        # to get more room to include imports
+        # prompt = self._add_imports(prefix, prompt, lang_id)
 
-        return prompt, suffix
+        return prefix_truncated.val, suffix_truncated.val
 
     def _add_imports(self, content: str, prompt: str, lang_id: Optional[LanguageId]) -> str:
+        """
+        Deprecated.
+        """
         extractor = ImportExtractor(lang_id)
         imports = extractor.extract_imports(content)
 
@@ -139,3 +152,24 @@ class ModelEnginePalm(ModelEngineBase):
                 prompt = text + prompt + "\n"
 
         return prompt
+
+    def _truncate_content(self, val: str, max_length: int, truncation_side: str = "left") -> _ContentTruncated:
+        self.tokenizer.truncation_side = truncation_side
+
+        tokens = self.tokenizer(
+            val,
+            max_length=max_length,
+            truncation=True,
+            return_length=True,
+            return_attention_mask=False,
+        )
+
+        decoded = self.tokenizer.decode(
+            tokens['input_ids'],
+            skip_special_tokens=True,
+        )
+
+        return _ContentTruncated(
+            val=decoded,
+            length_tokens=tokens['length'],
+        )
