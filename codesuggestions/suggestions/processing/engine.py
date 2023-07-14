@@ -25,9 +25,50 @@ _KEY_EXAMPLE_LANG_ID = {
 }
 
 
-class _ContentTruncated(NamedTuple):
-    val: str
+class _CodeContent(NamedTuple):
+    text: str
     length_tokens: int
+
+
+class _CodeBody(NamedTuple):
+    prefix: _CodeContent
+    suffix: _CodeContent
+
+    @property
+    def total_length_tokens(self):
+        return self.prefix.length_tokens + self.suffix.length_tokens
+
+
+class _CodeImports(NamedTuple):
+    content: list[_CodeContent]
+
+    @property
+    def total_length_tokens(self):
+        return sum([import_statement.length_tokens for import_statement in self.content])
+
+
+class _PromptBuilder:
+    def __init__(self, prefix: str, suffix: str):
+        self._prefix = prefix
+        self._suffix = suffix
+
+    def add_imports(self, imports: _CodeImports, max_total_length_tokens: int):
+        total_length_tokens = 0
+
+        # Only prepend the import statement if it's not present and we have room
+        for import_statement in imports.content:
+            if (
+                self._prefix.find(import_statement.text) >= 0
+                or self._suffix.find(import_statement.text) >= 0
+            ):
+                continue
+
+            total_length_tokens += import_statement.length_tokens
+            if max_total_length_tokens - total_length_tokens >= 0:
+                self._prefix = f"{import_statement.text}\n{self._prefix}"
+
+    def build(self) -> tuple[str, str]:
+        return self._prefix, self._suffix
 
 
 class ModelEngineCodegen(ModelEngineBase):
@@ -115,61 +156,69 @@ class ModelEnginePalm(ModelEngineBase):
         return ""
 
     def _build_prompt(self, prefix: str, suffix: str, lang_id: Optional[LanguageId]) -> tuple[str, str]:
+        imports = self._get_imports(prefix, lang_id)
+        prompt_len_imports = min(imports.total_length_tokens, 512)  # max 512 tokens
+        prompt_len_body = self.model.MAX_MODEL_LEN - prompt_len_imports
+
+        body = self._get_body(prefix, suffix, prompt_len_body)
+
+        prompt_builder = _PromptBuilder(body.prefix.text, body.suffix.text)
+        prompt_builder.add_imports(imports, prompt_len_imports)
+        prefix, suffix = prompt_builder.build()
+
+        return prefix, suffix
+
+    def _get_imports(self, content: str, lang_id: Optional[LanguageId] = None) -> _CodeImports:
+        imports_extracted = []
+        if lang_id:
+            extractor = ImportExtractor(lang_id)
+            imports_extracted = extractor.extract_imports(content)
+
+        if len(imports_extracted) == 0:
+            return _CodeImports(content=[])
+
+        imports_tokenized = self.tokenizer(
+            imports_extracted,
+            return_length=True,
+            return_attention_mask=False,
+            add_special_tokens=False,
+        )
+
+        imports = [
+            _CodeContent(text=import_text, length_tokens=length)
+            for import_text, length in zip(imports_extracted, imports_tokenized["length"])
+        ]
+
+        return _CodeImports(content=imports)
+
+    def _get_body(self, prefix: str, suffix: str, max_length: int) -> _CodeBody:
         suffix_truncated = self._truncate_content(
             suffix,
-            max_length=self.model.MAX_MODEL_LEN // 2,
+            max_length=max_length // 2,
             truncation_side="right",
         )
         prefix_truncated = self._truncate_content(
             prefix,
-            max_length=self.model.MAX_MODEL_LEN - suffix_truncated.length_tokens,
+            max_length=max_length - suffix_truncated.length_tokens,
             truncation_side="left",
         )
 
-        # TODO: Once the tokenizer is implemented, we either take `MAX_MODEL_LEN` tokens
-        # TODO: and there is no more room for imports or the prompt already contains the import statements
-        # TODO: if the prefix is less than 2048 tokens.
-        # Wait for https://gitlab.com/gitlab-org/modelops/applied-ml/code-suggestions/ai-assist/-/issues/174
-        # to get more room to include imports
-        # prompt = self._add_imports(prefix, prompt, lang_id)
+        return _CodeBody(prefix=prefix_truncated, suffix=suffix_truncated)
 
-        return prefix_truncated.val, suffix_truncated.val
-
-    def _add_imports(self, content: str, prompt: str, lang_id: Optional[LanguageId]) -> str:
-        """
-        Deprecated.
-        """
-        extractor = ImportExtractor(lang_id)
-        imports = extractor.extract_imports(content)
-
-        if imports is None:
-            return prompt
-
-        for text in imports:
-            # Only prepend the import statement if it's not present and we have room.
-            # The model truncates excess tokens that precede the cursor
-            if prompt.find(text) == -1 and (len(prompt) + len(text) < self.model.UPPER_BOUND_MODEL_CHARS):
-                prompt = text + prompt + "\n"
-
-        return prompt
-
-    def _truncate_content(self, val: str, max_length: int, truncation_side: str = "left") -> _ContentTruncated:
+    def _truncate_content(self, val: str, max_length: int, truncation_side: str = "left") -> _CodeContent:
         self.tokenizer.truncation_side = truncation_side
 
         tokens = self.tokenizer(
             val,
             max_length=max_length,
             truncation=True,
-            return_length=True,
             return_attention_mask=False,
+            add_special_tokens=False,
         )
 
-        decoded = self.tokenizer.decode(
-            tokens['input_ids'],
-            skip_special_tokens=True,
-        )
+        decoded = self.tokenizer.decode(tokens['input_ids'])
 
-        return _ContentTruncated(
-            val=decoded,
-            length_tokens=tokens['length'],
+        return _CodeContent(
+            text=decoded,
+            length_tokens=len(tokens["input_ids"]),
         )
