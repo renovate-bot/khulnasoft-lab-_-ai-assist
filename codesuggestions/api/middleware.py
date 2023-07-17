@@ -103,8 +103,9 @@ class MiddlewareLogRequest(Middleware):
                 response = await call_next(request)
             except Exception as e:
                 # TODO: Validate that we don't swallow exceptions (unit test?)
-                context.data['exception.message'] = str(e)
-                context.data['exception.backtrace'] = traceback.format_exc()
+                context.data["exception"] = {}
+                context.data["exception"]["message"] = str(e)
+                context.data["exception"]["backtrace"] = traceback.format_exc()
                 raise
             finally:
                 elapsed_time = time.perf_counter() - start_time_total
