@@ -38,22 +38,18 @@ class ImportExtractor:
 
     def extract_imports(self, code: str) -> list[str]:
         if self.parser is None:
-            return None
+            return []
 
         try:
             tree = self.parser.parse(bytes(code, "utf8"))
         except TypeError:
-            return None
+            return []
 
-        root_node = tree.root_node
+        if root_node := tree.root_node:
+            return [
+                node.text.decode('utf-8', errors='ignore')
+                for node in root_node.children
+                if node.type == self.node_type
+            ]
 
-        if root_node is None:
-            return None
-
-        import_nodes = []
-
-        for node in root_node.children:
-            if node.type == self.node_type:
-                import_nodes.append(node)
-
-        return [node.text.decode('utf-8', errors='ignore') for node in import_nodes]
+        return []

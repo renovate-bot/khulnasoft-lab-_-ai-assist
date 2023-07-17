@@ -96,11 +96,11 @@ def test_unparseable(lang_id: LanguageId, source_code: str):
 def test_unsupported_languages(lang_id: LanguageId):
     extractor = ImportExtractor(lang_id)
 
-    assert extractor.extract_imports("import java.util.*") is None
+    assert extractor.extract_imports("import java.util.*") == []
 
 
 def test_non_utf8():
     value = b'\xc3\x28'  # Invalid UTF-8 byte sequence
 
     extractor = ImportExtractor(LanguageId.JS)
-    assert extractor.extract_imports(value) is None
+    assert extractor.extract_imports(value) == []
