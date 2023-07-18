@@ -1,5 +1,6 @@
 from unittest import mock
 
+import json
 import pytest
 from snowplow_tracker import Snowplow, StructuredEvent
 
@@ -45,17 +46,18 @@ class TestSnowplowClient:
             endpoint="wonderful.chocolate.factory",
             app_id="gitlab_ai_gateway",
         )
+        context = SnowplowEventContext(
+            suggestions_shown=1,
+            suggestions_failed=0,
+            suggestions_accepted=1,
+            prefix_length=2048,
+            suffix_length=1024,
+            language="Python",
+            user_agent="VSCode",
+            gitlab_realm="saas",
+        )
         event = SnowplowEvent(
-            context=SnowplowEventContext(
-                suggestions_shown=1,
-                suggestions_failed=0,
-                suggestions_accepted=1,
-                prefix_length=2048,
-                suffix_length=1024,
-                language="Python",
-                user_agent="VSCode",
-                gitlab_realm="saas",
-            ),
+            context=context,
             category="code_suggestions",
             action="suggestion_requested",
         )
@@ -65,7 +67,10 @@ class TestSnowplowClient:
 
         init_args = mock_structured_event_init.call_args[1]
 
-        assert init_args["category"] == "code_suggestions"
-        assert init_args["action"] == "suggestion_requested"
+        assert init_args["category"] == event.category
+        assert init_args["action"] == event.action
+
+        context_data = init_args["context"][0].to_json()["data"]
+        assert context_data == event.context._asdict()
 
         mock_track.assert_called_once()

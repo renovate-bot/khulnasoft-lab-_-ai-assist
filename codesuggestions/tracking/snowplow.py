@@ -70,7 +70,7 @@ class SnowplowClient:
             event: A domain event which is transformed to Snowplow StructuredEvent for tracking.
         """
         structured_event = StructuredEvent(
-            context=[SelfDescribingJson(self.SCHEMA, event.context)],
+            context=[SelfDescribingJson(self.SCHEMA, event.context._asdict())],
             category=event.category,
             action=event.action,
         )
