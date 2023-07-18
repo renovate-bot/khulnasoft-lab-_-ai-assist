@@ -1,5 +1,6 @@
 from pathlib import Path
 
+from codesuggestions.tracking import SnowplowClient, SnowplowClientConfiguration
 from dependency_injector import containers, providers
 from py_grpc_prometheus.prometheus_client_interceptor import PromClientInterceptor
 
@@ -129,6 +130,13 @@ class FastApiContainer(containers.DeclarativeContainer):
     telemetry_middleware = providers.Factory(
         middleware.MiddlewareModelTelemetry,
         skip_endpoints=_PROBS_ENDPOINTS,
+    )
+
+    snowplow_client = providers.Resource(
+        SnowplowClient,
+        configuration=SnowplowClientConfiguration(
+            endpoint=config.tracking.snowplow_endpoint
+        ),
     )
 
 

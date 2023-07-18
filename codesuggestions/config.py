@@ -10,6 +10,7 @@ __all__ = [
     "PalmTextModelConfig",
     "Project",
     "FeatureFlags",
+    "TrackingConfig",
 ]
 
 
@@ -68,6 +69,10 @@ class FeatureFlags(NamedTuple):
     is_third_party_ai_default: bool
     limited_access_third_party_ai: dict[int, Project]
     third_party_rollout_percentage: int
+
+
+class TrackingConfig(NamedTuple):
+    snowplow_endpoint: str
 
 
 class Config:
@@ -177,6 +182,12 @@ class Config:
             real_or_fake=Config._parse_fake_models(
                 Config._get_value("USE_FAKE_MODELS", "False")
             ),
+        )
+
+    @property
+    def tracking(self) -> TrackingConfig:
+        return TrackingConfig(
+            snowplow_endpoint=Config._get_value("SNOWPLOW_ENDPOINT", "blizzard.local")
         )
 
     @staticmethod
