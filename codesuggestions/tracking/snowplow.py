@@ -16,7 +16,7 @@ __all__ = [
 
 
 class SnowplowClientConfiguration(NamedTuple):
-    """Store all Snowplow configration."""
+    """Store all Snowplow configuration."""
 
     endpoint: str
     namespace: str = "gl"
