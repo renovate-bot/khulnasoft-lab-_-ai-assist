@@ -10,6 +10,7 @@ from snowplow_tracker import (
 __all__ = [
     "SnowplowClient",
     "SnowplowClientConfiguration",
+    "SnowplowClientStub",
     "SnowplowEvent",
     "SnowplowEventContext",
 ]
@@ -76,3 +77,10 @@ class SnowplowClient:
         )
 
         self.tracker.track(structured_event)
+
+
+class SnowplowClientStub:
+    """The stub class used when Snowplow is disabled, e.g. development and testing."""
+
+    def track(self):
+        pass

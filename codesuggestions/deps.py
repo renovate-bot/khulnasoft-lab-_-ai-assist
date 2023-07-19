@@ -1,6 +1,5 @@
 from pathlib import Path
 
-from codesuggestions.tracking import SnowplowClient, SnowplowClientConfiguration
 from dependency_injector import containers, providers
 from py_grpc_prometheus.prometheus_client_interceptor import PromClientInterceptor
 
@@ -18,6 +17,7 @@ from codesuggestions.models import (
 from codesuggestions.suggestions import CodeSuggestions
 from codesuggestions.suggestions.processing import ModelEngineCodegen, ModelEnginePalm
 from codesuggestions.tokenizer import init_tokenizer
+from codesuggestions.tracking import SnowplowClient, SnowplowClientConfiguration
 
 __all__ = [
     "FastApiContainer",

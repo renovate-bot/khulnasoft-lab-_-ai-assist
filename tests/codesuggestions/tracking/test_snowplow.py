@@ -1,6 +1,6 @@
+import json
 from unittest import mock
 
-import json
 import pytest
 from snowplow_tracker import Snowplow, StructuredEvent
 

@@ -72,6 +72,7 @@ class FeatureFlags(NamedTuple):
 
 
 class TrackingConfig(NamedTuple):
+    snowplow_enabled: bool
     snowplow_endpoint: str
 
 
@@ -187,7 +188,10 @@ class Config:
     @property
     def tracking(self) -> TrackingConfig:
         return TrackingConfig(
-            snowplow_endpoint=Config._get_value("SNOWPLOW_ENDPOINT", "blizzard.local")
+            snowplow_enabled=Config._str_to_bool(
+                Config._get_value("SNOWPLOW_ENABLED", "False")
+            ),
+            snowplow_endpoint=Config._get_value("SNOWPLOW_ENDPOINT", None),
         )
 
     @staticmethod

@@ -15,6 +15,7 @@ from codesuggestions.deps import (
 )
 from codesuggestions.profiling import setup_profiling
 from codesuggestions.structured_logging import setup_logging
+from codesuggestions.tracking import SnowplowClientStub
 
 # load env variables from .env if exists
 load_dotenv()
@@ -30,6 +31,9 @@ def main():
     fast_api_container = FastApiContainer()
     fast_api_container.config.auth.from_value(config.auth._asdict())
     fast_api_container.config.fastapi.from_value(config.fastapi._asdict())
+
+    if not fast_api_container.config.tracking.snowplow_enabled:
+        fast_api_container.snowplow_client.override(SnowplowClientStub)
 
     code_suggestions_container = CodeSuggestionsContainer()
     code_suggestions_container.config.triton.from_value(config.triton._asdict())
