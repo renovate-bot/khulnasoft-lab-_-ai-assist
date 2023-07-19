@@ -123,7 +123,7 @@ def split_and_convert(arguments):
         "mlp.dense_4h_to_h.weight",
     ]
 
-    torch.multiprocessing.set_start_method("spawn")
+    torch.multiprocessing.set_start_method("spawn", force=True)
     pool = multiprocessing.Pool(arguments.processes)
     for name, param in model.named_parameters():
         if name.find("weight") == -1 and name.find("bias") == -1:
@@ -168,9 +168,12 @@ def split_and_convert(arguments):
                     new_name = name.replace("transformer.h.", "layers.").replace(huggingface_model_name_pattern[i],
                                                                                  ft_model_name_pattern[i])
 
-                    pool.starmap(split_and_convert_process,
-                                 [(0, saved_dir, factor, new_name, arguments,
-                                   weights)], )
+                    pool.starmap(
+                        split_and_convert_process,
+                        [
+                            (0, saved_dir, factor, new_name, weights)
+                        ],
+                    )
 
     pool.close()
     pool.join()
