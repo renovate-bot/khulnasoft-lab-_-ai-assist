@@ -1,11 +1,12 @@
 from pathlib import Path
 from typing import Optional, Any, NamedTuple
+import structlog
 
 from transformers import PreTrainedTokenizer
 
 from codesuggestions.models import TextGenBaseModel
 from codesuggestions.prompts import PromptTemplateBase, PromptTemplate, PromptTemplateFewShot
-from codesuggestions.prompts.import_extractor import ImportExtractor
+from codesuggestions.prompts.code_parser import CodeParser
 from codesuggestions.suggestions.processing.base import LanguageId, ModelEngineBase
 from codesuggestions.suggestions.processing.ops import (
     trim_by_max_len,
@@ -14,6 +15,8 @@ from codesuggestions.suggestions.processing.ops import (
     prepend_lang_id,
     remove_incomplete_lines,
 )
+
+log = structlog.stdlib.get_logger("codesuggestions")
 
 __all__ = [
     "ModelEngineCodegen",
@@ -150,6 +153,10 @@ class ModelEnginePalm(ModelEngineBase):
         self.increment_lang_counter(file_name, lang_id)
 
         prompt, suffix = self._build_prompt(prefix, suffix, lang_id)
+
+        # count symbols of the final prompt
+        self._count_symbols(prompt, lang_id)
+
         if res := self.model.generate(prompt, suffix, **kwargs):
             return res.text
 
@@ -171,8 +178,11 @@ class ModelEnginePalm(ModelEngineBase):
     def _get_imports(self, content: str, lang_id: Optional[LanguageId] = None) -> _CodeImports:
         imports_extracted = []
         if lang_id:
-            extractor = ImportExtractor(lang_id)
-            imports_extracted = extractor.extract_imports(content)
+            try:
+                parser = CodeParser(lang_id)
+                imports_extracted = parser.extract_imports(content)
+            except ValueError as e:
+                log.warning(f"Failed to parse code: {e}")
 
         if len(imports_extracted) == 0:
             return _CodeImports(content=[])
@@ -222,3 +232,10 @@ class ModelEnginePalm(ModelEngineBase):
             text=decoded,
             length_tokens=len(tokens["input_ids"]),
         )
+
+    def _count_symbols(self, prompt: str, lang_id: LanguageId) -> None:
+        try:
+            symbol_map = CodeParser(lang_id).count_symbols(prompt, target_symbols={"imports"})
+            self.increment_code_symbol_counter(lang_id, symbol_map)
+        except ValueError as e:
+            log.warning(f"Failed to parse code: {e}")

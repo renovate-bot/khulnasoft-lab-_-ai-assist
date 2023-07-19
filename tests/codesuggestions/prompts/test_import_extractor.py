@@ -1,4 +1,4 @@
-from codesuggestions.prompts.import_extractor import ImportExtractor
+from codesuggestions.prompts.code_parser import CodeParser
 from codesuggestions.suggestions.processing.base import LanguageId
 
 import pytest
@@ -64,7 +64,7 @@ import java.util._
     (LanguageId.TS, JAVASCRIPT_SOURCE_SAMPLE, "import { someFunction } from './module';")
 ])
 def test_import_extractor(lang_id: LanguageId, source_code: str, expected_output: str):
-    extractor = ImportExtractor(lang_id)
+    extractor = CodeParser(lang_id)
     output = extractor.extract_imports(source_code)
 
     assert len(output) == 1
@@ -84,7 +84,7 @@ def test_import_extractor(lang_id: LanguageId, source_code: str, expected_output
     (LanguageId.TS, "nothing to import here"),
 ])
 def test_unparseable(lang_id: LanguageId, source_code: str):
-    extractor = ImportExtractor(lang_id)
+    extractor = CodeParser(lang_id)
     output = extractor.extract_imports(source_code)
 
     assert len(output) == 0
@@ -94,13 +94,13 @@ def test_unparseable(lang_id: LanguageId, source_code: str):
    (LanguageId.KOTLIN),
 ])
 def test_unsupported_languages(lang_id: LanguageId):
-    extractor = ImportExtractor(lang_id)
-
-    assert extractor.extract_imports("import java.util.*") == []
+    with pytest.raises(ValueError):
+        extractor = CodeParser(lang_id)
+        extractor.extract_imports("import java.util.*")
 
 
 def test_non_utf8():
     value = b'\xc3\x28'  # Invalid UTF-8 byte sequence
 
-    extractor = ImportExtractor(LanguageId.JS)
-    assert extractor.extract_imports(value) == []
+    extractor = CodeParser(LanguageId.JS)
+    assert len(extractor.extract_imports(value)) == 0
