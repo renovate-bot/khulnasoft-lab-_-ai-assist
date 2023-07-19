@@ -4,7 +4,7 @@ import argparse
 import torch
 from transformers import GPTJForCausalLM, GPTJConfig
 # Note: these need the git version of Transformers as of 7/22/2022
-from transformers import CodeGenTokenizer, CodeGenForCausalLM
+from transformers import CodeGenTokenizer, AutoModelForCausalLM
 from transformers import CODEGEN_PRETRAINED_MODEL_ARCHIVE_LIST
 
 parser = argparse.ArgumentParser('Convert SalesForce CodeGen model to GPT-J')
@@ -12,11 +12,16 @@ parser.add_argument('--code_model',
                     choices=CODEGEN_PRETRAINED_MODEL_ARCHIVE_LIST, default='Salesforce/codegen-350M-multi',
                     help='which SalesForce model to convert'
                     )
+parser.add_argument('--ckpt_path', help='path to the model checkpoint.', default=None)
 parser.add_argument('output_dir', help='where to store the converted model')
 args = parser.parse_args()
 
-print('Loading CodeGen model')
-cg_model = CodeGenForCausalLM.from_pretrained(args.code_model, torch_dtype="auto")
+if args.ckpt_path:
+    print(f'Loading CodeGen model from {args.ckpt_path}.')
+    cg_model = AutoModelForCausalLM.from_pretrained(args.code_model, state_dict=torch.load(args.ckpt_path))
+else:
+    print('Loading CodeGen model')
+    cg_model = AutoModelForCausalLM.from_pretrained(args.code_model, torch_dtype="auto")
 cg_config = cg_model.config
 
 # Create empty GPTJ model
