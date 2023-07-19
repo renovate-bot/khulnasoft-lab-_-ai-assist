@@ -13,6 +13,8 @@ __all__ = [
 
 LANGUAGE_COUNTER = Counter('code_suggestions_prompt_language', 'Language count by number', ['lang', 'extension'])
 
+CODE_SYMBOL_COUNTER = Counter('code_suggestions_prompt_symbols', 'Prompt symbols count', ['lang', 'symbol'])
+
 
 class LanguageId(Enum):
     C = 1
@@ -44,6 +46,10 @@ class ModelEngineBase(ABC):
         labels['extension'] = Path(filename).suffix[1:]
 
         LANGUAGE_COUNTER.labels(**labels).inc()
+
+    def increment_code_symbol_counter(self, lang_id: LanguageId, symbol_map: dict):
+        for symbol, count in symbol_map.items():
+            CODE_SYMBOL_COUNTER.labels(lang=lang_id.name.lower(), symbol=symbol).inc(count)
 
     @staticmethod
     def _read_json(filepath: Path) -> dict[str, list]:
