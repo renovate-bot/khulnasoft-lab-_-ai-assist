@@ -50,8 +50,48 @@ class _CodeImports(NamedTuple):
         return sum([import_statement.length_tokens for import_statement in self.content])
 
 
+def _double_slash_comment(comment):
+    return f"// {comment}"
+
+
 class _PromptBuilder:
-    def __init__(self, prefix: str, suffix: str):
+    DOUBLE_SLASH_COMMENT = _double_slash_comment
+
+    # TODO: Convert these to templates later
+    COMMENT_GENERATOR = {
+        LanguageId.C: lambda comment: f"/* {comment} */",
+        LanguageId.CPP: DOUBLE_SLASH_COMMENT,
+        LanguageId.CSHARP: DOUBLE_SLASH_COMMENT,
+        LanguageId.GO: DOUBLE_SLASH_COMMENT,
+        LanguageId.JAVA: DOUBLE_SLASH_COMMENT,
+        LanguageId.JS: DOUBLE_SLASH_COMMENT,
+        LanguageId.PHP: DOUBLE_SLASH_COMMENT,
+        LanguageId.PYTHON: lambda comment: f"# {comment}",
+        LanguageId.RUBY: lambda comment: f"# {comment}",
+        LanguageId.RUST: DOUBLE_SLASH_COMMENT,
+        LanguageId.SCALA: DOUBLE_SLASH_COMMENT,
+        LanguageId.TS: DOUBLE_SLASH_COMMENT,
+        LanguageId.KOTLIN: DOUBLE_SLASH_COMMENT
+    }
+    LANG_ID_TO_HUMAN_NAME = {
+        LanguageId.C: "C",
+        LanguageId.CPP: "C++",
+        LanguageId.CSHARP: "C#",
+        LanguageId.GO: "Go",
+        LanguageId.JAVA: "Java",
+        LanguageId.JS: "JavaScript",
+        LanguageId.PHP: "PHP",
+        LanguageId.PYTHON: "Python",
+        LanguageId.RUBY: "Ruby",
+        LanguageId.RUST: "Rust",
+        LanguageId.SCALA: "Scala",
+        LanguageId.TS: "TypeScript",
+        LanguageId.KOTLIN: "Kotlin"
+    }
+
+    def __init__(self, lang_id: Optional[LanguageId], file_name: str, prefix: str, suffix: str):
+        self.lang_id = lang_id
+        self.file_name = file_name
         self._prefix = prefix
         self._suffix = suffix
 
@@ -70,8 +110,18 @@ class _PromptBuilder:
             if max_total_length_tokens - total_length_tokens >= 0:
                 self._prefix = f"{import_statement.text}\n{self._prefix}"
 
+    def _prepend_comments(self) -> str:
+        if self.lang_id not in self.COMMENT_GENERATOR:
+            return self._prefix
+
+        comment = self.COMMENT_GENERATOR[self.lang_id]
+        language = self.LANG_ID_TO_HUMAN_NAME[self.lang_id]
+        header = comment(f"This code has a filename of {self.file_name} and is written in {language}.")
+        return f"{header}\n{self._prefix}"
+
     def build(self) -> tuple[str, str]:
-        return self._prefix, self._suffix
+        new_prefix = self._prepend_comments()
+        return new_prefix, self._suffix
 
 
 class ModelEngineCodegen(ModelEngineBase):
@@ -152,7 +202,7 @@ class ModelEnginePalm(ModelEngineBase):
         lang_id = lang_from_filename(file_name)
         self.increment_lang_counter(file_name, lang_id)
 
-        prompt, suffix = self._build_prompt(prefix, suffix, lang_id)
+        prompt, suffix = self._build_prompt(prefix, file_name, suffix, lang_id)
 
         # count symbols of the final prompt
         self._count_symbols(prompt, lang_id)
@@ -162,14 +212,14 @@ class ModelEnginePalm(ModelEngineBase):
 
         return ""
 
-    def _build_prompt(self, prefix: str, suffix: str, lang_id: Optional[LanguageId]) -> tuple[str, str]:
+    def _build_prompt(self, prefix: str, file_name: str, suffix: str, lang_id: Optional[LanguageId]) -> tuple[str, str]:
         imports = self._get_imports(prefix, lang_id)
         prompt_len_imports = min(imports.total_length_tokens, 512)  # max 512 tokens
         prompt_len_body = self.model.MAX_MODEL_LEN - prompt_len_imports
 
         body = self._get_body(prefix, suffix, prompt_len_body)
 
-        prompt_builder = _PromptBuilder(body.prefix.text, body.suffix.text)
+        prompt_builder = _PromptBuilder(lang_id, file_name, body.prefix.text, body.suffix.text)
         prompt_builder.add_imports(imports, prompt_len_imports)
         prefix, suffix = prompt_builder.build()
 
