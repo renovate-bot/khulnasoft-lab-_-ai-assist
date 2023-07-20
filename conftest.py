@@ -5,6 +5,8 @@ from unittest.mock import Mock
 
 from codesuggestions.models import TextGenBaseModel
 
+pytest_plugins = ("pytest_asyncio",)
+
 
 @pytest.fixture
 def tpl_codegen_dir() -> Path:
