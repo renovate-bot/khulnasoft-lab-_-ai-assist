@@ -41,6 +41,7 @@ optional = true
 pytest = "^7.2.0"
 responses = "^0.23.1"
 pytest-cov = "^4.1.0"
+pytest-asyncio = "^0.21.1"
 
 [tool.poetry.group.lint]
 optional = true
