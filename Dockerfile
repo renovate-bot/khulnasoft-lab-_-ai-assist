@@ -48,4 +48,8 @@ COPY --from=install-image /app/scripts/lib/*.so ./lib/
 
 COPY codesuggestions/ codesuggestions/
 
+# Environment variable TRANSFORMERS_CACHE controls where files are downloaded
+COPY --from=install-image /app/scripts/bootstrap.py .
+RUN poetry run python bootstrap.py
+
 CMD ["poetry", "run", "codesuggestions"]
