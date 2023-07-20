@@ -55,21 +55,11 @@ def _init_vertex_grpc_client(api_endpoint: str, real_or_fake):
     client.transport.close()
 
 
-def _create_t5_tokenizer():
+def _init_t5_tokenizer():
     # T5Tokenizer ignores new lines, tabs and multiple spaces used a lot in coding.
     # When the T5Tokenizer is applied, the output differs from input.
     # We're switching to the Salesforce Codegen tokenizer temporarily.
-
-    # Use a factory method to avoid https://github.com/huggingface/tokenizers/issues/537
-    t5_tokenizer = providers.Factory(
-        AutoTokenizer.from_pretrained,
-        pretrained_model_name_or_path="Salesforce/codegen2-16B",
-        use_fast=True,
-    )
-
-    # Hack: create a tmp tokenizer object to download the asset from the HF hub
-    # Subsequent calls to the factory method will reuse the cache.
-    _ = t5_tokenizer()
+    t5_tokenizer = AutoTokenizer.from_pretrained("Salesforce/codegen2-16B", use_fast=True)
 
     return t5_tokenizer
 
@@ -185,7 +175,7 @@ class CodeSuggestionsContainer(containers.DeclarativeContainer):
         real_or_fake=config.palm_text_model.real_or_fake,
     )
 
-    t5_tokenizer = _create_t5_tokenizer()
+    t5_tokenizer = providers.Resource(_init_t5_tokenizer)
 
     palm_model_rollout = providers.Callable(
         # take the first model only as the primary one if several passed

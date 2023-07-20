@@ -13,7 +13,7 @@ from codesuggestions.suggestions import CodeSuggestionsUseCaseV2
 from codesuggestions.api.rollout import ModelRolloutBasePlan
 from codesuggestions.instrumentators.base import Telemetry, TelemetryInstrumentator
 
-from starlette.concurrency import run_in_threadpool
+# from starlette.concurrency import run_in_threadpool
 from starlette_context import context
 
 __all__ = [
@@ -78,11 +78,7 @@ async def completions(
     usecase = code_suggestions(engine=engine_factory(model_name))
 
     with TelemetryInstrumentator().watch(payload.telemetry):
-        suggestion = await run_in_threadpool(
-            get_suggestions,
-            usecase,
-            payload,
-        )
+        suggestion = await get_suggestions(usecase, payload)
 
     return SuggestionsResponse(
         id="id",

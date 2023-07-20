@@ -4,7 +4,7 @@ import structlog
 
 from transformers import PreTrainedTokenizer
 
-from codesuggestions.models import TextGenBaseModel
+from codesuggestions.models import TextGenBaseModel, PalmCodeGenBaseModel
 from codesuggestions.prompts import PromptTemplateBase, PromptTemplate, PromptTemplateFewShot
 from codesuggestions.prompts.code_parser import CodeParser
 from codesuggestions.suggestions.processing.base import LanguageId, ModelEngineBase
@@ -193,11 +193,11 @@ class ModelEngineCodegen(ModelEngineBase):
 
 class ModelEnginePalm(ModelEngineBase):
     # TODO: implement another custom prompt template here
-    def __init__(self, model: TextGenBaseModel, tokenizer: PreTrainedTokenizer):
+    def __init__(self, model: PalmCodeGenBaseModel, tokenizer: PreTrainedTokenizer):
         self.model = model
         self.tokenizer = tokenizer
 
-    def generate_completion(self, prefix: str, suffix: str, file_name: str, **kwargs: Any):
+    async def generate_completion(self, prefix: str, suffix: str, file_name: str, **kwargs: Any):
         # collect metrics
         lang_id = lang_from_filename(file_name)
         self.increment_lang_counter(file_name, lang_id)
@@ -207,7 +207,7 @@ class ModelEnginePalm(ModelEngineBase):
         # count symbols of the final prompt
         self._count_symbols(prompt, lang_id)
 
-        if res := self.model.generate(prompt, suffix, **kwargs):
+        if res := await self.model.generate(prompt, suffix, **kwargs):
             return res.text
 
         return ""
