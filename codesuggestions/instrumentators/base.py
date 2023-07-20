@@ -63,6 +63,10 @@ class TextGenModelInstrumentator:
             duration = time.perf_counter() - start_time
             INFERENCE_HISTOGRAM.labels(**self.labels).observe(duration)
 
+            # Moved from api/v2/endpoints/suggestions.py for backward compatibility
+            # Kibana dashboard still uses the field - https://log.gprd.gitlab.net/app/r/s/D2wE4
+            context["get_suggestions_duration_s"] = duration
+
             context["inference_duration_s"] = duration
             context.update(watch_container.dict())
 

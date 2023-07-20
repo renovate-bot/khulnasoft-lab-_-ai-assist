@@ -24,7 +24,7 @@ class CodeCompletionsInternalUseCase:
     def __init__(self, engine: ModelEngineBase):
         self.engine = engine
 
-    def __call__(
+    async def __call__(
         self,
         prefix: str,
         suffix: str,
@@ -33,7 +33,7 @@ class CodeCompletionsInternalUseCase:
     ) -> CodeCompletionsInternal:
         file_name = file_name if file_name else ""
 
-        completion = self.engine.generate_completion(
+        completion = await self.engine.generate_completion(
             prefix,
             suffix,
             file_name,

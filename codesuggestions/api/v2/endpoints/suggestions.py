@@ -7,13 +7,11 @@ from dependency_injector.providers import FactoryAggregate, Factory
 from fastapi import APIRouter, Depends, Request
 from pydantic import BaseModel, constr, conlist
 
-from codesuggestions.api.timing import timing
 from codesuggestions.deps import CodeSuggestionsContainer
 from codesuggestions.suggestions import CodeSuggestionsUseCaseV2
 from codesuggestions.api.rollout import ModelRolloutBasePlan
 from codesuggestions.instrumentators.base import Telemetry, TelemetryInstrumentator
 
-from starlette.concurrency import run_in_threadpool
 from starlette_context import context
 
 __all__ = [
@@ -78,10 +76,10 @@ async def completions(
     usecase = code_suggestions(engine=engine_factory(model_name))
 
     with TelemetryInstrumentator().watch(payload.telemetry):
-        suggestion = await run_in_threadpool(
-            get_suggestions,
-            usecase,
-            payload,
+        suggestion = await usecase(
+            payload.current_file.content_above_cursor,
+            payload.current_file.content_below_cursor,
+            payload.current_file.file_name,
         )
 
     return SuggestionsResponse(
@@ -93,16 +91,4 @@ async def completions(
         choices=[
             SuggestionsResponse.Choice(text=suggestion),
         ],
-    )
-
-
-@timing("get_suggestions_duration_s")
-def get_suggestions(
-    usecase: CodeSuggestionsUseCaseV2,
-    req: SuggestionsRequest,
-):
-    return usecase(
-        req.current_file.content_above_cursor,
-        req.current_file.content_below_cursor,
-        req.current_file.file_name,
     )

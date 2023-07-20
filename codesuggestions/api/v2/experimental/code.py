@@ -10,13 +10,10 @@ from pydantic import BaseModel, constr
 from pydantic.fields import Field
 from pydantic.types import confloat, conint, conlist
 
-from codesuggestions.api.timing import timing
 from codesuggestions.deps import CodeSuggestionsContainer
 from codesuggestions.api.rollout import ModelRollout
 from codesuggestions.suggestions.experimental import CodeCompletionsInternalUseCase
 from codesuggestions.instrumentators.base import Telemetry, TelemetryInstrumentator
-
-from starlette.concurrency import run_in_threadpool
 
 
 __all__ = [
@@ -126,10 +123,11 @@ async def completions(
     usecase = CodeCompletionsInternalUseCase(engine)
 
     with TelemetryInstrumentator().watch(payload.telemetry):
-        completion = await run_in_threadpool(
-            get_code_completions,
-            usecase,
-            payload,
+        completion = await usecase(
+            _get_requested_prefix(payload.model),
+            _get_requested_suffix(payload.model),
+            file_name=payload.file_name,
+            **payload.model.parameters.dict(),
         )
 
     return CodeCompletionsResponse(
@@ -161,16 +159,3 @@ def _get_requested_suffix(model: ModelAny) -> str:
         suffix = model.suffix
 
     return suffix
-
-
-@timing("get_internal_code_completions_duration_s")
-def get_code_completions(
-    usecase: CodeCompletionsInternalUseCase,
-    req: CodeCompletionsRequest,
-):
-    return usecase(
-        _get_requested_prefix(req.model),
-        _get_requested_suffix(req.model),
-        file_name=req.file_name,
-        **req.model.parameters.dict(),
-    )

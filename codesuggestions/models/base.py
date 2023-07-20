@@ -6,7 +6,7 @@ import numpy as np
 import tritonclient.grpc as triton_grpc_util
 from tritonclient.grpc import service_pb2_grpc
 from tritonclient.utils import np_to_triton_dtype
-from google.cloud.aiplatform.gapic import PredictionServiceClient
+from google.cloud.aiplatform.gapic import PredictionServiceAsyncClient
 from py_grpc_prometheus.prometheus_client_interceptor import PromClientInterceptor
 
 __all__ = [
@@ -118,5 +118,5 @@ def grpc_connect_triton(
     return client
 
 
-def grpc_connect_vertex(client_options: dict) -> PredictionServiceClient:
-    return PredictionServiceClient(client_options=client_options)
+def grpc_connect_vertex(client_options: dict) -> PredictionServiceAsyncClient:
+    return PredictionServiceAsyncClient(client_options=client_options)

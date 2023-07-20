@@ -1,5 +1,5 @@
 import pytest
-from unittest.mock import Mock
+from unittest.mock import Mock, AsyncMock
 
 from codesuggestions.models import TextGenModelOutput, PalmCodeGenBaseModel
 from codesuggestions.suggestions.processing import (
@@ -140,6 +140,7 @@ def test_model_engine_codegen(
     assert engine.generate_completion(content, "", file_name) == expected_completion
 
 
+@pytest.mark.asyncio
 @pytest.mark.parametrize(
     "content,suffix,file_name,model_gen_func,model_output,expected_completion",
     [
@@ -186,7 +187,7 @@ def test_model_engine_codegen(
         ),
     ],
 )
-def test_model_engine_palm(
+async def test_model_engine_palm(
     text_gen_base_model,
     content,
     suffix,
@@ -196,8 +197,9 @@ def test_model_engine_palm(
     expected_completion,
 ):
     _side_effect = model_gen_func(content, suffix, file_name, model_output)
-    text_gen_base_model.generate = Mock(side_effect=_side_effect)
+    text_gen_base_model.generate = AsyncMock(side_effect=_side_effect)
 
     engine = ModelEnginePalm(text_gen_base_model, tokenizer)
+    completion = await engine.generate_completion(content, suffix, file_name)
 
-    assert engine.generate_completion(content, suffix, file_name) == expected_completion
+    assert completion == expected_completion

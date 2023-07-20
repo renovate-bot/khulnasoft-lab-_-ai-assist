@@ -1,12 +1,8 @@
 import structlog
-from abc import ABC, abstractmethod
+from abc import abstractmethod
 from enum import Enum
 from typing import (
-    MutableSequence,
     Optional,
-    Sequence,
-    Tuple,
-    Union,
 )
 from http.client import (
     BAD_REQUEST,
@@ -18,7 +14,7 @@ from codesuggestions.models import TextGenBaseModel, TextGenModelOutput
 from codesuggestions.instrumentators.base import TextGenModelInstrumentator
 
 from google.protobuf import json_format, struct_pb2
-from google.api_core import gapic_v1, retry as retries
+from google.cloud.aiplatform.gapic import PredictionServiceAsyncClient
 from google.api_core.exceptions import InvalidArgument, InternalServerError
 
 __all__ = [
@@ -84,27 +80,6 @@ class CodeGeckoModelInput(ModelInput):
         return {"prefix": self.prefix, "suffix": self.suffix}
 
 
-class PalmPredictionResponse(ABC):
-    predictions: MutableSequence
-
-
-class PalmPredictionClient(ABC):
-
-    @abstractmethod
-    def predict(
-        self,
-        request: Optional[dict] = None,
-        *,
-        endpoint: Optional[str] = None,
-        instances: Optional[MutableSequence[struct_pb2.Value]] = None,
-        parameters: Optional[struct_pb2.Value] = None,
-        retry: Union[retries.Retry, object] = gapic_v1.method.DEFAULT,
-        timeout: Union[float, object] = gapic_v1.method.DEFAULT,
-        metadata: Sequence[Tuple[str, str]] = (),
-    ) -> PalmPredictionResponse:
-        pass
-
-
 class PalmModel(str, Enum):
     TEXT_BISON = "text-bison"
     CODE_BISON = "code-bison"
@@ -126,7 +101,7 @@ class PalmCodeGenBaseModel(TextGenBaseModel):
     def __init__(
         self,
         model_name: str,
-        client: PalmPredictionClient,
+        client: PredictionServiceAsyncClient,
         project: str,
         location: str,
         timeout: int = 30
@@ -137,7 +112,7 @@ class PalmCodeGenBaseModel(TextGenBaseModel):
         self.endpoint = f"projects/{project}/locations/{location}/publishers/google/models/{model_name}"
         self.instrumentator = TextGenModelInstrumentator("vertex-ai", model_name)
 
-    def _generate(
+    async def _generate(
         self,
         input: ModelInput,
         temperature: float,
@@ -156,9 +131,13 @@ class PalmCodeGenBaseModel(TextGenBaseModel):
         parameters = json_format.ParseDict(parameters_dict, struct_pb2.Value())
 
         try:
-            response = self.client.predict(
-                endpoint=self.endpoint, instances=instances, parameters=parameters, timeout=self.timeout
+            response = await self.client.predict(
+                endpoint=self.endpoint,
+                instances=instances,
+                parameters=parameters,
+                timeout=self.timeout,
             )
+
             predictions = response.predictions
         except InvalidArgument as ex:
             raise VertexModelInvalidArgument(ex.message, errors=(ex,))
@@ -177,7 +156,7 @@ class PalmCodeGenBaseModel(TextGenBaseModel):
         )
 
     @abstractmethod
-    def generate(
+    async def generate(
         self,
         prompt: str,
         suffix: str,
@@ -194,7 +173,7 @@ class PalmTextBisonModel(PalmCodeGenBaseModel):
 
     def __init__(
         self,
-        client: PalmPredictionClient,
+        client: PredictionServiceAsyncClient,
         project: str,
         location: str,
         version: str = "latest"
@@ -205,7 +184,7 @@ class PalmTextBisonModel(PalmCodeGenBaseModel):
         )
         super().__init__(model_name, client, project, location)
 
-    def generate(
+    async def generate(
         self,
         prompt: str,
         suffix: str,
@@ -216,7 +195,7 @@ class PalmTextBisonModel(PalmCodeGenBaseModel):
     ) -> Optional[TextGenModelOutput]:
         input = TextBisonModelInput(prompt)
         with self.instrumentator.watch(prompt):
-            res = self._generate(input, temperature, max_output_tokens, top_p, top_k)
+            res = await self._generate(input, temperature, max_output_tokens, top_p, top_k)
 
         return res
 
@@ -226,7 +205,7 @@ class PalmCodeBisonModel(PalmCodeGenBaseModel):
 
     def __init__(
         self,
-        client: PalmPredictionClient,
+        client: PredictionServiceAsyncClient,
         project: str,
         location: str,
         version: str = "latest",
@@ -237,7 +216,7 @@ class PalmCodeBisonModel(PalmCodeGenBaseModel):
         )
         super().__init__(model_name, client, project, location)
 
-    def generate(
+    async def generate(
         self,
         prompt: str,
         suffix: str,
@@ -248,7 +227,7 @@ class PalmCodeBisonModel(PalmCodeGenBaseModel):
     ) -> Optional[TextGenModelOutput]:
         input = CodeBisonModelInput(prompt)
         with self.instrumentator.watch(prompt):
-            res = self._generate(input, temperature, max_output_tokens, top_p, top_k)
+            res = await self._generate(input, temperature, max_output_tokens, top_p, top_k)
 
         return res
 
@@ -258,7 +237,7 @@ class PalmCodeGeckoModel(PalmCodeGenBaseModel):
 
     def __init__(
         self,
-        client: PalmPredictionClient,
+        client: PredictionServiceAsyncClient,
         project: str,
         location: str,
         version: str = "latest"
@@ -269,7 +248,7 @@ class PalmCodeGeckoModel(PalmCodeGenBaseModel):
         )
         super().__init__(model_name, client, project, location)
 
-    def generate(
+    async def generate(
         self,
         prompt: str,
         suffix: str,
@@ -282,7 +261,7 @@ class PalmCodeGeckoModel(PalmCodeGenBaseModel):
 
         with self.instrumentator.watch(prompt, suffix_length=len(suffix)) as watch_container:
             try:
-                res = self._generate(input, temperature, max_output_tokens, top_p, top_k)
+                res = await self._generate(input, temperature, max_output_tokens, top_p, top_k)
             except (VertexModelInvalidArgument, VertexModelInternalError) as ex:
                 res = TextGenModelOutput(text="")
                 watch_container.register_model_exception(str(ex), ex.code)
@@ -300,7 +279,7 @@ class PalmCodeGenModel:
     @staticmethod
     def from_model_name(
         name: str,
-        client: PalmPredictionClient,
+        client: PredictionServiceAsyncClient,
         project: str,
         location: str,
     ) -> PalmCodeGenBaseModel:

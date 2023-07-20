@@ -1,7 +1,7 @@
 import pytest
 
 from contextlib import contextmanager
-from unittest.mock import Mock
+from unittest.mock import Mock, AsyncMock
 from codesuggestions.models.palm import (
     CodeBisonModelInput,
     CodeGeckoModelInput,
@@ -27,6 +27,7 @@ TEST_PREFIX = "random propmt"
 TEST_SUFFIX = "some suffix"
 
 
+@pytest.mark.asyncio
 @pytest.mark.parametrize(
     "model,prefix,suffix,expected_output,expected_generate_args",
     [
@@ -73,13 +74,13 @@ TEST_SUFFIX = "some suffix"
             None
         )
     ])
-def test_palm_code_gecko_prompt(model, prefix, suffix, expected_output, expected_generate_args):
+async def test_palm_code_gecko_prompt(model, prefix, suffix, expected_output, expected_generate_args):
     client = Mock()
     palm_model = model(client=client, project="test", location="some location")
     palm_model.instrumentator = MockInstrumentor()
-    palm_model._generate = Mock(side_effect=lambda *_: TextGenModelOutput(text=expected_output))
+    palm_model._generate = AsyncMock(side_effect=lambda *_: TextGenModelOutput(text=expected_output))
 
-    result = palm_model.generate(prefix, suffix)
+    result = await palm_model.generate(prefix, suffix)
 
     assert result == TextGenModelOutput(text=expected_output)
 
@@ -106,6 +107,7 @@ def test_palm_model_inputs(model_input, is_valid, output_dict):
     assert output_dict is None or model_input.dict() == output_dict
 
 
+@pytest.mark.asyncio
 @pytest.mark.parametrize(
     "model,vertex_exception", [
         (
@@ -118,12 +120,12 @@ def test_palm_model_inputs(model_input, is_valid, output_dict):
         ),
     ]
 )
-def test_palm_model_api_error(model, vertex_exception):
+async def test_palm_model_api_error(model, vertex_exception):
     def _client_predict(*args, **kwargs):
         raise vertex_exception
 
-    model.client.predict = Mock(side_effect=_client_predict)
+    model.client.predict = AsyncMock(side_effect=_client_predict)
     model.instrumentator = MockInstrumentor()
 
-    actual = model.generate("random_prefix", "random_suffix")
+    actual = await model.generate("random_prefix", "random_suffix")
     assert actual == TextGenModelOutput(text="")
