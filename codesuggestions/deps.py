@@ -2,7 +2,6 @@ from pathlib import Path
 
 from dependency_injector import containers, providers
 from py_grpc_prometheus.prometheus_client_interceptor import PromClientInterceptor
-from transformers import AutoTokenizer
 
 from codesuggestions.auth import GitLabAuthProvider, GitLabOidcProvider
 from codesuggestions.api import middleware
@@ -25,6 +24,8 @@ from codesuggestions.suggestions import (
     CodeSuggestionsUseCase,
     CodeSuggestionsUseCaseV2,
 )
+from codesuggestions.tokenizer import init_tokenizer
+
 
 __all__ = [
     "FastApiContainer",
@@ -59,9 +60,7 @@ def _init_t5_tokenizer():
     # T5Tokenizer ignores new lines, tabs and multiple spaces used a lot in coding.
     # When the T5Tokenizer is applied, the output differs from input.
     # We're switching to the Salesforce Codegen tokenizer temporarily.
-    t5_tokenizer = AutoTokenizer.from_pretrained("Salesforce/codegen2-16B", use_fast=True)
-
-    return t5_tokenizer
+    init_tokenizer()
 
 
 def _create_gitlab_codegen_model_provider(grpc_client_triton, real_or_fake):
