@@ -2,6 +2,7 @@
 
 import contextlib
 import os
+import platform
 import sys
 from collections.abc import Generator
 from pathlib import Path
@@ -39,7 +40,7 @@ def working_directory(path: Path) -> Generator[None, None, None]:
 def main() -> int:
     """Clone and build treesitter language libraries."""
     scripts_dir = Path(__file__).resolve().parent
-    vendor_dir = scripts_dir / "vendor"
+    vendor_dir = scripts_dir / "vendor" / platform.platform()
     lib_dir = scripts_dir / "lib"
     print(f"Checking out grammars in {vendor_dir}")
 
