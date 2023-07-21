@@ -21,8 +21,7 @@ from codesuggestions.api.rollout.model import (
     ModelRolloutWithFallbackPlan, ModelRollout,
 )
 from codesuggestions.suggestions import (
-    CodeSuggestionsUseCase,
-    CodeSuggestionsUseCaseV2,
+    CodeSuggestions,
 )
 from codesuggestions.tokenizer import init_tokenizer
 
@@ -138,8 +137,7 @@ class FastApiContainer(containers.DeclarativeContainer):
 class CodeSuggestionsContainer(containers.DeclarativeContainer):
     wiring_config = containers.WiringConfiguration(
         modules=[
-            "codesuggestions.api.suggestions",
-            "codesuggestions.api.v2.endpoints.suggestions",
+            "codesuggestions.api.v2.endpoints.code",
             "codesuggestions.api.v2.experimental.code",
             "codesuggestions.api.monitoring",
         ]
@@ -211,12 +209,6 @@ class CodeSuggestionsContainer(containers.DeclarativeContainer):
         },
     })
 
-    # Deprecated
-    usecase = providers.Factory(
-        CodeSuggestionsUseCase,
-        model=model_gitlab_codegen,
-    )
-
-    usecase_v2 = providers.Factory(
-        CodeSuggestionsUseCaseV2,
+    code_suggestions = providers.Factory(
+        CodeSuggestions,
     )

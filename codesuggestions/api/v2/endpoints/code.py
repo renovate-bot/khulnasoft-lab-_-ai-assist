@@ -8,7 +8,7 @@ from fastapi import APIRouter, Depends, Request
 from pydantic import BaseModel, constr, conlist
 
 from codesuggestions.deps import CodeSuggestionsContainer
-from codesuggestions.suggestions import CodeSuggestionsUseCaseV2
+from codesuggestions.suggestions import CodeSuggestions
 from codesuggestions.api.rollout import ModelRolloutBasePlan
 from codesuggestions.instrumentators.base import Telemetry, TelemetryInstrumentator
 
@@ -68,8 +68,8 @@ async def completions(
     engine_factory: FactoryAggregate = Depends(
         Provide[CodeSuggestionsContainer.engine_factory.provider]
     ),
-    code_suggestions: Factory[CodeSuggestionsUseCaseV2] = Depends(
-        Provide[CodeSuggestionsContainer.usecase_v2.provider]
+    code_suggestions: Factory[CodeSuggestions] = Depends(
+        Provide[CodeSuggestionsContainer.code_suggestions.provider]
     ),
 ):
     model_name = model_rollout_plan.route(req.user, payload.project_id)

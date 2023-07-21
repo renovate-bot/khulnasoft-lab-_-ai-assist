@@ -1,7 +1,5 @@
 from typing import List, Dict
 
-from codesuggestions.models import TextGenBaseModel
-from codesuggestions.suggestions.processing import ModelEngineBase
 from codesuggestions.suggestions.detectors import (
     DetectorRegexEmail,
     DetectorRegexIPV4,
@@ -18,8 +16,6 @@ __all__ = [
     "DEFAULT_REPLACEMENT_IPV4",
     "DEFAULT_REPLACEMENT_IPV6",
     "DEFAULT_REPLACEMENT_SECRET",
-    "CodeSuggestionsUseCase",
-    "CodeSuggestionsUseCaseV2",
 ]
 
 DEFAULT_REPLACEMENT_EMAIL = "<email placeholder|email@example.com>"
@@ -83,30 +79,3 @@ class RedactPiiMixin:
     def redact_pii(self, content: str) -> str:
         pii_detected = self._detect_pii(content)
         return self._redact_pii(content, pii_detected)
-
-
-class CodeSuggestionsUseCase:
-    def __init__(self, model: TextGenBaseModel):
-        self.model = model
-
-    def __call__(self, prompt: str) -> str:
-        if res := self.model.generate(prompt):
-            return res.text
-        return ""
-
-
-class CodeSuggestionsUseCaseV2:
-    # TODO: we probably need to create a pool of models with custom routing rules
-    def __init__(
-        self,
-        engine: ModelEngineBase,
-    ):
-        self.engine = engine
-
-    def __call__(
-        self,
-        prefix: str,
-        suffix: str,
-        file_name: str,
-    ) -> str:
-        return self.engine.generate_completion(prefix, suffix, file_name)
