@@ -23,7 +23,7 @@ class TestSnowplowClient:
     def test_initialization(self, mock_create):
         configuration = SnowplowClientConfiguration(
             namespace="gl",
-            endpoint="whitechoc.local",
+            endpoint="https://whitechoc.local",
             app_id="gitlab_ai_gateway",
         )
         SnowplowClient(configuration)
@@ -43,7 +43,7 @@ class TestSnowplowClient:
 
         configuration = SnowplowClientConfiguration(
             namespace="gl",
-            endpoint="wonderful.chocolate.factory",
+            endpoint="https://whitechoc.local",
             app_id="gitlab_ai_gateway",
         )
         context = SnowplowEventContext(
@@ -52,8 +52,8 @@ class TestSnowplowClient:
             suggestions_accepted=1,
             prefix_length=2048,
             suffix_length=1024,
-            language="Python",
-            user_agent="VSCode",
+            language="python",
+            user_agent="vs-code-gitlab-workflow",
             gitlab_realm="saas",
         )
         event = SnowplowEvent(
@@ -66,7 +66,6 @@ class TestSnowplowClient:
         mock_structured_event_init.assert_called_once()
 
         init_args = mock_structured_event_init.call_args[1]
-
         assert init_args["category"] == event.category
         assert init_args["action"] == event.action
 
