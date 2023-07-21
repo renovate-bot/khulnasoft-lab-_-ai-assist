@@ -65,6 +65,16 @@ class TextGenModelOutput(NamedTuple):
 class TextGenBaseModel(ABC):
     MAX_MODEL_LEN = 1
 
+    @property
+    @abstractmethod
+    def model_name(self) -> str:
+        pass
+
+    @property
+    @abstractmethod
+    def model_engine(self) -> str:
+        pass
+
     @abstractmethod
     def generate(
         self,

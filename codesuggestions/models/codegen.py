@@ -36,12 +36,14 @@ class GitLabCodeGen(TextGenBaseModel):
     # Model name specified in config.pbtxt
     MODEL_NAME = "ensemble"
 
+    ENGINE_NAME = "codegen"
+
     def __init__(
         self, grpc_client: triton_grpc_util.InferenceServerClient, timeout: int = 30
     ):
         self.client = grpc_client
         self.timeout = timeout
-        self.instrumentator = TextGenModelInstrumentator("codegen", GitLabCodeGen.MODEL_NAME)
+        self.instrumentator = TextGenModelInstrumentator(GitLabCodeGen.ENGINE_NAME, GitLabCodeGen.MODEL_NAME)
 
     def _model_inputs(self, model_input: GitLabCodeGenModelInput) -> list:
         prompt_np = np.array([[model_input.prompt]], dtype=object)
@@ -80,6 +82,14 @@ class GitLabCodeGen(TextGenBaseModel):
             grpc_requested_output("cum_log_probs"),
             grpc_requested_output("output_ids"),
         ]
+
+    @property
+    def model_name(self) -> str:
+        return GitLabCodeGen.MODEL_NAME
+
+    @property
+    def model_engine(self) -> str:
+        return GitLabCodeGen.ENGINE_NAME
 
     def generate(
         self,
