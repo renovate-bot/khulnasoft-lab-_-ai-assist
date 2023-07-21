@@ -1,5 +1,5 @@
 import os
-from codesuggestions.suggestions.processing.base import LanguageId
+from codesuggestions.suggestions.processing.ops import LanguageId
 from tree_sitter import Language, Node, Parser, Tree
 from typing import Optional
 from collections import Counter

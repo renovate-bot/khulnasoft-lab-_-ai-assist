@@ -46,6 +46,7 @@ def test_telemetry_capture_with_headers(mock_counter):
             "log_level": "info",
             "model_engine": "codegen",
             "model_name": "ensemble",
+            "lang": None,
         }
     ]
 

@@ -103,6 +103,7 @@ class CodeCompletionsResponse(BaseModel):
     class Model(BaseModel):
         engine: str
         name: str
+        lang: str
 
     id: str
     model: Model
@@ -136,6 +137,7 @@ async def completions(
         model=CodeCompletionsResponse.Model(
             engine=completion.model.engine,
             name=completion.model.name,
+            lang=completion.model.lang,
         ),
         choices=[
             CodeCompletionsResponse.Choice(

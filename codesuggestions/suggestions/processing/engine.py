@@ -14,7 +14,6 @@ from codesuggestions.models import (
 from codesuggestions.prompts import PromptTemplateBase, PromptTemplate, PromptTemplateFewShot
 from codesuggestions.prompts.code_parser import CodeParser
 from codesuggestions.suggestions.processing.base import (
-    LanguageId,
     ModelEngineBase,
     MetadataCodeContent,
     MetadataImports,
@@ -23,9 +22,9 @@ from codesuggestions.suggestions.processing.base import (
     MetadataModel,
 )
 from codesuggestions.suggestions.processing.ops import (
+    LanguageId,
     trim_by_max_len,
     trim_by_sep,
-    lang_from_filename,
     prepend_lang_id,
     remove_incomplete_lines,
 )
@@ -204,11 +203,7 @@ class ModelEngineCodegen(ModelEngineBase):
         self.prompt_tpls = prompt_tpls
         self.sep_code_block = sep_code_block
 
-    def generate_completion(self, prefix: str, suffix: str, file_name: str, **kwargs: Any) -> ModelEngineOutput:
-        # collect metrics
-        lang_id = lang_from_filename(file_name)
-        self.increment_lang_counter(file_name, lang_id)
-
+    async def _generate_completion(self, prefix: str, suffix: str, file_name: str, lang_id: LanguageId, **kwargs: Any) -> ModelEngineOutput:
         prompt = self._build_prompt(prefix, lang_id)
         model_metadata = MetadataModel(name=self.model.model_name, engine=self.model.model_engine)
 
@@ -265,11 +260,7 @@ class ModelEnginePalm(ModelEngineBase):
         self.tokenizer = tokenizer
         self.instrumentator = TextGenModelInstrumentator(model.model_engine, model.model_name)
 
-    async def generate_completion(self, prefix: str, suffix: str, file_name: str, **kwargs: Any) -> ModelEngineOutput:
-        # collect metrics
-        lang_id = lang_from_filename(file_name)
-        self.increment_lang_counter(file_name, lang_id)
-
+    async def _generate_completion(self, prefix: str, suffix: str, file_name: str, lang_id: LanguageId, **kwargs: Any) -> ModelEngineOutput:
         prompt = self._build_prompt(prefix, file_name, suffix, lang_id)
 
         # count symbols of the final prompt

@@ -47,6 +47,7 @@ class SuggestionsResponse(BaseModel):
     class Model(BaseModel):
         engine: str
         name: str
+        lang: str
 
     id: str
     model: Model
@@ -83,7 +84,11 @@ async def completions(
     return SuggestionsResponse(
         id="id",
         created=int(time()),
-        model=SuggestionsResponse.Model(engine=suggestion.model.engine, name=suggestion.model.name),
+        model=SuggestionsResponse.Model(
+            engine=suggestion.model.engine,
+            name=suggestion.model.name,
+            lang=suggestion.lang(),
+        ),
         choices=[
             SuggestionsResponse.Choice(text=suggestion.text),
         ],

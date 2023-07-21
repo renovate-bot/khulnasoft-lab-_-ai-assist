@@ -1,11 +1,11 @@
 import pytest
 
-from codesuggestions.suggestions.processing.base import LanguageId
 from codesuggestions.suggestions.processing.engine import (
     _PromptBuilder,
     _CodeContent,
     MetadataPromptBuilder,
 )
+from codesuggestions.suggestions.processing.ops import LanguageId
 
 
 @pytest.mark.parametrize(

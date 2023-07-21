@@ -1,15 +1,31 @@
+from enum import Enum
 from pathlib import Path
 from typing import Optional, Union
 
-from codesuggestions.suggestions.processing.base import LanguageId
-
 __all__ = [
+    "LanguageId",
     "prepend_lang_id",
     "remove_incomplete_lines",
-    "lang_from_filename",
     "trim_by_max_len",
     "trim_by_sep",
 ]
+
+
+class LanguageId(Enum):
+    C = 1
+    CPP = 2
+    CSHARP = 3
+    GO = 4
+    JAVA = 5
+    JS = 6
+    PHP = 7
+    PYTHON = 8
+    RUBY = 9
+    RUST = 10
+    SCALA = 11
+    TS = 12
+    KOTLIN = 13
+
 
 _ALL_LANGS = {
     LanguageId.C: {"c", "h"},
