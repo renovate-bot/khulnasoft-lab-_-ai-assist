@@ -1,16 +1,16 @@
 import pytest
-from unittest.mock import Mock, AsyncMock
+from unittest.mock import Mock, AsyncMock, PropertyMock
 
 from codesuggestions.models import TextGenModelOutput, PalmCodeGenBaseModel
 from codesuggestions.suggestions.processing import (
     ops,
     ModelEngineCodegen,
-    ModelEnginePalm,
+    ModelEnginePalm, MetadataModel, LanguageId, MetadataPromptBuilder, MetadataCodeContent, MetadataImports,
 )
 
-from transformers import T5Tokenizer
+from transformers import AutoTokenizer
 
-tokenizer = T5Tokenizer.from_pretrained("google/mt5-small")
+tokenizer = AutoTokenizer.from_pretrained("Salesforce/codegen2-16B")
 
 
 def _side_effect_few_shot_tpl(content: str, _suffix: str, filename: str, model_output: str):
@@ -47,8 +47,7 @@ def _side_effect_lang_prepended(content: str, _suffix: str, filename: str, model
 
 
 def token_length(s: str):
-    tokens = tokenizer(s, return_length=True)
-    return tokens['length']
+    return len(tokenizer(s)["input_ids"])
 
 
 def _side_effect_with_suffix(content: str, suffix: str, filename: str, model_output: str):
@@ -137,12 +136,16 @@ def test_model_engine_codegen(
         text_gen_base_model,
     )
 
-    assert engine.generate_completion(content, "", file_name) == expected_completion
+    completion = engine.generate_completion(content, "", file_name)
+
+    assert completion.text == expected_completion
+    assert completion.model is not None
 
 
 @pytest.mark.asyncio
 @pytest.mark.parametrize(
-    "content,suffix,file_name,model_gen_func,model_output,expected_completion",
+    "prefix,suffix,file_name,model_gen_func,model_output,"
+    "language,prompt_builder_metadata,expected_completion",
     [
         (
             "prompt",
@@ -150,6 +153,14 @@ def test_model_engine_codegen(
             "f.unk",
             _side_effect_unknown_tpl,
             "random completion",
+            None,
+            MetadataPromptBuilder(
+                prefix=MetadataCodeContent(length=6, length_tokens=2),
+                suffix=MetadataCodeContent(length=0, length_tokens=0),
+                imports=MetadataImports(pre=MetadataCodeContent(length=0, length_tokens=0),
+                                        post=MetadataCodeContent(length=0, length_tokens=0),
+                )
+            ),
             "random completion",
         ),
         (
@@ -158,6 +169,13 @@ def test_model_engine_codegen(
             "f.unk",
             _side_effect_unknown_tpl,
             "random completion\nnew line",
+            None,
+            MetadataPromptBuilder(
+                prefix=MetadataCodeContent(length=6, length_tokens=2),
+                suffix=MetadataCodeContent(length=0, length_tokens=0),
+                imports=MetadataImports(pre=MetadataCodeContent(length=0, length_tokens=0),
+                                        post=MetadataCodeContent(length=0, length_tokens=0)),
+            ),
             "random completion\nnew line",
         ),
         # TODO: Disable this test as we temporarily do not prepend with lang_id
@@ -175,6 +193,13 @@ def test_model_engine_codegen(
             "f.py",
             _side_effect_with_suffix,
             "random completion\nnew line",
+            LanguageId.PYTHON,
+            MetadataPromptBuilder(
+                prefix=MetadataCodeContent(length=3494, length_tokens=500),
+                suffix=MetadataCodeContent(length=1002, length_tokens=500),
+                imports=MetadataImports(pre=MetadataCodeContent(length=0, length_tokens=0),
+                                        post=MetadataCodeContent(length=0, length_tokens=0))
+            ),
             "random completion\nnew line",
         ),
         (
@@ -183,23 +208,40 @@ def test_model_engine_codegen(
             "f.py",
             _side_effect_with_imports,
             "random completion\nnew line",
+            LanguageId.PYTHON,
+            MetadataPromptBuilder(
+                prefix=MetadataCodeContent(length=2984, length_tokens=995),
+                suffix=MetadataCodeContent(length=0, length_tokens=0),
+                imports=MetadataImports(pre=MetadataCodeContent(length=22, length_tokens=5),
+                                        post=MetadataCodeContent(length=22, length_tokens=5))
+            ),
             "random completion\nnew line",
         ),
     ],
 )
 async def test_model_engine_palm(
     text_gen_base_model,
-    content,
+    prefix,
     suffix,
     file_name,
     model_gen_func,
     model_output,
+    language,
+    prompt_builder_metadata,
     expected_completion,
 ):
-    _side_effect = model_gen_func(content, suffix, file_name, model_output)
+    model_name = "palm-model"
+    model_engine = "vertex-ai"
+    _side_effect = model_gen_func(prefix, suffix, file_name, model_output)
+
     text_gen_base_model.generate = AsyncMock(side_effect=_side_effect)
+    type(text_gen_base_model).model_name = PropertyMock(return_value=model_name)
+    type(text_gen_base_model).model_engine = PropertyMock(return_value=model_engine)
 
     engine = ModelEnginePalm(text_gen_base_model, tokenizer)
-    completion = await engine.generate_completion(content, suffix, file_name)
+    completion = await engine.generate_completion(prefix, suffix, file_name)
 
-    assert completion == expected_completion
+    assert completion.text == expected_completion
+    assert completion.model == MetadataModel(name=model_name, engine=model_engine)
+    assert completion.lang_id == language
+    assert completion.metadata == prompt_builder_metadata

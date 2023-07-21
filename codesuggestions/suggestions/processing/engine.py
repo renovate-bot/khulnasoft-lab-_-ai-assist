@@ -7,7 +7,15 @@ from transformers import PreTrainedTokenizer
 from codesuggestions.models import TextGenBaseModel, PalmCodeGenBaseModel
 from codesuggestions.prompts import PromptTemplateBase, PromptTemplate, PromptTemplateFewShot
 from codesuggestions.prompts.code_parser import CodeParser
-from codesuggestions.suggestions.processing.base import LanguageId, ModelEngineBase
+from codesuggestions.suggestions.processing.base import (
+    LanguageId,
+    ModelEngineBase,
+    MetadataCodeContent,
+    MetadataImports,
+    MetadataPromptBuilder,
+    ModelEngineOutput,
+    MetadataModel,
+)
 from codesuggestions.suggestions.processing.ops import (
     trim_by_max_len,
     trim_by_sep,
@@ -37,17 +45,25 @@ class _CodeBody(NamedTuple):
     prefix: _CodeContent
     suffix: _CodeContent
 
-    @property
-    def total_length_tokens(self):
-        return self.prefix.length_tokens + self.suffix.length_tokens
-
 
 class _CodeImports(NamedTuple):
     content: list[_CodeContent]
 
     @property
     def total_length_tokens(self):
-        return sum([import_statement.length_tokens for import_statement in self.content])
+        return sum([
+            import_statement.length_tokens for import_statement in self.content
+        ])
+
+    @property
+    def total_length(self):
+        return sum([len(import_statement.text) for import_statement in self.content])
+
+
+class _Prompt(NamedTuple):
+    prefix: str
+    suffix: str
+    metadata: MetadataPromptBuilder
 
 
 def _double_slash_comment(comment):
@@ -89,14 +105,33 @@ class _PromptBuilder:
         LanguageId.KOTLIN: "Kotlin"
     }
 
-    def __init__(self, lang_id: Optional[LanguageId], file_name: str, prefix: str, suffix: str):
+    def __init__(
+        self,
+        prefix: _CodeContent,
+        suffix: _CodeContent,
+        file_name: str,
+        lang_id: Optional[LanguageId] = None,
+    ):
         self.lang_id = lang_id
         self.file_name = file_name
-        self._prefix = prefix
-        self._suffix = suffix
+
+        self._prefix = prefix.text
+        self._suffix = suffix.text
+
+        self._metadata = {
+            "prefix": MetadataCodeContent(
+                length=len(prefix.text),
+                length_tokens=prefix.length_tokens,
+            ),
+            "suffix": MetadataCodeContent(
+                length=len(suffix.text),
+                length_tokens=suffix.length_tokens,
+            )
+        }
 
     def add_imports(self, imports: _CodeImports, max_total_length_tokens: int):
         total_length_tokens = 0
+        total_length = 0
 
         # Only prepend the import statement if it's not present and we have room
         for import_statement in imports.content:
@@ -106,9 +141,21 @@ class _PromptBuilder:
             ):
                 continue
 
+            total_length += len(import_statement.text)
             total_length_tokens += import_statement.length_tokens
             if max_total_length_tokens - total_length_tokens >= 0:
                 self._prefix = f"{import_statement.text}\n{self._prefix}"
+
+        self._metadata["imports"] = MetadataImports(
+            pre=MetadataCodeContent(
+                length=imports.total_length,
+                length_tokens=imports.total_length_tokens,
+            ),
+            post=MetadataCodeContent(
+                length=total_length,
+                length_tokens=total_length_tokens,
+            ),
+        )
 
     def _prepend_comments(self) -> str:
         if self.lang_id not in self.COMMENT_GENERATOR:
@@ -119,9 +166,18 @@ class _PromptBuilder:
         header = comment(f"This code has a filename of {self.file_name} and is written in {language}.")
         return f"{header}\n{self._prefix}"
 
-    def build(self) -> tuple[str, str]:
+    def build(self) -> _Prompt:
         new_prefix = self._prepend_comments()
-        return new_prefix, self._suffix
+
+        return _Prompt(
+            prefix=new_prefix,
+            suffix=self._suffix,
+            metadata=MetadataPromptBuilder(
+                prefix=self._metadata["prefix"],
+                suffix=self._metadata["suffix"],
+                imports=self._metadata.get("imports", None),
+            ),
+        )
 
 
 class ModelEngineCodegen(ModelEngineBase):
@@ -141,17 +197,22 @@ class ModelEngineCodegen(ModelEngineBase):
         self.prompt_tpls = prompt_tpls
         self.sep_code_block = sep_code_block
 
-    def generate_completion(self, prefix: str, suffix: str, file_name: str, **kwargs: Any) -> str:
+    def generate_completion(self, prefix: str, suffix: str, file_name: str, **kwargs: Any) -> ModelEngineOutput:
         # collect metrics
         lang_id = lang_from_filename(file_name)
         self.increment_lang_counter(file_name, lang_id)
 
         prompt = self._build_prompt(prefix, lang_id)
+        model_metadata = MetadataModel(name=self.model.model_name, engine=self.model.model_engine)
+
         if res := self.model.generate(prompt, suffix, **kwargs):
             completion = self._clean_completions(res.text)
-            return completion
+            return ModelEngineOutput(
+                text=completion,
+                model=model_metadata,
+            )
 
-        return ""
+        return ModelEngineOutput(text="", model=model_metadata)
 
     def _build_prompt(self, content: str, lang_id: Optional[LanguageId]) -> str:
         prompt = trim_by_max_len(content, self.model.MAX_MODEL_LEN)
@@ -197,33 +258,45 @@ class ModelEnginePalm(ModelEngineBase):
         self.model = model
         self.tokenizer = tokenizer
 
-    async def generate_completion(self, prefix: str, suffix: str, file_name: str, **kwargs: Any):
+    async def generate_completion(self, prefix: str, suffix: str, file_name: str, **kwargs: Any) -> ModelEngineOutput:
         # collect metrics
         lang_id = lang_from_filename(file_name)
         self.increment_lang_counter(file_name, lang_id)
 
-        prompt, suffix = self._build_prompt(prefix, file_name, suffix, lang_id)
+        prompt = self._build_prompt(prefix, file_name, suffix, lang_id)
 
         # count symbols of the final prompt
-        self._count_symbols(prompt, lang_id)
+        self._count_symbols(prompt.prefix, lang_id)
 
-        if res := await self.model.generate(prompt, suffix, **kwargs):
-            return res.text
+        model_metadata = MetadataModel(name=self.model.model_name, engine=self.model.model_engine)
+        if res := await self.model.generate(prompt.prefix, prompt.suffix, **kwargs):
+            return ModelEngineOutput(
+                text=res.text,
+                model=model_metadata,
+                lang_id=lang_id,
+                metadata=prompt.metadata,
+            )
 
-        return ""
+        return ModelEngineOutput(text="", model=model_metadata)
 
-    def _build_prompt(self, prefix: str, file_name: str, suffix: str, lang_id: Optional[LanguageId]) -> tuple[str, str]:
+    def _build_prompt(
+        self,
+        prefix: str,
+        file_name: str,
+        suffix: str,
+        lang_id: Optional[LanguageId] = None,
+    ) -> _Prompt:
         imports = self._get_imports(prefix, lang_id)
         prompt_len_imports = min(imports.total_length_tokens, 512)  # max 512 tokens
         prompt_len_body = self.model.MAX_MODEL_LEN - prompt_len_imports
 
         body = self._get_body(prefix, suffix, prompt_len_body)
 
-        prompt_builder = _PromptBuilder(lang_id, file_name, body.prefix.text, body.suffix.text)
+        prompt_builder = _PromptBuilder(body.prefix, body.suffix, file_name, lang_id)
         prompt_builder.add_imports(imports, prompt_len_imports)
-        prefix, suffix = prompt_builder.build()
+        prompt = prompt_builder.build()
 
-        return prefix, suffix
+        return prompt
 
     def _get_imports(self, content: str, lang_id: Optional[LanguageId] = None) -> _CodeImports:
         imports_extracted = []

@@ -1,7 +1,11 @@
 import pytest
 
 from codesuggestions.suggestions.processing.base import LanguageId
-from codesuggestions.suggestions.processing.engine import _PromptBuilder
+from codesuggestions.suggestions.processing.engine import (
+    _PromptBuilder,
+    _CodeContent,
+    MetadataPromptBuilder,
+)
 
 
 @pytest.mark.parametrize(
@@ -33,8 +37,15 @@ def test_prompt_builder(
     expected_prefix: str,
     expected_suffix: str
 ):
-    prompt_builder = _PromptBuilder(lang_id, file_name, prefix, suffix)
-    prefix, suffix = prompt_builder.build()
+    prompt_builder = _PromptBuilder(
+        _CodeContent(prefix, length_tokens=1),
+        _CodeContent(suffix, length_tokens=1),
+        file_name,
+        lang_id=lang_id,
+    )
 
-    assert prefix == expected_prefix
-    assert suffix == expected_suffix
+    prompt = prompt_builder.build()
+
+    assert prompt.prefix == expected_prefix
+    assert prompt.suffix == expected_suffix
+    assert type(prompt.metadata) is MetadataPromptBuilder
