@@ -56,13 +56,6 @@ def _init_vertex_grpc_client(api_endpoint: str, real_or_fake):
     client.transport.close()
 
 
-def _init_t5_tokenizer():
-    # T5Tokenizer ignores new lines, tabs and multiple spaces used a lot in coding.
-    # When the T5Tokenizer is applied, the output differs from input.
-    # We're switching to the Salesforce Codegen tokenizer temporarily.
-    init_tokenizer()
-
-
 def _create_gitlab_codegen_model_provider(grpc_client_triton, real_or_fake):
     return (
         providers.Selector(
@@ -174,7 +167,7 @@ class CodeSuggestionsContainer(containers.DeclarativeContainer):
         real_or_fake=config.palm_text_model.real_or_fake,
     )
 
-    t5_tokenizer = providers.Resource(_init_t5_tokenizer)
+    tokenizer = providers.Resource(init_tokenizer)
 
     palm_model_rollout = providers.Callable(
         # take the first model only as the primary one if several passed
@@ -196,7 +189,7 @@ class CodeSuggestionsContainer(containers.DeclarativeContainer):
 
     engines_palm_codegen = _create_palm_engine_providers(
         grpc_client_vertex,
-        t5_tokenizer,
+        tokenizer,
         config.palm_text_model.project,
         config.palm_text_model.location,
         config.palm_text_model.real_or_fake
