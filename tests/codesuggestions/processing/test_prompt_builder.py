@@ -26,6 +26,14 @@ from codesuggestions.suggestions.processing.engine import (
             "\n",
             "# This code has a filename of test.py and is written in Python.\ndef sort(arr):",
             "\n",
+        ),
+        (
+            None,
+            "App.vue",
+            "<script setup>",
+            "\n",
+            "This code has a filename of App.vue\n<script setup>",
+            "\n",
         )
     ]
 )

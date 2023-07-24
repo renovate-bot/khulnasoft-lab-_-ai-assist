@@ -159,7 +159,8 @@ class _PromptBuilder:
 
     def _prepend_comments(self) -> str:
         if self.lang_id not in self.COMMENT_GENERATOR:
-            return self._prefix
+            header = f"This code has a filename of {self.file_name}"
+            return f"{header}\n{self._prefix}"
 
         comment = self.COMMENT_GENERATOR[self.lang_id]
         language = self.LANG_ID_TO_HUMAN_NAME[self.lang_id]
