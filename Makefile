@@ -6,8 +6,11 @@ CODE_SUGGESTIONS_DIR := ${ROOT_DIR}/codesuggestions
 
 LINT_WORKING_DIR ?= ${ROOT_DIR}
 
-COMPOSE := docker-compose -f docker-compose.dev.yaml
-
+COMPOSE_FILES := -f docker-compose.dev.yaml
+ifneq (,$(wildcard docker-compose.override.yaml))
+COMPOSE_FILES += -f docker-compose.override.yaml
+endif
+COMPOSE := docker-compose $(COMPOSE_FILES)
 
 .PHONY: develop-local
 develop-local:

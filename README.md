@@ -257,7 +257,8 @@ If you are on Apple Silicon, you will need to host Triton somewhere else as ther
 architecture.
 
 You can either run `make develop-local` or `docker-compose -f docker-compose.dev.yaml up --build --remove-orphans` this
-will run the API.
+will run the API. If you need to change configuration for a Docker Compose service, add it to `docker-compose.override.yaml`.
+Any changes made to services in this file will be merged into the default settings.
 
 Next open the VS Code extension project, and run the development version of the GitLab Workflow extension locally.
 
