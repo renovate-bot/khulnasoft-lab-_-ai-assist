@@ -1,16 +1,29 @@
+from typing import Any
+
 import pytest
 from unittest.mock import Mock, AsyncMock, PropertyMock
+from contextlib import contextmanager
+from transformers import AutoTokenizer
 
-from codesuggestions.models import TextGenModelOutput, PalmCodeGenBaseModel
+from codesuggestions.models import (
+    TextGenModelOutput,
+    PalmCodeGenBaseModel,
+    VertexModelInternalError,
+    VertexModelInvalidArgument,
+)
 from codesuggestions.suggestions.processing import (
     ops,
     ModelEngineCodegen,
     ModelEnginePalm, MetadataModel, LanguageId, MetadataPromptBuilder, MetadataCodeContent, MetadataImports,
 )
 
-from transformers import AutoTokenizer
-
 tokenizer = AutoTokenizer.from_pretrained("Salesforce/codegen2-16B")
+
+
+class MockInstrumentor:
+    @contextmanager
+    def watch(self, prompt: str, **kwargs: Any):
+        yield Mock()
 
 
 def _side_effect_few_shot_tpl(content: str, _suffix: str, filename: str, model_output: str):
@@ -46,10 +59,6 @@ def _side_effect_lang_prepended(content: str, _suffix: str, filename: str, model
     return _fn
 
 
-def token_length(s: str):
-    return len(tokenizer(s)["input_ids"])
-
-
 def _side_effect_with_suffix(content: str, suffix: str, filename: str, model_output: str):
     original_suffix = suffix
 
@@ -69,6 +78,24 @@ def _side_effect_with_imports(content: str, suffix: str, filename: str, model_ou
         return TextGenModelOutput(text=model_output)
 
     return _fn
+
+
+def _side_effect_with_internal_exception(content: str, suffix: str, filename: str, model_output: str):
+    def _fn(prompt: str, suffix: str):
+        raise VertexModelInternalError("internal error")
+
+    return _fn
+
+
+def _side_effect_with_invalid_arg_exception(content: str, suffix: str, filename: str, model_output: str):
+    def _fn(prompt: str, suffix: str):
+        raise VertexModelInvalidArgument("invalid argument")
+
+    return _fn
+
+
+def token_length(s: str):
+    return len(tokenizer(s)["input_ids"])
 
 
 @pytest.mark.parametrize(
@@ -158,8 +185,7 @@ def test_model_engine_codegen(
                 prefix=MetadataCodeContent(length=6, length_tokens=2),
                 suffix=MetadataCodeContent(length=0, length_tokens=0),
                 imports=MetadataImports(pre=MetadataCodeContent(length=0, length_tokens=0),
-                                        post=MetadataCodeContent(length=0, length_tokens=0),
-                )
+                                        post=MetadataCodeContent(length=0, length_tokens=0)),
             ),
             "random completion",
         ),
@@ -178,15 +204,6 @@ def test_model_engine_codegen(
             ),
             "random completion\nnew line",
         ),
-        # TODO: Disable this test as we temporarily do not prepend with lang_id
-        # (
-        #     "prompt",
-        #     "",
-        #     "f.py",
-        #     _side_effect_lang_prepended,
-        #     "random completion\nnew line",
-        #     "random completion\nnew line",
-        # ),
         (
             "prompt " * 2048,
             "abc " * 4096,
@@ -217,6 +234,26 @@ def test_model_engine_codegen(
             ),
             "random completion\nnew line",
         ),
+        (
+            "random_prefix",
+            "random_suffix",
+            "f.unk",
+            _side_effect_with_internal_exception,
+            "unreturned completion due to an exception",
+            None,
+            None,
+            "",
+        ),
+(
+            "random_prefix",
+            "random_suffix",
+            "f.unk",
+            _side_effect_with_invalid_arg_exception,
+            "unreturned completion due to an exception",
+            None,
+            None,
+            "",
+        ),
     ],
 )
 async def test_model_engine_palm(
@@ -239,6 +276,7 @@ async def test_model_engine_palm(
     type(text_gen_base_model).model_engine = PropertyMock(return_value=model_engine)
 
     engine = ModelEnginePalm(text_gen_base_model, tokenizer)
+    engine.instrumentator = MockInstrumentor()
     completion = await engine.generate_completion(prefix, suffix, file_name)
 
     assert completion.text == expected_completion
