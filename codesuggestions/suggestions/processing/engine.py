@@ -4,7 +4,13 @@ import structlog
 
 from transformers import PreTrainedTokenizer
 
-from codesuggestions.models import TextGenBaseModel, PalmCodeGenBaseModel
+from codesuggestions.instrumentators import TextGenModelInstrumentator
+from codesuggestions.models import (
+    TextGenBaseModel,
+    PalmCodeGenBaseModel,
+    VertexModelInvalidArgument,
+    VertexModelInternalError,
+)
 from codesuggestions.prompts import PromptTemplateBase, PromptTemplate, PromptTemplateFewShot
 from codesuggestions.prompts.code_parser import CodeParser
 from codesuggestions.suggestions.processing.base import (
@@ -253,10 +259,10 @@ class ModelEngineCodegen(ModelEngineBase):
 
 
 class ModelEnginePalm(ModelEngineBase):
-    # TODO: implement another custom prompt template here
     def __init__(self, model: PalmCodeGenBaseModel, tokenizer: PreTrainedTokenizer):
         self.model = model
         self.tokenizer = tokenizer
+        self.instrumentator = TextGenModelInstrumentator(model.model_engine, model.model_name)
 
     async def generate_completion(self, prefix: str, suffix: str, file_name: str, **kwargs: Any) -> ModelEngineOutput:
         # collect metrics
@@ -269,15 +275,22 @@ class ModelEnginePalm(ModelEngineBase):
         self._count_symbols(prompt.prefix, lang_id)
 
         model_metadata = MetadataModel(name=self.model.model_name, engine=self.model.model_engine)
-        if res := await self.model.generate(prompt.prefix, prompt.suffix, **kwargs):
-            return ModelEngineOutput(
-                text=res.text,
-                model=model_metadata,
-                lang_id=lang_id,
-                metadata=prompt.metadata,
-            )
+        empty_output = ModelEngineOutput(text="", model=model_metadata)
 
-        return ModelEngineOutput(text="", model=model_metadata)
+        # TODO: keep watching the suffix length until logging ModelEngineOutput in the upper layer
+        with self.instrumentator.watch(prompt, suffix_length=len(suffix)) as watch_container:
+            try:
+                if res := await self.model.generate(prompt.prefix, prompt.suffix, **kwargs):
+                    return ModelEngineOutput(
+                        text=res.text,
+                        model=model_metadata,
+                        lang_id=lang_id,
+                        metadata=prompt.metadata,
+                    )
+            except (VertexModelInvalidArgument, VertexModelInternalError) as ex:
+                watch_container.register_model_exception(str(ex), ex.code)
+
+        return empty_output
 
     def _build_prompt(
         self,
