@@ -10,8 +10,7 @@ from codesuggestions.api.middleware import (
     MiddlewareModelTelemetry,
 )
 from codesuggestions.api.monitoring import router as http_monitoring_router
-from codesuggestions.api.suggestions import router as http_suggestions_router
-from codesuggestions.api.v2.api import api_router as api_router_v2
+from codesuggestions.api.v2.api import api_router as http_api_router_v2
 from codesuggestions.deps import FastApiContainer
 
 __all__ = [
@@ -54,8 +53,7 @@ def create_fast_api_server(
         ],
     )
 
-    fastapi_app.include_router(http_suggestions_router, prefix="/v1")
-    fastapi_app.include_router(api_router_v2)
+    fastapi_app.include_router(http_api_router_v2)
     fastapi_app.include_router(http_monitoring_router)
 
     return fastapi_app
