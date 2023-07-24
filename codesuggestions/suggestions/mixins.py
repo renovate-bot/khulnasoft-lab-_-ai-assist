@@ -30,7 +30,7 @@ PII_DETECTORS = [
     DetectorRegexIPV4(),
     DetectorBasicAuthSecrets(),
     DetectorTokenSecrets(),
-    DetectorKeywordsSecrets()
+    DetectorKeywordsSecrets(),
 ]
 
 PII_REPLACEMENTS = {
@@ -62,7 +62,7 @@ class RedactPiiMixin:
             if step > d.start:
                 # skip: the previous detection overlaps the current one
                 continue
-            if subtext := content[step: d.start]:
+            if subtext := content[step : d.start]:
                 subparts.append(subtext)
 
             subparts.append(self.pii_replacements[d.kind])

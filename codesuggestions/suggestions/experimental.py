@@ -41,7 +41,7 @@ class CodeCompletionsInternalUseCase:
         )
 
         return CodeCompletionsInternal(
-            text=completion,
+            text=completion.text,
             model=CodeCompletionsInternal.Model(
                 # TODO: return props from the target engine instead of using glob var
                 engine=context.get("model_engine", ""),

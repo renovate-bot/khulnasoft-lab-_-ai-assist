@@ -1,6 +1,6 @@
 import json
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any, Optional, NamedTuple
 from abc import ABC, abstractmethod
 from enum import Enum
 
@@ -8,6 +8,11 @@ from prometheus_client import Counter
 
 __all__ = [
     "LanguageId",
+    "MetadataCodeContent",
+    "MetadataImports",
+    "MetadataPromptBuilder",
+    "ModelEngineOutput",
+    "MetadataModel",
     "ModelEngineBase",
 ]
 
@@ -32,9 +37,37 @@ class LanguageId(Enum):
     KOTLIN = 13
 
 
+class MetadataCodeContent(NamedTuple):
+    length: int
+    length_tokens: int
+
+
+class MetadataImports(NamedTuple):
+    pre: MetadataCodeContent
+    post: MetadataCodeContent
+
+
+class MetadataPromptBuilder(NamedTuple):
+    prefix: MetadataCodeContent
+    suffix: MetadataCodeContent
+    imports: Optional[MetadataImports] = None
+
+
+class MetadataModel(NamedTuple):
+    name: str
+    engine: str
+
+
+class ModelEngineOutput(NamedTuple):
+    text: str
+    model: MetadataModel
+    lang_id: Optional[LanguageId] = None
+    metadata: Optional[MetadataPromptBuilder] = None
+
+
 class ModelEngineBase(ABC):
     @abstractmethod
-    async def generate_completion(self, prefix: str, suffix: str, file_name: str, **kwargs: Any):
+    async def generate_completion(self, prefix: str, suffix: str, file_name: str, **kwargs: Any) -> ModelEngineOutput:
         pass
 
     def increment_lang_counter(self, filename: str, lang_id: Optional[LanguageId] = None):
