@@ -73,6 +73,7 @@ install-test-deps:
 	@mv scripts/lib/*.so lib
 
 .PHONY: test
+test: LIB_DIR ?= ${ROOT_DIR}/lib
 test: install-test-deps
 	@echo "Running test..."
 	@poetry run pytest

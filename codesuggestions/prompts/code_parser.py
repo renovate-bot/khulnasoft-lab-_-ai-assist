@@ -1,3 +1,4 @@
+import os
 from codesuggestions.suggestions.processing.base import LanguageId
 from tree_sitter import Language, Node, Parser, Tree
 from typing import Optional
@@ -5,7 +6,7 @@ from collections import Counter
 
 
 class CodeParser:
-    TREE_SITTER_LIB = 'lib/tree-sitter-languages.so'
+    TREE_SITTER_LIB = "%s/tree-sitter-languages.so" % os.getenv("LIB_DIR", "/usr/lib")
 
     LANG_ID_TO_LANGUAGE = {
         LanguageId.C: "c",

@@ -44,7 +44,7 @@ RUN poetry run python /app/scripts/build-tree-sitter-lib.py
 FROM base-image as final
 
 COPY --from=install-image /opt/venv /opt/venv
-COPY --from=install-image /app/scripts/lib/*.so ./lib/
+COPY --from=install-image /app/scripts/lib/*.so /usr/lib
 
 COPY codesuggestions/ codesuggestions/
 
