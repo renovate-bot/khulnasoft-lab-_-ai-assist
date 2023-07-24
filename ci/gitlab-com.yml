@@ -158,8 +158,7 @@ tests:
     - curl -sL https://deb.nodesource.com/setup_18.x | bash -
     - apt-get update && apt install -y nodejs build-essential git
     - poetry run python scripts/build-tree-sitter-lib.py
-    - mkdir -p lib
-    - mv scripts/lib/tree-sitter-languages.so lib
+    - mv scripts/lib/tree-sitter-languages.so /usr/lib
     - poetry run pytest --junitxml=".test-reports/tests.xml"
   artifacts:
     when: always
