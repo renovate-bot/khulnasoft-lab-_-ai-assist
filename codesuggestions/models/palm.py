@@ -98,19 +98,28 @@ class PalmCodeGenBaseModel(TextGenBaseModel):
     # E.g.: code-bison@001
     SEP_MODEL_VERSION = "@"
 
+    _MODEL_ENGINE = "vertex-ai"
+
     def __init__(
         self,
         model_name: str,
         client: PredictionServiceAsyncClient,
         project: str,
         location: str,
-        timeout: int = 30
+        model_version: str,
+        timeout: int = 30,
     ):
         self.client = client
         self.timeout = timeout
 
-        self.endpoint = f"projects/{project}/locations/{location}/publishers/google/models/{model_name}"
-        self.instrumentator = TextGenModelInstrumentator("vertex-ai", model_name)
+        self._model_name = (
+            model_name
+            if model_version == "latest" or model_version == ""
+            else PalmCodeGenBaseModel.SEP_MODEL_VERSION.join([model_name, model_version])
+        )
+
+        self.endpoint = f"projects/{project}/locations/{location}/publishers/google/models/{self.model_name}"
+        self.instrumentator = TextGenModelInstrumentator("vertex-ai", self.model_name)
 
     async def _generate(
         self,
@@ -147,13 +156,13 @@ class PalmCodeGenBaseModel(TextGenBaseModel):
         for prediction in predictions:
             return TextGenModelOutput(text=prediction.get('content'))
 
-    @staticmethod
-    def _resolve_model_version(model_name: str, model_version: str = "latest") -> str:
-        return (
-            model_name
-            if model_version == "latest" or model_version == ""
-            else PalmCodeGenBaseModel.SEP_MODEL_VERSION.join([model_name, model_version])
-        )
+    @property
+    def model_name(self) -> str:
+        return self._model_name
+
+    @property
+    def model_engine(self) -> str:
+        return PalmCodeGenBaseModel._MODEL_ENGINE
 
     @abstractmethod
     async def generate(
@@ -178,11 +187,7 @@ class PalmTextBisonModel(PalmCodeGenBaseModel):
         location: str,
         version: str = "latest"
     ):
-        model_name = PalmCodeGenBaseModel._resolve_model_version(
-            PalmModel.TEXT_BISON,
-            version,
-        )
-        super().__init__(model_name, client, project, location)
+        super().__init__(PalmModel.TEXT_BISON, client, project, location, version)
 
     async def generate(
         self,
@@ -210,11 +215,7 @@ class PalmCodeBisonModel(PalmCodeGenBaseModel):
         location: str,
         version: str = "latest",
     ):
-        model_name = PalmCodeGenBaseModel._resolve_model_version(
-            PalmModel.CODE_BISON,
-            version,
-        )
-        super().__init__(model_name, client, project, location)
+        super().__init__(PalmModel.CODE_BISON, client, project, location, version)
 
     async def generate(
         self,
@@ -242,11 +243,7 @@ class PalmCodeGeckoModel(PalmCodeGenBaseModel):
         location: str,
         version: str = "latest"
     ):
-        model_name = PalmCodeGenBaseModel._resolve_model_version(
-            PalmModel.CODE_GECKO,
-            version,
-        )
-        super().__init__(model_name, client, project, location)
+        super().__init__(PalmModel.CODE_GECKO, client, project, location, version)
 
     async def generate(
         self,
