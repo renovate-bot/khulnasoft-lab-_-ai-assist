@@ -34,6 +34,15 @@ def _side_effect_unknown_tpl(content: str, _suffix: str, _: str, model_output: s
     return _fn
 
 
+def _side_effect_unknown_tpl_palm(prefix: str, _suffix: str, filename: str, model_output: str):
+    def _fn(prompt: str, _suffix: str):
+        assert filename in prompt
+
+        return TextGenModelOutput(text=model_output)
+
+    return _fn
+
+
 def _side_effect_lang_prepended(content: str, _suffix: str, filename: str, model_output: str):
     lang_id = ops.lang_from_filename(filename)
 
@@ -151,7 +160,7 @@ def test_model_engine_codegen(
             "prompt",
             "",
             "f.unk",
-            _side_effect_unknown_tpl,
+            _side_effect_unknown_tpl_palm,
             "random completion",
             None,
             MetadataPromptBuilder(
@@ -167,7 +176,7 @@ def test_model_engine_codegen(
             "prompt",
             "",
             "f.unk",
-            _side_effect_unknown_tpl,
+            _side_effect_unknown_tpl_palm,
             "random completion\nnew line",
             None,
             MetadataPromptBuilder(
