@@ -12,8 +12,6 @@ from codesuggestions.suggestions import CodeSuggestions
 from codesuggestions.api.rollout import ModelRolloutBasePlan
 from codesuggestions.instrumentators.base import Telemetry, TelemetryInstrumentator
 
-from starlette_context import context
-
 __all__ = [
     "router",
 ]
@@ -85,9 +83,7 @@ async def completions(
     return SuggestionsResponse(
         id="id",
         created=int(time()),
-        model=SuggestionsResponse.Model(
-            engine=context.get("model_engine", ""), name=context.get("model_name", "")
-        ),
+        model=SuggestionsResponse.Model(engine=suggestion.model.engine, name=suggestion.model.name),
         choices=[
             SuggestionsResponse.Choice(text=suggestion.text),
         ],

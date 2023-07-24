@@ -1,4 +1,4 @@
-from codesuggestions.suggestions.processing import ModelEngineBase
+from codesuggestions.suggestions.processing import ModelEngineBase, ModelEngineOutput
 
 __all__ = [
     "CodeSuggestions"
@@ -14,5 +14,5 @@ class CodeSuggestions:
         prefix: str,
         suffix: str,
         file_name: str,
-    ) -> str:
+    ) -> ModelEngineOutput:
         return self.engine.generate_completion(prefix, suffix, file_name)
