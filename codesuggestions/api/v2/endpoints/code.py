@@ -89,6 +89,6 @@ async def completions(
             engine=context.get("model_engine", ""), name=context.get("model_name", "")
         ),
         choices=[
-            SuggestionsResponse.Choice(text=suggestion),
+            SuggestionsResponse.Choice(text=suggestion.text),
         ],
     )
