@@ -11,7 +11,6 @@ from http.client import (
 
 from codesuggestions.models.base import ModelInput, ModelAPICallError
 from codesuggestions.models import TextGenBaseModel, TextGenModelOutput
-from codesuggestions.instrumentators.base import TextGenModelInstrumentator
 
 from google.protobuf import json_format, struct_pb2
 from google.cloud.aiplatform.gapic import PredictionServiceAsyncClient
@@ -119,7 +118,6 @@ class PalmCodeGenBaseModel(TextGenBaseModel):
         )
 
         self.endpoint = f"projects/{project}/locations/{location}/publishers/google/models/{self.model_name}"
-        self.instrumentator = TextGenModelInstrumentator("vertex-ai", self.model_name)
 
     async def _generate(
         self,
@@ -198,9 +196,8 @@ class PalmTextBisonModel(PalmCodeGenBaseModel):
         top_p: float = 0.95,
         top_k: int = 40
     ) -> Optional[TextGenModelOutput]:
-        input = TextBisonModelInput(prompt)
-        with self.instrumentator.watch(prompt):
-            res = await self._generate(input, temperature, max_output_tokens, top_p, top_k)
+        model_input = TextBisonModelInput(prompt)
+        res = await self._generate(model_input, temperature, max_output_tokens, top_p, top_k)
 
         return res
 
@@ -226,9 +223,8 @@ class PalmCodeBisonModel(PalmCodeGenBaseModel):
         top_p: float = 0.95,
         top_k: int = 40
     ) -> Optional[TextGenModelOutput]:
-        input = CodeBisonModelInput(prompt)
-        with self.instrumentator.watch(prompt):
-            res = await self._generate(input, temperature, max_output_tokens, top_p, top_k)
+        model_input = CodeBisonModelInput(prompt)
+        res = await self._generate(model_input, temperature, max_output_tokens, top_p, top_k)
 
         return res
 
@@ -254,14 +250,8 @@ class PalmCodeGeckoModel(PalmCodeGenBaseModel):
         top_p: float = 0.95,
         top_k: int = 40
     ) -> Optional[TextGenModelOutput]:
-        input = CodeGeckoModelInput(prompt, suffix)
-
-        with self.instrumentator.watch(prompt, suffix_length=len(suffix)) as watch_container:
-            try:
-                res = await self._generate(input, temperature, max_output_tokens, top_p, top_k)
-            except (VertexModelInvalidArgument, VertexModelInternalError) as ex:
-                res = TextGenModelOutput(text="")
-                watch_container.register_model_exception(str(ex), ex.code)
+        model_input = CodeGeckoModelInput(prompt, suffix)
+        res = await self._generate(model_input, temperature, max_output_tokens, top_p, top_k)
 
         return res
 

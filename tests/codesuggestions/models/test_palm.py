@@ -1,6 +1,5 @@
 import pytest
 
-from contextlib import contextmanager
 from unittest.mock import Mock, AsyncMock
 from codesuggestions.models.palm import (
     CodeBisonModelInput,
@@ -10,18 +9,12 @@ from codesuggestions.models.palm import (
     PalmTextBisonModel,
     TextBisonModelInput,
     TextGenModelOutput,
+    VertexModelInternalError,
+    VertexModelInvalidArgument,
 )
-from typing import Any
 
-from google.cloud.aiplatform.gapic import PredictionServiceClient
+from google.cloud.aiplatform.gapic import PredictionServiceAsyncClient
 from google.api_core.exceptions import InvalidArgument, InternalServerError
-
-
-class MockInstrumentor:
-    @contextmanager
-    def watch(self, prompt: str, **kwargs: Any):
-        yield Mock()
-
 
 TEST_PREFIX = "random propmt"
 TEST_SUFFIX = "some suffix"
@@ -77,7 +70,6 @@ TEST_SUFFIX = "some suffix"
 async def test_palm_code_gecko_prompt(model, prefix, suffix, expected_output, expected_generate_args):
     client = Mock()
     palm_model = model(client=client, project="test", location="some location")
-    palm_model.instrumentator = MockInstrumentor()
     palm_model._generate = AsyncMock(side_effect=lambda *_: TextGenModelOutput(text=expected_output))
 
     result = await palm_model.generate(prefix, suffix)
@@ -109,23 +101,24 @@ def test_palm_model_inputs(model_input, is_valid, output_dict):
 
 @pytest.mark.asyncio
 @pytest.mark.parametrize(
-    "model,vertex_exception", [
+    "model,client_exception,expected_exception", [
         (
-            PalmCodeGeckoModel(Mock(spec=PredictionServiceClient), "random_project", "random_location"),
+            PalmCodeGeckoModel(Mock(spec=PredictionServiceAsyncClient), "random_project", "random_location"),
             InvalidArgument("Bad argument."),
+            VertexModelInvalidArgument,
         ),
         (
-            PalmCodeGeckoModel(Mock(spec=PredictionServiceClient), "random_project", "random_location"),
+            PalmCodeGeckoModel(Mock(spec=PredictionServiceAsyncClient), "random_project", "random_location"),
             InternalServerError("Internal server error."),
+            VertexModelInternalError,
         ),
     ]
 )
-async def test_palm_model_api_error(model, vertex_exception):
+async def test_palm_model_api_error(model, client_exception, expected_exception):
     def _client_predict(*args, **kwargs):
-        raise vertex_exception
+        raise client_exception
 
     model.client.predict = AsyncMock(side_effect=_client_predict)
-    model.instrumentator = MockInstrumentor()
 
-    actual = await model.generate("random_prefix", "random_suffix")
-    assert actual == TextGenModelOutput(text="")
+    with pytest.raises(expected_exception):
+        _ = await model.generate("random_prefix", "random_suffix")
