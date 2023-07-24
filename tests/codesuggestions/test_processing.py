@@ -1,7 +1,7 @@
 import pytest
 
 from codesuggestions.suggestions.processing import ops
-from codesuggestions.suggestions.processing import (
+from codesuggestions.suggestions.processing.ops import (
     LanguageId,
 )
 

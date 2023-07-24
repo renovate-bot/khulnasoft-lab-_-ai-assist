@@ -8,6 +8,7 @@ from prometheus_client import Counter, Histogram
 from pydantic import BaseModel, constr
 
 METRIC_LABELS = ["model_engine", "model_name"]
+TELEMETRY_LABELS = METRIC_LABELS + ["lang"]
 
 INFERENCE_COUNTER = Counter("code_suggestions_inference_requests",
                             "Number of times an inference request was made", METRIC_LABELS)
@@ -19,9 +20,9 @@ INFERENCE_PROMPT_HISTOGRAM = Histogram("code_suggestions_inference_prompt_size_b
                                        "Size of the prompt of an inference request in bytes", METRIC_LABELS,
                                        buckets=(32, 64, 128, 256, 512, 1024, 2048, 4096))
 
-ACCEPTS_COUNTER = Counter("code_suggestions_accepts", "Accepts count by number", METRIC_LABELS)
-REQUESTS_COUNTER = Counter("code_suggestions_requests", "Requests count by number", METRIC_LABELS)
-ERRORS_COUNTER = Counter("code_suggestions_errors", "Errors count by number", METRIC_LABELS)
+ACCEPTS_COUNTER = Counter("code_suggestions_accepts", "Accepts count by number", TELEMETRY_LABELS)
+REQUESTS_COUNTER = Counter("code_suggestions_requests", "Requests count by number", TELEMETRY_LABELS)
+ERRORS_COUNTER = Counter("code_suggestions_errors", "Errors count by number", TELEMETRY_LABELS)
 
 telemetry_logger = structlog.stdlib.get_logger("telemetry")
 
@@ -71,6 +72,7 @@ class Telemetry(BaseModel):
     # TODO: Once the header telemetry format is removed, we can unmark these as optional
     model_engine: Optional[constr(max_length=50)]
     model_name: Optional[constr(max_length=50)]
+    lang: Optional[constr(max_length=50)]
     requests: int
     accepts: int
     errors: int
@@ -87,6 +89,7 @@ class TelemetryInstrumentator:
                 labels = {
                     "model_engine": stats.model_engine or context.get("model_engine", ""),
                     "model_name": stats.model_name or context.get("model_name", ""),
+                    "lang": stats.lang
                 }
 
                 telemetry_logger.info("telemetry", **(stats.dict() | labels))

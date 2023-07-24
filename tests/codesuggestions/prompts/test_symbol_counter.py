@@ -1,7 +1,7 @@
 import pytest
 
 from codesuggestions.prompts.code_parser import CodeParser
-from codesuggestions.suggestions.processing.base import LanguageId
+from codesuggestions.suggestions.processing.ops import LanguageId
 
 PYTHON_SOURCE_SAMPLE = """# Python test
 import os

@@ -14,7 +14,7 @@ from codesuggestions.models import (
 from codesuggestions.suggestions.processing import (
     ops,
     ModelEngineCodegen,
-    ModelEnginePalm, MetadataModel, LanguageId, MetadataPromptBuilder, MetadataCodeContent, MetadataImports,
+    ModelEnginePalm, MetadataModel, MetadataPromptBuilder, MetadataCodeContent, MetadataImports,
 )
 
 tokenizer = AutoTokenizer.from_pretrained("Salesforce/codegen2-16B")
@@ -107,6 +107,7 @@ def token_length(s: str):
     return len(tokenizer(s)["input_ids"])
 
 
+@pytest.mark.asyncio
 @pytest.mark.parametrize(
     "content,file_name,model_gen_func,model_output,expected_completion",
     [
@@ -155,7 +156,7 @@ def token_length(s: str):
         ),
     ],
 )
-def test_model_engine_codegen(
+async def test_model_engine_codegen(
     text_gen_base_model,
     tpl_codegen_dir,
     content,
@@ -172,7 +173,7 @@ def test_model_engine_codegen(
         text_gen_base_model,
     )
 
-    completion = engine.generate_completion(content, "", file_name)
+    completion = await engine.generate_completion(content, "", file_name)
 
     assert completion.text == expected_completion
     assert completion.model is not None
@@ -219,7 +220,7 @@ def test_model_engine_codegen(
             "f.py",
             _side_effect_with_suffix,
             "random completion\nnew line",
-            LanguageId.PYTHON,
+            ops.LanguageId.PYTHON,
             MetadataPromptBuilder(
                 prefix=MetadataCodeContent(length=3494, length_tokens=500),
                 suffix=MetadataCodeContent(length=1002, length_tokens=500),
@@ -234,7 +235,7 @@ def test_model_engine_codegen(
             "f.py",
             _side_effect_with_imports,
             "random completion\nnew line",
-            LanguageId.PYTHON,
+            ops.LanguageId.PYTHON,
             MetadataPromptBuilder(
                 prefix=MetadataCodeContent(length=2984, length_tokens=995),
                 suffix=MetadataCodeContent(length=0, length_tokens=0),

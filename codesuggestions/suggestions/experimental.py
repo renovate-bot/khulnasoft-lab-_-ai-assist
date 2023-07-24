@@ -14,6 +14,7 @@ class CodeCompletionsInternal(NamedTuple):
         # TODO: replace with enum values
         engine: str
         name: str
+        lang: str
 
     text: str
     model: Model
@@ -45,6 +46,7 @@ class CodeCompletionsInternalUseCase:
             model=CodeCompletionsInternal.Model(
                 # TODO: return props from the target engine instead of using glob var
                 engine=context.get("model_engine", ""),
-                name=context.get("model_name", "")
+                name=context.get("model_name", ""),
+                lang=completion.lang(),
             )
         )
