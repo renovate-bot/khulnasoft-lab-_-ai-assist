@@ -1,14 +1,14 @@
-from typing import List, Dict
+from typing import Dict, List
 
 from codesuggestions.suggestions.detectors import (
+    Detected,
+    DetectorBasicAuthSecrets,
+    DetectorKeywordsSecrets,
+    DetectorKind,
     DetectorRegexEmail,
     DetectorRegexIPV4,
     DetectorRegexIPV6,
-    DetectorBasicAuthSecrets,
     DetectorTokenSecrets,
-    DetectorKeywordsSecrets,
-    Detected,
-    DetectorKind,
 )
 
 __all__ = [

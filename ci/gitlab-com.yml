@@ -38,9 +38,9 @@ include:
     ref: v1.73.0 # renovate:managed
     file: "kaniko.yml"
 
-  - project: 'gitlab-com/gl-infra/platform/runway/ci-tasks'
+  - project: "gitlab-com/gl-infra/platform/runway/ci-tasks"
     ref: v1.0.3 # renovate:managed
-    file: 'service-project/runway.yml'
+    file: "service-project/runway.yml"
     inputs:
       runway_service_id: model-gateway-n2bsxg
       image: "$CI_REGISTRY_IMAGE/model-gateway:${CI_COMMIT_SHORT_SHA}"
@@ -89,8 +89,7 @@ lint:
   extends: .poetry
   stage: lint
   script:
-    - poetry install --with lint
-    - poetry run flake8 codesuggestions
+    - make lint
     - poetry lock --no-update
     - git diff --exit-code
 

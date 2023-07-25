@@ -4,7 +4,7 @@ ROOT_DIR := $(shell pwd)
 TESTS_DIR := ${ROOT_DIR}/tests
 CODE_SUGGESTIONS_DIR := ${ROOT_DIR}/codesuggestions
 
-LINT_WORKING_DIR ?= ${ROOT_DIR}
+LINT_WORKING_DIR ?= ${CODE_SUGGESTIONS_DIR}/suggestions
 
 COMPOSE_FILES := -f docker-compose.dev.yaml
 ifneq (,$(wildcard docker-compose.override.yaml))
@@ -20,8 +20,8 @@ develop-local:
 test-local:
 	$(COMPOSE) run -v "$(ROOT_DIR):/app" api bash -c 'poetry install --with test && poetry run pytest'
 
-.PHONY: lint
-lint:
+.PHONY: lint-local
+lint-local:
 	$(COMPOSE) run -v "$(ROOT_DIR):/app" api bash -c 'poetry install --with lint && poetry run flake8 codesuggestions'
 
 clean:
@@ -51,7 +51,7 @@ lint: flake8 check-black check-isort
 .PHONY: flake8
 flake8: install-lint-deps
 	@echo "Running flake8..."
-	@poetry run flake8 codesuggestions
+	@poetry run flake8 ${CODE_SUGGESTIONS_DIR}
 
 .PHONY: check-black
 check-black: install-lint-deps

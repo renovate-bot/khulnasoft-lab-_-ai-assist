@@ -1,4 +1,4 @@
-from typing import Optional, Any, NamedTuple
+from typing import Any, NamedTuple, Optional
 
 from starlette_context import context
 
@@ -26,11 +26,7 @@ class CodeCompletionsInternalUseCase:
         self.engine = engine
 
     async def __call__(
-        self,
-        prefix: str,
-        suffix: str,
-        file_name: Optional[str] = None,
-        **kwargs: Any
+        self, prefix: str, suffix: str, file_name: Optional[str] = None, **kwargs: Any
     ) -> CodeCompletionsInternal:
         file_name = file_name if file_name else ""
 
@@ -48,5 +44,5 @@ class CodeCompletionsInternalUseCase:
                 engine=context.get("model_engine", ""),
                 name=context.get("model_name", ""),
                 lang=completion.lang(),
-            )
+            ),
         )

@@ -1,16 +1,14 @@
 import re
+from abc import ABC, abstractmethod
+from enum import Enum
+from typing import Iterable, NamedTuple, Optional
 
 import regex
-from abc import ABC, abstractmethod
-from typing import NamedTuple, Iterable, Optional
-from enum import Enum
 
 # noinspection PyProtectedMember
-from detect_secrets.core.scan import _process_line_based_plugins, PotentialSecret
+from detect_secrets.core.scan import PotentialSecret, _process_line_based_plugins
+from detect_secrets.plugins.keyword import QUOTES_REQUIRED_DENYLIST_REGEX_TO_GROUP
 from detect_secrets.settings import transient_settings
-from detect_secrets.plugins.keyword import (
-    QUOTES_REQUIRED_DENYLIST_REGEX_TO_GROUP,
-)
 
 __all__ = [
     "Detected",
@@ -38,9 +36,9 @@ email_pattern = r"""
     (?= $ | [\b\s@,?!;:)('".\p{Han}>] )
 """
 
-ipv4seg = r'(?:25[0-5]|(?:2[0-4]|1{0,1}[0-9]){0,1}[0-9])'
-ipv4addr = r'(?:(?:' + ipv4seg + r'\.){3,3}' + ipv4seg + r')'
-ipv6seg = r'(?:(?:[0-9a-fA-F]){1,4})'
+ipv4seg = r"(?:25[0-5]|(?:2[0-4]|1{0,1}[0-9]){0,1}[0-9])"
+ipv4addr = r"(?:(?:" + ipv4seg + r"\.){3,3}" + ipv4seg + r")"
+ipv6seg = r"(?:(?:[0-9a-fA-F]){1,4})"
 
 # Examples of emails identified:
 # 1:2:3:4:5:6:7:8
@@ -56,31 +54,27 @@ ipv6seg = r'(?:(?:[0-9a-fA-F]){1,4})'
 # ::255.255.255.255  ::ffff:255.255.255.255  ::ffff:0:255.255.255.255 (IPv4-mapped and IPv4-translated addresses)
 # 2001:db8:3:4::192.0.2.33  64:ff9b::192.0.2.33 (IPv4-Embedded IPv6 Address)
 ipv6groups = (
-    r'(?:' + ipv6seg + r':){7,7}' + ipv6seg,
-    r'(?:' + ipv6seg + r':){1,7}:',
-    r'(?:' + ipv6seg + r':){1,6}:' + ipv6seg,
-    r'(?:' + ipv6seg + r':){1,5}(?::' + ipv6seg + r'){1,2}',
-    r'(?:' + ipv6seg + r':){1,4}(?::' + ipv6seg + r'){1,3}',
-    r'(?:' + ipv6seg + r':){1,3}(?::' + ipv6seg + r'){1,4}',
-    r'(?:' + ipv6seg + r':){1,2}(?::' + ipv6seg + r'){1,5}',
-    ipv6seg + r':(?:(?::' + ipv6seg + r'){1,6})',
-    r':(?:(?::' + ipv6seg + r'){1,7}|:)',
-    r'fe80:(?::' + ipv6seg + r'){0,4}%[0-9a-zA-Z]{1,}',
-    r'::(?:ffff(?::0{1,4}){0,1}:){0,1}[^\s:]' + ipv4addr,
-    r'(?:' + ipv6seg + r':){1,6}:?[^\s:]' + ipv4addr,
+    r"(?:" + ipv6seg + r":){7,7}" + ipv6seg,
+    r"(?:" + ipv6seg + r":){1,7}:",
+    r"(?:" + ipv6seg + r":){1,6}:" + ipv6seg,
+    r"(?:" + ipv6seg + r":){1,5}(?::" + ipv6seg + r"){1,2}",
+    r"(?:" + ipv6seg + r":){1,4}(?::" + ipv6seg + r"){1,3}",
+    r"(?:" + ipv6seg + r":){1,3}(?::" + ipv6seg + r"){1,4}",
+    r"(?:" + ipv6seg + r":){1,2}(?::" + ipv6seg + r"){1,5}",
+    ipv6seg + r":(?:(?::" + ipv6seg + r"){1,6})",
+    r":(?:(?::" + ipv6seg + r"){1,7}|:)",
+    r"fe80:(?::" + ipv6seg + r"){0,4}%[0-9a-zA-Z]{1,}",
+    r"::(?:ffff(?::0{1,4}){0,1}:){0,1}[^\s:]" + ipv4addr,
+    r"(?:" + ipv6seg + r":){1,6}:?[^\s:]" + ipv4addr,
 )
-ipv6addr = '|'.join(['(?:{})'.format(g) for g in ipv6groups[::-1]])
+ipv6addr = "|".join(["(?:{})".format(g) for g in ipv6groups[::-1]])
 
 ipv6_pattern = (
-    r"(?:^|[\b\s@?,!;:\'\")(.\p{Han}])("
-    + ipv6addr
-    + r")(?:$|[\s@,?!;:'\"(.\p{Han}])"
+    r"(?:^|[\b\s@?,!;:\'\")(.\p{Han}])(" + ipv6addr + r")(?:$|[\s@,?!;:'\"(.\p{Han}])"
 )
 
 ipv4_pattern = (
-        r"(?:^|[\b\s@?,!;:\'\")(.\p{Han}])("
-        + ipv4addr
-        + r")(?:$|[\s@,?!;:'\"(.\p{Han}])"
+    r"(?:^|[\b\s@?,!;:\'\")(.\p{Han}])(" + ipv4addr + r")(?:$|[\s@,?!;:'\"(.\p{Han}])"
 )
 
 
@@ -106,8 +100,12 @@ class BaseDetector(ABC):
 
 
 class DetectorRegex(BaseDetector):
-
-    def __init__(self, re_expression: re.Pattern, g: int = 1, kind: DetectorKind = DetectorKind.REGEX):
+    def __init__(
+        self,
+        re_expression: re.Pattern,
+        g: int = 1,
+        kind: DetectorKind = DetectorKind.REGEX,
+    ):
         self.re_expression = re_expression
         self.g = g
         self.kind = kind
@@ -140,7 +138,6 @@ class DetectorRegex(BaseDetector):
 
 
 class DetectorRegexEmail(BaseDetector):
-
     def __init__(self):
         re_expression = regex.compile(email_pattern, regex.MULTILINE | regex.VERBOSE)
         self.det = DetectorRegex(re_expression, kind=DetectorKind.EMAIL)
@@ -207,7 +204,9 @@ class DetectorTokenSecrets(BaseDetector):
         {"name": "DiscordBotTokenDetector"},
     ]
 
-    def _get_detected_from_secret(self, content: str, secret: PotentialSecret) -> Detected:
+    def _get_detected_from_secret(
+        self, content: str, secret: PotentialSecret
+    ) -> Detected:
         start = content.index(secret.secret_value)
         end = start + len(secret.secret_value)
 
@@ -227,7 +226,6 @@ class DetectorTokenSecrets(BaseDetector):
 
 
 class DetectorKeywordsSecrets(BaseDetector):
-
     def __init__(self):
         self.detectors = []
         groups = [
@@ -250,7 +248,7 @@ class DetectorKeywordsSecrets(BaseDetector):
 def _run_detect_secrets_plugins(
     content: str,
     plugins: list[dict[str, str]],
-    filters: Optional[list[dict[str, str]]] = None
+    filters: Optional[list[dict[str, str]]] = None,
 ) -> Iterable[PotentialSecret]:
     # https://github.com/Yelp/detect-secrets/blob/master/docs
     settings = {

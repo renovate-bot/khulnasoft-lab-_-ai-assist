@@ -1,32 +1,36 @@
 from pathlib import Path
-from typing import Optional, Any, NamedTuple
-import structlog
+from typing import Any, NamedTuple, Optional
 
+import structlog
 from transformers import PreTrainedTokenizer
 
 from codesuggestions.instrumentators import TextGenModelInstrumentator
 from codesuggestions.models import (
-    TextGenBaseModel,
     PalmCodeGenBaseModel,
-    VertexModelInvalidArgument,
+    TextGenBaseModel,
     VertexModelInternalError,
+    VertexModelInvalidArgument,
 )
-from codesuggestions.prompts import PromptTemplateBase, PromptTemplate, PromptTemplateFewShot
+from codesuggestions.prompts import (
+    PromptTemplate,
+    PromptTemplateBase,
+    PromptTemplateFewShot,
+)
 from codesuggestions.prompts.code_parser import CodeParser
 from codesuggestions.suggestions.processing.base import (
-    ModelEngineBase,
     MetadataCodeContent,
     MetadataImports,
-    MetadataPromptBuilder,
-    ModelEngineOutput,
     MetadataModel,
+    MetadataPromptBuilder,
+    ModelEngineBase,
+    ModelEngineOutput,
 )
 from codesuggestions.suggestions.processing.ops import (
     LanguageId,
-    trim_by_max_len,
-    trim_by_sep,
     prepend_lang_id,
     remove_incomplete_lines,
+    trim_by_max_len,
+    trim_by_sep,
 )
 
 log = structlog.stdlib.get_logger("codesuggestions")
@@ -56,9 +60,9 @@ class _CodeImports(NamedTuple):
 
     @property
     def total_length_tokens(self):
-        return sum([
-            import_statement.length_tokens for import_statement in self.content
-        ])
+        return sum(
+            [import_statement.length_tokens for import_statement in self.content]
+        )
 
     @property
     def total_length(self):
@@ -92,7 +96,7 @@ class _PromptBuilder:
         LanguageId.RUST: DOUBLE_SLASH_COMMENT,
         LanguageId.SCALA: DOUBLE_SLASH_COMMENT,
         LanguageId.TS: DOUBLE_SLASH_COMMENT,
-        LanguageId.KOTLIN: DOUBLE_SLASH_COMMENT
+        LanguageId.KOTLIN: DOUBLE_SLASH_COMMENT,
     }
     LANG_ID_TO_HUMAN_NAME = {
         LanguageId.C: "C",
@@ -107,7 +111,7 @@ class _PromptBuilder:
         LanguageId.RUST: "Rust",
         LanguageId.SCALA: "Scala",
         LanguageId.TS: "TypeScript",
-        LanguageId.KOTLIN: "Kotlin"
+        LanguageId.KOTLIN: "Kotlin",
     }
 
     def __init__(
@@ -131,7 +135,7 @@ class _PromptBuilder:
             "suffix": MetadataCodeContent(
                 length=len(suffix.text),
                 length_tokens=suffix.length_tokens,
-            )
+            ),
         }
 
     def add_imports(self, imports: _CodeImports, max_total_length_tokens: int):
@@ -169,7 +173,9 @@ class _PromptBuilder:
 
         comment = self.COMMENT_GENERATOR[self.lang_id]
         language = self.LANG_ID_TO_HUMAN_NAME[self.lang_id]
-        header = comment(f"This code has a filename of {self.file_name} and is written in {language}.")
+        header = comment(
+            f"This code has a filename of {self.file_name} and is written in {language}."
+        )
         return f"{header}\n{self._prefix}"
 
     def build(self) -> _Prompt:
@@ -197,15 +203,24 @@ class ModelEngineCodegen(ModelEngineBase):
         self,
         model: TextGenBaseModel,
         prompt_tpls: dict[LanguageId, PromptTemplateBase],
-        sep_code_block: str
+        sep_code_block: str,
     ):
         self.model = model
         self.prompt_tpls = prompt_tpls
         self.sep_code_block = sep_code_block
 
-    async def _generate_completion(self, prefix: str, suffix: str, file_name: str, lang_id: LanguageId, **kwargs: Any) -> ModelEngineOutput:
+    async def _generate_completion(
+        self,
+        prefix: str,
+        suffix: str,
+        file_name: str,
+        lang_id: LanguageId,
+        **kwargs: Any,
+    ) -> ModelEngineOutput:
         prompt = self._build_prompt(prefix, lang_id)
-        model_metadata = MetadataModel(name=self.model.model_name, engine=self.model.model_engine)
+        model_metadata = MetadataModel(
+            name=self.model.model_name, engine=self.model.model_engine
+        )
 
         if res := self.model.generate(prompt, suffix, **kwargs):
             completion = self._clean_completions(res.text)
@@ -248,7 +263,9 @@ class ModelEngineCodegen(ModelEngineBase):
         prompt_tpls = dict()
         for key_example, examples in all_examples.items():
             tpl_examples = PromptTemplate.from_local_file(tpl_dir / tpl_examples)
-            tpl = PromptTemplateFewShot.from_local_file(tpl_dir / tpl_completion, examples, tpl_examples)
+            tpl = PromptTemplateFewShot.from_local_file(
+                tpl_dir / tpl_completion, examples, tpl_examples
+            )
             prompt_tpls[_KEY_EXAMPLE_LANG_ID[key_example]] = tpl
 
         return cls(model, prompt_tpls, sep_code_block)
@@ -258,21 +275,36 @@ class ModelEnginePalm(ModelEngineBase):
     def __init__(self, model: PalmCodeGenBaseModel, tokenizer: PreTrainedTokenizer):
         self.model = model
         self.tokenizer = tokenizer
-        self.instrumentator = TextGenModelInstrumentator(model.model_engine, model.model_name)
+        self.instrumentator = TextGenModelInstrumentator(
+            model.model_engine, model.model_name
+        )
 
-    async def _generate_completion(self, prefix: str, suffix: str, file_name: str, lang_id: LanguageId, **kwargs: Any) -> ModelEngineOutput:
+    async def _generate_completion(
+        self,
+        prefix: str,
+        suffix: str,
+        file_name: str,
+        lang_id: LanguageId,
+        **kwargs: Any,
+    ) -> ModelEngineOutput:
         prompt = self._build_prompt(prefix, file_name, suffix, lang_id)
 
         # count symbols of the final prompt
         self._count_symbols(prompt.prefix, lang_id)
 
-        model_metadata = MetadataModel(name=self.model.model_name, engine=self.model.model_engine)
+        model_metadata = MetadataModel(
+            name=self.model.model_name, engine=self.model.model_engine
+        )
         empty_output = ModelEngineOutput(text="", model=model_metadata)
 
         # TODO: keep watching the suffix length until logging ModelEngineOutput in the upper layer
-        with self.instrumentator.watch(prompt, suffix_length=len(suffix)) as watch_container:
+        with self.instrumentator.watch(
+            prompt, suffix_length=len(suffix)
+        ) as watch_container:
             try:
-                if res := await self.model.generate(prompt.prefix, prompt.suffix, **kwargs):
+                if res := await self.model.generate(
+                    prompt.prefix, prompt.suffix, **kwargs
+                ):
                     return ModelEngineOutput(
                         text=res.text,
                         model=model_metadata,
@@ -303,7 +335,9 @@ class ModelEnginePalm(ModelEngineBase):
 
         return prompt
 
-    def _get_imports(self, content: str, lang_id: Optional[LanguageId] = None) -> _CodeImports:
+    def _get_imports(
+        self, content: str, lang_id: Optional[LanguageId] = None
+    ) -> _CodeImports:
         imports_extracted = []
         if lang_id:
             try:
@@ -324,7 +358,9 @@ class ModelEnginePalm(ModelEngineBase):
 
         imports = [
             _CodeContent(text=import_text, length_tokens=length)
-            for import_text, length in zip(imports_extracted, imports_tokenized["length"])
+            for import_text, length in zip(
+                imports_extracted, imports_tokenized["length"]
+            )
         ]
 
         return _CodeImports(content=imports)
@@ -343,7 +379,9 @@ class ModelEnginePalm(ModelEngineBase):
 
         return _CodeBody(prefix=prefix_truncated, suffix=suffix_truncated)
 
-    def _truncate_content(self, val: str, max_length: int, truncation_side: str = "left") -> _CodeContent:
+    def _truncate_content(
+        self, val: str, max_length: int, truncation_side: str = "left"
+    ) -> _CodeContent:
         self.tokenizer.truncation_side = truncation_side
 
         tokens = self.tokenizer(
@@ -354,7 +392,7 @@ class ModelEnginePalm(ModelEngineBase):
             add_special_tokens=False,
         )
 
-        decoded = self.tokenizer.decode(tokens['input_ids'])
+        decoded = self.tokenizer.decode(tokens["input_ids"])
 
         return _CodeContent(
             text=decoded,
@@ -363,7 +401,9 @@ class ModelEnginePalm(ModelEngineBase):
 
     def _count_symbols(self, prompt: str, lang_id: LanguageId) -> None:
         try:
-            symbol_map = CodeParser(lang_id).count_symbols(prompt, target_symbols={"imports"})
+            symbol_map = CodeParser(lang_id).count_symbols(
+                prompt, target_symbols={"imports"}
+            )
             self.increment_code_symbol_counter(lang_id, symbol_map)
         except ValueError as e:
             log.warning(f"Failed to parse code: {e}")
