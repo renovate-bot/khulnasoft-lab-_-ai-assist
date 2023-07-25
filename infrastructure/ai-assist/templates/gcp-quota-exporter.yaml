@@ -24,7 +24,7 @@ spec:
       serviceAccountName: {{ .Values.gcpQuotaExporter.serviceAccount.name }}
       containers:
         - name: gcp-quota-exporter
-          image: mintel/gcp-quota-exporter:v0.3.2
+          image: registry.gitlab.com/gitlab-com/gl-infra/gcp-quota-exporter:v0.3.3
           imagePullPolicy: IfNotPresent
           env:
             - name: GCP_EXPORTER_HTTP_TIMEOUT
