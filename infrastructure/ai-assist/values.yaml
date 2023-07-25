@@ -18,6 +18,7 @@ modelGateway:
   modelGateway:
     env:
       fastapiApiPort: "5052"
+      customerPortalBaseUrl: https://customers.gitlab.com
       tritonHost: model-k8s-triton-headless
       tritonPort: "8001"
       googleCloudProfiler: true
@@ -77,7 +78,7 @@ prometheus-stackdriver-exporter:
   stackdriver:
     projectId: unreview-poc-390200e5
     metrics:
-      typePrefixes: 'file.googleapis.com'
+      typePrefixes: "file.googleapis.com"
   serviceMonitor:
     enabled: true
     namespace: fauxpilot
@@ -97,6 +98,6 @@ gcpQuotaExporter:
   port: 9592
   serviceAccount:
     create: true
-    name: 'gcp-quota-exporter'
+    name: "gcp-quota-exporter"
   labels:
-    type: 'monitoring'
+    type: "monitoring"
