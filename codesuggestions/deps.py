@@ -112,7 +112,12 @@ class FastApiContainer(containers.DeclarativeContainer):
 
     oidc_provider = providers.Singleton(
         GitLabOidcProvider,
-        base_url=config.auth.gitlab_base_url,
+        oidc_providers=providers.Dict(
+            {
+                'Gitlab': config.auth.gitlab_base_url,
+                'CustomersDot': config.auth.customer_portal_base_url
+            }
+        )
     )
 
     auth_middleware = providers.Factory(

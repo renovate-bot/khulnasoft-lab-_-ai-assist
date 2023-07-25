@@ -50,7 +50,7 @@ class TestGitLabOidcProvider:
     # JSON Web Key can be generated via https://mkjwk.org/
     # Private key: X.509 PEM format
     # Public key: JWK format
-    private_key = """
+    private_key_test = """
 -----BEGIN PRIVATE KEY-----
 MIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQCAzC66XB4Fppc0
 QFmrujl0AnGA7ffgnXvVJTdswIlDrYH/2R5F05ekS0Fzn/tFksyx4RZuakQu4SiP
@@ -80,8 +80,38 @@ meZ76Z9wPG3CuNPtQqgG4zHy57z9bZMcDMHnL60NV6liH0E8CxGQ07NGjI3qdfs9
 cmOY8Rcamyo/giOO9+jYMaU=
 -----END PRIVATE KEY-----
     """
+    private_key_customers = """
+-----BEGIN PRIVATE KEY-----
+MIIEwAIBADANBgkqhkiG9w0BAQEFAASCBKowggSmAgEAAoIBAQCy2Krb2S6uU6EF
+Rm4FPhiG2GzcPSlz3ydMBfnwIYpHIlC5nnfW+XYm4xomTvNVqVb4kjNnhsIB4nzj
+8NoFRaD8v1rT/SF0wZPlH5TQyj9hAZn73LkQJw3muy0q38LLrhEt0VqNIjwxH65M
+hJgB6d2ReGgS9qPD0PnZLlFUVc1tH1TxLXfHp0nom+F7o6Pd8dtihqWgbninxjuP
+dvZj20CveFAaqNggrdrqysj999/ksGM6FuqVURtFzKJHGyyjg0ZW/8yGyYWQXrW7
+J8PByVMONPUrXEPNZ2dREjlxBXMxeMstZPD0AygAqixmXI/WEMWC3o5a8L6WJZ2t
+6NmMJPPfAgMBAAECggEBAIHRejw46oSJmcDtfaD6kO0YnfRDxRohqjGpyOHARtIZ
+m4UQ/SYjT9ssT+fsuP69+65U2VFVZO/fSg5e3rKi9xdfgvuLq0RH2yWehfQESnsM
+oYxLjF2oK5QG2+NaJtiX0kpyw4rchdqWh3ttZ7VD35vfTZQuSXMy9pjp4QkZexKw
+SuZ0fATQ7Iq0GXhFgKS7a8fK5ErLWRu5rZ6T0tqykoXFhvb3e1Wkr7KQZ0rfAI37
+J4dzA6bs7sBufD4nenJ91VKoQuVytT4XWeVmHrkN1uRVbsKyXN0zwMBd0rbyoRhK
+YpTvgJ+9vjrmuerheJ/UQZADCNwsk8lvqiBSoSPJRwECgYEA56+YxehNjJB+vzox
+X9nqZ5dN6/yb2vD5E5+Kdy1QS8i3KDc5NDKIKwOj369AJ/6yO3HIT84nAA+hyaQV
+bZR8TAn1HcjyVneS8xUv3yHUf6OtX0fHzBoQ0SBHV8de7kb141J1A61eZXigWdQf
+xyPaU1Gd/FVEs0e/Ms5L3fGyzV8CgYEAxZ1/vKp+lDdHO1eFaGt7OyRyjFR5uINg
+qh41BSdvUQISBMLcIjy0iQwz3X/IsGhVJLpZnq4KcvbwjmxnBfALe6V3W4p0lkrQ
+KZSMbj5CQ9EvHUIWhH/63EcXDiF0lE1P02oyIE6GgXHmPzPxIm4L9+R/woS7CtwJ
+cIIGrU/g6YECgYEApJS1pujlpdPDZd5V0qw/eoUeAmR45qfFmC3+M7jJ0HvtuDC6
+fxziZAP69lxM69xfCiFC1YYxaDayjEX2Pth7D50HNbhYhhn9FpbXYd9rT5ya/RNF
+l/RwO859P5rOEd/wriIWI52Vb+mnpwgr5s/OON/CpcyAuAZgiRvJAwm+JWsCgYEA
+nFgxWYjiQE1Ds/VYfPacNnxtjAzBiHOYpL7lX8CFV2f17YJlO0kf5FWdKx8QHlFN
+G5O7l8lGRxKL24J0N8RksVyGBAyUlNt3uY3nVMk5EAKN7e39drLyPBiaavmZDEPm
+ZfNc2SaHUB5W9aYYnw7FtUg4tCLjAIJ5jWOx+Kh73wECgYEAqYJrXZLG3X0gY3hw
+2kS5BpWEyoQJDVgA8lxK+ND22MwtN0NMDbmp4h3HifkXrZ2EKcTwgUx4revqtv3I
+Piz6UxMdEyvOKmcujB6dYNem3LONaaaxDEYcPwApNSH1ZCKHnM8zBBI6EolIkNhZ
+0GGnJpqAOqw0uWLx1Wp+fQYu0H0=
+-----END PRIVATE KEY-----
+    """
 
-    public_key = {
+    public_key_test = {
         "kty": "RSA",
         "e": "AQAB",
         "use": "sig",
@@ -94,67 +124,81 @@ cmOY8Rcamyo/giOO9+jYMaU=
         "wbrBVVCK9v7FovzLDdFCK7VrKpU5S_yVcKrIOm8ADajhTAcmcSEZBoEwshTtw",
     }
 
+    public_key_customers = {
+        "kty": "RSA",
+        "e": "AQAB",
+        "use": "sig",
+        "alg": "RS256",
+        "n": "stiq29kurlOhBUZuBT4Yhths3D0pc98nTAX58CGKRyJQuZ531vl2JuMaJk7zValW-JIzZ4bCAe"
+        "J84_DaBUWg_L9a0_0hdMGT5R-U0Mo_YQGZ-9y5ECcN5rstKt_Cy64RLdFajSI8MR-uTISYAendkXhoE"
+        "vajw9D52S5RVFXNbR9U8S13x6dJ6Jvhe6Oj3fHbYoaloG54p8Y7j3b2Y9tAr3hQGqjYIK3a6srI_fff5"
+        "LBjOhbqlVEbRcyiRxsso4NGVv_MhsmFkF61uyfDwclTDjT1K1xDzWdnURI5cQVzMXjLLWTw9AMoAKosZ"
+        "lyP1hDFgt6OWvC-liWdrejZjCTz3w",
+    }
+
+    claims = {
+        "third_party_ai_features_enabled": True,
+        "gitlab_realm": "self-managed",
+    }
+
     @responses.activate
-    def test_gitlab_oidc_provider(self):
-        well_known_response = responses.get(
+    @pytest.mark.parametrize(
+        "private_key,claims,third_party,gitlab_realm",
+        [
+            (private_key_test, claims, True, "self-managed"),
+            (private_key_customers, claims, True, "self-managed"),
+            (private_key_test, {"is_life_beautiful": True}, False, "saas"),
+        ],
+    )
+    def test_gitlab_oidc_provider(self, private_key, claims, third_party, gitlab_realm):
+        well_known_test_response = responses.get(
             "http://test.com/.well-known/openid-configuration",
             body='{"jwks_uri": "http://test.com/oauth/discovery/keys"}',
             status=200,
         )
 
-        jwks_response = responses.get(
-            "http://test.com/oauth/discovery/keys",
-            body=json.dumps(self.public_key),
+        well_known_customers_response = responses.get(
+            "http://customers.test.com/.well-known/openid-configuration",
+            body='{"jwks_uri": "http://customers.test.com/oauth/discovery/keys"}',
             status=200,
         )
 
-        auth_provider = GitLabOidcProvider(base_url="http://test.com")
+        jwks_test_response = responses.get(
+            "http://test.com/oauth/discovery/keys",
+            body=f'{{"keys": [{json.dumps(self.public_key_test)}]}}',
+            status=200,
+        )
+
+        jwks_customers_response = responses.get(
+            "http://customers.test.com/oauth/discovery/keys",
+            body=f'{{"keys": [{json.dumps(self.public_key_customers)}]}}',
+            status=200,
+        )
+
+        auth_provider = GitLabOidcProvider(
+            oidc_providers={
+                "Gitlab": "http://test.com",
+                "CustomersDot": "http://customers.test.com",
+            }
+        )
 
         token = jwt.encode(
-            {
-                "third_party_ai_features_enabled": True,
-                "gitlab_realm": "self-managed",
-            },
-            self.private_key,
+            claims,
+            private_key,
             algorithm="RS256",
         )
         user = auth_provider.authenticate(token)
 
         assert user is not None
         assert user.authenticated is True
-        assert user.claims.is_third_party_ai_default is True
-        assert user.claims.gitlab_realm == "self-managed"
+        assert user.claims.is_third_party_ai_default is third_party
+        assert user.claims.gitlab_realm == gitlab_realm
 
-        assert well_known_response.call_count == 1
-        assert jwks_response.call_count == 1
+        assert well_known_test_response.call_count == 1
+        assert well_known_customers_response.call_count == 1
+        assert jwks_test_response.call_count == 1
+        assert jwks_customers_response.call_count == 1
 
-    @responses.activate
-    def test_gitlab_oidc_provider_missing_user_claims(self):
-        well_known_response = responses.get(
-            "http://test.com/.well-known/openid-configuration",
-            body='{"jwks_uri": "http://test.com/oauth/discovery/keys"}',
-            status=200,
-        )
+        cached_keys = auth_provider.cache.get(auth_provider.CACHE_KEY).value
 
-        jwks_response = responses.get(
-            "http://test.com/oauth/discovery/keys",
-            body=json.dumps(self.public_key),
-            status=200,
-        )
-
-        auth_provider = GitLabOidcProvider(base_url="http://test.com")
-
-        token = jwt.encode(
-            {"is_life_beautiful": True},
-            self.private_key,
-            algorithm="RS256",
-        )
-        user = auth_provider.authenticate(token)
-
-        assert user is not None
-        assert user.authenticated is True
-        assert user.claims.is_third_party_ai_default is False
-        assert user.claims.gitlab_realm == "saas"
-
-        assert well_known_response.call_count == 1
-        assert jwks_response.call_count == 1
+        assert len(cached_keys["keys"]) == 2
