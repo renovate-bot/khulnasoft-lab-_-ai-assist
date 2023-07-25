@@ -23,27 +23,55 @@ class CodeParser:
         # TODO Support Ruby. Not as straightforward since require uses a call node type.
     }
 
+    # Node types can be looked up in their language-specific repositories.
+    # e.g.: CSHARP: https://github.com/tree-sitter/tree-sitter-c-sharp/blob/master/src/node-types.json
     LANGUAGES_TARGETS = {
         "imports": {
-            LanguageId.C: "preproc_include",
-            LanguageId.CPP: "preproc_include",
-            LanguageId.CSHARP: "using_directive",
-            LanguageId.GO: "import_declaration",
-            LanguageId.JAVA: "import_declaration",
-            LanguageId.JS: "import_statement",
-            LanguageId.PHP: "namespace_use_declaration",
-            LanguageId.PYTHON: "import_statement",
-            LanguageId.RUST: "use_declaration",
-            LanguageId.SCALA: "import_declaration",
-            LanguageId.TS: 'import_statement',
+            LanguageId.C: ("preproc_include",),
+            LanguageId.CPP: ("preproc_include",),
+            LanguageId.CSHARP: ("using_directive",),
+            LanguageId.GO: ("import_declaration",),
+            LanguageId.JAVA: ("import_declaration",),
+            LanguageId.JS: ("import_statement",),
+            LanguageId.PHP: ("namespace_use_declaration",),  # TODO: add support for require_once
+            LanguageId.PYTHON: ("import_statement",),
+            LanguageId.RUST: ("use_declaration",),
+            LanguageId.SCALA: ("import_declaration",),
+            LanguageId.TS: ("import_statement",),
         },
         "functions": {
-            LanguageId.PYTHON: "function_definition",
-            LanguageId.C: "function_definition",
+            LanguageId.C: ("function_definition",),
+            LanguageId.CPP: ("function_definition",),
+            LanguageId.GO: ("function_declaration",),
+            LanguageId.JS: ("function_declaration", "generator_function_declaration"),
+            LanguageId.PHP: ("function_definition",),
+            LanguageId.PYTHON: ("function_definition",),
+            LanguageId.TS: ("function_declaration",),
+            LanguageId.RUST: ("function_item",),
+            LanguageId.SCALA: ("function_definition",),
         },
         "classes": {
-            LanguageId.PYTHON: "class_definition",
+            LanguageId.CSHARP: ("class_declaration",),
+            LanguageId.JAVA: ("class_declaration",),
+            LanguageId.JS: ("class_declaration",),
+            LanguageId.PHP: ("class_declaration",),
+            LanguageId.PYTHON: ("class_definition",),
+            LanguageId.SCALA: ("class_definition",),
+            LanguageId.TS: ("class_declaration",),
         },
+        "comments": {
+            LanguageId.C: ("comment",),
+            LanguageId.CPP: ("comment",),
+            LanguageId.CSHARP: ("comment",),
+            LanguageId.GO: ("comment",),
+            LanguageId.JAVA: ("line_comment", "block_comment",),
+            LanguageId.JS: ("comment",),
+            LanguageId.PHP: ("comment",),
+            LanguageId.RUST: ("line_comment", "block_comment",),
+            LanguageId.SCALA: ("comment",),
+            LanguageId.PYTHON: ("comment",),
+            LanguageId.TS: ("comment",),
+        }
     }
 
     def __init__(self, lang_id: LanguageId):
@@ -59,7 +87,7 @@ class CodeParser:
         nodes = []
 
         for node in self._each_node(code):
-            if node.type == self.LANGUAGES_TARGETS[symbol][self.lang_id]:
+            if node.type in self.LANGUAGES_TARGETS[symbol][self.lang_id]:
                 nodes.append(node)
 
         return [node.text.decode('utf-8', errors='ignore') for node in nodes]
@@ -75,7 +103,7 @@ class CodeParser:
             for symbol in target_symbols:
                 if symbol in self.LANGUAGES_TARGETS:
                     # does the node type match the lang-specific symbol name for this lang_id?
-                    if node.type == self.LANGUAGES_TARGETS[symbol].get(self.lang_id, ""):
+                    if node.type in self.LANGUAGES_TARGETS[symbol].get(self.lang_id, []):
                         symbol_map.update([symbol])
 
         return symbol_map
