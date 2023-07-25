@@ -4,6 +4,7 @@ aiassist:
     modelGateway:
       env:
         googleCloudProfiler: false
+        customerPortalBaseUrl: https://customers.staging.gitlab.com
 
   modelTriton:
     replicas: 1

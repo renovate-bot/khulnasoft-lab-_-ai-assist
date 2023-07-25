@@ -48,6 +48,8 @@ spec:
               value: {{ quote .Values.modelGateway.modelGateway.env.tritonPort }}
             - name: FASTAPI_API_PORT
               value: {{ quote .Values.modelGateway.modelGateway.env.fastapiApiPort }}
+            - name: CUSTOMER_PORTAL_BASE_URL
+              value: {{ quote .Values.modelGateway.modelGateway.env.customerPortalBaseUrl }}
             # Enable the Google Cloud Profiler
             # See https://console.cloud.google.com/profiler?referrer=search&project=unreview-poc-390200e5
             # for profile output
