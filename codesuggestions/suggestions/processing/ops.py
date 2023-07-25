@@ -44,9 +44,7 @@ _ALL_LANGS = {
 }
 
 _EXTENSION_TO_LANG_ID = {
-    value: key
-    for key, values in _ALL_LANGS.items()
-    for value in values
+    value: key for key, values in _ALL_LANGS.items() for value in values
 }
 
 

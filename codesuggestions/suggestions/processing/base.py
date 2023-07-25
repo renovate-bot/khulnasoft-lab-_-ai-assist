@@ -1,11 +1,11 @@
 import json
-from pathlib import Path
-from typing import Any, Optional, NamedTuple
 from abc import ABC, abstractmethod
-
-from codesuggestions.suggestions.processing.ops import LanguageId, lang_from_filename
+from pathlib import Path
+from typing import Any, NamedTuple, Optional
 
 from prometheus_client import Counter
+
+from codesuggestions.suggestions.processing.ops import LanguageId, lang_from_filename
 
 __all__ = [
     "MetadataCodeContent",
@@ -16,9 +16,15 @@ __all__ = [
     "ModelEngineBase",
 ]
 
-LANGUAGE_COUNTER = Counter('code_suggestions_prompt_language', 'Language count by number', ['lang', 'extension'])
+LANGUAGE_COUNTER = Counter(
+    "code_suggestions_prompt_language",
+    "Language count by number",
+    ["lang", "extension"],
+)
 
-CODE_SYMBOL_COUNTER = Counter('code_suggestions_prompt_symbols', 'Prompt symbols count', ['lang', 'symbol'])
+CODE_SYMBOL_COUNTER = Counter(
+    "code_suggestions_prompt_symbols", "Prompt symbols count", ["lang", "symbol"]
+)
 
 
 class MetadataCodeContent(NamedTuple):
@@ -53,28 +59,43 @@ class ModelEngineOutput(NamedTuple):
 
 
 class ModelEngineBase(ABC):
-    async def generate_completion(self, prefix: str, suffix: str, file_name: str, **kwargs: Any) -> ModelEngineOutput:
+    async def generate_completion(
+        self, prefix: str, suffix: str, file_name: str, **kwargs: Any
+    ) -> ModelEngineOutput:
         lang_id = lang_from_filename(file_name)
         self.increment_lang_counter(file_name, lang_id)
-        return await self._generate_completion(prefix, suffix, file_name, lang_id, **kwargs)
+        return await self._generate_completion(
+            prefix, suffix, file_name, lang_id, **kwargs
+        )
 
-    def increment_lang_counter(self, filename: str, lang_id: Optional[LanguageId] = None):
-        labels = {'lang': None}
+    def increment_lang_counter(
+        self, filename: str, lang_id: Optional[LanguageId] = None
+    ):
+        labels = {"lang": None}
 
         if lang_id:
-            labels['lang'] = lang_id.name.lower()
+            labels["lang"] = lang_id.name.lower()
 
-        labels['extension'] = Path(filename).suffix[1:]
+        labels["extension"] = Path(filename).suffix[1:]
 
         LANGUAGE_COUNTER.labels(**labels).inc()
 
     @abstractmethod
-    async def _generate_completion(self, prefix: str, suffix: str, file_name: str, lang_id: LanguageId, **kwargs: Any) -> ModelEngineOutput:
+    async def _generate_completion(
+        self,
+        prefix: str,
+        suffix: str,
+        file_name: str,
+        lang_id: LanguageId,
+        **kwargs: Any
+    ) -> ModelEngineOutput:
         pass
 
     def increment_code_symbol_counter(self, lang_id: LanguageId, symbol_map: dict):
         for symbol, count in symbol_map.items():
-            CODE_SYMBOL_COUNTER.labels(lang=lang_id.name.lower(), symbol=symbol).inc(count)
+            CODE_SYMBOL_COUNTER.labels(lang=lang_id.name.lower(), symbol=symbol).inc(
+                count
+            )
 
     @staticmethod
     def _read_json(filepath: Path) -> dict[str, list]:

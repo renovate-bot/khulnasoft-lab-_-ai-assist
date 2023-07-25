@@ -1,8 +1,6 @@
 from codesuggestions.suggestions.processing import ModelEngineBase, ModelEngineOutput
 
-__all__ = [
-    "CodeSuggestions"
-]
+__all__ = ["CodeSuggestions"]
 
 
 class CodeSuggestions:
