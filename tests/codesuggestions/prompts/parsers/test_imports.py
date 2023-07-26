@@ -1,8 +1,7 @@
-from codesuggestions.prompts.parsers import CodeParser
-from codesuggestions.suggestions.processing.base import LanguageId
-
 import pytest
 
+from codesuggestions.prompts.parsers import CodeParser
+from codesuggestions.suggestions.processing.base import LanguageId
 
 GO_SOURCE_SAMPLE = """package main
 
@@ -51,18 +50,29 @@ import java.util._
 """
 
 
-@pytest.mark.parametrize(("lang_id", "source_code", "expected_output"), [
-    (LanguageId.C, C_SOURCE_SAMPLE, "#include <stdio.h>\n"),
-    (LanguageId.CPP, C_SOURCE_SAMPLE, "#include <stdio.h>\n\n"),
-    (LanguageId.GO, GO_SOURCE_SAMPLE, "\n".join(GO_SOURCE_SAMPLE.split("\n")[2:8])),
-    (LanguageId.JAVA, JAVA_SOURCE_SAMPLE, "import java.util.ArrayList;"),
-    (LanguageId.JS, JAVASCRIPT_SOURCE_SAMPLE, "import { someFunction } from './module';"),
-    (LanguageId.PHP, PHP_SOURCE_SAMPLE, "use SomeNamespace\\SomeClass;"),
-    (LanguageId.PYTHON, PYTHON_SOURCE_SAMPLE, "import os"),
-    (LanguageId.RUST, RUST_SOURCE_SAMPLE, "use std::collections::HashMap;"),
-    (LanguageId.SCALA, SCALA_SOURCE_SAMPLE, "import java.util._"),
-    (LanguageId.TS, JAVASCRIPT_SOURCE_SAMPLE, "import { someFunction } from './module';")
-])
+@pytest.mark.parametrize(
+    ("lang_id", "source_code", "expected_output"),
+    [
+        (LanguageId.C, C_SOURCE_SAMPLE, "#include <stdio.h>\n"),
+        (LanguageId.CPP, C_SOURCE_SAMPLE, "#include <stdio.h>\n\n"),
+        (LanguageId.GO, GO_SOURCE_SAMPLE, "\n".join(GO_SOURCE_SAMPLE.split("\n")[2:8])),
+        (LanguageId.JAVA, JAVA_SOURCE_SAMPLE, "import java.util.ArrayList;"),
+        (
+            LanguageId.JS,
+            JAVASCRIPT_SOURCE_SAMPLE,
+            "import { someFunction } from './module';",
+        ),
+        (LanguageId.PHP, PHP_SOURCE_SAMPLE, "use SomeNamespace\\SomeClass;"),
+        (LanguageId.PYTHON, PYTHON_SOURCE_SAMPLE, "import os"),
+        (LanguageId.RUST, RUST_SOURCE_SAMPLE, "use std::collections::HashMap;"),
+        (LanguageId.SCALA, SCALA_SOURCE_SAMPLE, "import java.util._"),
+        (
+            LanguageId.TS,
+            JAVASCRIPT_SOURCE_SAMPLE,
+            "import { someFunction } from './module';",
+        ),
+    ],
+)
 def test_import_extractor(lang_id: LanguageId, source_code: str, expected_output: str):
     parser = CodeParser.from_language_id(source_code, lang_id)
 
@@ -72,18 +82,21 @@ def test_import_extractor(lang_id: LanguageId, source_code: str, expected_output
     assert output == [expected_output]
 
 
-@pytest.mark.parametrize(("lang_id", "source_code"), [
-    (LanguageId.C, "there is nothing, but #include sounds nice"),
-    (LanguageId.CPP, "there is nothing, but #include sounds nice"),
-    (LanguageId.GO, "nothing to import here"),
-    (LanguageId.JAVA, "nothing to import"),
-    (LanguageId.JS, "nothing to import here"),
-    (LanguageId.PHP, "<html></html>"),
-    (LanguageId.PYTHON, "nothing to import"),
-    (LanguageId.RUST, "nothing to use here"),
-    (LanguageId.SCALA, "nothing to import here"),
-    (LanguageId.TS, "nothing to import here"),
-])
+@pytest.mark.parametrize(
+    ("lang_id", "source_code"),
+    [
+        (LanguageId.C, "there is nothing, but #include sounds nice"),
+        (LanguageId.CPP, "there is nothing, but #include sounds nice"),
+        (LanguageId.GO, "nothing to import here"),
+        (LanguageId.JAVA, "nothing to import"),
+        (LanguageId.JS, "nothing to import here"),
+        (LanguageId.PHP, "<html></html>"),
+        (LanguageId.PYTHON, "nothing to import"),
+        (LanguageId.RUST, "nothing to use here"),
+        (LanguageId.SCALA, "nothing to import here"),
+        (LanguageId.TS, "nothing to import here"),
+    ],
+)
 def test_unparseable(lang_id: LanguageId, source_code: str):
     parser = CodeParser.from_language_id(source_code, lang_id)
     output = parser.imports()
@@ -98,7 +111,7 @@ def test_unsupported_languages(lang_id: LanguageId):
 
 
 def test_non_utf8():
-    value = b'\xc3\x28'  # Invalid UTF-8 byte sequence
+    value = b"\xc3\x28"  # Invalid UTF-8 byte sequence
 
     with pytest.raises(ValueError):
         CodeParser.from_language_id(value, LanguageId.JS)

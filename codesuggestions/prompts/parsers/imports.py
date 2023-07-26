@@ -21,7 +21,7 @@ class BaseImportVisitor(BaseVisitor):
         return self._imports
 
     def _visit_node(self, node: Node):
-        self._imports.append(node.text.decode('utf-8', errors='ignore'))
+        self._imports.append(node.text.decode("utf-8", errors="ignore"))
 
 
 class CImportVisitor(BaseImportVisitor):

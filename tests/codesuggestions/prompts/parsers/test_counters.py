@@ -3,7 +3,6 @@ import pytest
 from codesuggestions.prompts.parsers import CodeParser
 from codesuggestions.suggestions.processing.ops import LanguageId
 
-
 PYTHON_SOURCE_SAMPLE = """
 import os
 import time
@@ -30,7 +29,7 @@ class Calculator:
         self.result = 0
 
     def calculateSum(self, a, b):
-        self.result = sum(a, b)        
+        self.result = sum(a, b)
 """
 
 C_SOURCE_SAMPLE = """
@@ -302,7 +301,7 @@ object Main extends App {
 PHP_SAMPLE_SOURCE = """
 <?php
 
-use SomeOtherNamespace\coolFunction;
+use SomeOtherNamespaceCoolFunction;
 
 // Import 1
 require_once 'calculator.php';
@@ -345,67 +344,94 @@ $myApp->performCalculations();
         (
             LanguageId.PYTHON,
             PYTHON_SOURCE_SAMPLE,
-            {"import_statement": 4, "function_definition": 2, "comment": 6, "class_definition": 1}
+            {
+                "import_statement": 4,
+                "function_definition": 2,
+                "comment": 6,
+                "class_definition": 1,
+            },
         ),
         (
             LanguageId.C,
             C_SOURCE_SAMPLE,
-            {"preproc_include": 2, "function_definition": 3, "comment": 3}
+            {"preproc_include": 2, "function_definition": 3, "comment": 3},
         ),
-        (
-            LanguageId.JS,
-            JAVASCRIPT_SOURCE_SAMPLE,
-            {"import_statement": 3}
-        ),
+        (LanguageId.JS, JAVASCRIPT_SOURCE_SAMPLE, {"import_statement": 3}),
         (
             LanguageId.TS,
             TS_SAMPLE_SOURCE,
-            {"import_statement": 1, "function_declaration": 2, "comment": 5, "class_declaration": 1}
+            {
+                "import_statement": 1,
+                "function_declaration": 2,
+                "comment": 5,
+                "class_declaration": 1,
+            },
         ),
         (
             LanguageId.CPP,
             CPP_SAMPLE_SOURCE,
-            {"preproc_include": 3, "function_definition": 1, "comment": 1}
+            {"preproc_include": 3, "function_definition": 1, "comment": 1},
         ),
         (
             LanguageId.CSHARP,
             CSHARP_SAMPLE_SOURCE,
-            {"using_directive": 1, "class_declaration": 1, "comment": 1}
+            {"using_directive": 1, "class_declaration": 1, "comment": 1},
         ),
         (
             LanguageId.GO,
             GO_SAMPLE_SOURCE,
-            {"import_declaration": 1, "function_declaration": 1, "comment": 2}
+            {"import_declaration": 1, "function_declaration": 1, "comment": 2},
         ),
-        (
-            LanguageId.GO,
-            GO_SAMPLE_SOURCE_2,
-            {"import_declaration": 2}
-        ),
+        (LanguageId.GO, GO_SAMPLE_SOURCE_2, {"import_declaration": 2}),
         (
             LanguageId.JAVA,
             JAVA_SAMPLE_SOURCE,
-            {"import_declaration": 2, "line_comment": 1, "class_declaration": 1, "block_comment": 1},
+            {
+                "import_declaration": 2,
+                "line_comment": 1,
+                "class_declaration": 1,
+                "block_comment": 1,
+            },
         ),
         (
             LanguageId.RUST,
             RUST_SAMPLE_SOURCE,
-            {"use_declaration": 2, "line_comment": 1, "block_comment": 1, "function_item": 2}
+            {
+                "use_declaration": 2,
+                "line_comment": 1,
+                "block_comment": 1,
+                "function_item": 2,
+            },
         ),
         (
             LanguageId.SCALA,
             SCALA_SAMPLE_SOURCE,
-            {"import_declaration": 2, "comment": 1, "class_definition": 1, "function_definition": 1}
+            {
+                "import_declaration": 2,
+                "comment": 1,
+                "class_definition": 1,
+                "function_definition": 1,
+            },
         ),
         (
             LanguageId.JS,
             JAVASCRIPT_SAMPLE_SOURCE_2,
-            {"class_declaration": 1, "function_declaration": 2, "generator_function_declaration": 1, "comment": 7}
+            {
+                "class_declaration": 1,
+                "function_declaration": 2,
+                "generator_function_declaration": 1,
+                "comment": 7,
+            },
         ),
         (
             LanguageId.PHP,
             PHP_SAMPLE_SOURCE,
-            {"namespace_use_declaration": 1, "function_definition": 2, "comment": 5, "class_declaration": 1}
+            {
+                "namespace_use_declaration": 1,
+                "function_definition": 2,
+                "comment": 5,
+                "class_declaration": 1,
+            },
         ),
     ],
 )
@@ -427,7 +453,7 @@ def test_symbol_counter(
     [
         LanguageId.RUBY,
         LanguageId.KOTLIN,
-    ]
+    ],
 )
 def test_lang_id_not_supported(not_supported_lang_id: LanguageId):
     with pytest.raises(ValueError):

@@ -21,10 +21,7 @@ class BaseVisitor(ABC):
 
     def visit(self, node: Node):
         # use self instead of the class name to access the overridden attribute
-        if (
-            self._TARGET_SYMBOL
-            and node.type == self._TARGET_SYMBOL
-        ):
+        if self._TARGET_SYMBOL and node.type == self._TARGET_SYMBOL:
             self._visit_node(node)
 
 

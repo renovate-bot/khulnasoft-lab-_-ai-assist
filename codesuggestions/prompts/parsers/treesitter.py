@@ -1,11 +1,11 @@
 import os
 from typing import Optional
 
-from tree_sitter import Parser, Language, Tree
+from tree_sitter import Language, Parser, Tree
 
-from codesuggestions.prompts.parsers.base import BaseVisitor, BaseCodeParser
-from codesuggestions.prompts.parsers.imports import ImportVisitorFactory
+from codesuggestions.prompts.parsers.base import BaseCodeParser, BaseVisitor
 from codesuggestions.prompts.parsers.counters import CounterVisitorFactory
+from codesuggestions.prompts.parsers.imports import ImportVisitorFactory
 from codesuggestions.suggestions.processing.ops import LanguageId
 
 
