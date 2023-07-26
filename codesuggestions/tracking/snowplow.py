@@ -1,11 +1,7 @@
+from abc import ABC, abstractmethod
 from typing import NamedTuple, Optional
 
-from snowplow_tracker import (
-    EmitterConfiguration,
-    SelfDescribingJson,
-    Snowplow,
-    StructuredEvent,
-)
+from snowplow_tracker import AsyncEmitter, SelfDescribingJson, StructuredEvent, Tracker
 
 __all__ = [
     "SnowplowClient",
@@ -45,7 +41,13 @@ class SnowplowEvent(NamedTuple):
     action: str = "suggestions_requested"
 
 
-class SnowplowClient:
+class Client(ABC):
+    @abstractmethod
+    def track(self, *args, **kwargs) -> None:
+        pass
+
+
+class SnowplowClient(Client):
     """The Snowplow client to send tracking event to external Snowplow collectors.
 
     Attributes:
@@ -55,13 +57,14 @@ class SnowplowClient:
     SCHEMA = "iglu:com.gitlab/code_suggestions_context/jsonschema/1-0-0"
 
     def __init__(self, configuration: SnowplowClientConfiguration) -> None:
-        emitter_configuration = EmitterConfiguration(batch_size=1)
-
-        self.tracker = Snowplow.create_tracker(
-            app_id=configuration.app_id,
+        e = AsyncEmitter(
+            batch_size=1,
+            thread_count=5,
             endpoint=configuration.endpoint,
-            namespace=configuration.namespace,
-            emitter_config=emitter_configuration,
+        )
+
+        self.tracker = Tracker(
+            app_id=configuration.app_id, namespace=configuration.namespace, emitters=[e]
         )
 
     def track(self, event: SnowplowEvent) -> None:
@@ -79,8 +82,8 @@ class SnowplowClient:
         self.tracker.track(structured_event)
 
 
-class SnowplowClientStub:
+class SnowplowClientStub(Client):
     """The stub class used when Snowplow is disabled, e.g. development and testing."""
 
-    def track(self):
+    def track(self, event: SnowplowEvent) -> None:
         pass

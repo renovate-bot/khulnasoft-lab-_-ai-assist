@@ -19,8 +19,12 @@ class TestSnowplowClient:
         yield
         Snowplow.reset()
 
-    @mock.patch("snowplow_tracker.Snowplow.create_tracker")
-    def test_initialization(self, mock_create):
+    @mock.patch("snowplow_tracker.Tracker.__init__")
+    @mock.patch("snowplow_tracker.emitters.AsyncEmitter.__init__")
+    def test_initialization(self, mock_emitter_init, mock_tracker_init):
+        mock_emitter_init.return_value = None
+        mock_tracker_init.return_value = None
+
         configuration = SnowplowClientConfiguration(
             namespace="gl",
             endpoint="https://whitechoc.local",
@@ -28,13 +32,18 @@ class TestSnowplowClient:
         )
         SnowplowClient(configuration)
 
-        mock_create.assert_called_once()
+        mock_emitter_init.assert_called_once()
+        mock_tracker_init.assert_called_once()
 
-        create_args = mock_create.call_args[1]
-        assert create_args["app_id"] == configuration.app_id
-        assert create_args["namespace"] == configuration.namespace
-        assert create_args["endpoint"] == configuration.endpoint
-        assert create_args["emitter_config"].batch_size == 1
+        emitter_args = mock_emitter_init.call_args[1]
+        assert emitter_args["batch_size"] == 1
+        assert emitter_args["thread_count"] == 5
+        assert emitter_args["endpoint"] == configuration.endpoint
+
+        tracker_args = mock_tracker_init.call_args[1]
+        assert tracker_args["app_id"] == configuration.app_id
+        assert tracker_args["namespace"] == configuration.namespace
+        assert len(tracker_args["emitters"]) == 1
 
     @mock.patch("snowplow_tracker.events.StructuredEvent.__init__")
     @mock.patch("snowplow_tracker.Tracker.track")
