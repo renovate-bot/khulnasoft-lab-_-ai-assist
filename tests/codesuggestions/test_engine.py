@@ -21,9 +21,13 @@ tokenizer = AutoTokenizer.from_pretrained("Salesforce/codegen2-16B")
 
 
 class MockInstrumentor:
+    def __init__(self):
+        self.watcher = Mock()
+        self.watcher.register_prompt_symbols = Mock()
+
     @contextmanager
     def watch(self, prompt: str, **kwargs: Any):
-        yield Mock()
+        yield self.watcher
 
 
 def _side_effect_few_shot_tpl(content: str, _suffix: str, filename: str, model_output: str):
@@ -182,7 +186,7 @@ async def test_model_engine_codegen(
 @pytest.mark.asyncio
 @pytest.mark.parametrize(
     "prefix,suffix,file_name,model_gen_func,model_output,"
-    "language,prompt_builder_metadata,expected_completion",
+    "language,prompt_builder_metadata,expected_completion,expected_prompt_symbol_counts",
     [
         (
             "prompt",
@@ -198,6 +202,7 @@ async def test_model_engine_codegen(
                                         post=MetadataCodeContent(length=0, length_tokens=0)),
             ),
             "random completion",
+            None,
         ),
         (
             "prompt",
@@ -213,6 +218,7 @@ async def test_model_engine_codegen(
                                         post=MetadataCodeContent(length=0, length_tokens=0)),
             ),
             "random completion\nnew line",
+            None
         ),
         (
             "prompt " * 2048,
@@ -228,6 +234,7 @@ async def test_model_engine_codegen(
                                         post=MetadataCodeContent(length=0, length_tokens=0))
             ),
             "random completion\nnew line",
+            {'comments': 1}
         ),
         (
             "import os\nimport pytest\n" + "prompt" * 2048,
@@ -243,6 +250,7 @@ async def test_model_engine_codegen(
                                         post=MetadataCodeContent(length=22, length_tokens=5))
             ),
             "random completion\nnew line",
+            {'comments': 1, 'imports': 2}
         ),
         (
             "random_prefix",
@@ -253,8 +261,9 @@ async def test_model_engine_codegen(
             None,
             None,
             "",
+            None
         ),
-(
+        (
             "random_prefix",
             "random_suffix",
             "f.unk",
@@ -263,6 +272,7 @@ async def test_model_engine_codegen(
             None,
             None,
             "",
+            None
         ),
     ],
 )
@@ -276,6 +286,7 @@ async def test_model_engine_palm(
     language,
     prompt_builder_metadata,
     expected_completion,
+    expected_prompt_symbol_counts,
 ):
     model_name = "palm-model"
     model_engine = "vertex-ai"
@@ -293,3 +304,8 @@ async def test_model_engine_palm(
     assert completion.model == MetadataModel(name=model_name, engine=model_engine)
     assert completion.lang_id == language
     assert completion.metadata == prompt_builder_metadata
+
+    if expected_prompt_symbol_counts:
+        engine.instrumentator.watcher.register_prompt_symbols.assert_called_with(expected_prompt_symbol_counts)
+    else:
+        engine.instrumentator.watcher.register_prompt_symbols.assert_not_called

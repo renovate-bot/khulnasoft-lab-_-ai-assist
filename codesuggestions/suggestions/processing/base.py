@@ -5,6 +5,7 @@ from typing import Any, NamedTuple, Optional
 
 from prometheus_client import Counter
 
+from codesuggestions.instrumentators import TextGenModelInstrumentator
 from codesuggestions.suggestions.processing.ops import LanguageId, lang_from_filename
 
 __all__ = [
@@ -96,6 +97,13 @@ class ModelEngineBase(ABC):
             CODE_SYMBOL_COUNTER.labels(lang=lang_id.name.lower(), symbol=symbol).inc(
                 count
             )
+
+    def log_symbol_map(
+        self,
+        watch_container: TextGenModelInstrumentator.WatchContainer,
+        symbol_map: dict,
+    ) -> None:
+        watch_container.register_prompt_symbols(symbol_map)
 
     @staticmethod
     def _read_json(filepath: Path) -> dict[str, list]:
