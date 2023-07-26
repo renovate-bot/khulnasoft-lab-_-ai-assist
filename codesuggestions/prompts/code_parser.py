@@ -1,8 +1,11 @@
 import os
-from codesuggestions.suggestions.processing.ops import LanguageId
-from tree_sitter import Language, Node, Parser, Tree
 from typing import Optional
 from collections import Counter
+
+from tree_sitter import Language, Node, Parser, Tree
+
+from codesuggestions.prompts.parsers import tree_bfs
+from codesuggestions.suggestions.processing.ops import LanguageId
 
 
 class CodeParser:
@@ -98,13 +101,16 @@ class CodeParser:
 
         symbol_map = Counter()
 
-        # TODO: bfs to traverse all nodes
-        for node in self._each_node(code):
+        def visit_node(depth: int, node: Node):
             for symbol in target_symbols:
                 if symbol in self.LANGUAGES_TARGETS:
                     # does the node type match the lang-specific symbol name for this lang_id?
                     if node.type in self.LANGUAGES_TARGETS[symbol].get(self.lang_id, []):
                         symbol_map.update([symbol])
+
+        tree = self._parse_code(code)
+        if tree and tree.root_node:
+            tree_bfs(tree.root_node, visit_node, max_depth=0)
 
         return symbol_map
 
