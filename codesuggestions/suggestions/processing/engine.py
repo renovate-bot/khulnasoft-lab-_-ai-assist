@@ -296,7 +296,7 @@ class ModelEnginePalm(ModelEngineBase):
 
         # TODO: keep watching the suffix length until logging ModelEngineOutput in the upper layer
         with self.instrumentator.watch(
-            prompt, suffix_length=len(suffix)
+            prompt.prefix, suffix_length=len(suffix)
         ) as watch_container:
             try:
                 # count symbols of the final prompt
