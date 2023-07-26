@@ -289,9 +289,6 @@ class ModelEnginePalm(ModelEngineBase):
     ) -> ModelEngineOutput:
         prompt = self._build_prompt(prefix, file_name, suffix, lang_id)
 
-        # count symbols of the final prompt
-        self._count_symbols(prompt.prefix, lang_id)
-
         model_metadata = MetadataModel(
             name=self.model.model_name, engine=self.model.model_engine
         )
@@ -302,6 +299,9 @@ class ModelEnginePalm(ModelEngineBase):
             prompt, suffix_length=len(suffix)
         ) as watch_container:
             try:
+                # count symbols of the final prompt
+                self._count_symbols(prompt.prefix, lang_id, watch_container)
+
                 if res := await self.model.generate(
                     prompt.prefix, prompt.suffix, **kwargs
                 ):
@@ -399,11 +399,17 @@ class ModelEnginePalm(ModelEngineBase):
             length_tokens=len(tokens["input_ids"]),
         )
 
-    def _count_symbols(self, prompt: str, lang_id: LanguageId) -> None:
+    def _count_symbols(
+        self,
+        prompt: str,
+        lang_id: LanguageId,
+        watch_container: TextGenModelInstrumentator.WatchContainer,
+    ) -> None:
         try:
             symbol_map = CodeParser(lang_id).count_symbols(
-                prompt, target_symbols={"imports"}
+                prompt, target_symbols=CodeParser.LANGUAGES_TARGETS.keys()
             )
             self.increment_code_symbol_counter(lang_id, symbol_map)
+            self.log_symbol_map(watch_container, symbol_map)
         except ValueError as e:
             log.warning(f"Failed to parse code: {e}")

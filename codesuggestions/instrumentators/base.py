@@ -38,6 +38,11 @@ class TextGenModelInstrumentator:
                 "model_exception_status_code": status_code,
             })
 
+        def register_prompt_symbols(self, symbol_map: dict[str, int]):
+            self.__dict__.update({
+                "prompt_symbols": symbol_map
+            })
+
         def dict(self) -> dict:
             return self.__dict__
 
