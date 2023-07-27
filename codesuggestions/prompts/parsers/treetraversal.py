@@ -1,7 +1,7 @@
-from typing import Union, Callable
+from collections import deque
+from typing import Callable, Union
 
 from tree_sitter import Node, Tree
-from collections import deque
 
 from codesuggestions.prompts.parsers.base import BaseVisitor
 

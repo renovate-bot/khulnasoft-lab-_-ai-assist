@@ -30,10 +30,7 @@ class PromptTemplateFewShot(PromptTemplateBase):
         example_prompt: PromptTemplate,
         sep: str,
     ):
-        pre_tpls = [
-            example_prompt.apply(**example)
-            for example in examples
-        ]
+        pre_tpls = [example_prompt.apply(**example) for example in examples]
 
         tpl_raw = f"{sep}".join([*pre_tpls, tpl_raw])
 

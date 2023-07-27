@@ -110,10 +110,10 @@ class RubyCounterVisitor(BaseCounterVisitor, RubyParserMixin):
     }
 
     def _visit_node(self, node: Node):
-        if node.type == 'call':
+        if node.type == "call":
             if self.is_import(node):
                 # Remap call to require since call is too generic
-                self._symbol_counter.update(['require'])
+                self._symbol_counter.update(["require"])
         else:
             # In the Ruby grammar, module and class definitions get two nodes, one
             # with children and one without. For example:
@@ -127,8 +127,11 @@ class RubyCounterVisitor(BaseCounterVisitor, RubyParserMixin):
             #
             # 1. A `module` node type for the entire `module` definition.
             # 2. Another `module` node type for just the `module Foo` part, with no children.
-            if (node.type == "comment" or
-                    (node.type == "module" or node.type == "class") and len(node.children) > 0):
+            if (
+                node.type == "comment"
+                or (node.type == "module" or node.type == "class")
+                and len(node.children) > 0
+            ):
                 self._symbol_counter.update([node.type])
 
 

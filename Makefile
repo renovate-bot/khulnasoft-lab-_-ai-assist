@@ -6,7 +6,8 @@ CODE_SUGGESTIONS_DIR := ${ROOT_DIR}/codesuggestions
 
 LINT_WORKING_DIR ?= ${CODE_SUGGESTIONS_DIR}/suggestions \
 	${CODE_SUGGESTIONS_DIR}/auth \
-	${CODE_SUGGESTIONS_DIR}/api
+	${CODE_SUGGESTIONS_DIR}/api \
+	${CODE_SUGGESTIONS_DIR}/prompts
 
 COMPOSE_FILES := -f docker-compose.dev.yaml
 ifneq (,$(wildcard docker-compose.override.yaml))

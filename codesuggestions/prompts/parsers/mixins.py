@@ -1,8 +1,6 @@
 from tree_sitter import Node
 
-__all__ = [
-    "RubyParserMixin"
-]
+__all__ = ["RubyParserMixin"]
 
 
 class RubyParserMixin:
@@ -15,5 +13,6 @@ class RubyParserMixin:
 
         return (
             (first_text == "require" or first_text == "require_relative")
-            and first.type == "identifier" and second.type == "argument_list"
+            and first.type == "identifier"
+            and second.type == "argument_list"
         )
