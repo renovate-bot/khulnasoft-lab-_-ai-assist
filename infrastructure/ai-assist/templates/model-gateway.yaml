@@ -48,6 +48,10 @@ spec:
               value: {{ quote .Values.modelGateway.modelGateway.env.tritonPort }}
             - name: FASTAPI_API_PORT
               value: {{ quote .Values.modelGateway.modelGateway.env.fastapiApiPort }}
+            - name: GITLAB_URL
+              value: {{ quote .Values.modelGateway.modelGateway.env.gitlabUrl }}
+            - name: GITLAB_API_URL
+              value: {{ quote .Values.modelGateway.modelGateway.env.gitlabApiUrl }}
             - name: CUSTOMER_PORTAL_BASE_URL
               value: {{ quote .Values.modelGateway.modelGateway.env.customerPortalBaseUrl }}
             # Enable the Google Cloud Profiler
