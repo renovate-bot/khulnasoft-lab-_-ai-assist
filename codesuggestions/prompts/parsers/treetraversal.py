@@ -49,11 +49,11 @@ def tree_dfs(tree: Tree, visitor: BaseVisitor):
     while has_next:
         current_node = cursor.node
 
-        if visitor.stop_earlier:
+        if visitor.stop_tree_traversal:
             break
 
         visitor.visit(current_node)
-        has_next = cursor.goto_first_child()
+        has_next = not visitor.stop_node_traversal and cursor.goto_first_child()
 
         if not has_next:
             has_next = cursor.goto_next_sibling()

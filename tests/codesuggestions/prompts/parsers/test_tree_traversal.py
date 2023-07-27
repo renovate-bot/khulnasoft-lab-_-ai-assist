@@ -59,32 +59,59 @@ def test_level_order_traversal(lang_id: LanguageId, source_code: str, max_depth:
     assert len(visited_nodes) == expected_node_count
 
 
-class StubVisitor(BaseVisitor):
+class StubLimitedDepthVisitor(BaseVisitor):
     def __init__(self, stop_limit=-1):
         self.visited_nodes = []
         self.stop_limit = stop_limit
 
     def _visit_node(self, node: Node):
-        pass
+        self.visited_nodes.append(node)
 
     @property
-    def stop_earlier(self) -> bool:
+    def stop_tree_traversal(self) -> bool:
         return 0 < self.stop_limit <= len(self.visited_nodes)
 
     def visit(self, node: Node):
+        self._visit_node(node)
+
+
+class StubLimitedNodeTraversalVisitor(BaseVisitor):
+    def __init__(self, symbol: str):
+        self.visited_nodes = []
+        self.symbol = symbol
+        self._stop_node_traversal = False
+
+    def _visit_node(self, node: Node):
         self.visited_nodes.append(node)
+        self._stop_node_traversal = (
+            True if node.type == self.symbol
+            else False
+        )
+
+    @property
+    def stop_node_traversal(self) -> bool:
+        return self._stop_node_traversal
+
+    def visit(self, node: Node):
+        self._visit_node(node)
 
 
 @pytest.mark.parametrize(
-    ("lang_id", "source_code", "stop_limit", "expected_node_count"),
+    ("lang_id", "source_code", "visitor", "expected_node_count"),
     [
-        (LanguageId.JAVA, JAVA_SAMPLE_SOURCE, -1, 77),
-        (LanguageId.JAVA, JAVA_SAMPLE_SOURCE, 50, 50),
+        (LanguageId.JAVA, JAVA_SAMPLE_SOURCE, StubLimitedDepthVisitor(-1), 77),
+        (LanguageId.JAVA, JAVA_SAMPLE_SOURCE, StubLimitedDepthVisitor(50), 50),
+        (LanguageId.JAVA, JAVA_SAMPLE_SOURCE, StubLimitedNodeTraversalVisitor("class_declaration"), 33),
+        (LanguageId.JAVA, JAVA_SAMPLE_SOURCE, StubLimitedNodeTraversalVisitor("import_declaration"), 50),
     ]
 )
-def test_preorder_traversal(lang_id: LanguageId, source_code: str, stop_limit: int, expected_node_count: int):
+def test_preorder_traversal(
+    lang_id: LanguageId,
+    source_code: str,
+    visitor: StubLimitedDepthVisitor,
+    expected_node_count: int
+):
     tree = CodeParser.from_language_id(source_code, lang_id).tree
-    visitor = StubVisitor(stop_limit)
 
     tree_dfs(tree, visitor)
 
