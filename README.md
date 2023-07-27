@@ -5,10 +5,6 @@ This project is based on the open source project
 create a GitLab owned AI Assistant to help developers write secure code by the
 [AI Assist SEG](https://about.gitlab.com/handbook/engineering/incubation/ai-assist/).
 
-It uses the [SalesForce CodeGen](https://github.com/salesforce/CodeGen) models inside of NVIDIA's
-[Triton Inference Server](https://developer.nvidia.com/nvidia-triton-inference-server) with the
-[FasterTransformer backend](https://github.com/triton-inference-server/fastertransformer_backend/).
-
 ## API
 
 ### Authentication
@@ -198,13 +194,14 @@ available in a `.env`:
 ```dotenv
 API_EXTERNAL_PORT=5001  # External port for the API used in docker-compose
 METRICS_EXTERNAL_PORT=8082  # External port for the /metrics endpoint used in docker-compose
+F_IS_THIRD_PARTY_AI_DEFAULT=true
+F_THIRD_PARTY_ROLLOUT_PERCENTAGE=100
+PALM_TEXT_MODEL_NAME=code-gecko
+PALM_TEXT_PROJECT=unreview-poc-390200e5
 FASTAPI_API_HOST=0.0.0.0
 FASTAPI_API_PORT=5000
 FASTAPI_METRICS_HOST=0.0.0.0
 FASTAPI_METRICS_PORT=8082
-TRITON_HOST=triton
-TRITON_PORT=8001
-TRITON_VERBOSITY=False
 # FASTAPI_DOCS_URL=None  # To disable docs on the API endpoint
 # FASTAPI_OPENAPI_URL=None  # To disable docs on the API endpoint
 # FASTAPI_REDOC_URL=None  # To disable docs on the API endpoint
@@ -228,17 +225,15 @@ value `'None'`.
 
    ```
    AUTH_BYPASS_EXTERNAL=true
-   TRITON_HOST=localhost
-   TRITON_PORT=8080
+   F_IS_THIRD_PARTY_AI_DEFAULT=true
+   F_THIRD_PARTY_ROLLOUT_PERCENTAGE=100
+   PALM_TEXT_MODEL_NAME=code-gecko
+   PALM_TEXT_PROJECT=unreview-poc-390200e5
    FASTAPI_DOCS_URL=/docs
    FASTAPI_OPENAPI_URL=/openapi.json
    FASTAPI_API_PORT=5052
    ```
 
-1. Get k8s credentials to access our k8s cluster:
-   `gcloud container clusters get-credentials ai-assist --zone us-central1-c --project unreview-poc-390200e5`
-1. Port-forward the triton server to access it locally:
-   `kubectl port-forward svc/model-k8s-triton -n fauxpilot 8080:8080 --address='0.0.0.0'`
 1. Start the model-gateway server locally: `poetry run codesuggestions`
 1. Open `http://0.0.0.0:5052/docs` in your browser and run any requests to the codegen model
 
@@ -252,9 +247,6 @@ This can be useful for testing middleware, request/response interface contracts,
 uses cases that do not require an AI model to execute.
 
 ## Local development using GDK
-
-If you are on Apple Silicon, you will need to host Triton somewhere else as there is a dependency on Nvidia GPU and
-architecture.
 
 You can either run `make develop-local` or `docker-compose -f docker-compose.dev.yaml up --build --remove-orphans` this
 will run the API. If you need to change configuration for a Docker Compose service, add it to `docker-compose.override.yaml`.
@@ -322,13 +314,8 @@ Is written in Python and uses the FastApi framework along with Uvicorn. It has t
 
 1. Provide a REST API for incoming calls on `/v2/completions`
 1. Authenticate incoming requests against GitLab `/v4/ml/ai-assist` and cache the result
-1. Convert the prompt into a format that can be used by Triton Inference server
-1. Call the Triton Inference Server, await the result and parse it back as a response
-
-### Triton Inference server
-
-NVIDIA Triton™ Inference Server, is an open-source inference serving software that helps standardize model deployment
-and execution and delivers fast and scalable AI in production. See [https://developer.nvidia.com/nvidia-triton-inference-server](https://developer.nvidia.com/nvidia-triton-inference-server)
+1. Convert the prompt into a format that can be used by GCP Vertex AI
+1. Call Vertex AI, await the result and parse it back as a response
 
 ### GitLab API
 
@@ -336,7 +323,6 @@ The endpoint `/v4/ml/ai-assist` checks if a user meets the requirements to use A
 
 ## Deploying to the Kubernetes cluster
 
-To successfully deploy AI Assist to a k8s cluster, please, make sure your cluster supports NVIDIA® GPU hardware accelerators.
 Below, we give a guideline tested specifically on the GKE cluster in the Applied ML group. Successful work
 on any other clusters is not guaranteed.
 
@@ -345,9 +331,6 @@ on any other clusters is not guaranteed.
    ```shell
    # Enable Cloud Profiler for Continuous Profiling
    gcloud services enable cloudprofiler.googleapis.com
-
-   # Enable Google FileStore (managed NFS)
-   gcloud services enable file.googleapis.com
    ```
 
 1. Create a GKE cluster with the following configuration:
@@ -356,20 +339,6 @@ on any other clusters is not guaranteed.
    - image type `container-optimized OS with containerd.`
    - machine type `n1-standard-2` machines,
    - autoscaling enabled `from 0 to 5` nodes
-   - 1 Nvidia T4 GPU 16 GB GDDR6
-   - Nvidia driver version: 510.47.03, CUDA version: 11.7
-
-1. Enable the `GcpFilestoreCsiDriver` Addon, to allow GKE to provision volumes on FileStore:
-
-   ```shell
-    gcloud container clusters update <GKE_CLUSTER_NAME> --update-addons=GcpFilestoreCsiDriver=ENABLED --region <REGION>
-   ```
-
-1. Install NVIDIA GPU device drivers (more [info](https://cloud.google.com/kubernetes-engine/docs/how-to/gpus#installing_drivers)):
-
-   ```shell
-   kubectl apply -f https://raw.githubusercontent.com/GoogleCloudPlatform/container-engine-accelerators/master/nvidia-driver-installer/cos/daemonset-preloaded-latest.yaml
-   ```
 
 1. Install [`cert-manager`](https://cert-manager.io/docs/):
 
@@ -460,32 +429,12 @@ on any other clusters is not guaranteed.
    scripts/deploy sync gprd --no-dry-run
    ```
 
-1. Deploy a new version of the Triton server using the `ai-assist` helm chart. Note that this should normally be done via the CI job.
-
-   ```shell
-   cd infrastructure
-   # Deploy the Triton container with tag `deadbeef`...
-   scripts/deploy sync gprd --no-dry-run --deploy triton=deadbeef
-   ```
-
 1. Deploy a new version of the Model-Gateway using the `ai-assist` helm chart. Note that this should normally be done via the CI job.
 
    ```shell
    cd infrastructure
    # Deploy the Model-Gateway container with tag `deadbeef`...
    scripts/deploy sync gprd --no-dry-run --deploy model-gateway=deadbeef
-   ```
-
-1. Run the k8s job to fetch the `codegen-16B-multi` model from Hugging Face and store it in Google FileStore:
-
-   ```shell
-   ./infrastructure/scripts/load-model.sh
-   ```
-
-1. Reload Triton to fetch the newer model after the batch job:
-
-   ```shell
-   kubectl rollout restart deployment model-triton
    ```
 
 1. Deploy the NGINX ingress resource with TLS enabled:
@@ -502,7 +451,7 @@ Deployments can be controlled via manual CI/CD jobs running in pipelines on [ops
 
 1. Looking at the pipeline on gitlab.com, ensure that the new registry image has been built and pushed to registry.gitlab.com
 1. Look for the Woodhouse notification for the pipeline running on ops.gitlab.net, and navigate to the pipeline.
-1. You will find two manual jobs, `helm-deploy-gstg: [triton]` for deploying Triton, and `helm-deploy-gstg: [model-gateway]` for deploying the Model Gateway.
+1. You will find a manual job, `helm-deploy-gstg: [model-gateway]` for deploying the Model Gateway.
 1. Click the "play" button to deploy the new CI image to the [`ai-assist-test`](https://console.cloud.google.com/kubernetes/clusters/details/us-central1-c/ai-assist-test/nodes?project=unreview-poc-390200e5) Cluster.
 1. The job will complete when the deployment completes.
 
@@ -511,30 +460,15 @@ Deployments can be controlled via manual CI/CD jobs running in pipelines on [ops
 1. Merge your merge request and ensure that the pipeline on the `main` branch completes successfully.
 1. Ensure that the new registry image has been built and pushed to registry.gitlab.com
 1. Visit <https://ops.gitlab.net/gitlab-org/modelops/applied-ml/code-suggestions/ai-assist/-/pipelines> and navigate to the latest `main` branch pipeline.
-1. You will find two manual jobs, `helm-deploy-gprd: [triton]` for deploying Triton, and `helm-deploy-gprd: [model-gateway]` for deploying the Model Gateway.
+1. You will find a manual job, `helm-deploy-gprd: [model-gateway]` for deploying the Model Gateway.
 1. Click the "play" button to deploy the new CI image to the [`ai-assist` Cluster](https://console.cloud.google.com/kubernetes/clusters/details/us-central1-c/ai-assist/details?project=unreview-poc-390200e5).
 1. The job will complete when the deployment completes.
-
-### Loading the Model
-
-Triton loads the model from [Google Filestore](https://console.cloud.google.com/filestore/instances?project=unreview-poc-390200e5) on startup.
-
-When a new model is generated, it needs to be loaded from [Google Cloud Storage](<https://console.cloud.google.com/storage/browser/code-suggestions/model-deployments?project=unreview-poc-390200e5&pageState=(%22StorageObjectListTable%22:(%22f%22:%22%255B%255D%22))&prefix=&forceOnObjectsSortingFiltering=false>), decompressed, processed and saved to Google FileStore.
-
-To load the model, you need to run the following command:
-
-**Note**: the `load-model.sh` script will run on the current Kubernetes context, so be sure to have selected the correct context before running `load-model.sh`.
-
-```shell
-infrastructure/scripts/load-model.sh
-```
 
 ## Monitoring
 
 The following monitoring and observability resources are available:
 
 1. [`code_suggestions` Service Overview Dashboard in Grafana](https://dashboards.gitlab.net/d/code_suggestions-main/code-suggestions-overview?orgId=1)
-1. [Triton Server Dashboard in Grafana](https://dashboards.gitlab.net/d/code_suggestions-triton/code-suggestions-triton-server?orgId=1)
 1. [Model Gateway Continuous Profiling](https://console.cloud.google.com/profiler/model-gateway;type=CPU/cpu?referrer=search&project=unreview-poc-390200e5)
 1. [Code Suggestions Kibana Dashboard](https://log.gprd.gitlab.net/goto/b34327f0-feb2-11ed-8afc-c9851e4645c0)
 
