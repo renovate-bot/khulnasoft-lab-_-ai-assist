@@ -1,6 +1,6 @@
 from typing import Union, Callable
 
-from tree_sitter import Node
+from tree_sitter import Node, Tree
 from collections import deque
 
 from codesuggestions.prompts.parsers.base import BaseVisitor
@@ -40,3 +40,23 @@ def tree_bfs(node: Node, visitor: Union[Callable, BaseVisitor], max_depth: int =
 
             q1.extend(q2)
             q2.clear()
+
+
+def tree_dfs(tree: Tree, visitor: BaseVisitor):
+    cursor = tree.walk()
+    has_next = True
+
+    while has_next:
+        current_node = cursor.node
+
+        if visitor.stop_earlier:
+            break
+
+        visitor.visit(current_node)
+        has_next = cursor.goto_first_child()
+
+        if not has_next:
+            has_next = cursor.goto_next_sibling()
+
+        while not has_next and cursor.goto_parent():
+            has_next = cursor.goto_next_sibling()

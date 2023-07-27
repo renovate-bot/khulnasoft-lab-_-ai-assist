@@ -20,6 +20,7 @@ LANGS = [
     "tree-sitter-javascript",
     "tree-sitter-php",
     "tree-sitter-python",
+    "tree-sitter-ruby",
     "tree-sitter-rust",
     "tree-sitter-scala",
     "tree-sitter-typescript",
