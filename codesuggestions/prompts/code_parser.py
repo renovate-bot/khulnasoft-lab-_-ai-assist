@@ -1,6 +1,6 @@
 import os
-from typing import Optional
 from collections import Counter
+from typing import Optional
 
 from tree_sitter import Language, Node, Parser, Tree
 
@@ -36,7 +36,9 @@ class CodeParser:
             LanguageId.GO: ("import_declaration",),
             LanguageId.JAVA: ("import_declaration",),
             LanguageId.JS: ("import_statement",),
-            LanguageId.PHP: ("namespace_use_declaration",),  # TODO: add support for require_once
+            LanguageId.PHP: (
+                "namespace_use_declaration",
+            ),  # TODO: add support for require_once
             LanguageId.PYTHON: ("import_statement",),
             LanguageId.RUST: ("use_declaration",),
             LanguageId.SCALA: ("import_declaration",),
@@ -67,14 +69,20 @@ class CodeParser:
             LanguageId.CPP: ("comment",),
             LanguageId.CSHARP: ("comment",),
             LanguageId.GO: ("comment",),
-            LanguageId.JAVA: ("line_comment", "block_comment",),
+            LanguageId.JAVA: (
+                "line_comment",
+                "block_comment",
+            ),
             LanguageId.JS: ("comment",),
             LanguageId.PHP: ("comment",),
-            LanguageId.RUST: ("line_comment", "block_comment",),
+            LanguageId.RUST: (
+                "line_comment",
+                "block_comment",
+            ),
             LanguageId.SCALA: ("comment",),
             LanguageId.PYTHON: ("comment",),
             LanguageId.TS: ("comment",),
-        }
+        },
     }
 
     def __init__(self, lang_id: LanguageId):
@@ -93,7 +101,7 @@ class CodeParser:
             if node.type in self.LANGUAGES_TARGETS[symbol][self.lang_id]:
                 nodes.append(node)
 
-        return [node.text.decode('utf-8', errors='ignore') for node in nodes]
+        return [node.text.decode("utf-8", errors="ignore") for node in nodes]
 
     def count_symbols(self, code: str, target_symbols: Optional[set[str]]) -> dict:
         if target_symbols is None:
@@ -105,7 +113,9 @@ class CodeParser:
             for symbol in target_symbols:
                 if symbol in self.LANGUAGES_TARGETS:
                     # does the node type match the lang-specific symbol name for this lang_id?
-                    if node.type in self.LANGUAGES_TARGETS[symbol].get(self.lang_id, []):
+                    if node.type in self.LANGUAGES_TARGETS[symbol].get(
+                        self.lang_id, []
+                    ):
                         symbol_map.update([symbol])
 
         tree = self._parse_code(code)
