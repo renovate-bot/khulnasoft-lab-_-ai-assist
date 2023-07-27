@@ -261,7 +261,7 @@ async def test_model_engine_codegen(
                 ),
             ),
             "random completion\nnew line",
-            {"comments": 1},
+            {"comment": 1},
         ),
         (
             "import os\nimport pytest\n" + "prompt" * 2048,
@@ -279,7 +279,7 @@ async def test_model_engine_codegen(
                 ),
             ),
             "random completion\nnew line",
-            {"comments": 1, "imports": 2},
+            {"comment": 1, "import_statement": 2},
         ),
         (
             "random_prefix",
