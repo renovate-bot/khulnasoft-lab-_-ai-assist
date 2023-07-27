@@ -9,7 +9,6 @@ __all__ = [
 
 
 class FakeGitLabCodeGenModel(TextGenBaseModel):
-
     def generate(
         self,
         prompt: str,
@@ -23,7 +22,6 @@ class FakeGitLabCodeGenModel(TextGenBaseModel):
 
 
 class FakePalmTextGenModel(TextGenBaseModel):
-
     def generate(
         self,
         prompt: str,

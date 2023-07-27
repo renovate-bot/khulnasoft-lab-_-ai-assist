@@ -1,31 +1,40 @@
 #!/usr/bin/env python
 
 import argparse
-import torch
-from transformers import GPTJForCausalLM, GPTJConfig
-# Note: these need the git version of Transformers as of 7/22/2022
-from transformers import CodeGenTokenizer, AutoModelForCausalLM
-from transformers import CODEGEN_PRETRAINED_MODEL_ARCHIVE_LIST
 
-parser = argparse.ArgumentParser('Convert SalesForce CodeGen model to GPT-J')
-parser.add_argument('--code_model',
-                    choices=CODEGEN_PRETRAINED_MODEL_ARCHIVE_LIST, default='Salesforce/codegen-350M-multi',
-                    help='which SalesForce model to convert'
-                    )
-parser.add_argument('--ckpt_path', help='path to the model checkpoint.', default=None)
-parser.add_argument('output_dir', help='where to store the converted model')
+import torch
+
+# Note: these need the git version of Transformers as of 7/22/2022
+from transformers import (
+    CODEGEN_PRETRAINED_MODEL_ARCHIVE_LIST,
+    AutoModelForCausalLM,
+    GPTJConfig,
+    GPTJForCausalLM,
+)
+
+parser = argparse.ArgumentParser("Convert SalesForce CodeGen model to GPT-J")
+parser.add_argument(
+    "--code_model",
+    choices=CODEGEN_PRETRAINED_MODEL_ARCHIVE_LIST,
+    default="Salesforce/codegen-350M-multi",
+    help="which SalesForce model to convert",
+)
+parser.add_argument("--ckpt_path", help="path to the model checkpoint.", default=None)
+parser.add_argument("output_dir", help="where to store the converted model")
 args = parser.parse_args()
 
 if args.ckpt_path:
-    print(f'Loading CodeGen model from {args.ckpt_path}.')
-    cg_model = AutoModelForCausalLM.from_pretrained(args.code_model, state_dict=torch.load(args.ckpt_path))
+    print(f"Loading CodeGen model from {args.ckpt_path}.")
+    cg_model = AutoModelForCausalLM.from_pretrained(
+        args.code_model, state_dict=torch.load(args.ckpt_path)
+    )
 else:
-    print('Loading CodeGen model')
+    print("Loading CodeGen model")
     cg_model = AutoModelForCausalLM.from_pretrained(args.code_model, torch_dtype="auto")
 cg_config = cg_model.config
 
 # Create empty GPTJ model
-print('Creating empty GPTJ model')
+print("Creating empty GPTJ model")
 config = GPTJConfig(
     vocab_size=cg_config.vocab_size,
     n_positions=cg_config.n_positions,
@@ -47,7 +56,7 @@ config = GPTJConfig(
     torch_dtype=cg_config.torch_dtype,
 )
 # Fix tokenizer type
-config.tokenizer_class = 'CodeGenTokenizer'
+config.tokenizer_class = "CodeGenTokenizer"
 
 gptj_model = GPTJForCausalLM(config).half()
 embed_dim = config.n_embd
@@ -63,7 +72,7 @@ def replace_by_name(dest_model, src_model, old_name, new_name):
     replace(dest_model, src_model.state_dict()[old_name], new_name)
 
 
-print('Converting...')
+print("Converting...")
 # Copy weights from CodeGen model
 with torch.no_grad():
     cg_model.eval()
@@ -72,7 +81,7 @@ with torch.no_grad():
     for name, param in cg_model.named_parameters():
         # print(f'Converting {name}')
         # Handle the qkv weights separately because we need to split them
-        if 'qkv_proj' in name:
+        if "qkv_proj" in name:
             qkv_proj = param.detach().clone()
             mp_num = 4  # number of cores on their TPU I guess?
             local_dim = embed_dim // mp_num
@@ -80,18 +89,23 @@ with torch.no_grad():
             # After a great deal of pain, I figured out that this permutation on
             # the weights of the qkv_proj fixes it.
             base_permutation = [0, 3, 6, 9, 1, 4, 7, 10, 2, 5, 8, 11]
-            permutation = torch.cat([torch.arange(i * local_dim, (i + 1) * local_dim) for i in base_permutation])
+            permutation = torch.cat(
+                [
+                    torch.arange(i * local_dim, (i + 1) * local_dim)
+                    for i in base_permutation
+                ]
+            )
             # NB: we permute the *rows* here because the computation is xA.T
             new_qkv_proj = qkv_proj[permutation, :]
             # NB: the name QKV is misleading here; they are actually stored in
             #     the order QVK
             query, value, key = torch.split(new_qkv_proj, embed_dim, dim=0)
-            replace(gptj_model, query, name.replace('qkv_proj', 'q_proj'))
-            replace(gptj_model, key, name.replace('qkv_proj', 'k_proj'))
-            replace(gptj_model, value, name.replace('qkv_proj', 'v_proj'))
+            replace(gptj_model, query, name.replace("qkv_proj", "q_proj"))
+            replace(gptj_model, key, name.replace("qkv_proj", "k_proj"))
+            replace(gptj_model, value, name.replace("qkv_proj", "v_proj"))
         else:
             replace_by_name(gptj_model, cg_model, name, name)
 
-    print('Conversion complete.')
+    print("Conversion complete.")
     print(f"Saving model to {args.output_dir}...")
     gptj_model.save_pretrained(args.output_dir)

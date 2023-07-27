@@ -1,22 +1,20 @@
 import logging
-import uvicorn
-
 from logging.config import dictConfig
+
+import uvicorn
 from dotenv import load_dotenv
+from prometheus_client import start_http_server
+from prometheus_fastapi_instrumentator import Instrumentator, metrics
 
 from codesuggestions import Config
 from codesuggestions.api import create_fast_api_server
 from codesuggestions.deps import (
-    FastApiContainer,
-    CodeSuggestionsContainer,
     _PROBS_ENDPOINTS,
+    CodeSuggestionsContainer,
+    FastApiContainer,
 )
-
-from codesuggestions.structured_logging import setup_logging
 from codesuggestions.profiling import setup_profiling
-
-from prometheus_fastapi_instrumentator import Instrumentator, metrics
-from prometheus_client import start_http_server
+from codesuggestions.structured_logging import setup_logging
 
 # load env variables from .env if exists
 load_dotenv()
@@ -35,9 +33,15 @@ def main():
 
     code_suggestions_container = CodeSuggestionsContainer()
     code_suggestions_container.config.triton.from_value(config.triton._asdict())
-    code_suggestions_container.config.gitlab_codegen_model.from_value(config.gitlab_codegen_model._asdict())
-    code_suggestions_container.config.palm_text_model.from_value(config.palm_text_model._asdict())
-    code_suggestions_container.config.feature_flags.from_value(config.feature_flags._asdict())
+    code_suggestions_container.config.gitlab_codegen_model.from_value(
+        config.gitlab_codegen_model._asdict()
+    )
+    code_suggestions_container.config.palm_text_model.from_value(
+        config.palm_text_model._asdict()
+    )
+    code_suggestions_container.config.feature_flags.from_value(
+        config.feature_flags._asdict()
+    )
 
     app = create_fast_api_server()
     setup_logging(app, config.logging)
@@ -62,7 +66,7 @@ def main():
                 should_include_handler=True,
                 should_include_method=True,
                 should_include_status=True,
-                buckets=(0.5, 1, 2.5, 5, 10, 30, 60)
+                buckets=(0.5, 1, 2.5, 5, 10, 30, 60),
             )
         )
         instrumentator.instrument(app)

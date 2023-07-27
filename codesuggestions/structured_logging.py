@@ -1,10 +1,11 @@
 import logging
-import structlog
 import sys
 
-from structlog.types import EventDict, Processor
+import structlog
 from asgi_correlation_id import CorrelationIdMiddleware
 from starlette.types import ASGIApp
+from structlog.types import EventDict, Processor
+
 from codesuggestions.config import LoggingConfig
 
 access_logger = structlog.stdlib.get_logger("api.access")
