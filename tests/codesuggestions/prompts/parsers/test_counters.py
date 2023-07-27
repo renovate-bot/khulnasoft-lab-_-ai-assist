@@ -410,12 +410,7 @@ $myApp->performCalculations();
         (
             LanguageId.RUBY,
             RUBY_SAMPLE_SOURCE,
-            {
-                "require": 2,
-                "comment": 1,
-                "module": 1,
-                "class": 1
-            },
+            {"require": 2, "comment": 1, "module": 1, "class": 1},
         ),
         (
             LanguageId.RUST,

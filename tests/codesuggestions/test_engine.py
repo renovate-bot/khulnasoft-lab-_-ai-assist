@@ -1,20 +1,24 @@
+from contextlib import contextmanager
 from typing import Any
+from unittest.mock import AsyncMock, Mock, PropertyMock
 
 import pytest
-from unittest.mock import Mock, AsyncMock, PropertyMock
-from contextlib import contextmanager
 from transformers import AutoTokenizer
 
 from codesuggestions.models import (
-    TextGenModelOutput,
     PalmCodeGenBaseModel,
+    TextGenModelOutput,
     VertexModelInternalError,
     VertexModelInvalidArgument,
 )
 from codesuggestions.suggestions.processing import (
-    ops,
+    MetadataCodeContent,
+    MetadataImports,
+    MetadataModel,
+    MetadataPromptBuilder,
     ModelEngineCodegen,
-    ModelEnginePalm, MetadataModel, MetadataPromptBuilder, MetadataCodeContent, MetadataImports,
+    ModelEnginePalm,
+    ops,
 )
 
 tokenizer = AutoTokenizer.from_pretrained("Salesforce/codegen2-16B")
@@ -30,7 +34,9 @@ class MockInstrumentor:
         yield self.watcher
 
 
-def _side_effect_few_shot_tpl(content: str, _suffix: str, filename: str, model_output: str):
+def _side_effect_few_shot_tpl(
+    content: str, _suffix: str, filename: str, model_output: str
+):
     lang_id = ops.lang_from_filename(filename)
 
     def _fn(prompt: str, _suffix: str):
@@ -51,7 +57,9 @@ def _side_effect_unknown_tpl(content: str, _suffix: str, _: str, model_output: s
     return _fn
 
 
-def _side_effect_unknown_tpl_palm(prefix: str, _suffix: str, filename: str, model_output: str):
+def _side_effect_unknown_tpl_palm(
+    prefix: str, _suffix: str, filename: str, model_output: str
+):
     def _fn(prompt: str, _suffix: str):
         assert filename in prompt
 
@@ -60,7 +68,9 @@ def _side_effect_unknown_tpl_palm(prefix: str, _suffix: str, filename: str, mode
     return _fn
 
 
-def _side_effect_lang_prepended(content: str, _suffix: str, filename: str, model_output: str):
+def _side_effect_lang_prepended(
+    content: str, _suffix: str, filename: str, model_output: str
+):
     lang_id = ops.lang_from_filename(filename)
 
     def _fn(prompt: str, _suffix: str):
@@ -72,19 +82,26 @@ def _side_effect_lang_prepended(content: str, _suffix: str, filename: str, model
     return _fn
 
 
-def _side_effect_with_suffix(content: str, suffix: str, filename: str, model_output: str):
+def _side_effect_with_suffix(
+    content: str, suffix: str, filename: str, model_output: str
+):
     original_suffix = suffix
 
     def _fn(prompt: str, suffix: str):
         assert original_suffix.startswith(suffix)
-        assert token_length(prompt) + token_length(suffix) <= PalmCodeGenBaseModel.MAX_MODEL_LEN
+        assert (
+            token_length(prompt) + token_length(suffix)
+            <= PalmCodeGenBaseModel.MAX_MODEL_LEN
+        )
 
         return TextGenModelOutput(text=model_output)
 
     return _fn
 
 
-def _side_effect_with_imports(content: str, suffix: str, filename: str, model_output: str):
+def _side_effect_with_imports(
+    content: str, suffix: str, filename: str, model_output: str
+):
     def _fn(prompt: str, suffix: str):
         assert content.startswith("import os\nimport pytest")
 
@@ -93,14 +110,18 @@ def _side_effect_with_imports(content: str, suffix: str, filename: str, model_ou
     return _fn
 
 
-def _side_effect_with_internal_exception(content: str, suffix: str, filename: str, model_output: str):
+def _side_effect_with_internal_exception(
+    content: str, suffix: str, filename: str, model_output: str
+):
     def _fn(prompt: str, suffix: str):
         raise VertexModelInternalError("internal error")
 
     return _fn
 
 
-def _side_effect_with_invalid_arg_exception(content: str, suffix: str, filename: str, model_output: str):
+def _side_effect_with_invalid_arg_exception(
+    content: str, suffix: str, filename: str, model_output: str
+):
     def _fn(prompt: str, suffix: str):
         raise VertexModelInvalidArgument("invalid argument")
 
@@ -169,7 +190,7 @@ async def test_model_engine_codegen(
     model_output,
     expected_completion,
 ):
-    _side_effect = model_gen_func(content, '', file_name, model_output)
+    _side_effect = model_gen_func(content, "", file_name, model_output)
     text_gen_base_model.generate = Mock(side_effect=_side_effect)
 
     engine = ModelEngineCodegen.from_local_templates(
@@ -198,8 +219,10 @@ async def test_model_engine_codegen(
             MetadataPromptBuilder(
                 prefix=MetadataCodeContent(length=6, length_tokens=2),
                 suffix=MetadataCodeContent(length=0, length_tokens=0),
-                imports=MetadataImports(pre=MetadataCodeContent(length=0, length_tokens=0),
-                                        post=MetadataCodeContent(length=0, length_tokens=0)),
+                imports=MetadataImports(
+                    pre=MetadataCodeContent(length=0, length_tokens=0),
+                    post=MetadataCodeContent(length=0, length_tokens=0),
+                ),
             ),
             "random completion",
             None,
@@ -214,11 +237,13 @@ async def test_model_engine_codegen(
             MetadataPromptBuilder(
                 prefix=MetadataCodeContent(length=6, length_tokens=2),
                 suffix=MetadataCodeContent(length=0, length_tokens=0),
-                imports=MetadataImports(pre=MetadataCodeContent(length=0, length_tokens=0),
-                                        post=MetadataCodeContent(length=0, length_tokens=0)),
+                imports=MetadataImports(
+                    pre=MetadataCodeContent(length=0, length_tokens=0),
+                    post=MetadataCodeContent(length=0, length_tokens=0),
+                ),
             ),
             "random completion\nnew line",
-            None
+            None,
         ),
         (
             "prompt " * 2048,
@@ -230,11 +255,13 @@ async def test_model_engine_codegen(
             MetadataPromptBuilder(
                 prefix=MetadataCodeContent(length=3494, length_tokens=500),
                 suffix=MetadataCodeContent(length=1002, length_tokens=500),
-                imports=MetadataImports(pre=MetadataCodeContent(length=0, length_tokens=0),
-                                        post=MetadataCodeContent(length=0, length_tokens=0))
+                imports=MetadataImports(
+                    pre=MetadataCodeContent(length=0, length_tokens=0),
+                    post=MetadataCodeContent(length=0, length_tokens=0),
+                ),
             ),
             "random completion\nnew line",
-            {'comments': 1}
+            {"comments": 1},
         ),
         (
             "import os\nimport pytest\n" + "prompt" * 2048,
@@ -246,11 +273,13 @@ async def test_model_engine_codegen(
             MetadataPromptBuilder(
                 prefix=MetadataCodeContent(length=2984, length_tokens=995),
                 suffix=MetadataCodeContent(length=0, length_tokens=0),
-                imports=MetadataImports(pre=MetadataCodeContent(length=22, length_tokens=5),
-                                        post=MetadataCodeContent(length=22, length_tokens=5))
+                imports=MetadataImports(
+                    pre=MetadataCodeContent(length=22, length_tokens=5),
+                    post=MetadataCodeContent(length=22, length_tokens=5),
+                ),
             ),
             "random completion\nnew line",
-            {'comments': 1, 'imports': 2}
+            {"comments": 1, "imports": 2},
         ),
         (
             "random_prefix",
@@ -261,7 +290,7 @@ async def test_model_engine_codegen(
             None,
             None,
             "",
-            None
+            None,
         ),
         (
             "random_prefix",
@@ -272,7 +301,7 @@ async def test_model_engine_codegen(
             None,
             None,
             "",
-            None
+            None,
         ),
     ],
 )
@@ -306,6 +335,8 @@ async def test_model_engine_palm(
     assert completion.metadata == prompt_builder_metadata
 
     if expected_prompt_symbol_counts:
-        engine.instrumentator.watcher.register_prompt_symbols.assert_called_with(expected_prompt_symbol_counts)
+        engine.instrumentator.watcher.register_prompt_symbols.assert_called_with(
+            expected_prompt_symbol_counts
+        )
     else:
         engine.instrumentator.watcher.register_prompt_symbols.assert_not_called

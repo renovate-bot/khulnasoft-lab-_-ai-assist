@@ -1,9 +1,9 @@
 import pytest
 
 from codesuggestions.suggestions.processing.engine import (
-    _PromptBuilder,
-    _CodeContent,
     MetadataPromptBuilder,
+    _CodeContent,
+    _PromptBuilder,
 )
 from codesuggestions.suggestions.processing.ops import LanguageId
 
@@ -34,8 +34,8 @@ from codesuggestions.suggestions.processing.ops import LanguageId
             "\n",
             "This code has a filename of App.vue\n<script setup>",
             "\n",
-        )
-    ]
+        ),
+    ],
 )
 def test_prompt_builder(
     lang_id: LanguageId,
@@ -43,7 +43,7 @@ def test_prompt_builder(
     prefix: str,
     suffix: str,
     expected_prefix: str,
-    expected_suffix: str
+    expected_suffix: str,
 ):
     prompt_builder = _PromptBuilder(
         _CodeContent(prefix, length_tokens=1),

@@ -1,10 +1,10 @@
 from unittest import mock
 
-from starlette_context import request_cycle_context
 from starlette.applications import Starlette
 from starlette.responses import JSONResponse
 from starlette.routing import Route
 from starlette.testclient import TestClient
+from starlette_context import request_cycle_context
 from structlog.testing import capture_logs
 
 from codesuggestions.api.middleware import MiddlewareModelTelemetry
