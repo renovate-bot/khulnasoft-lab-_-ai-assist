@@ -16,7 +16,11 @@ class BaseVisitor(ABC):
         pass
 
     @property
-    def stop_earlier(self) -> bool:
+    def stop_tree_traversal(self) -> bool:
+        return False
+
+    @property
+    def stop_node_traversal(self) -> bool:
         return False
 
     def visit(self, node: Node):
