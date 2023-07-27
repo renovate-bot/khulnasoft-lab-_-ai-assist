@@ -53,7 +53,7 @@ import java.util._
 
 @pytest.mark.parametrize(("lang_id", "source_code", "expected_output"), [
     (LanguageId.C, C_SOURCE_SAMPLE, "#include <stdio.h>\n"),
-    (LanguageId.CPP, C_SOURCE_SAMPLE, "#include <stdio.h>\n\n"),
+    (LanguageId.CPP, C_SOURCE_SAMPLE, "#include <stdio.h>\n"),
     (LanguageId.GO, GO_SOURCE_SAMPLE, "\n".join(GO_SOURCE_SAMPLE.split("\n")[2:8])),
     (LanguageId.JAVA, JAVA_SOURCE_SAMPLE, "import java.util.ArrayList;"),
     (LanguageId.JS, JAVASCRIPT_SOURCE_SAMPLE, "import { someFunction } from './module';"),
