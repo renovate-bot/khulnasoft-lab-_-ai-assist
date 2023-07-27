@@ -1,24 +1,21 @@
 from time import time
-from typing import Literal, Union, Optional
+from typing import Literal, Optional, Union
 from uuid import uuid4
 
 import structlog
-from dependency_injector.wiring import Provide, inject
 from dependency_injector.providers import FactoryAggregate
+from dependency_injector.wiring import Provide, inject
 from fastapi import APIRouter, Depends
 from pydantic import BaseModel, constr
 from pydantic.fields import Field
 from pydantic.types import confloat, conint, conlist
 
-from codesuggestions.deps import CodeSuggestionsContainer
 from codesuggestions.api.rollout import ModelRollout
-from codesuggestions.suggestions.experimental import CodeCompletionsInternalUseCase
+from codesuggestions.deps import CodeSuggestionsContainer
 from codesuggestions.instrumentators.base import Telemetry, TelemetryInstrumentator
+from codesuggestions.suggestions.experimental import CodeCompletionsInternalUseCase
 
-
-__all__ = [
-    "router"
-]
+__all__ = ["router"]
 
 log = structlog.stdlib.get_logger("codesuggestions")
 

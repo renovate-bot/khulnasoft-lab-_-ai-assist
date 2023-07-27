@@ -1,8 +1,9 @@
 import zlib
-import structlog
+from abc import ABC, abstractmethod
 from enum import Enum
 from typing import Optional
-from abc import ABC, abstractmethod
+
+import structlog
 
 from codesuggestions.api.middleware import GitLabUser
 from codesuggestions.config import Project
@@ -47,7 +48,7 @@ class ModelRolloutThirdPartyPlan(ModelRolloutBasePlan):
         rollout_percentage: int,
         third_party_ai_models: list[ModelRollout],
         f_third_party_ai_default: bool,
-        f_limited_access_third_party_ai: dict[int, Project]
+        f_limited_access_third_party_ai: dict[int, Project],
     ):
         super().__init__(rollout_percentage)
 
@@ -61,7 +62,8 @@ class ModelRolloutThirdPartyPlan(ModelRolloutBasePlan):
         if project := self.f_limited_access_third_party_ai.get(project_id, None):
             log.info(
                 "Redirect request to the third-party model",
-                project_id=project.id, project_name=project.full_name,
+                project_id=project.id,
+                project_name=project.full_name,
             )
             return True
 
@@ -98,11 +100,12 @@ class ModelRolloutThirdPartyPlan(ModelRolloutBasePlan):
         """
 
         f_third_party_ai_flag = self._resolve_third_party_ai_flag(user)
-        is_third_party_ai_limited_access = self._is_third_party_ai_limited_access(project_id)
+        is_third_party_ai_limited_access = self._is_third_party_ai_limited_access(
+            project_id
+        )
 
         if not (
-            project_id
-            and (f_third_party_ai_flag or is_third_party_ai_limited_access)
+            project_id and (f_third_party_ai_flag or is_third_party_ai_limited_access)
         ):
             return ModelRollout.GITLAB_CODEGEN
 
@@ -110,10 +113,7 @@ class ModelRolloutThirdPartyPlan(ModelRolloutBasePlan):
         checksum = zlib.crc32(feature_project.encode("utf-8"))
         is_included = self._is_project_included(checksum)
 
-        if not (
-            is_included
-            or is_third_party_ai_limited_access
-        ):
+        if not (is_included or is_third_party_ai_limited_access):
             return ModelRollout.GITLAB_CODEGEN
 
         bucket_index = checksum % len(self.third_party_models)
