@@ -16,7 +16,7 @@ from codesuggestions.prompts import (
     PromptTemplateBase,
     PromptTemplateFewShot,
 )
-from codesuggestions.prompts.code_parser import CodeParser
+from codesuggestions.prompts.parsers import CodeParser
 from codesuggestions.suggestions.processing.base import (
     MetadataCodeContent,
     MetadataImports,
@@ -341,8 +341,8 @@ class ModelEnginePalm(ModelEngineBase):
         imports_extracted = []
         if lang_id:
             try:
-                parser = CodeParser(lang_id)
-                imports_extracted = parser.extract_imports(content)
+                parser = CodeParser.from_language_id(content, lang_id)
+                imports_extracted = parser.imports()
             except ValueError as e:
                 log.warning(f"Failed to parse code: {e}")
 
@@ -406,9 +406,8 @@ class ModelEnginePalm(ModelEngineBase):
         watch_container: TextGenModelInstrumentator.WatchContainer,
     ) -> None:
         try:
-            symbol_map = CodeParser(lang_id).count_symbols(
-                prompt, target_symbols=CodeParser.LANGUAGES_TARGETS.keys()
-            )
+            parser = CodeParser.from_language_id(prompt, lang_id)
+            symbol_map = parser.count_symbols()
             self.increment_code_symbol_counter(lang_id, symbol_map)
             self.log_symbol_map(watch_container, symbol_map)
         except ValueError as e:
