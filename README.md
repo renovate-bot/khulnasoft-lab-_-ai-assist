@@ -334,7 +334,28 @@ and execution and delivers fast and scalable AI in production. See [https://deve
 
 The endpoint `/v4/ml/ai-assist` checks if a user meets the requirements to use AI Assist and returns a boolean.
 
-## Deploying to the Kubernetes cluster
+## Deployment to Runway
+
+Code suggestions is continuously deployed to [Runway](https://about.gitlab.com/handbook/engineering/infrastructure/platforms/tools/runway/).
+
+This deployment is not yet serving production traffic from `codesuggestions.gitlab.com`, but the aim is to shift this soon ([&1064](https://gitlab.com/groups/gitlab-com/gl-infra/-/epics/1064)). Once this is complete and we are confident in the stability, we can deprecate the legacy Kubernetes-based deployment.
+
+When an MR gets merged, CI will build a new Docker image, and trigger a Runway downstream pipeline that will deploy this image to staging, and then production. Downstream pipelines run against the [deployment project](https://gitlab.com/gitlab-com/gl-infra/platform/runway/deployments/model-gateway-n2bsxg).
+
+The deployment is available at:
+
+- `https://model-gateway-n2bsxg.staging.runway.gitlab.net` (staging)
+- `https://model-gateway-n2bsxg.runway.gitlab.net` (production)
+
+For more information and assistance, please check out:
+
+- [Runway - Handbook](https://about.gitlab.com/handbook/engineering/infrastructure/platforms/tools/runway/)
+- [Runway - Group](https://gitlab.com/gitlab-com/gl-infra/platform/runway)
+- [Runway - Docs](https://gitlab.com/gitlab-com/gl-infra/platform/runway/docs)
+- [Runway - Issue Tracker](https://gitlab.com/groups/gitlab-com/gl-infra/platform/runway/-/issues)
+- `#f_runway` in Slack.
+
+## Deploying to the Kubernetes cluster (legacy)
 
 To successfully deploy AI Assist to a k8s cluster, please, make sure your cluster supports NVIDIA® GPU hardware accelerators.
 Below, we give a guideline tested specifically on the GKE cluster in the Applied ML group. Successful work
