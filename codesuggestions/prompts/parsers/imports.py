@@ -3,6 +3,7 @@ from typing import Optional
 from tree_sitter import Node
 
 from codesuggestions.prompts.parsers.base import BaseVisitor
+from codesuggestions.prompts.parsers.mixins import RubyParserMixin
 
 __all__ = [
     "BaseImportVisitor",
@@ -21,7 +22,10 @@ class BaseImportVisitor(BaseVisitor):
         return self._imports
 
     def _visit_node(self, node: Node):
-        self._imports.append(node.text.decode("utf-8", errors="ignore"))
+        self._imports.append(self._bytes_to_str(node.text))
+
+    def _bytes_to_str(self, data: bytes) -> str:
+        return data.decode("utf-8", errors="ignore")
 
 
 class CImportVisitor(BaseImportVisitor):
@@ -56,6 +60,14 @@ class PythonImportVisitor(BaseImportVisitor):
     _TARGET_SYMBOL = "import_statement"
 
 
+class RubyImportVisitor(BaseImportVisitor, RubyParserMixin):
+    _TARGET_SYMBOL = "call"
+
+    def _visit_node(self, node: Node):
+        if self.is_import(node):
+            self._imports.append(self._bytes_to_str(node.text))
+
+
 class RustImportVisitor(BaseImportVisitor):
     _TARGET_SYMBOL = "use_declaration"
 
@@ -78,6 +90,7 @@ class ImportVisitorFactory:
         LanguageId.JS: JsImportVisitor,
         LanguageId.PHP: PhpImportVisitor,
         LanguageId.PYTHON: PythonImportVisitor,
+        LanguageId.RUBY: RubyImportVisitor,
         LanguageId.RUST: RustImportVisitor,
         LanguageId.SCALA: ScalaImportVisitor,
         LanguageId.TS: TsImportVisitor,

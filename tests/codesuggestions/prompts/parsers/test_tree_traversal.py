@@ -1,8 +1,11 @@
 import pytest
 
 from codesuggestions.prompts.parsers import CodeParser
-from codesuggestions.prompts.parsers import tree_bfs
+from codesuggestions.prompts.parsers import tree_bfs, tree_dfs
 from codesuggestions.suggestions.processing.ops import LanguageId
+from codesuggestions.prompts.parsers.base import BaseVisitor
+
+from tree_sitter import Node
 
 JAVA_SAMPLE_SOURCE = """
 import org.springframework.boot.SpringApplication;
@@ -54,3 +57,35 @@ def test_level_order_traversal(lang_id: LanguageId, source_code: str, max_depth:
 
     tree_bfs(root_node, collect_nodes, max_depth=max_depth)
     assert len(visited_nodes) == expected_node_count
+
+
+class StubVisitor(BaseVisitor):
+    def __init__(self, stop_limit=-1):
+        self.visited_nodes = []
+        self.stop_limit = stop_limit
+
+    def _visit_node(self, node: Node):
+        pass
+
+    @property
+    def stop_earlier(self) -> bool:
+        return 0 < self.stop_limit <= len(self.visited_nodes)
+
+    def visit(self, node: Node):
+        self.visited_nodes.append(node)
+
+
+@pytest.mark.parametrize(
+    ("lang_id", "source_code", "stop_limit", "expected_node_count"),
+    [
+        (LanguageId.JAVA, JAVA_SAMPLE_SOURCE, -1, 77),
+        (LanguageId.JAVA, JAVA_SAMPLE_SOURCE, 50, 50),
+    ]
+)
+def test_preorder_traversal(lang_id: LanguageId, source_code: str, stop_limit: int, expected_node_count: int):
+    tree = CodeParser.from_language_id(source_code, lang_id).tree
+    visitor = StubVisitor(stop_limit)
+
+    tree_dfs(tree, visitor)
+
+    assert len(visitor.visited_nodes) == expected_node_count

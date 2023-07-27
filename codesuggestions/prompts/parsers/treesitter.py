@@ -6,6 +6,8 @@ from tree_sitter import Language, Parser, Tree
 from codesuggestions.prompts.parsers.base import BaseCodeParser, BaseVisitor
 from codesuggestions.prompts.parsers.counters import CounterVisitorFactory
 from codesuggestions.prompts.parsers.imports import ImportVisitorFactory
+from codesuggestions.prompts.parsers.treetraversal import tree_dfs
+
 from codesuggestions.suggestions.processing.ops import LanguageId
 
 
@@ -19,10 +21,10 @@ class CodeParser(BaseCodeParser):
         LanguageId.JS: "javascript",
         LanguageId.PHP: "php",
         LanguageId.PYTHON: "python",
+        LanguageId.RUBY: "ruby",
         LanguageId.RUST: "rust",
         LanguageId.SCALA: "scala",
         LanguageId.TS: "typescript",
-        # TODO Support Ruby. Not as straightforward since require uses a call node type.
     }
 
     def __init__(self, tree: Tree, lang_id: LanguageId):
@@ -50,12 +52,7 @@ class CodeParser(BaseCodeParser):
         return counts
 
     def _visit_nodes(self, visitor: BaseVisitor):
-        # TODO: bfs to traverse all nodes
-        if root_node := self.tree.root_node:
-            for node in root_node.children:
-                if visitor.stop_earlier:
-                    break
-                visitor.visit(node)
+        tree_dfs(self.tree, visitor)
 
     @classmethod
     def from_language_id(

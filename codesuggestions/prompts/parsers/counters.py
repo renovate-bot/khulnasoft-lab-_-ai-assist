@@ -4,6 +4,7 @@ from typing import Optional
 from tree_sitter import Node
 
 from codesuggestions.prompts.parsers.base import BaseVisitor
+from codesuggestions.prompts.parsers.mixins import RubyParserMixin
 from codesuggestions.suggestions.processing.ops import LanguageId
 
 __all__ = [
@@ -100,6 +101,37 @@ class PythonCounterVisitor(BaseCounterVisitor):
     }
 
 
+class RubyCounterVisitor(BaseCounterVisitor, RubyParserMixin):
+    _TARGET_SYMBOLS = {
+        "comment",
+        "call",
+        "module",
+        "class",
+    }
+
+    def _visit_node(self, node: Node):
+        if node.type == 'call':
+            if self.is_import(node):
+                # Remap call to require since call is too generic
+                self._symbol_counter.update(['require'])
+        else:
+            # In the Ruby grammar, module and class definitions get two nodes, one
+            # with children and one without. For example:
+            #
+            # module Foo
+            #   def initalize(self):
+            #   end
+            # end
+            #
+            # The parser returns:
+            #
+            # 1. A `module` node type for the entire `module` definition.
+            # 2. Another `module` node type for just the `module Foo` part, with no children.
+            if (node.type == "comment" or
+                    (node.type == "module" or node.type == "class") and len(node.children) > 0):
+                self._symbol_counter.update([node.type])
+
+
 class RustCounterVisitor(BaseCounterVisitor):
     _TARGET_SYMBOLS = {
         "use_declaration",
@@ -137,6 +169,7 @@ class CounterVisitorFactory:
         LanguageId.JS: JsCounterVisitor,
         LanguageId.PHP: PhpCounterVisitor,
         LanguageId.PYTHON: PythonCounterVisitor,
+        LanguageId.RUBY: RubyCounterVisitor,
         LanguageId.RUST: RustCounterVisitor,
         LanguageId.SCALA: ScalaCounterVisitor,
         LanguageId.TS: TsCounterVisitor,

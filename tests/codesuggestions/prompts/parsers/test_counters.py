@@ -256,6 +256,20 @@ public class Application {
 /* block comment 1 */
 """
 
+RUBY_SAMPLE_SOURCE = """
+require 'date'
+require_relative 'lib/test'
+
+# comment 1
+module Application
+  class Test
+    def hello(self, test)
+      puts "hello world"
+    end
+  end
+end
+"""
+
 RUST_SAMPLE_SOURCE = """
 use std::io;
 use actix_web::{web, App, HttpServer};
@@ -345,8 +359,8 @@ $myApp->performCalculations();
             LanguageId.PYTHON,
             PYTHON_SOURCE_SAMPLE,
             {
-                "import_statement": 4,
-                "function_definition": 2,
+                "import_statement": 5,
+                "function_definition": 4,
                 "comment": 6,
                 "class_definition": 1,
             },
@@ -363,14 +377,14 @@ $myApp->performCalculations();
             {
                 "import_statement": 1,
                 "function_declaration": 2,
-                "comment": 5,
+                "comment": 6,
                 "class_declaration": 1,
             },
         ),
         (
             LanguageId.CPP,
             CPP_SAMPLE_SOURCE,
-            {"preproc_include": 3, "function_definition": 1, "comment": 1},
+            {"preproc_include": 3, "function_definition": 1, "comment": 3},
         ),
         (
             LanguageId.CSHARP,
@@ -391,6 +405,16 @@ $myApp->performCalculations();
                 "line_comment": 1,
                 "class_declaration": 1,
                 "block_comment": 1,
+            },
+        ),
+        (
+            LanguageId.RUBY,
+            RUBY_SAMPLE_SOURCE,
+            {
+                "require": 2,
+                "comment": 1,
+                "module": 1,
+                "class": 1
             },
         ),
         (
@@ -420,7 +444,7 @@ $myApp->performCalculations();
                 "class_declaration": 1,
                 "function_declaration": 2,
                 "generator_function_declaration": 1,
-                "comment": 7,
+                "comment": 10,
             },
         ),
         (
@@ -429,7 +453,7 @@ $myApp->performCalculations();
             {
                 "namespace_use_declaration": 1,
                 "function_definition": 2,
-                "comment": 5,
+                "comment": 6,
                 "class_declaration": 1,
             },
         ),
@@ -451,7 +475,6 @@ def test_symbol_counter(
 @pytest.mark.parametrize(
     "not_supported_lang_id",
     [
-        LanguageId.RUBY,
         LanguageId.KOTLIN,
     ],
 )
