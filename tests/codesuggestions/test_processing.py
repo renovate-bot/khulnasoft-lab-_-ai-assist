@@ -1,16 +1,18 @@
 import pytest
 
 from codesuggestions.suggestions.processing import ops
-from codesuggestions.suggestions.processing.ops import (
-    LanguageId,
-)
+from codesuggestions.suggestions.processing.ops import LanguageId
 
 
 @pytest.mark.parametrize(
-    "file_names,expected_lang_id", [
+    "file_names,expected_lang_id",
+    [
         ([".unknown", "..file"], None),
         (["f.file.c", "f.file.h"], LanguageId.C),
-        (["f.cpp", "f.hpp", "f.c++", "f.h++", "f.cc", "f.hh", "f.C", "f.H"], LanguageId.CPP),
+        (
+            ["f.cpp", "f.hpp", "f.c++", "f.h++", "f.cc", "f.hh", "f.C", "f.H"],
+            LanguageId.CPP,
+        ),
         (["f.cs"], LanguageId.CSHARP),
         (["f.go"], LanguageId.GO),
         (["f.java"], LanguageId.JAVA),
@@ -22,7 +24,7 @@ from codesuggestions.suggestions.processing.ops import (
         (["f.scala"], LanguageId.SCALA),
         (["f.ts", "f.tsx"], LanguageId.TS),
         (["f.kts", "f.kt"], LanguageId.KOTLIN),
-    ]
+    ],
 )
 def test_resolve_lang_from_filepath(file_names, expected_lang_id):
     for file_name in file_names:
@@ -32,7 +34,8 @@ def test_resolve_lang_from_filepath(file_names, expected_lang_id):
 
 
 @pytest.mark.parametrize(
-    "lang_id,prompt,prompt_constructed", [
+    "lang_id,prompt,prompt_constructed",
+    [
         (None, "model prompt", "model prompt"),
         (LanguageId.C, "model prompt", "<c>model prompt"),
         (LanguageId.CPP, "model prompt", "<cpp>model prompt"),
@@ -47,7 +50,7 @@ def test_resolve_lang_from_filepath(file_names, expected_lang_id):
         (LanguageId.SCALA, "model prompt", "<scala>model prompt"),
         (LanguageId.TS, "model prompt", "<ts>model prompt"),
         (LanguageId.KOTLIN, "model prompt", "<kotlin>model prompt"),
-    ]
+    ],
 )
 def test_prepend_lang_id_prompt(lang_id, prompt, prompt_constructed):
     constructed = ops.prepend_lang_id(prompt, lang_id)
@@ -56,12 +59,13 @@ def test_prepend_lang_id_prompt(lang_id, prompt, prompt_constructed):
 
 
 @pytest.mark.parametrize(
-    "completion,expected_completion", [
+    "completion,expected_completion",
+    [
         ("def hello_world():\n", "def hello_world():"),
         ("def hello_world():\nprint(", "def hello_world():"),
         ("def hello_world():", "def hello_world():"),
         ("\ndef hello_world():", "\ndef hello_world():"),
-    ]
+    ],
 )
 def test_remove_incomplete_line(completion, expected_completion):
     actual_completion = ops.remove_incomplete_lines(completion, sep="\n")
@@ -71,10 +75,11 @@ def test_remove_incomplete_line(completion, expected_completion):
 
 class TestTrimByMaxLen:
     @pytest.mark.parametrize(
-        "prompt,max_length,expected_prompt", [
+        "prompt,max_length,expected_prompt",
+        [
             ("abcdefg", 100, "abcdefg"),
             ("abcdefg", 1, "g"),
-        ]
+        ],
     )
     def test_ok(self, prompt, max_length, expected_prompt):
         actual = self._test_run_processing(prompt, max_length)
@@ -82,10 +87,11 @@ class TestTrimByMaxLen:
         assert actual == expected_prompt
 
     @pytest.mark.parametrize(
-        "prompt,max_length", [
+        "prompt,max_length",
+        [
             ("abcdefg", 0),
             ("abcdefg", -1),
-        ]
+        ],
     )
     def test_fail(self, prompt, max_length):
         with pytest.raises(ValueError) as _:
@@ -96,12 +102,16 @@ class TestTrimByMaxLen:
 
 
 @pytest.mark.parametrize(
-    "completion,expected_completion", [
+    "completion,expected_completion",
+    [
         ("random completion```", "random completion"),
         ("random completion```\nanother random text", "random completion"),
         ("```\nanother random text", ""),
-        ("random completion``another random text", "random completion``another random text"),
-    ]
+        (
+            "random completion``another random text",
+            "random completion``another random text",
+        ),
+    ],
 )
 def test_trim_by_sep(completion, expected_completion):
     actual_completion = ops.trim_by_sep(completion, sep="```")

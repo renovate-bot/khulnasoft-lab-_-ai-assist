@@ -1,16 +1,14 @@
 import pytest
 
-from codesuggestions.prompts import (
-    PromptTemplate,
-    PromptTemplateFewShot,
-)
+from codesuggestions.prompts import PromptTemplate, PromptTemplateFewShot
 
 
 @pytest.mark.parametrize(
-    "lang, code", [
+    "lang, code",
+    [
         ("python", "random code"),
         ("python", ""),
-    ]
+    ],
 )
 def test_prompt_template(tpl_codegen_dir, lang, code):
     filepath = tpl_codegen_dir / "base.tpl"
@@ -26,10 +24,11 @@ def test_prompt_template(tpl_codegen_dir, lang, code):
 
 
 @pytest.mark.parametrize(
-    "lang,content,example", [
+    "lang,content,example",
+    [
         ("python", "random_prompt", "def hello_world"),
         ("python", "random_prompt", "s = 'hello world'"),
-    ]
+    ],
 )
 def test_prompt_template_few_shot(tpl_codegen_dir, lang, content, example):
     tpl_filepath = tpl_codegen_dir / "completion.tpl"

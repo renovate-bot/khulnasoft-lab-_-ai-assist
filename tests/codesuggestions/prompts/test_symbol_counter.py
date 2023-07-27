@@ -3,7 +3,6 @@ import pytest
 from codesuggestions.prompts.code_parser import CodeParser
 from codesuggestions.suggestions.processing.ops import LanguageId
 
-
 PYTHON_SOURCE_SAMPLE = """
 import os
 import time
@@ -342,19 +341,55 @@ $myApp->performCalculations();
 @pytest.mark.parametrize(
     ("lang_id", "source_code", "target_symbols_counts"),
     [
-        (LanguageId.PYTHON, PYTHON_SOURCE_SAMPLE, {"imports": 4, "functions": 2, "comments": 6, "classes": 1}),
+        (
+            LanguageId.PYTHON,
+            PYTHON_SOURCE_SAMPLE,
+            {"imports": 4, "functions": 2, "comments": 6, "classes": 1},
+        ),
         (LanguageId.C, C_SOURCE_SAMPLE, {"imports": 2, "functions": 3, "comments": 3}),
         (LanguageId.JS, JAVASCRIPT_SOURCE_SAMPLE, {"imports": 3}),
-        (LanguageId.TS, TS_SAMPLE_SOURCE, {"imports": 1, "functions": 2, "comments": 5, "classes": 1}),
-        (LanguageId.CPP, CPP_SAMPLE_SOURCE, {"imports": 3, "comments": 1, "functions": 1}),
-        (LanguageId.CSHARP, CSHARP_SAMPLE_SOURCE, {"imports": 1, "comments": 1, "classes": 1}),
-        (LanguageId.GO, GO_SAMPLE_SOURCE, {"imports": 1, "functions": 1, "comments": 2}),
+        (
+            LanguageId.TS,
+            TS_SAMPLE_SOURCE,
+            {"imports": 1, "functions": 2, "comments": 5, "classes": 1},
+        ),
+        (
+            LanguageId.CPP,
+            CPP_SAMPLE_SOURCE,
+            {"imports": 3, "comments": 1, "functions": 1},
+        ),
+        (
+            LanguageId.CSHARP,
+            CSHARP_SAMPLE_SOURCE,
+            {"imports": 1, "comments": 1, "classes": 1},
+        ),
+        (
+            LanguageId.GO,
+            GO_SAMPLE_SOURCE,
+            {"imports": 1, "functions": 1, "comments": 2},
+        ),
         (LanguageId.GO, GO_SAMPLE_SOURCE_2, {"imports": 2}),
-        (LanguageId.JAVA, JAVA_SAMPLE_SOURCE, {"imports": 2, "comments": 2, "classes": 1}),
+        (
+            LanguageId.JAVA,
+            JAVA_SAMPLE_SOURCE,
+            {"imports": 2, "comments": 2, "classes": 1},
+        ),
         (LanguageId.RUST, RUST_SAMPLE_SOURCE, {"imports": 2, "comments": 2}),
-        (LanguageId.SCALA, SCALA_SAMPLE_SOURCE, {"imports": 2, "comments": 1, "classes": 1, "functions": 1}),
-        (LanguageId.JS, JAVASCRIPT_SAMPLE_SOURCE_2, {"classes": 1, "functions": 3, "comments": 7}),
-        (LanguageId.PHP, PHP_SAMPLE_SOURCE, {"imports": 1, "functions": 2, "comments": 5, "classes": 1}),
+        (
+            LanguageId.SCALA,
+            SCALA_SAMPLE_SOURCE,
+            {"imports": 2, "comments": 1, "classes": 1, "functions": 1},
+        ),
+        (
+            LanguageId.JS,
+            JAVASCRIPT_SAMPLE_SOURCE_2,
+            {"classes": 1, "functions": 3, "comments": 7},
+        ),
+        (
+            LanguageId.PHP,
+            PHP_SAMPLE_SOURCE,
+            {"imports": 1, "functions": 2, "comments": 5, "classes": 1},
+        ),
     ],
 )
 def test_symbol_counter(
@@ -363,18 +398,21 @@ def test_symbol_counter(
     target_symbols_counts: set[str],
 ):
     parser = CodeParser(lang_id)
-    output = parser.count_symbols(source_code, target_symbols=target_symbols_counts.keys())
+    output = parser.count_symbols(
+        source_code, target_symbols=target_symbols_counts.keys()
+    )
 
     assert len(output) == len(target_symbols_counts)
     for symbol, expected_count in target_symbols_counts.items():
         assert output[symbol] == expected_count
+
 
 @pytest.mark.parametrize(
     ("not_supported_lang_id"),
     [
         LanguageId.RUBY,
         LanguageId.KOTLIN,
-    ]
+    ],
 )
 def test_lang_id_not_supported(not_supported_lang_id: LanguageId):
     with pytest.raises(ValueError):

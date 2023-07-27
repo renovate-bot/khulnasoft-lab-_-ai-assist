@@ -60,7 +60,11 @@ import java.util._
     [
         (LanguageId.C, C_SOURCE_SAMPLE, ["#include <stdio.h>\n"]),
         (LanguageId.CPP, C_SOURCE_SAMPLE, ["#include <stdio.h>\n"]),
-        (LanguageId.GO, GO_SOURCE_SAMPLE, ["\n".join(GO_SOURCE_SAMPLE.split("\n")[2:8])]),
+        (
+            LanguageId.GO,
+            GO_SOURCE_SAMPLE,
+            ["\n".join(GO_SOURCE_SAMPLE.split("\n")[2:8])],
+        ),
         (LanguageId.JAVA, JAVA_SOURCE_SAMPLE, ["import java.util.ArrayList;"]),
         (
             LanguageId.JS,
@@ -69,7 +73,11 @@ import java.util._
         ),
         (LanguageId.PHP, PHP_SOURCE_SAMPLE, ["use SomeNamespace\\SomeClass;"]),
         (LanguageId.PYTHON, PYTHON_SOURCE_SAMPLE, ["import os"]),
-        (LanguageId.RUBY, RUBY_SOURCE_SAMPLE, ["require 'date'", "require_relative 'lib/test'"]),
+        (
+            LanguageId.RUBY,
+            RUBY_SOURCE_SAMPLE,
+            ["require 'date'", "require_relative 'lib/test'"],
+        ),
         (LanguageId.RUST, RUST_SOURCE_SAMPLE, ["use std::collections::HashMap;"]),
         (LanguageId.SCALA, SCALA_SOURCE_SAMPLE, ["import java.util._"]),
         (

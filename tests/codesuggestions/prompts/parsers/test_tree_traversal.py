@@ -1,11 +1,9 @@
 import pytest
-
-from codesuggestions.prompts.parsers import CodeParser
-from codesuggestions.prompts.parsers import tree_bfs, tree_dfs
-from codesuggestions.suggestions.processing.ops import LanguageId
-from codesuggestions.prompts.parsers.base import BaseVisitor
-
 from tree_sitter import Node
+
+from codesuggestions.prompts.parsers import CodeParser, tree_bfs, tree_dfs
+from codesuggestions.prompts.parsers.base import BaseVisitor
+from codesuggestions.suggestions.processing.ops import LanguageId
 
 JAVA_SAMPLE_SOURCE = """
 import org.springframework.boot.SpringApplication;
@@ -45,9 +43,11 @@ PYTHON_SAMPLE_SOURCE = """import os"""
         (LanguageId.PYTHON, PYTHON_SAMPLE_SOURCE, 1, 3),
         (LanguageId.PYTHON, PYTHON_SAMPLE_SOURCE, 2, 4),
         (LanguageId.PYTHON, PYTHON_SAMPLE_SOURCE, 3, 4),
-    ]
+    ],
 )
-def test_level_order_traversal(lang_id: LanguageId, source_code: str, max_depth: int, expected_node_count: int):
+def test_level_order_traversal(
+    lang_id: LanguageId, source_code: str, max_depth: int, expected_node_count: int
+):
     root_node = CodeParser.from_language_id(source_code, lang_id).tree.root_node
 
     visited_nodes = []
@@ -83,10 +83,7 @@ class StubLimitedNodeTraversalVisitor(BaseVisitor):
 
     def _visit_node(self, node: Node):
         self.visited_nodes.append(node)
-        self._stop_node_traversal = (
-            True if node.type == self.symbol
-            else False
-        )
+        self._stop_node_traversal = True if node.type == self.symbol else False
 
     @property
     def stop_node_traversal(self) -> bool:
@@ -101,15 +98,25 @@ class StubLimitedNodeTraversalVisitor(BaseVisitor):
     [
         (LanguageId.JAVA, JAVA_SAMPLE_SOURCE, StubLimitedDepthVisitor(-1), 77),
         (LanguageId.JAVA, JAVA_SAMPLE_SOURCE, StubLimitedDepthVisitor(50), 50),
-        (LanguageId.JAVA, JAVA_SAMPLE_SOURCE, StubLimitedNodeTraversalVisitor("class_declaration"), 33),
-        (LanguageId.JAVA, JAVA_SAMPLE_SOURCE, StubLimitedNodeTraversalVisitor("import_declaration"), 50),
-    ]
+        (
+            LanguageId.JAVA,
+            JAVA_SAMPLE_SOURCE,
+            StubLimitedNodeTraversalVisitor("class_declaration"),
+            33,
+        ),
+        (
+            LanguageId.JAVA,
+            JAVA_SAMPLE_SOURCE,
+            StubLimitedNodeTraversalVisitor("import_declaration"),
+            50,
+        ),
+    ],
 )
 def test_preorder_traversal(
     lang_id: LanguageId,
     source_code: str,
     visitor: StubLimitedDepthVisitor,
-    expected_node_count: int
+    expected_node_count: int,
 ):
     tree = CodeParser.from_language_id(source_code, lang_id).tree
 
