@@ -36,6 +36,10 @@ RUN poetry install --no-interaction --no-ansi --no-cache --no-root --only main
 
 # Build tree-sitter library for the grammars supported
 COPY scripts /app/scripts
+
+# Workaround to resolve https://github.com/orgs/community/discussions/55820
+RUN git config --global http.version HTTP/1.1
+
 RUN poetry run python /app/scripts/build-tree-sitter-lib.py
 
 ##
