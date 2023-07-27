@@ -60,7 +60,7 @@ class GitLabUser(BaseUser):
         self,
         authenticated: bool,
         is_debug: bool = False,
-        claims: Optional[UserClaims] = None
+        claims: Optional[UserClaims] = None,
     ):
         self._authenticated = authenticated
         self._is_debug = is_debug
@@ -121,9 +121,13 @@ class MiddlewareLogRequest(Middleware):
                 if 400 <= status_code < 500:
                     # StreamingResponse is received from the MiddlewareAuthentication, so
                     # we need to read the response ourselves.
-                    response_body = [section async for section in response.body_iterator]
+                    response_body = [
+                        section async for section in response.body_iterator
+                    ]
                     response.body_iterator = iterate_in_threadpool(iter(response_body))
-                    structlog.contextvars.bind_contextvars(response_body=response_body[0].decode())
+                    structlog.contextvars.bind_contextvars(
+                        response_body=response_body[0].decode()
+                    )
 
                 fields = dict(
                     url=str(request.url),
@@ -136,21 +140,24 @@ class MiddlewareLogRequest(Middleware):
                     client_port=client_port,
                     duration_s=elapsed_time,
                     cpu_s=cpu_time,
-                    user_agent=request.headers.get('User-Agent'),
+                    user_agent=request.headers.get("User-Agent"),
                 )
                 fields.update(context.data)
 
                 # Recreate the Uvicorn access log format, but add all parameters as structured information
                 access_logger.info(
                     f"""{client_host}:{client_port} - "{http_method} {url} HTTP/{http_version}" {status_code}""",
-                    **fields)
+                    **fields,
+                )
                 response.headers["X-Process-Time"] = str(elapsed_time)
                 return response
 
     def __init__(self, skip_endpoints: Optional[list] = None):
         path_resolver = _PathResolver.from_optional_list(skip_endpoints)
 
-        super().__init__(MiddlewareLogRequest.CustomHeaderMiddleware, path_resolver=path_resolver)
+        super().__init__(
+            MiddlewareLogRequest.CustomHeaderMiddleware, path_resolver=path_resolver
+        )
 
 
 class MiddlewareAuthentication(Middleware):
@@ -190,7 +197,7 @@ class MiddlewareAuthentication(Middleware):
             header = conn.headers[self.AUTH_HEADER]
             bearer, _, token = header.partition(" ")
             if bearer.lower() != self.PREFIX_BEARER_HEADER:
-                raise AuthenticationError('Invalid authorization header')
+                raise AuthenticationError("Invalid authorization header")
 
             authenticated, claims = self.authenticate_with_token(conn.headers, token)
 
@@ -218,7 +225,7 @@ class MiddlewareAuthentication(Middleware):
 
     @staticmethod
     def on_auth_error(_: Request, e: Exception):
-        content = jsonable_encoder({'error': str(e)})
+        content = jsonable_encoder({"error": str(e)})
         return JSONResponse(status_code=401, content=content)
 
     def __init__(

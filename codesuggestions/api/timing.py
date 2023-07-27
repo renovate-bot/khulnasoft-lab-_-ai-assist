@@ -1,5 +1,6 @@
 import functools
 import time
+
 from starlette_context import context
 
 
@@ -16,5 +17,7 @@ def timing(context_key):
                 context.data[context_key] = end_time - start_time
 
             return result
+
         return wrap
+
     return decorator

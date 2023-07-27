@@ -2,15 +2,15 @@ from time import time
 from typing import Optional
 
 import structlog
+from dependency_injector.providers import Factory, FactoryAggregate
 from dependency_injector.wiring import Provide, inject
-from dependency_injector.providers import FactoryAggregate, Factory
 from fastapi import APIRouter, Depends, Request
-from pydantic import BaseModel, constr, conlist
+from pydantic import BaseModel, conlist, constr
 
-from codesuggestions.deps import CodeSuggestionsContainer
-from codesuggestions.suggestions import CodeSuggestions
 from codesuggestions.api.rollout import ModelRolloutBasePlan
+from codesuggestions.deps import CodeSuggestionsContainer
 from codesuggestions.instrumentators.base import Telemetry, TelemetryInstrumentator
+from codesuggestions.suggestions import CodeSuggestions
 
 __all__ = [
     "router",
