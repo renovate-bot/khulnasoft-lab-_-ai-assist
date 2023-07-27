@@ -4,10 +4,10 @@ ROOT_DIR := $(shell pwd)
 TESTS_DIR := ${ROOT_DIR}/tests
 CODE_SUGGESTIONS_DIR := ${ROOT_DIR}/codesuggestions
 
-LINT_WORKING_DIR ?= ${CODE_SUGGESTIONS_DIR}/suggestions \
-	${CODE_SUGGESTIONS_DIR}/auth \
-	${CODE_SUGGESTIONS_DIR}/api \
-	${CODE_SUGGESTIONS_DIR}/prompts \
+LINT_WORKING_DIR ?= ${CODE_SUGGESTIONS_DIR} \
+	${ROOT_DIR}/converter \
+	${ROOT_DIR}/infrastructure \
+	${ROOT_DIR}/scripts \
 	${TESTS_DIR}
 
 COMPOSE_FILES := -f docker-compose.dev.yaml
@@ -55,7 +55,7 @@ lint: flake8 check-black check-isort
 .PHONY: flake8
 flake8: install-lint-deps
 	@echo "Running flake8..."
-	@poetry run flake8 ${CODE_SUGGESTIONS_DIR}
+	@poetry run flake8 ${LINT_WORKING_DIR}
 
 .PHONY: check-black
 check-black: install-lint-deps

@@ -3,38 +3,27 @@ from pathlib import Path
 from dependency_injector import containers, providers
 from py_grpc_prometheus.prometheus_client_interceptor import PromClientInterceptor
 
-from codesuggestions.auth import GitLabAuthProvider, GitLabOidcProvider
 from codesuggestions.api import middleware
+from codesuggestions.api.rollout.model import ModelRollout, ModelRolloutWithFallbackPlan
+from codesuggestions.auth import GitLabAuthProvider, GitLabOidcProvider
 from codesuggestions.models import (
-    grpc_connect_triton,
-    grpc_connect_vertex,
-    GitLabCodeGen,
-    PalmCodeGenModel,
     FakeGitLabCodeGenModel,
     FakePalmTextGenModel,
+    GitLabCodeGen,
+    PalmCodeGenModel,
+    grpc_connect_triton,
+    grpc_connect_vertex,
 )
-from codesuggestions.suggestions.processing import (
-    ModelEngineCodegen,
-    ModelEnginePalm,
-)
-from codesuggestions.api.rollout.model import (
-    ModelRolloutWithFallbackPlan, ModelRollout,
-)
-from codesuggestions.suggestions import (
-    CodeSuggestions,
-)
+from codesuggestions.suggestions import CodeSuggestions
+from codesuggestions.suggestions.processing import ModelEngineCodegen, ModelEnginePalm
 from codesuggestions.tokenizer import init_tokenizer
-
 
 __all__ = [
     "FastApiContainer",
     "CodeSuggestionsContainer",
 ]
 
-_PROBS_ENDPOINTS = [
-    "/monitoring/healthz",
-    "/metrics"
-]
+_PROBS_ENDPOINTS = ["/monitoring/healthz", "/metrics"]
 
 
 def _init_triton_grpc_client(host: str, port: int, interceptor: PromClientInterceptor):
@@ -48,31 +37,33 @@ def _init_vertex_grpc_client(api_endpoint: str, real_or_fake):
         yield None
         return
 
-    client = grpc_connect_vertex({
-        "api_endpoint": api_endpoint,
-    })
+    client = grpc_connect_vertex(
+        {
+            "api_endpoint": api_endpoint,
+        }
+    )
     yield client
     client.transport.close()
 
 
 def _create_gitlab_codegen_model_provider(grpc_client_triton, real_or_fake):
-    return (
-        providers.Selector(
-            real_or_fake,
-            real=providers.Singleton(
-                GitLabCodeGen,
-                grpc_client=grpc_client_triton,
-            ),
-            fake=providers.Singleton(FakeGitLabCodeGenModel),
-        )
+    return providers.Selector(
+        real_or_fake,
+        real=providers.Singleton(
+            GitLabCodeGen,
+            grpc_client=grpc_client_triton,
+        ),
+        fake=providers.Singleton(FakeGitLabCodeGenModel),
     )
 
 
-def _create_palm_engine_providers(grpc_client_vertex, tokenizer, project, location, real_or_fake):
+def _create_palm_engine_providers(
+    grpc_client_vertex, tokenizer, project, location, real_or_fake
+):
     model_names = [
         ModelRollout.GOOGLE_TEXT_BISON,
         ModelRollout.GOOGLE_CODE_BISON,
-        ModelRollout.GOOGLE_CODE_GECKO
+        ModelRollout.GOOGLE_CODE_GECKO,
     ]
 
     models = {
@@ -101,7 +92,9 @@ def _create_palm_engine_providers(grpc_client_vertex, tokenizer, project, locati
 
 
 class FastApiContainer(containers.DeclarativeContainer):
-    wiring_config = containers.WiringConfiguration(modules=["codesuggestions.api.server"])
+    wiring_config = containers.WiringConfiguration(
+        modules=["codesuggestions.api.server"]
+    )
 
     config = providers.Configuration()
 
@@ -114,10 +107,10 @@ class FastApiContainer(containers.DeclarativeContainer):
         GitLabOidcProvider,
         oidc_providers=providers.Dict(
             {
-                'Gitlab': config.auth.gitlab_base_url,
-                'CustomersDot': config.auth.customer_portal_base_url
+                "Gitlab": config.auth.gitlab_base_url,
+                "CustomersDot": config.auth.customer_portal_base_url,
             }
-        )
+        ),
     )
 
     auth_middleware = providers.Factory(
@@ -195,7 +188,7 @@ class CodeSuggestionsContainer(containers.DeclarativeContainer):
         tokenizer,
         config.palm_text_model.project,
         config.palm_text_model.location,
-        config.palm_text_model.real_or_fake
+        config.palm_text_model.real_or_fake,
     )
 
     engine_codegen_factory_template = providers.Callable(
@@ -203,16 +196,18 @@ class CodeSuggestionsContainer(containers.DeclarativeContainer):
         tpl_dir=Path(__file__).parent / "_assets" / "tpl" / "codegen",
     )
 
-    engine_factory = providers.FactoryAggregate(**{
-        ModelRollout.GITLAB_CODEGEN: providers.Factory(
-            engine_codegen_factory_template,
-            model=model_gitlab_codegen,
-        ),
+    engine_factory = providers.FactoryAggregate(
         **{
-            ModelRollout(name): engine
-            for name, engine in engines_palm_codegen.items()
-        },
-    })
+            ModelRollout.GITLAB_CODEGEN: providers.Factory(
+                engine_codegen_factory_template,
+                model=model_gitlab_codegen,
+            ),
+            **{
+                ModelRollout(name): engine
+                for name, engine in engines_palm_codegen.items()
+            },
+        }
+    )
 
     code_suggestions = providers.Factory(
         CodeSuggestions,

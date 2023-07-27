@@ -1,7 +1,6 @@
 import os
 from pathlib import Path
-
-from typing import Optional, Any, NamedTuple
+from typing import Any, NamedTuple, Optional
 
 __all__ = [
     "Config",
@@ -73,14 +72,17 @@ class FeatureFlags(NamedTuple):
 
 class Config:
     BOOLEAN_STATES = {
-        '1': True, 'yes': True, 'true': True, 'on': True,
-        '0': False, 'no': False, 'false': False, 'off': False
+        "1": True,
+        "yes": True,
+        "true": True,
+        "on": True,
+        "0": False,
+        "no": False,
+        "false": False,
+        "off": False,
     }
 
-    STRUCTURED_LOGGING = {
-        "version": 1,
-        "disable_existing_loggers": False
-    }
+    STRUCTURED_LOGGING = {"version": 1, "disable_existing_loggers": False}
 
     @property
     def logging(self) -> LoggingConfig:
@@ -106,22 +108,30 @@ class Config:
             api_port=int(Config._get_value("FASTAPI_API_PORT", 5000)),
             metrics_host=Config._get_value("FASTAPI_API_METRICS_HOST", "0.0.0.0"),
             metrics_port=int(Config._get_value("FASTAPI_API_METRICS_PORT", 8082)),
-            uvicorn_logger=Config.STRUCTURED_LOGGING
+            uvicorn_logger=Config.STRUCTURED_LOGGING,
         )
 
     @property
     def auth(self) -> AuthConfig:
         return AuthConfig(
             gitlab_base_url=Config._get_value("GITLAB_URL", "https://gitlab.com/"),
-            gitlab_api_base_url=Config._get_value("GITLAB_API_URL", "https://gitlab.com/api/v4/"),
-            customer_portal_base_url=Config._get_value("CUSTOMER_PORTAL_BASE_URL", "https://customers.gitlab.com"),
-            bypass=Config._str_to_bool(Config._get_value("AUTH_BYPASS_EXTERNAL", "False"))
+            gitlab_api_base_url=Config._get_value(
+                "GITLAB_API_URL", "https://gitlab.com/api/v4/"
+            ),
+            customer_portal_base_url=Config._get_value(
+                "CUSTOMER_PORTAL_BASE_URL", "https://customers.gitlab.com"
+            ),
+            bypass=Config._str_to_bool(
+                Config._get_value("AUTH_BYPASS_EXTERNAL", "False")
+            ),
         )
 
     @property
     def profiling(self) -> ProfilingConfig:
         return ProfilingConfig(
-            enabled=Config._str_to_bool(Config._get_value("GOOGLE_CLOUD_PROFILER", "False")),
+            enabled=Config._str_to_bool(
+                Config._get_value("GOOGLE_CLOUD_PROFILER", "False")
+            ),
             verbose=int(Config._get_value("GOOGLE_CLOUD_PROFILER_VERBOSE", 2)),
             period_ms=int(Config._get_value("GOOGLE_CLOUD_PROFILER_PERIOD_MS", 10)),
         )
@@ -134,7 +144,9 @@ class Config:
             limited_access = {project.id: project for project in projects}
 
         return FeatureFlags(
-            is_third_party_ai_default=Config._str_to_bool(Config._get_value("F_IS_THIRD_PARTY_AI_DEFAULT", "False")),
+            is_third_party_ai_default=Config._str_to_bool(
+                Config._get_value("F_IS_THIRD_PARTY_AI_DEFAULT", "False")
+            ),
             limited_access_third_party_ai=limited_access,
             third_party_rollout_percentage=int(
                 Config._get_value("F_THIRD_PARTY_ROLLOUT_PERCENTAGE", 0)
@@ -151,7 +163,9 @@ class Config:
             names=names,
             project=Config._get_value("PALM_TEXT_PROJECT", "unreview-poc-390200e5"),
             location=Config._get_value("PALM_TEXT_LOCATION", "us-central1"),
-            vertex_api_endpoint=Config._get_value("VERTEX_API_ENDPOINT", "us-central1-aiplatform.googleapis.com"),
+            vertex_api_endpoint=Config._get_value(
+                "VERTEX_API_ENDPOINT", "us-central1-aiplatform.googleapis.com"
+            ),
             real_or_fake=Config._parse_fake_models(
                 Config._get_value("USE_FAKE_MODELS", "False")
             ),
@@ -172,7 +186,7 @@ class Config:
     @staticmethod
     def _str_to_bool(value: str):
         if value.lower() not in Config.BOOLEAN_STATES:
-            raise ValueError('Not a boolean: %s' % value)
+            raise ValueError("Not a boolean: %s" % value)
         return Config.BOOLEAN_STATES[value.lower()]
 
     @staticmethod
@@ -185,9 +199,11 @@ def _read_projects_from_file(file_path: Path, sep: str = ",") -> list[Project]:
     with open(str(file_path), "r") as f:
         for line in f.readlines():
             line_split = line.strip().split(sep, maxsplit=2)
-            projects.append(Project(
-                id=int(line_split[0]),
-                full_name=line_split[1],
-            ))
+            projects.append(
+                Project(
+                    id=int(line_split[0]),
+                    full_name=line_split[1],
+                )
+            )
 
     return projects

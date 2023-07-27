@@ -1,37 +1,33 @@
-import structlog
 from abc import abstractmethod
 from enum import Enum
-from typing import (
-    Optional,
-)
-from http.client import (
-    BAD_REQUEST,
-    INTERNAL_SERVER_ERROR,
-)
+from http.client import BAD_REQUEST, INTERNAL_SERVER_ERROR
+from typing import Optional
 
-from codesuggestions.models.base import ModelInput, ModelAPICallError
-from codesuggestions.models import TextGenBaseModel, TextGenModelOutput
-
-from google.protobuf import json_format, struct_pb2
+import structlog
+from google.api_core.exceptions import InternalServerError, InvalidArgument
 from google.cloud.aiplatform.gapic import PredictionServiceAsyncClient
-from google.api_core.exceptions import InvalidArgument, InternalServerError
+from google.protobuf import json_format, struct_pb2
+
+from codesuggestions.models import TextGenBaseModel, TextGenModelOutput
+from codesuggestions.models.base import ModelAPICallError, ModelInput
 
 __all__ = [
     "VertexModelAPICallError",
     "VertexModelInvalidArgument",
     "VertexModelInternalError",
-
     "PalmModel",
     "PalmCodeGenBaseModel",
     "PalmCodeBisonModel",
     "PalmCodeGeckoModel",
-    "PalmCodeGenModel"
+    "PalmCodeGenModel",
 ]
 
 log = structlog.stdlib.get_logger("codesuggestions")
 
 
-class VertexModelAPICallError(ModelAPICallError, ):
+class VertexModelAPICallError(
+    ModelAPICallError,
+):
     def __init__(self, message: str, errors: tuple = (), details: tuple = ()):
         message = f"Vertex model API error: {message.lower().strip('.')}"
         super().__init__(message, errors, details)
@@ -114,7 +110,9 @@ class PalmCodeGenBaseModel(TextGenBaseModel):
         self._model_name = (
             model_name
             if model_version == "latest" or model_version == ""
-            else PalmCodeGenBaseModel.SEP_MODEL_VERSION.join([model_name, model_version])
+            else PalmCodeGenBaseModel.SEP_MODEL_VERSION.join(
+                [model_name, model_version]
+            )
         )
 
         self.endpoint = f"projects/{project}/locations/{location}/publishers/google/models/{self.model_name}"
@@ -125,7 +123,7 @@ class PalmCodeGenBaseModel(TextGenBaseModel):
         temperature: float,
         max_output_tokens: int,
         top_p: float,
-        top_k: int
+        top_k: int,
     ) -> Optional[TextGenModelOutput]:
         if not input.is_valid():
             return TextGenModelOutput(text="")
@@ -134,7 +132,12 @@ class PalmCodeGenBaseModel(TextGenBaseModel):
 
         instance = json_format.ParseDict(input_data, struct_pb2.Value())
         instances = [instance]
-        parameters_dict = {"temperature": temperature, "maxOutputTokens": max_output_tokens, "topP": top_p, "topK": top_k}
+        parameters_dict = {
+            "temperature": temperature,
+            "maxOutputTokens": max_output_tokens,
+            "topP": top_p,
+            "topK": top_k,
+        }
         parameters = json_format.ParseDict(parameters_dict, struct_pb2.Value())
 
         try:
@@ -152,7 +155,7 @@ class PalmCodeGenBaseModel(TextGenBaseModel):
             raise VertexModelInternalError(ex.message, errors=(ex,))
 
         for prediction in predictions:
-            return TextGenModelOutput(text=prediction.get('content'))
+            return TextGenModelOutput(text=prediction.get("content"))
 
     @property
     def model_name(self) -> str:
@@ -183,7 +186,7 @@ class PalmTextBisonModel(PalmCodeGenBaseModel):
         client: PredictionServiceAsyncClient,
         project: str,
         location: str,
-        version: str = "latest"
+        version: str = "latest",
     ):
         super().__init__(PalmModel.TEXT_BISON, client, project, location, version)
 
@@ -194,10 +197,12 @@ class PalmTextBisonModel(PalmCodeGenBaseModel):
         temperature: float = 0.2,
         max_output_tokens: int = 32,
         top_p: float = 0.95,
-        top_k: int = 40
+        top_k: int = 40,
     ) -> Optional[TextGenModelOutput]:
         model_input = TextBisonModelInput(prompt)
-        res = await self._generate(model_input, temperature, max_output_tokens, top_p, top_k)
+        res = await self._generate(
+            model_input, temperature, max_output_tokens, top_p, top_k
+        )
 
         return res
 
@@ -221,10 +226,12 @@ class PalmCodeBisonModel(PalmCodeGenBaseModel):
         temperature: float = 0.2,
         max_output_tokens: int = 32,
         top_p: float = 0.95,
-        top_k: int = 40
+        top_k: int = 40,
     ) -> Optional[TextGenModelOutput]:
         model_input = CodeBisonModelInput(prompt)
-        res = await self._generate(model_input, temperature, max_output_tokens, top_p, top_k)
+        res = await self._generate(
+            model_input, temperature, max_output_tokens, top_p, top_k
+        )
 
         return res
 
@@ -237,7 +244,7 @@ class PalmCodeGeckoModel(PalmCodeGenBaseModel):
         client: PredictionServiceAsyncClient,
         project: str,
         location: str,
-        version: str = "latest"
+        version: str = "latest",
     ):
         super().__init__(PalmModel.CODE_GECKO, client, project, location, version)
 
@@ -248,10 +255,12 @@ class PalmCodeGeckoModel(PalmCodeGenBaseModel):
         temperature: float = 0.2,
         max_output_tokens: int = 32,
         top_p: float = 0.95,
-        top_k: int = 40
+        top_k: int = 40,
     ) -> Optional[TextGenModelOutput]:
         model_input = CodeGeckoModelInput(prompt, suffix)
-        res = await self._generate(model_input, temperature, max_output_tokens, top_p, top_k)
+        res = await self._generate(
+            model_input, temperature, max_output_tokens, top_p, top_k
+        )
 
         return res
 
@@ -270,7 +279,9 @@ class PalmCodeGenModel:
         project: str,
         location: str,
     ) -> PalmCodeGenBaseModel:
-        model_name, _, model_version = name.partition(PalmCodeGenBaseModel.SEP_MODEL_VERSION)
+        model_name, _, model_version = name.partition(
+            PalmCodeGenBaseModel.SEP_MODEL_VERSION
+        )
 
         if model := PalmCodeGenModel.models.get(PalmModel(model_name), None):
             return model(client, project, location, version=model_version)

@@ -1,17 +1,16 @@
 from abc import ABC, abstractmethod
-from typing import NamedTuple, Any, Optional
+from typing import Any, NamedTuple, Optional
 
 import grpc
 import numpy as np
 import tritonclient.grpc as triton_grpc_util
-from tritonclient.grpc import service_pb2_grpc
-from tritonclient.utils import np_to_triton_dtype
 from google.cloud.aiplatform.gapic import PredictionServiceAsyncClient
 from py_grpc_prometheus.prometheus_client_interceptor import PromClientInterceptor
+from tritonclient.grpc import service_pb2_grpc
+from tritonclient.utils import np_to_triton_dtype
 
 __all__ = [
     "ModelAPICallError",
-
     "TextGenModelOutput",
     "TextGenBaseModel",
     "grpc_input_from_np",
@@ -101,10 +100,7 @@ def grpc_requested_output(name: str) -> triton_grpc_util.InferRequestedOutput:
 
 
 def grpc_connect_triton(
-        host: str,
-        port: int,
-        interceptor: PromClientInterceptor,
-        verbose: bool = False
+    host: str, port: int, interceptor: PromClientInterceptor, verbose: bool = False
 ) -> triton_grpc_util.InferenceServerClient:
     # These settings MUST be kept in sync with the Triton server config:
     # https://grpc.github.io/grpc/cpp/md_doc_keepalive.html

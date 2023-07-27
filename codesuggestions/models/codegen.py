@@ -4,14 +4,13 @@ import numpy as np
 import tritonclient.grpc as triton_grpc_util
 from pydantic import BaseModel
 
+from codesuggestions.instrumentators.base import TextGenModelInstrumentator
 from codesuggestions.models.base import (
     TextGenBaseModel,
     TextGenModelOutput,
     grpc_input_from_np,
     grpc_requested_output,
 )
-
-from codesuggestions.instrumentators.base import TextGenModelInstrumentator
 
 __all__ = [
     "GitLabCodeGen",
@@ -43,7 +42,9 @@ class GitLabCodeGen(TextGenBaseModel):
     ):
         self.client = grpc_client
         self.timeout = timeout
-        self.instrumentator = TextGenModelInstrumentator(GitLabCodeGen.ENGINE_NAME, GitLabCodeGen.MODEL_NAME)
+        self.instrumentator = TextGenModelInstrumentator(
+            GitLabCodeGen.ENGINE_NAME, GitLabCodeGen.MODEL_NAME
+        )
 
     def _model_inputs(self, model_input: GitLabCodeGenModelInput) -> list:
         prompt_np = np.array([[model_input.prompt]], dtype=object)
