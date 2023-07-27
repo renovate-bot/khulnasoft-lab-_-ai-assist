@@ -4,7 +4,7 @@ ROOT_DIR := $(shell pwd)
 TESTS_DIR := ${ROOT_DIR}/tests
 CODE_SUGGESTIONS_DIR := ${ROOT_DIR}/codesuggestions
 
-LINT_WORKING_DIR ?= ${CODE_SUGGESTIONS_DIR}/suggestions
+LINT_WORKING_DIR ?= ${CODE_SUGGESTIONS_DIR}/suggestions ${CODE_SUGGESTIONS_DIR}/auth
 
 COMPOSE_FILES := -f docker-compose.dev.yaml
 ifneq (,$(wildcard docker-compose.override.yaml))
