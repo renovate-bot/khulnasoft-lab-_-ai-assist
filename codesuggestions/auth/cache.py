@@ -1,6 +1,6 @@
-from datetime import datetime
-from typing import Optional, NamedTuple
 from abc import ABC, abstractmethod
+from datetime import datetime
+from typing import NamedTuple, Optional
 
 from codesuggestions.auth.user import User
 

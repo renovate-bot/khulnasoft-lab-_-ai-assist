@@ -2,14 +2,14 @@ import logging
 import os
 import urllib.parse
 from abc import ABC, abstractmethod
+from collections import defaultdict
 from datetime import datetime, timedelta
 from hashlib import pbkdf2_hmac
-from collections import defaultdict
 
 import requests
 from jose import JWTError, jwt
 
-from codesuggestions.auth.cache import LocalAuthCache, AuthRecord
+from codesuggestions.auth.cache import AuthRecord, LocalAuthCache
 from codesuggestions.auth.user import User, UserClaims
 
 __all__ = [
@@ -130,7 +130,7 @@ class GitLabOidcProvider(AuthProvider):
             authenticated=is_allowed,
             claims=UserClaims(
                 is_third_party_ai_default=third_party_ai_features_enabled,
-                gitlab_realm=gitlab_realm
+                gitlab_realm=gitlab_realm,
             ),
         )
 
@@ -166,7 +166,9 @@ class GitLabOidcProvider(AuthProvider):
             res = requests.get(url=url, timeout=REQUEST_TIMEOUT_SECONDS)
             well_known = res.json()
         except requests.exceptions.RequestException as err:
-            logging.error(f"Unable to fetch OpenID configuration from {oidc_provider}: {err}")
+            logging.error(
+                f"Unable to fetch OpenID configuration from {oidc_provider}: {err}"
+            )
 
         return well_known
 
