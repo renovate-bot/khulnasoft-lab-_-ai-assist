@@ -272,6 +272,9 @@ class ModelEngineCodegen(ModelEngineBase):
 
 
 class ModelEnginePalm(ModelEngineBase):
+    MAX_TOKENS_IMPORTS_PERCENT = 0.12  # about 245 tokens for code-gecko
+    MAX_TOKENS_SUFFIX_PERCENT = 0.7  # about 126 tokens for code-gecko, if "imports" takes up all the available space
+
     def __init__(self, model: PalmCodeGenBaseModel, tokenizer: PreTrainedTokenizer):
         self.model = model
         self.tokenizer = tokenizer
@@ -324,9 +327,12 @@ class ModelEnginePalm(ModelEngineBase):
         lang_id: Optional[LanguageId] = None,
     ) -> _Prompt:
         imports = self._get_imports(prefix, lang_id)
-        prompt_len_imports = min(imports.total_length_tokens, 512)  # max 512 tokens
-        prompt_len_body = self.model.MAX_MODEL_LEN - prompt_len_imports
+        prompt_len_imports_max = int(
+            self.model.MAX_MODEL_LEN * self.MAX_TOKENS_IMPORTS_PERCENT
+        )
+        prompt_len_imports = min(imports.total_length_tokens, prompt_len_imports_max)
 
+        prompt_len_body = self.model.MAX_MODEL_LEN - prompt_len_imports
         body = self._get_body(prefix, suffix, prompt_len_body)
 
         prompt_builder = _PromptBuilder(body.prefix, body.suffix, file_name, lang_id)
@@ -366,14 +372,17 @@ class ModelEnginePalm(ModelEngineBase):
         return _CodeImports(content=imports)
 
     def _get_body(self, prefix: str, suffix: str, max_length: int) -> _CodeBody:
+        suffix_len = int(max_length * self.MAX_TOKENS_SUFFIX_PERCENT)
         suffix_truncated = self._truncate_content(
             suffix,
-            max_length=max_length // 2,
+            max_length=suffix_len,
             truncation_side="right",
         )
+
+        prefix_len = max_length - suffix_truncated.length_tokens
         prefix_truncated = self._truncate_content(
             prefix,
-            max_length=max_length - suffix_truncated.length_tokens,
+            max_length=prefix_len,
             truncation_side="left",
         )
 

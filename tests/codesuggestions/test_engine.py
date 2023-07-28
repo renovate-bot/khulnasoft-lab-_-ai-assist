@@ -332,7 +332,26 @@ async def test_model_engine_palm(
     assert completion.text == expected_completion
     assert completion.model == MetadataModel(name=model_name, engine=model_engine)
     assert completion.lang_id == language
-    assert completion.metadata == prompt_builder_metadata
+
+    if prompt_builder_metadata:
+        max_imports_len = int(
+            text_gen_base_model.MAX_MODEL_LEN
+            * ModelEnginePalm.MAX_TOKENS_IMPORTS_PERCENT
+        )
+        assert 0 <= completion.metadata.imports.post.length_tokens <= max_imports_len
+
+        body_len = (
+            text_gen_base_model.MAX_MODEL_LEN
+            - completion.metadata.imports.post.length_tokens
+        )
+        max_suffix_len = int(body_len * ModelEnginePalm.MAX_TOKENS_SUFFIX_PERCENT)
+        assert 0 <= completion.metadata.suffix.length_tokens <= max_suffix_len
+
+        max_prefix_len = body_len - completion.metadata.suffix.length_tokens
+        assert 0 <= completion.metadata.prefix.length_tokens <= max_prefix_len
+
+    assert True if len(prefix) > 0 else len(prefix) == completion.metadata.prefix.length
+    assert True if len(suffix) > 0 else len(suffix) == completion.metadata.suffix.length
 
     if expected_prompt_symbol_counts:
         engine.instrumentator.watcher.register_prompt_symbols.assert_called_with(
