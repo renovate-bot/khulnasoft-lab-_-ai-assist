@@ -51,14 +51,22 @@ Given a prompt, the service will return one or more predicted completions.
 POST v2/completions
 ```
 
-| Attribute                           | Type   | Required | Description                                     | Example                   |
-| ----------------------------------- | ------ | -------- | ----------------------------------------------- | ------------------------- |
-| `prompt_version`                    | int    | no       | The version of the prompt                       | `1`                       |
-| `project_path`                      | string | no       | The name of the project (max_len: **255**)      | `gitlab-orb/gitlab-shell` |
-| `project_id`                        | int    | no       | The id of the project (max_len: **255**)        | `33191677`                |
-| `current_file.file_name`            | string | yes      | The name of the current file (max_len: **255**) | `README.md`               |
-| `current_file.content_above_cursor` | string | yes      | The content above cursor (max_len: **100,000**) | `import numpy as np`      |
-| `current_file.content_below_cursor` | string | yes      | The content below cursor (max_len: **100,000**) | `def __main__:\n`         |
+| Attribute                           | Type   | Required | Description                                                        | Example                   |
+| ----------------------------------- | ------ | -------- | ------------------------------------------------------------------ | ------------------------- |
+| `prompt_version`                    | int    | no       | The version of the prompt                                          | `1`                       |
+| `project_path`                      | string | no       | The name of the project (max_len: **255**)                         | `gitlab-orb/gitlab-shell` |
+| `project_id`                        | int    | no       | The id of the project                                              | `33191677`                |
+| `current_file`                      | hash   | yes      | The data of the current file                                       |                           |
+| `current_file.file_name`            | string | yes      | The name of the current file (max_len: **255**)                    | `README.md`               |
+| `current_file.content_above_cursor` | string | yes      | The content above cursor (max_len: **100,000**)                    | `import numpy as np`      |
+| `current_file.content_below_cursor` | string | yes      | The content below cursor (max_len: **100,000**)                    | `def __main__:\n`         |
+| `telemetry`                         | array  | no       | The list of telemetry data from previous request (max_len: **10**) |                           |
+| `telemetry.model_engine`            | string | no       | The model engine used for completions (max_len: **100,000**)       | `vertex-ai`               |
+| `telemetry.model_name`              | string | no       | The model name used for completions (max_len: **50**)              | `code-gecko`              |
+| `telemetry.lang`                    | string | no       | The language used for completions (max_len: **50**)                | `python`                  |
+| `telemetry.requests`                | int    | yes      | The number of previously requested completions                     | `1`                       |
+| `telemetry.accepts`                 | int    | yes      | The number of previously accepted completions                      | `1`                       |
+| `telemetry.errors`                  | int    | yes      | The number of previously failed completions                        | `0`                       |
 
 ```shell
 curl --request POST \
@@ -74,13 +82,27 @@ curl --request POST \
       "content_above_cursor": "def is_even(n: int) ->",
       "content_below_cursor": ""
     }
+    "telemetry": [
+      {
+        "model_engine": "vertex-ai",
+        "model_name": "code-gecko",
+        "lang": "python",
+        "requests": 1,
+        "accepts": 1,
+        "errors": 0
+      }
+    ]
   }'
 ```
 
 ```json
 {
   "id": "id",
-  "model": "codegen",
+  "model": {
+    "engine": "vertex-ai",
+    "name": "code-gecko",
+    "lang": "python"
+  },
   "object": "text_completion",
   "created": 1682031100,
   "choices": [
@@ -94,55 +116,6 @@ curl --request POST \
 ```
 
 #### Responses
-
-- `200: OK` if the service returns some completions.
-- `422: Unprocessable Entity` if the required attributes are missing.
-- `401: Unauthorized` if the service fails to authenticate using the access token.
-
-### Deprecations
-
-The following endpoints are to be deprecated and removed.
-
-#### Completions V1
-
-Given a prompt, the service will return one or more predicted completions.
-
-```plaintext
-POST completions/v1
-```
-
-| Attribute | Type   | Required | Description           | Example                 |
-| --------- | ------ | -------- | --------------------- | ----------------------- |
-| prompt    | string | yes      | Prompt to be complete | `def is_odd(n: int) ->` |
-
-```shell
-curl --request POST \
-  --url 'https://codesuggestions.gitlab.com/v1/completions' \
-  --header 'Authorization: Bearer <access_token>' \
-  --header 'Content-Type: application/json' \
-  --data-raw '{
-    "prompt": "def is_odd(n: int) ->"
-  }'
-```
-
-```json
-{
-  "id": "id",
-  "model": "codegen",
-  "object": "text_completion",
-  "created": 1682030781,
-  "choices": [
-    {
-      "text": " bool:\n    return n % 2 == 1\n\n\ndef is_even",
-      "index": 0,
-      "finish_reason": "length"
-    }
-  ],
-  "usage": null
-}
-```
-
-##### Responses
 
 - `200: OK` if the service returns some completions.
 - `422: Unprocessable Entity` if the required attributes are missing.
