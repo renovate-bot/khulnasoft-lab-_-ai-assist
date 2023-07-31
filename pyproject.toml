@@ -61,3 +61,4 @@ codesuggestions = "codesuggestions.app:main"
 
 [tool.isort]
 profile = "black"
+skip = "scripts/vendor"
