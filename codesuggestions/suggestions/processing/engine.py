@@ -273,7 +273,7 @@ class ModelEngineCodegen(ModelEngineBase):
 
 class ModelEnginePalm(ModelEngineBase):
     MAX_TOKENS_IMPORTS_PERCENT = 0.12  # about 245 tokens for code-gecko
-    MAX_TOKENS_SUFFIX_PERCENT = 0.7  # about 126 tokens for code-gecko, if "imports" takes up all the available space
+    MAX_TOKENS_SUFFIX_PERCENT = 0.07  # about 126 tokens for code-gecko, if "imports" takes up all the available space
 
     def __init__(self, model: PalmCodeGenBaseModel, tokenizer: PreTrainedTokenizer):
         self.model = model
