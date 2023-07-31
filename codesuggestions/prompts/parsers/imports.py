@@ -14,6 +14,8 @@ from codesuggestions.suggestions.processing.ops import LanguageId
 
 
 class BaseImportVisitor(BaseVisitor):
+    _TARGET_SYMBOLS = []
+
     def __init__(self):
         self._imports = []
 
@@ -26,39 +28,39 @@ class BaseImportVisitor(BaseVisitor):
 
 
 class CImportVisitor(BaseImportVisitor):
-    _TARGET_SYMBOL = "preproc_include"
+    _TARGET_SYMBOLS = ["preproc_include"]
 
 
 class CppImportVisitor(BaseImportVisitor):
-    _TARGET_SYMBOL = "preproc_include"
+    _TARGET_SYMBOLS = ["preproc_include"]
 
 
 class CsharpImportVisitor(BaseImportVisitor):
-    _TARGET_SYMBOL = "using_directive"
+    _TARGET_SYMBOLS = ["using_directive"]
 
 
 class GoImportVisitor(BaseImportVisitor):
-    _TARGET_SYMBOL = "import_declaration"
+    _TARGET_SYMBOLS = ["import_declaration"]
 
 
 class JavaImportVisitor(BaseImportVisitor):
-    _TARGET_SYMBOL = "import_declaration"
+    _TARGET_SYMBOLS = ["import_declaration", "import_static"]
 
 
 class JsImportVisitor(BaseImportVisitor):
-    _TARGET_SYMBOL = "import_statement"
+    _TARGET_SYMBOLS = ["import_statement"]
 
 
 class PhpImportVisitor(BaseImportVisitor):
-    _TARGET_SYMBOL = "namespace_use_declaration"
+    _TARGET_SYMBOLS = ["namespace_use_declaration"]
 
 
 class PythonImportVisitor(BaseImportVisitor):
-    _TARGET_SYMBOL = "import_statement"
+    _TARGET_SYMBOLS = ["import_statement", "import_from_statement"]
 
 
 class RubyImportVisitor(BaseImportVisitor, RubyParserMixin):
-    _TARGET_SYMBOL = "call"
+    _TARGET_SYMBOLS = ["call"]
 
     def _visit_node(self, node: Node):
         if self.is_import(node):
@@ -66,15 +68,15 @@ class RubyImportVisitor(BaseImportVisitor, RubyParserMixin):
 
 
 class RustImportVisitor(BaseImportVisitor):
-    _TARGET_SYMBOL = "use_declaration"
+    _TARGET_SYMBOLS = ["use_declaration"]
 
 
 class ScalaImportVisitor(BaseImportVisitor):
-    _TARGET_SYMBOL = "import_declaration"
+    _TARGET_SYMBOLS = ["import_declaration"]
 
 
 class TsImportVisitor(BaseImportVisitor):
-    _TARGET_SYMBOL = "import_statement"
+    _TARGET_SYMBOLS = ["import_statement"]
 
 
 class ImportVisitorFactory:
