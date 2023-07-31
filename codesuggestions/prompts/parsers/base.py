@@ -9,7 +9,7 @@ __all__ = [
 
 
 class BaseVisitor(ABC):
-    _TARGET_SYMBOL = None
+    _TARGET_SYMBOLS = []
 
     @abstractmethod
     def _visit_node(self, node: Node):
@@ -25,7 +25,7 @@ class BaseVisitor(ABC):
 
     def visit(self, node: Node):
         # use self instead of the class name to access the overridden attribute
-        if self._TARGET_SYMBOL and node.type == self._TARGET_SYMBOL:
+        if self._TARGET_SYMBOLS and node.type in self._TARGET_SYMBOLS:
             self._visit_node(node)
 
     def _bytes_to_str(self, data: bytes) -> str:

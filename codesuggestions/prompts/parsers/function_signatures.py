@@ -37,45 +37,45 @@ class BaseFunctionSignatureVisitor(BaseVisitor):
 
 
 class CFunctionSignatureVisitor(BaseFunctionSignatureVisitor):
-    _TARGET_SYMBOL = "function_definition"
+    _TARGET_SYMBOLS = ["function_definition"]
     _FUNCTION_BODY_SYMBOL = "compound_statement"
 
 
 class CppFunctionSignatureVisitor(BaseFunctionSignatureVisitor):
-    _TARGET_SYMBOL = "function_definition"
+    _TARGET_SYMBOLS = ["function_definition"]
     _FUNCTION_BODY_SYMBOL = "compound_statement"
 
 
 # TODO: Not supporting c# for now because every function has to belong to a class in c#
 # class CsharpFunctionSignatureVisitor(BaseFunctionSignatureVisitor):
-#     _TARGET_SYMBOL = "method_declaration"
+#     _TARGET_SYMBOLS = ["method_declaration"]
 
 
 class GoFunctionSignatureVisitor(BaseFunctionSignatureVisitor):
-    _TARGET_SYMBOL = "function_declaration"
+    _TARGET_SYMBOLS = ["function_declaration"]
 
 
 # TODO: Not supporting java for now because every function has to belong to a class in java
 # class JavaFunctionSignatureVisitor(BaseFunctionSignatureVisitor):
-#     _TARGET_SYMBOL = "method_declaration"
+#     _TARGET_SYMBOLS = ["method_declaration"]
 
 
 class JsFunctionSignatureVisitor(BaseFunctionSignatureVisitor):
-    _TARGET_SYMBOL = "function_declaration"
+    _TARGET_SYMBOLS = ["function_declaration"]
     _FUNCTION_BODY_SYMBOL = "statement_block"
 
 
 class PhpFunctionSignatureVisitor(BaseFunctionSignatureVisitor):
-    _TARGET_SYMBOL = "function_definition"
+    _TARGET_SYMBOLS = ["function_definition"]
     _FUNCTION_BODY_SYMBOL = "compound_statement"
 
 
 class PythonFunctionSignatureVisitor(BaseFunctionSignatureVisitor):
-    _TARGET_SYMBOL = "function_definition"
+    _TARGET_SYMBOLS = ["function_definition"]
 
 
 class RubyFunctionSignatureVisitor(BaseFunctionSignatureVisitor, RubyParserMixin):
-    _TARGET_SYMBOL = "method"
+    _TARGET_SYMBOLS = ["method"]
     _FUNCTION_BODY_SYMBOL = "body_statement"
 
     def _visit_node(self, node: Node):
@@ -97,15 +97,15 @@ class RubyFunctionSignatureVisitor(BaseFunctionSignatureVisitor, RubyParserMixin
 
 
 class RustFunctionSignatureVisitor(BaseFunctionSignatureVisitor):
-    _TARGET_SYMBOL = "function_item"
+    _TARGET_SYMBOLS = ["function_item"]
 
 
 class ScalaFunctionSignatureVisitor(BaseFunctionSignatureVisitor):
-    _TARGET_SYMBOL = "function_definition"
+    _TARGET_SYMBOLS = ["function_definition"]
 
 
 class TsFunctionSignatureVisitor(BaseFunctionSignatureVisitor):
-    _TARGET_SYMBOL = "function_declaration"
+    _TARGET_SYMBOLS = ["function_declaration"]
     _FUNCTION_BODY_SYMBOL = "statement_block"
 
 

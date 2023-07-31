@@ -26,6 +26,7 @@ C_SOURCE_SAMPLE = """// C test
 
 JAVA_SOURCE_SAMPLE = """// Java test
 import java.util.ArrayList;
+import static java.lang.Math.sqrt;
 """
 
 JAVASCRIPT_SOURCE_SAMPLE = """// Javascript test
@@ -39,6 +40,7 @@ use SomeNamespace\\SomeClass;
 
 PYTHON_SOURCE_SAMPLE = """# Python test
 import os
+from abc import ABC
 """
 
 RUBY_SOURCE_SAMPLE = """# Ruby test
@@ -65,14 +67,18 @@ import java.util._
             GO_SOURCE_SAMPLE,
             ["\n".join(GO_SOURCE_SAMPLE.split("\n")[2:8])],
         ),
-        (LanguageId.JAVA, JAVA_SOURCE_SAMPLE, ["import java.util.ArrayList;"]),
+        (
+            LanguageId.JAVA,
+            JAVA_SOURCE_SAMPLE,
+            ["import java.util.ArrayList;", "import static java.lang.Math.sqrt;"],
+        ),
         (
             LanguageId.JS,
             JAVASCRIPT_SOURCE_SAMPLE,
             ["import { someFunction } from './module';"],
         ),
         (LanguageId.PHP, PHP_SOURCE_SAMPLE, ["use SomeNamespace\\SomeClass;"]),
-        (LanguageId.PYTHON, PYTHON_SOURCE_SAMPLE, ["import os"]),
+        (LanguageId.PYTHON, PYTHON_SOURCE_SAMPLE, ["import os", "from abc import ABC"]),
         (
             LanguageId.RUBY,
             RUBY_SOURCE_SAMPLE,
