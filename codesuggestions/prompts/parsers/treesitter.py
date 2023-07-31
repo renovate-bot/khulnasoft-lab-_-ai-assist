@@ -5,6 +5,9 @@ from tree_sitter import Language, Parser, Tree
 
 from codesuggestions.prompts.parsers.base import BaseCodeParser, BaseVisitor
 from codesuggestions.prompts.parsers.counters import CounterVisitorFactory
+from codesuggestions.prompts.parsers.function_signatures import (
+    FunctionSignatureVisitorFactory,
+)
 from codesuggestions.prompts.parsers.imports import ImportVisitorFactory
 from codesuggestions.prompts.parsers.treetraversal import tree_dfs
 from codesuggestions.suggestions.processing.ops import LanguageId
@@ -39,6 +42,16 @@ class CodeParser(BaseCodeParser):
         imports = visitor.imports
 
         return imports
+
+    def function_signatures(self) -> list[str]:
+        visitor = FunctionSignatureVisitorFactory.from_language_id(self.lang_id)
+        if visitor is None:
+            return []
+
+        self._visit_nodes(visitor)
+        function_signatures = visitor.function_signatures
+
+        return function_signatures
 
     def count_symbols(self) -> dict:
         visitor = CounterVisitorFactory.from_language_id(self.lang_id)

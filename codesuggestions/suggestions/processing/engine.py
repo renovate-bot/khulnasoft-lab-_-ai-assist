@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import Any, NamedTuple, Optional
+from typing import Any, Callable, NamedTuple, Optional
 
 import structlog
 from transformers import PreTrainedTokenizer
@@ -19,7 +19,7 @@ from codesuggestions.prompts import (
 from codesuggestions.prompts.parsers import CodeParser
 from codesuggestions.suggestions.processing.base import (
     MetadataCodeContent,
-    MetadataImports,
+    MetadataExtraInfo,
     MetadataModel,
     MetadataPromptBuilder,
     ModelEngineBase,
@@ -55,18 +55,16 @@ class _CodeBody(NamedTuple):
     suffix: _CodeContent
 
 
-class _CodeImports(NamedTuple):
+class _CodeInfo(NamedTuple):
     content: list[_CodeContent]
 
     @property
     def total_length_tokens(self):
-        return sum(
-            [import_statement.length_tokens for import_statement in self.content]
-        )
+        return sum([info.length_tokens for info in self.content])
 
     @property
     def total_length(self):
-        return sum([len(import_statement.text) for import_statement in self.content])
+        return sum([len(info.text) for info in self.content])
 
 
 class _Prompt(NamedTuple):
@@ -75,29 +73,29 @@ class _Prompt(NamedTuple):
     metadata: MetadataPromptBuilder
 
 
-def _double_slash_comment(comment):
+def _double_slash_comment(comment: str) -> str:
     return f"// {comment}"
 
 
-class _PromptBuilder:
-    DOUBLE_SLASH_COMMENT = _double_slash_comment
+# TODO: Convert these to templates later
+COMMENT_GENERATOR: dict[LanguageId, Callable[[str], str]] = {
+    LanguageId.C: lambda comment: f"/* {comment} */",
+    LanguageId.CPP: _double_slash_comment,
+    LanguageId.CSHARP: _double_slash_comment,
+    LanguageId.GO: _double_slash_comment,
+    LanguageId.JAVA: _double_slash_comment,
+    LanguageId.JS: _double_slash_comment,
+    LanguageId.PHP: _double_slash_comment,
+    LanguageId.PYTHON: lambda comment: f"# {comment}",
+    LanguageId.RUBY: lambda comment: f"# {comment}",
+    LanguageId.RUST: _double_slash_comment,
+    LanguageId.SCALA: _double_slash_comment,
+    LanguageId.TS: _double_slash_comment,
+    LanguageId.KOTLIN: _double_slash_comment,
+}
 
-    # TODO: Convert these to templates later
-    COMMENT_GENERATOR = {
-        LanguageId.C: lambda comment: f"/* {comment} */",
-        LanguageId.CPP: DOUBLE_SLASH_COMMENT,
-        LanguageId.CSHARP: DOUBLE_SLASH_COMMENT,
-        LanguageId.GO: DOUBLE_SLASH_COMMENT,
-        LanguageId.JAVA: DOUBLE_SLASH_COMMENT,
-        LanguageId.JS: DOUBLE_SLASH_COMMENT,
-        LanguageId.PHP: DOUBLE_SLASH_COMMENT,
-        LanguageId.PYTHON: lambda comment: f"# {comment}",
-        LanguageId.RUBY: lambda comment: f"# {comment}",
-        LanguageId.RUST: DOUBLE_SLASH_COMMENT,
-        LanguageId.SCALA: DOUBLE_SLASH_COMMENT,
-        LanguageId.TS: DOUBLE_SLASH_COMMENT,
-        LanguageId.KOTLIN: DOUBLE_SLASH_COMMENT,
-    }
+
+class _PromptBuilder:
     LANG_ID_TO_HUMAN_NAME = {
         LanguageId.C: "C",
         LanguageId.CPP: "C++",
@@ -138,27 +136,27 @@ class _PromptBuilder:
             ),
         }
 
-    def add_imports(self, imports: _CodeImports, max_total_length_tokens: int):
+    def add_extra_info(
+        self, extra_info: _CodeInfo, max_total_length_tokens: int, extra_info_name: str
+    ):
         total_length_tokens = 0
         total_length = 0
 
-        # Only prepend the import statement if it's not present and we have room
-        for import_statement in imports.content:
-            if (
-                self._prefix.find(import_statement.text) >= 0
-                or self._suffix.find(import_statement.text) >= 0
-            ):
+        # Only prepend the info if it's not present and we have room
+        for info in extra_info.content:
+            if info.text in self._prefix or info.text in self._suffix:
                 continue
 
-            total_length += len(import_statement.text)
-            total_length_tokens += import_statement.length_tokens
+            total_length += len(info.text)
+            total_length_tokens += info.length_tokens
             if max_total_length_tokens - total_length_tokens >= 0:
-                self._prefix = f"{import_statement.text}\n{self._prefix}"
+                self._prefix = f"{info.text}\n{self._prefix}"
 
-        self._metadata["imports"] = MetadataImports(
+        self._metadata[extra_info_name] = MetadataExtraInfo(
+            name=extra_info_name,
             pre=MetadataCodeContent(
-                length=imports.total_length,
-                length_tokens=imports.total_length_tokens,
+                length=extra_info.total_length,
+                length_tokens=extra_info.total_length_tokens,
             ),
             post=MetadataCodeContent(
                 length=total_length,
@@ -167,11 +165,11 @@ class _PromptBuilder:
         )
 
     def _prepend_comments(self) -> str:
-        if self.lang_id not in self.COMMENT_GENERATOR:
+        if self.lang_id not in COMMENT_GENERATOR:
             header = f"This code has a filename of {self.file_name}"
             return f"{header}\n{self._prefix}"
 
-        comment = self.COMMENT_GENERATOR[self.lang_id]
+        comment = COMMENT_GENERATOR[self.lang_id]
         language = self.LANG_ID_TO_HUMAN_NAME[self.lang_id]
         header = comment(
             f"This code has a filename of {self.file_name} and is written in {language}."
@@ -188,6 +186,7 @@ class _PromptBuilder:
                 prefix=self._metadata["prefix"],
                 suffix=self._metadata["suffix"],
                 imports=self._metadata.get("imports", None),
+                function_signatures=self._metadata.get("function_signatures", None),
             ),
         )
 
@@ -332,44 +331,87 @@ class ModelEnginePalm(ModelEngineBase):
         )
         prompt_len_imports = min(imports.total_length_tokens, prompt_len_imports_max)
 
-        prompt_len_body = self.model.MAX_MODEL_LEN - prompt_len_imports
+        func_signatures = self._get_function_signatures(suffix, lang_id)
+        prompt_len_func_signatures = min(
+            func_signatures.total_length_tokens, 1024
+        )  # max 1024 tokens
+
+        prompt_len_body = (
+            self.model.MAX_MODEL_LEN - prompt_len_imports - prompt_len_func_signatures
+        )
         body = self._get_body(prefix, suffix, prompt_len_body)
 
         prompt_builder = _PromptBuilder(body.prefix, body.suffix, file_name, lang_id)
-        prompt_builder.add_imports(imports, prompt_len_imports)
+        # NOTE that the last thing we add here will appear first in the prefix
+        prompt_builder.add_extra_info(
+            func_signatures,
+            prompt_len_func_signatures,
+            extra_info_name="function_signatures",
+        )
+        prompt_builder.add_extra_info(
+            imports, prompt_len_imports, extra_info_name="imports"
+        )
         prompt = prompt_builder.build()
 
         return prompt
 
     def _get_imports(
         self, content: str, lang_id: Optional[LanguageId] = None
-    ) -> _CodeImports:
-        imports_extracted = []
+    ) -> _CodeInfo:
+        imports = self._extract(content, "imports", lang_id)
+        return self._to_code_info(imports, lang_id, as_comments=False)
+
+    def _get_function_signatures(
+        self, content: str, lang_id: Optional[LanguageId] = None
+    ) -> _CodeInfo:
+        signatures = self._extract(content, "function_signatures", lang_id)
+        return self._to_code_info(signatures, lang_id, as_comments=True)
+
+    @staticmethod
+    def _extract(
+        content: str, target: str, lang_id: Optional[LanguageId] = None
+    ) -> list[str]:
+        extracted = []
         if lang_id:
             try:
                 parser = CodeParser.from_language_id(content, lang_id)
-                imports_extracted = parser.imports()
+                if target == "imports":
+                    extracted = parser.imports()
+                elif target == "function_signatures":
+                    extracted = parser.function_signatures()
+                else:
+                    raise ValueError(f"Unknown extraction target {target}")
             except ValueError as e:
                 log.warning(f"Failed to parse code: {e}")
 
-        if len(imports_extracted) == 0:
-            return _CodeImports(content=[])
+        return extracted
 
-        imports_tokenized = self.tokenizer(
-            imports_extracted,
+    def _to_code_info(
+        self, contents: list[str], lang_id: LanguageId, as_comments: bool = True
+    ) -> _CodeInfo:
+        """
+        Convert a list of code snippets into `_CodeInfo`, which includes metadata like text length and token length.
+        """
+        if len(contents) == 0:
+            return _CodeInfo(content=[])
+
+        if as_comments:
+            comment_converter = COMMENT_GENERATOR[lang_id]
+            contents = [comment_converter(content) for content in contents]
+
+        contents_tokenized = self.tokenizer(
+            contents,
             return_length=True,
             return_attention_mask=False,
             add_special_tokens=False,
         )
 
-        imports = [
-            _CodeContent(text=import_text, length_tokens=length)
-            for import_text, length in zip(
-                imports_extracted, imports_tokenized["length"]
-            )
+        code_contents = [
+            _CodeContent(text=text, length_tokens=length)
+            for text, length in zip(contents, contents_tokenized["length"])
         ]
 
-        return _CodeImports(content=imports)
+        return _CodeInfo(content=code_contents)
 
     def _get_body(self, prefix: str, suffix: str, max_length: int) -> _CodeBody:
         suffix_len = int(max_length * self.MAX_TOKENS_SUFFIX_PERCENT)

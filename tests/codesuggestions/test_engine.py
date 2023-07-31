@@ -13,7 +13,7 @@ from codesuggestions.models import (
 )
 from codesuggestions.suggestions.processing import (
     MetadataCodeContent,
-    MetadataImports,
+    MetadataExtraInfo,
     MetadataModel,
     MetadataPromptBuilder,
     ModelEngineCodegen,
@@ -219,7 +219,13 @@ async def test_model_engine_codegen(
             MetadataPromptBuilder(
                 prefix=MetadataCodeContent(length=6, length_tokens=2),
                 suffix=MetadataCodeContent(length=0, length_tokens=0),
-                imports=MetadataImports(
+                imports=MetadataExtraInfo(
+                    name="imports",
+                    pre=MetadataCodeContent(length=0, length_tokens=0),
+                    post=MetadataCodeContent(length=0, length_tokens=0),
+                ),
+                function_signatures=MetadataExtraInfo(
+                    name="function_signatures",
                     pre=MetadataCodeContent(length=0, length_tokens=0),
                     post=MetadataCodeContent(length=0, length_tokens=0),
                 ),
@@ -237,7 +243,13 @@ async def test_model_engine_codegen(
             MetadataPromptBuilder(
                 prefix=MetadataCodeContent(length=6, length_tokens=2),
                 suffix=MetadataCodeContent(length=0, length_tokens=0),
-                imports=MetadataImports(
+                imports=MetadataExtraInfo(
+                    name="imports",
+                    pre=MetadataCodeContent(length=0, length_tokens=0),
+                    post=MetadataCodeContent(length=0, length_tokens=0),
+                ),
+                function_signatures=MetadataExtraInfo(
+                    name="function_signatures",
                     pre=MetadataCodeContent(length=0, length_tokens=0),
                     post=MetadataCodeContent(length=0, length_tokens=0),
                 ),
@@ -255,7 +267,13 @@ async def test_model_engine_codegen(
             MetadataPromptBuilder(
                 prefix=MetadataCodeContent(length=3494, length_tokens=500),
                 suffix=MetadataCodeContent(length=1002, length_tokens=500),
-                imports=MetadataImports(
+                imports=MetadataExtraInfo(
+                    name="imports",
+                    pre=MetadataCodeContent(length=0, length_tokens=0),
+                    post=MetadataCodeContent(length=0, length_tokens=0),
+                ),
+                function_signatures=MetadataExtraInfo(
+                    name="function_signatures",
                     pre=MetadataCodeContent(length=0, length_tokens=0),
                     post=MetadataCodeContent(length=0, length_tokens=0),
                 ),
@@ -273,9 +291,15 @@ async def test_model_engine_codegen(
             MetadataPromptBuilder(
                 prefix=MetadataCodeContent(length=2984, length_tokens=995),
                 suffix=MetadataCodeContent(length=0, length_tokens=0),
-                imports=MetadataImports(
+                imports=MetadataExtraInfo(
+                    name="imports",
                     pre=MetadataCodeContent(length=22, length_tokens=5),
                     post=MetadataCodeContent(length=22, length_tokens=5),
+                ),
+                function_signatures=MetadataExtraInfo(
+                    name="function_signatures",
+                    pre=MetadataCodeContent(length=0, length_tokens=0),
+                    post=MetadataCodeContent(length=0, length_tokens=0),
                 ),
             ),
             "random completion\nnew line",
@@ -359,3 +383,82 @@ async def test_model_engine_palm(
         )
     else:
         engine.instrumentator.watcher.register_prompt_symbols.assert_not_called
+
+
+@pytest.mark.parametrize(
+    (
+        "prefix",
+        "suffix",
+        "file_name",
+        "lang_id",
+        "expected_imports",
+        "expected_functions",
+    ),
+    [
+        (
+            """
+import numpy as np
+
+def hello_world() -> int:
+    return 1 + 4
+""",
+            """
+def fib(n: int) -> int:
+    # sh*t I forgot how to do fib!
+    pass
+""",
+            "temp.py",
+            ops.LanguageId.PYTHON,
+            ["import numpy as np"],
+            ["def hello_world() -> int:", "# def fib(n: int) -> int:"],
+        ),
+        (
+            """
+import numpy as np
+
+def _side_effect_with_invalid_arg_exception(
+    content: str, suffix: str, filename: str, model_output: str
+):
+    def _fn(prompt: str, suffix: str):
+        raise VertexModelInvalidArgument(
+""",
+            """"invalid argument")
+
+    return _fn
+
+def fib(n: int) -> int:
+    # sh*t I forgot how to do fib!
+    pass
+""",
+            "temp.py",
+            ops.LanguageId.PYTHON,
+            ["import numpy as np"],
+            [
+                """def _side_effect_with_invalid_arg_exception(
+    content: str, suffix: str, filename: str, model_output: str
+):
+""",
+                "# def fib(n: int) -> int:",
+            ],
+        ),
+    ],
+)
+def test_prompt_building_model_engine_palm(
+    text_gen_base_model,
+    prefix: str,
+    suffix: str,
+    file_name: str,
+    lang_id: ops.LanguageId,
+    expected_imports: list[str],
+    expected_functions: list[str],
+):
+    engine = ModelEnginePalm(text_gen_base_model, tokenizer)
+    prompt = engine._build_prompt(
+        prefix=prefix, file_name=file_name, suffix=suffix, lang_id=lang_id
+    )
+
+    for expected_import in expected_imports:
+        assert expected_import in prompt.prefix
+
+    for expected_function in expected_functions:
+        assert expected_function in prompt.prefix

@@ -24,9 +24,6 @@ class BaseImportVisitor(BaseVisitor):
     def _visit_node(self, node: Node):
         self._imports.append(self._bytes_to_str(node.text))
 
-    def _bytes_to_str(self, data: bytes) -> str:
-        return data.decode("utf-8", errors="ignore")
-
 
 class CImportVisitor(BaseImportVisitor):
     _TARGET_SYMBOL = "preproc_include"
