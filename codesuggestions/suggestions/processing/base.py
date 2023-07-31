@@ -10,7 +10,7 @@ from codesuggestions.suggestions.processing.ops import LanguageId, lang_from_fil
 
 __all__ = [
     "MetadataCodeContent",
-    "MetadataImports",
+    "MetadataExtraInfo",
     "MetadataPromptBuilder",
     "ModelEngineOutput",
     "MetadataModel",
@@ -33,7 +33,8 @@ class MetadataCodeContent(NamedTuple):
     length_tokens: int
 
 
-class MetadataImports(NamedTuple):
+class MetadataExtraInfo(NamedTuple):
+    name: str
     pre: MetadataCodeContent
     post: MetadataCodeContent
 
@@ -41,7 +42,8 @@ class MetadataImports(NamedTuple):
 class MetadataPromptBuilder(NamedTuple):
     prefix: MetadataCodeContent
     suffix: MetadataCodeContent
-    imports: Optional[MetadataImports] = None
+    imports: Optional[MetadataExtraInfo] = None
+    function_signatures: Optional[MetadataExtraInfo] = None
 
 
 class MetadataModel(NamedTuple):

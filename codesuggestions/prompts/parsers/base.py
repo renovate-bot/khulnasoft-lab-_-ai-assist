@@ -28,6 +28,9 @@ class BaseVisitor(ABC):
         if self._TARGET_SYMBOL and node.type == self._TARGET_SYMBOL:
             self._visit_node(node)
 
+    def _bytes_to_str(self, data: bytes) -> str:
+        return data.decode("utf-8", errors="ignore")
+
 
 class BaseCodeParser(ABC):
     @abstractmethod
