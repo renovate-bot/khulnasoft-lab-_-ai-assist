@@ -9,6 +9,9 @@ from codesuggestions.models.palm import (
     CodeGeckoModelInput,
     PalmCodeBisonModel,
     PalmCodeGeckoModel,
+    PalmCodeGenBaseModel,
+    PalmCodeGenModel,
+    PalmModel,
     PalmTextBisonModel,
     TextBisonModelInput,
     TextGenModelOutput,
@@ -50,7 +53,7 @@ TEST_SUFFIX = "some suffix"
         (PalmCodeGeckoModel, "", TEST_SUFFIX, "", None),
     ],
 )
-async def test_palm_code_gecko_prompt(
+async def test_palm_model_generate(
     model, prefix, suffix, expected_output, expected_generate_args
 ):
     client = Mock()
@@ -123,3 +126,53 @@ async def test_palm_model_api_error(model, client_exception, expected_exception)
 
     with pytest.raises(expected_exception):
         _ = await model.generate("random_prefix", "random_suffix")
+
+
+@pytest.mark.parametrize(
+    ("model", "expected_name"),
+    [
+        (
+            PalmTextBisonModel(Mock(), "project", "location", version="latest"),
+            PalmModel.TEXT_BISON,
+        ),
+        (
+            PalmCodeBisonModel(Mock(), "project", "location", version="latest"),
+            PalmModel.CODE_BISON,
+        ),
+        (
+            PalmCodeGeckoModel(Mock(), "project", "location", version="latest"),
+            PalmModel.CODE_GECKO,
+        ),
+        (
+            PalmTextBisonModel(Mock(), "project", "location", version="001"),
+            f"{PalmModel.TEXT_BISON}@001",
+        ),
+        (
+            PalmCodeBisonModel(Mock(), "project", "location", version="001"),
+            f"{PalmModel.CODE_BISON}@001",
+        ),
+        (
+            PalmCodeGeckoModel(Mock(), "project", "location", version="001"),
+            f"{PalmModel.CODE_GECKO}@001",
+        ),
+    ],
+)
+def test_palm_model_name(model: PalmCodeGenBaseModel, expected_name: str):
+    assert isinstance(model.model_name, str)
+    assert model.model_name == expected_name
+
+
+@pytest.mark.parametrize(
+    "model_name",
+    [
+        PalmModel.TEXT_BISON,
+        PalmModel.CODE_BISON,
+        PalmModel.CODE_GECKO,
+        f"{PalmModel.TEXT_BISON}@001",
+        f"{PalmModel.CODE_BISON}@001",
+        f"{PalmModel.CODE_GECKO}@001",
+    ],
+)
+def test_palm_model_from_name(model_name: str):
+    model = PalmCodeGenModel.from_model_name(model_name, Mock(), "project", "location")
+    assert model.model_name == model_name

@@ -97,7 +97,7 @@ class PalmCodeGenBaseModel(TextGenBaseModel):
 
     def __init__(
         self,
-        model_name: str,
+        model_name: PalmModel,
         client: PredictionServiceAsyncClient,
         project: str,
         location: str,
@@ -108,7 +108,7 @@ class PalmCodeGenBaseModel(TextGenBaseModel):
         self.timeout = timeout
 
         self._model_name = (
-            model_name
+            model_name.value
             if model_version == "latest" or model_version == ""
             else PalmCodeGenBaseModel.SEP_MODEL_VERSION.join(
                 [model_name, model_version]
