@@ -1,3 +1,4 @@
+import re
 import time
 from contextlib import contextmanager
 from typing import Any, Optional
@@ -39,7 +40,25 @@ ERRORS_COUNTER = Counter(
     "code_suggestions_errors", "Errors count by number", TELEMETRY_LABELS
 )
 
+# Cost tracking metric for Vertex requests.
+#
+# NOTE: This counter is currently incremented both in gitlab-rails (AI abstraction layer) and here
+# since different vendors support different use cases. Keep this definition consistent with
+# https://gitlab.com/gitlab-org/gitlab/-/blob/837b7c68aaecf4b808d493a8bf08aab00ccb20f0/ee/lib/gitlab/llm/open_ai/client.rb#L150
+CLOUD_COST_COUNTER_LABELS = ["item", "unit", "vendor", "model"]
+CLOUD_COST_COUNTER = Counter(
+    "gitlab_cloud_cost_spend_entry_total",
+    "Number of units spent per vendor entry",
+    CLOUD_COST_COUNTER_LABELS,
+)
+
 telemetry_logger = structlog.stdlib.get_logger("telemetry")
+
+WHITESPACE_REGEX = re.compile(r"\s+")
+
+
+def remove_whitespace(text: str) -> str:
+    return WHITESPACE_REGEX.sub("", text)
 
 
 class TextGenModelInstrumentator:
@@ -58,6 +77,18 @@ class TextGenModelInstrumentator:
         def register_prompt_symbols(self, symbol_map: dict[str, int]):
             self.__dict__.update({"prompt_symbols": symbol_map})
 
+        # Track model output length both in terms of unaltered character count as well as
+        # with whitespace stripped out. The latter is used to calculate cloud provider cost.
+        def register_model_output_length(self, model_output: str):
+            self.__dict__.update(
+                {
+                    "model_output_length": len(model_output),
+                    "model_output_length_stripped": len(
+                        remove_whitespace(model_output)
+                    ),
+                }
+            )
+
         def dict(self) -> dict:
             return self.__dict__
 
@@ -65,15 +96,19 @@ class TextGenModelInstrumentator:
         self.labels = {"model_engine": model_engine, "model_name": model_name}
 
     @contextmanager
-    def watch(self, prompt: str, **kwargs: Any):
-        prompt_length = len(prompt)
+    def watch(self, prompt, **kwargs: Any):
+        prompt_string = prompt.prefix + prompt.suffix
+        prompt_length = len(prompt_string)
+        prompt_length_stripped = len(remove_whitespace(prompt_string))
 
         context["model_engine"] = self.labels["model_engine"]
         context["model_name"] = self.labels["model_name"]
         context["prompt_length"] = prompt_length
+        context["prompt_length_stripped"] = prompt_length_stripped
 
         INFERENCE_PROMPT_HISTOGRAM.labels(**self.labels).observe(prompt_length)
         INFERENCE_COUNTER.labels(**self.labels).inc()
+        self._track_model_cost("input", prompt_length_stripped)
 
         watch_container = TextGenModelInstrumentator.WatchContainer(**kwargs)
         start_time = time.perf_counter()
@@ -84,8 +119,22 @@ class TextGenModelInstrumentator:
             duration = time.perf_counter() - start_time
             INFERENCE_HISTOGRAM.labels(**self.labels).observe(duration)
 
+            container_dict = watch_container.dict()
+            self._track_model_cost(
+                "output", container_dict.get("model_output_length_stripped", 0)
+            )
+
             context["inference_duration_s"] = duration
-            context.update(watch_container.dict())
+            context.update(container_dict)
+
+    def _track_model_cost(self, kind, character_count):
+        labels = {
+            "item": f"completions/completion/{kind}",
+            "unit": "characters",
+            "vendor": self.labels["model_engine"],
+            "model": self.labels["model_name"],
+        }
+        CLOUD_COST_COUNTER.labels(**labels).inc(character_count)
 
 
 class Telemetry(BaseModel):

@@ -9,6 +9,14 @@ __all__ = [
 
 
 class FakeGitLabCodeGenModel(TextGenBaseModel):
+    @property
+    def model_name(self) -> str:
+        return "fake-gitlab-codegen"
+
+    @property
+    def model_engine(self) -> str:
+        return "fake-gitlab-engine"
+
     def generate(
         self,
         prompt: str,
@@ -22,7 +30,15 @@ class FakeGitLabCodeGenModel(TextGenBaseModel):
 
 
 class FakePalmTextGenModel(TextGenBaseModel):
-    def generate(
+    @property
+    def model_name(self) -> str:
+        return "fake-palm-model"
+
+    @property
+    def model_engine(self) -> str:
+        return "fake-palm-engine"
+
+    async def generate(
         self,
         prompt: str,
         suffix: str,

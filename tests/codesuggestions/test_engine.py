@@ -28,6 +28,7 @@ class MockInstrumentor:
     def __init__(self):
         self.watcher = Mock()
         self.watcher.register_prompt_symbols = Mock()
+        self.watcher.register_model_output_length = Mock()
 
     @contextmanager
     def watch(self, prompt: str, **kwargs: Any):
@@ -376,6 +377,13 @@ async def test_model_engine_palm(
 
     assert True if len(prefix) > 0 else len(prefix) == completion.metadata.prefix.length
     assert True if len(suffix) > 0 else len(suffix) == completion.metadata.suffix.length
+
+    if expected_completion:
+        engine.instrumentator.watcher.register_model_output_length.assert_called_with(
+            model_output
+        )
+    else:
+        engine.instrumentator.watcher.register_model_output_length.assert_not_called
 
     if expected_prompt_symbol_counts:
         engine.instrumentator.watcher.register_prompt_symbols.assert_called_with(
