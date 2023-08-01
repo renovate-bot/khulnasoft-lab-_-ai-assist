@@ -1,9 +1,10 @@
 import os
 from typing import Optional
 
-from tree_sitter import Language, Parser, Tree
+from tree_sitter import Language, Node, Parser, Tree
 
 from codesuggestions.prompts.parsers.base import BaseCodeParser, BaseVisitor
+from codesuggestions.prompts.parsers.context_extractors import ContextVisitorFactory
 from codesuggestions.prompts.parsers.counters import CounterVisitorFactory
 from codesuggestions.prompts.parsers.function_signatures import (
     FunctionSignatureVisitorFactory,
@@ -62,6 +63,15 @@ class CodeParser(BaseCodeParser):
         counts = visitor.counts
 
         return counts
+
+    def context_near_cursor(self, point: tuple[int, int]) -> Node:
+        visitor = ContextVisitorFactory.from_language_id(self.lang_id, point)
+        if visitor is None:
+            return None
+
+        self._visit_nodes(visitor)
+
+        return visitor.extract_most_relevant_context()
 
     def _visit_nodes(self, visitor: BaseVisitor):
         tree_dfs(self.tree, visitor)
