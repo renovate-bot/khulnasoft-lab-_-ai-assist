@@ -45,7 +45,7 @@ ERRORS_COUNTER = Counter(
 # NOTE: This counter is currently incremented both in gitlab-rails (AI abstraction layer) and here
 # since different vendors support different use cases. Keep this definition consistent with
 # https://gitlab.com/gitlab-org/gitlab/-/blob/837b7c68aaecf4b808d493a8bf08aab00ccb20f0/ee/lib/gitlab/llm/open_ai/client.rb#L150
-CLOUD_COST_COUNTER_LABELS = ["item", "unit", "vendor", "model"]
+CLOUD_COST_COUNTER_LABELS = ["item", "unit", "vendor", "model", "feature_category"]
 CLOUD_COST_COUNTER = Counter(
     "gitlab_cloud_cost_spend_entry_total",
     "Number of units spent per vendor entry",
@@ -133,6 +133,7 @@ class TextGenModelInstrumentator:
             "unit": "characters",
             "vendor": self.labels["model_engine"],
             "model": self.labels["model_name"],
+            "feature_category": "code_suggestions",
         }
         CLOUD_COST_COUNTER.labels(**labels).inc(character_count)
 
