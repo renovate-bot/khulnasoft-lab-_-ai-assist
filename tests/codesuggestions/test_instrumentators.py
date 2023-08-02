@@ -29,6 +29,7 @@ class TestTextGenModelInstrumentator:
         prompt = _Prompt(prefix=prefix, suffix=suffix, metadata=metadata)
         model_engine = "vertex-ai"
         model_name = "code-gecko"
+        feature_category = "code_suggestions"
         completion = "e f g"  # expected len: 3
 
         context = {}
@@ -54,6 +55,7 @@ class TestTextGenModelInstrumentator:
                     unit="characters",
                     vendor="vertex-ai",
                     model="code-gecko",
+                    feature_category="code_suggestions",
                 ),
                 mock.call().inc(5),  # prefix + suffix
                 # track model cost output
@@ -62,6 +64,7 @@ class TestTextGenModelInstrumentator:
                     unit="characters",
                     vendor="vertex-ai",
                     model="code-gecko",
+                    feature_category="code_suggestions",
                 ),
                 mock.call().inc(3),
             ]
