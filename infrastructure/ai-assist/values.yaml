@@ -19,7 +19,7 @@ modelGateway:
     env:
       fastapiApiPort: "5052"
       gitlabUrl: https://gitlab.com
-      gitlabApiUrl: https://gitlab.com/api/v4
+      gitlabApiUrl: https://gitlab.com/api/v4/
       customerPortalBaseUrl: https://customers.gitlab.com
       tritonHost: model-k8s-triton-headless
       tritonPort: "8001"
