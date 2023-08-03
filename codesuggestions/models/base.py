@@ -59,6 +59,7 @@ class ModelInput(ABC):
 
 class TextGenModelOutput(NamedTuple):
     text: str
+    score: float
 
 
 class TextGenBaseModel(ABC):

@@ -127,4 +127,5 @@ class GitLabCodeGen(TextGenBaseModel):
 
         return TextGenModelOutput(
             text=completion,
+            score=0,
         )

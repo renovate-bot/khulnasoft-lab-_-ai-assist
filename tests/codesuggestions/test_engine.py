@@ -44,7 +44,7 @@ def _side_effect_few_shot_tpl(
         assert lang_id.name.lower() in prompt
         assert content in prompt
 
-        return TextGenModelOutput(text=model_output)
+        return TextGenModelOutput(text=model_output, score=-1)
 
     return _fn
 
@@ -53,7 +53,7 @@ def _side_effect_unknown_tpl(content: str, _suffix: str, _: str, model_output: s
     def _fn(prompt: str, _suffix: str):
         assert content == prompt
 
-        return TextGenModelOutput(text=model_output)
+        return TextGenModelOutput(text=model_output, score=-1)
 
     return _fn
 
@@ -64,7 +64,7 @@ def _side_effect_unknown_tpl_palm(
     def _fn(prompt: str, _suffix: str):
         assert filename in prompt
 
-        return TextGenModelOutput(text=model_output)
+        return TextGenModelOutput(text=model_output, score=-1)
 
     return _fn
 
@@ -78,7 +78,7 @@ def _side_effect_lang_prepended(
         assert prompt.startswith(f"<{lang_id.name.lower()}>")
         assert prompt.endswith(content)
 
-        return TextGenModelOutput(text=model_output)
+        return TextGenModelOutput(text=model_output, score=-1)
 
     return _fn
 
@@ -95,7 +95,7 @@ def _side_effect_with_suffix(
             <= PalmCodeGenBaseModel.MAX_MODEL_LEN
         )
 
-        return TextGenModelOutput(text=model_output)
+        return TextGenModelOutput(text=model_output, score=-1)
 
     return _fn
 
@@ -106,7 +106,7 @@ def _side_effect_with_imports(
     def _fn(prompt: str, suffix: str):
         assert content.startswith("import os\nimport pytest")
 
-        return TextGenModelOutput(text=model_output)
+        return TextGenModelOutput(text=model_output, score=-1)
 
     return _fn
 
@@ -382,8 +382,10 @@ async def test_model_engine_palm(
         engine.instrumentator.watcher.register_model_output_length.assert_called_with(
             model_output
         )
+        engine.instrumentator.watcher.register_model_score.assert_called_with(-1)
     else:
         engine.instrumentator.watcher.register_model_output_length.assert_not_called
+        engine.instrumentator.watcher.register_model_score.assert_not_called
 
     if expected_prompt_symbol_counts:
         engine.instrumentator.watcher.register_prompt_symbols.assert_called_with(
