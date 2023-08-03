@@ -10,8 +10,7 @@ from pathlib import Path
 from tree_sitter import Language
 
 BASE_URL = "https://github.com/tree-sitter"
-
-LANGS = [
+BASE_LANGS = [
     "tree-sitter-c",
     "tree-sitter-c-sharp",
     "tree-sitter-cpp",
@@ -25,6 +24,8 @@ LANGS = [
     "tree-sitter-scala",
     "tree-sitter-typescript",
 ]
+LANGS = {lang: f"{BASE_URL}/{lang}" for lang in BASE_LANGS}
+LANGS["tree-sitter-kotlin"] = "https://github.com/fwcd/tree-sitter-kotlin"
 
 
 @contextlib.contextmanager
@@ -49,12 +50,11 @@ def main() -> int:
         vendor_dir.mkdir(parents=True)
 
     with working_directory(vendor_dir):
-        for lang in LANGS:
+        for lang, url in LANGS.items():
             if (vendor_dir / lang).exists():
                 print(f"Updating {lang}")
                 os.system(f"git -C {lang} pull")
             else:
-                url = f"{BASE_URL}/{lang}"
                 print(f"Cloning {url}")
                 os.system(f"git clone {url}")
 
@@ -63,8 +63,15 @@ def main() -> int:
             print("error building tree-sitter-typescript")
             return 1
 
+    with working_directory(vendor_dir / "tree-sitter-kotlin"):
+        if os.system("npm install && npm run generate") != 0:
+            print("error building tree-sitter-kotlin")
+            return 1
+
     language_directories = [
-        str(vendor_dir / lang) for lang in LANGS if lang != "tree-sitter-typescript"
+        str(vendor_dir / lang)
+        for lang in LANGS.keys()
+        if lang != "tree-sitter-typescript"
     ]
     language_directories += [
         str(vendor_dir / "tree-sitter-typescript/typescript"),

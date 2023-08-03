@@ -28,6 +28,7 @@ class CodeParser(BaseCodeParser):
         LanguageId.RUST: "rust",
         LanguageId.SCALA: "scala",
         LanguageId.TS: "typescript",
+        LanguageId.KOTLIN: "kotlin",
     }
 
     def __init__(self, tree: Tree, lang_id: LanguageId):

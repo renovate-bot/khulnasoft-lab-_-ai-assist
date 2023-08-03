@@ -79,6 +79,10 @@ class TsImportVisitor(BaseImportVisitor):
     _TARGET_SYMBOLS = ["import_statement"]
 
 
+class KotlinImportVisitor(BaseImportVisitor):
+    _TARGET_SYMBOLS = ["import_header"]
+
+
 class ImportVisitorFactory:
     _LANG_ID_VISITORS = {
         LanguageId.C: CImportVisitor,
@@ -93,6 +97,7 @@ class ImportVisitorFactory:
         LanguageId.RUST: RustImportVisitor,
         LanguageId.SCALA: ScalaImportVisitor,
         LanguageId.TS: TsImportVisitor,
+        LanguageId.KOTLIN: KotlinImportVisitor,
     }
 
     @staticmethod
