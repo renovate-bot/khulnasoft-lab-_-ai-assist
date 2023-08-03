@@ -183,8 +183,10 @@ class _PromptBuilder:
             prefix=new_prefix,
             suffix=self._suffix,
             metadata=MetadataPromptBuilder(
-                prefix=self._metadata["prefix"],
-                suffix=self._metadata["suffix"],
+                components={
+                    "prefix": self._metadata["prefix"],
+                    "suffix": self._metadata["suffix"],
+                },
                 imports=self._metadata.get("imports", None),
                 function_signatures=self._metadata.get("function_signatures", None),
             ),

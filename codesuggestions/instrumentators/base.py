@@ -10,6 +10,7 @@ from starlette_context import context
 
 METRIC_LABELS = ["model_engine", "model_name"]
 TELEMETRY_LABELS = METRIC_LABELS + ["lang"]
+PROMPT_LABELS = METRIC_LABELS + ["component"]
 
 INFERENCE_COUNTER = Counter(
     "code_suggestions_inference_requests",
@@ -26,7 +27,14 @@ INFERENCE_HISTOGRAM = Histogram(
 INFERENCE_PROMPT_HISTOGRAM = Histogram(
     "code_suggestions_inference_prompt_size_bytes",
     "Size of the prompt of an inference request in bytes",
-    METRIC_LABELS,
+    PROMPT_LABELS,
+    buckets=(32, 64, 128, 256, 512, 1024, 2048, 4096),
+)
+
+INFERENCE_PROMPT_TOKENS_HISTOGRAM = Histogram(
+    "code_suggestions_inference_prompt_size_tokens",
+    "Size of the prompt of an inference request in tokens",
+    PROMPT_LABELS,
     buckets=(32, 64, 128, 256, 512, 1024, 2048, 4096),
 )
 
@@ -106,7 +114,12 @@ class TextGenModelInstrumentator:
         context["prompt_length"] = prompt_length
         context["prompt_length_stripped"] = prompt_length_stripped
 
-        INFERENCE_PROMPT_HISTOGRAM.labels(**self.labels).observe(prompt_length)
+        for name, md in prompt.metadata.components.items():
+            labels = self.labels.copy()
+            labels["component"] = name
+            INFERENCE_PROMPT_HISTOGRAM.labels(**labels).observe(md.length)
+            INFERENCE_PROMPT_TOKENS_HISTOGRAM.labels(**labels).observe(md.length_tokens)
+
         INFERENCE_COUNTER.labels(**self.labels).inc()
         self._track_model_cost("input", prompt_length_stripped)
 
