@@ -37,3 +37,13 @@ spec:
                 name: faux-pilot
                 port:
                   number: 8080
+    - host: codesuggestions.staging.gitlab.com
+      http:
+        paths:
+          - path: /(v1|v2)/completions
+            pathType: Prefix
+            backend:
+              service:
+                name: faux-pilot
+                port:
+                  number: 8080
