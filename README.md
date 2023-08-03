@@ -154,6 +154,39 @@ make lint
 make test
 ```
 
+There is an [internal recording](https://youtu.be/SXfLOYm4zS4) for GitLab members that provides an overview of this project. 
+
+### Frameworks
+
+This project is built with the following frameworks:
+
+1. [FastAPI](https://fastapi.tiangolo.com/)
+1. [Dependency Injector](https://python-dependency-injector.ets-labs.org/introduction/di_in_python.html)
+
+### Project architecture
+
+This repository follows [The Clean Architecture](https://blog.cleancoder.com/uncle-bob/2012/08/13/the-clean-architecture.html) paradigm, 
+which define layers present in the system as well as their relations with each other, please refer to the linked article for more details.
+
+### Project structure
+
+This project was from [FauxPilot](https://github.com/moyix/fauxpilot/blob/main/docker-compose.yaml) as a base, however, due to the business 
+direction change GitLab for a time being decided to not train models on its own. With that significant part of this repository became 
+deprecated and is no longer in active use, including:
+
+1. All code in `/models` directory
+1. All code in `/converter` directory
+
+For the Code Suggestion feature most of the code is hosted at `/codesuggestions`. In that directory following artifacts can be of interest:
+
+1. `app.py` - main entry point for web application
+1. `suggestions/engine.py` - that contains `ModelEnginePalm` that is responsible for high-level orchestration of prompt transformation for external models
+1. `api/v2/endpoints/code.py` - that houses implementation of main production Code Suggestion API
+1. `api/v2/experimental/code.py` - implements experimental endpoints that route requests to fixed external models for experimentation and testing
+
+This project utilizes middleware to provide additional mechanisms that are not strictly feature-related including authorization and logging.
+Middlewares are hosted at `codesuggestions/api/middleware.py` and interact with the `context` global variable that represents the API request.
+
 ## Configuration
 
 Below described the configuration per component
