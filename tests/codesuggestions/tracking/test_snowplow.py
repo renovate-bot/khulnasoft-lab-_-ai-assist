@@ -5,6 +5,7 @@ import pytest
 from snowplow_tracker import Snowplow, StructuredEvent
 
 from codesuggestions.tracking import (
+    RequestCount,
     SnowplowClient,
     SnowplowClientConfiguration,
     SnowplowEvent,
@@ -56,9 +57,16 @@ class TestSnowplowClient:
             app_id="gitlab_ai_gateway",
         )
         context = SnowplowEventContext(
-            suggestions_shown=1,
-            suggestions_failed=0,
-            suggestions_accepted=1,
+            request_counts=[
+                RequestCount(
+                    requests=1,
+                    errors=0,
+                    accepts=1,
+                    lang="python",
+                    model_engine="vertex-ai",
+                    model_name="code-gecko",
+                )
+            ],
             prefix_length=2048,
             suffix_length=1024,
             language="python",

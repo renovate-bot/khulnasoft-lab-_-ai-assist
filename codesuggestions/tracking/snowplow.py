@@ -4,6 +4,7 @@ from typing import NamedTuple, Optional
 from snowplow_tracker import AsyncEmitter, SelfDescribingJson, StructuredEvent, Tracker
 
 __all__ = [
+    "RequestCount",
     "SnowplowClient",
     "SnowplowClientConfiguration",
     "SnowplowClientStub",
@@ -20,12 +21,21 @@ class SnowplowClientConfiguration(NamedTuple):
     app_id: str = "gitlab_ai_gateway"
 
 
+class RequestCount(NamedTuple):
+    """Acceptance, show and error counts for previous requests."""
+
+    requests: int
+    errors: int
+    accepts: int
+    lang: Optional[str]
+    model_engine: Optional[str]
+    model_name: Optional[str]
+
+
 class SnowplowEventContext(NamedTuple):
     """Additional context that attached to SnowplowEvent."""
 
-    suggestions_shown: int
-    suggestions_failed: int
-    suggestions_accepted: int
+    request_counts: Optional[list[RequestCount]]
     prefix_length: int
     suffix_length: int
     language: str
@@ -57,14 +67,16 @@ class SnowplowClient(Client):
     SCHEMA = "iglu:com.gitlab/code_suggestions_context/jsonschema/1-0-0"
 
     def __init__(self, configuration: SnowplowClientConfiguration) -> None:
-        e = AsyncEmitter(
+        emitter = AsyncEmitter(
             batch_size=1,
             thread_count=5,
             endpoint=configuration.endpoint,
         )
 
         self.tracker = Tracker(
-            app_id=configuration.app_id, namespace=configuration.namespace, emitters=[e]
+            app_id=configuration.app_id,
+            namespace=configuration.namespace,
+            emitters=[emitter],
         )
 
     def track(self, event: SnowplowEvent) -> None:

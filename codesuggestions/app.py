@@ -15,7 +15,6 @@ from codesuggestions.deps import (
 )
 from codesuggestions.profiling import setup_profiling
 from codesuggestions.structured_logging import setup_logging
-from codesuggestions.tracking import SnowplowClientStub
 
 # load env variables from .env if exists
 load_dotenv()
