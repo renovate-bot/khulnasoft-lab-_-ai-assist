@@ -1,5 +1,6 @@
 from abc import ABC, abstractmethod
-from typing import NamedTuple, Optional
+from dataclasses import asdict, dataclass
+from typing import Optional
 
 from snowplow_tracker import AsyncEmitter, SelfDescribingJson, StructuredEvent, Tracker
 
@@ -13,7 +14,8 @@ __all__ = [
 ]
 
 
-class SnowplowClientConfiguration(NamedTuple):
+@dataclass
+class SnowplowClientConfiguration:
     """Store all Snowplow configuration."""
 
     endpoint: str
@@ -21,7 +23,8 @@ class SnowplowClientConfiguration(NamedTuple):
     app_id: str = "gitlab_ai_gateway"
 
 
-class RequestCount(NamedTuple):
+@dataclass
+class RequestCount:
     """Acceptance, show and error counts for previous requests."""
 
     requests: int
@@ -32,7 +35,8 @@ class RequestCount(NamedTuple):
     model_name: Optional[str]
 
 
-class SnowplowEventContext(NamedTuple):
+@dataclass
+class SnowplowEventContext:
     """Additional context that attached to SnowplowEvent."""
 
     request_counts: Optional[list[RequestCount]]
@@ -43,7 +47,8 @@ class SnowplowEventContext(NamedTuple):
     gitlab_realm: str
 
 
-class SnowplowEvent(NamedTuple):
+@dataclass
+class SnowplowEvent:
     """Abstracted Snowplow event."""
 
     context: Optional[SnowplowEventContext] = None
@@ -86,7 +91,7 @@ class SnowplowClient(Client):
             event: A domain event which is transformed to Snowplow StructuredEvent for tracking.
         """
         structured_event = StructuredEvent(
-            context=[SelfDescribingJson(self.SCHEMA, event.context._asdict())],
+            context=[SelfDescribingJson(self.SCHEMA, asdict(event.context))],
             category=event.category,
             action=event.action,
         )

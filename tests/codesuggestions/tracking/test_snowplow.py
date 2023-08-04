@@ -1,4 +1,5 @@
 import json
+from dataclasses import asdict
 from unittest import mock
 
 import pytest
@@ -87,6 +88,6 @@ class TestSnowplowClient:
         assert init_args["action"] == event.action
 
         context_data = init_args["context"][0].to_json()["data"]
-        assert context_data == event.context._asdict()
+        assert context_data == asdict(event.context)
 
         mock_track.assert_called_once()
