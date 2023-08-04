@@ -26,7 +26,9 @@ class FakeGitLabCodeGenModel(TextGenBaseModel):
         top_p: float = 0.0,
         top_k: int = 0,
     ) -> Optional[TextGenModelOutput]:
-        return TextGenModelOutput(text="fake code suggestion from GitLab Codegen")
+        return TextGenModelOutput(
+            text="fake code suggestion from GitLab Codegen", score=0
+        )
 
 
 class FakePalmTextGenModel(TextGenBaseModel):
@@ -47,4 +49,4 @@ class FakePalmTextGenModel(TextGenBaseModel):
         top_p: float = 0.0,
         top_k: int = 0,
     ) -> Optional[TextGenModelOutput]:
-        return TextGenModelOutput(text="fake code suggestion from PaLM Text")
+        return TextGenModelOutput(text="fake code suggestion from PaLM Text", score=0)

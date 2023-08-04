@@ -89,6 +89,9 @@ class TextGenModelInstrumentator:
                 }
             )
 
+        def register_model_score(self, model_score: float):
+            self.__dict__.update({"model_output_score": model_score})
+
         def dict(self) -> dict:
             return self.__dict__
 

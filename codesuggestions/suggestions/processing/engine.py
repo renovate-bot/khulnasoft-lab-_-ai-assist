@@ -308,6 +308,7 @@ class ModelEnginePalm(ModelEngineBase):
                     prompt.prefix, prompt.suffix, **kwargs
                 ):
                     watch_container.register_model_output_length(res.text)
+                    watch_container.register_model_score(res.score)
                     return ModelEngineOutput(
                         text=res.text,
                         model=model_metadata,

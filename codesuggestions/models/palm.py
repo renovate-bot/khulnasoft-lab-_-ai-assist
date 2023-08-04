@@ -126,7 +126,7 @@ class PalmCodeGenBaseModel(TextGenBaseModel):
         top_k: int,
     ) -> Optional[TextGenModelOutput]:
         if not input.is_valid():
-            return TextGenModelOutput(text="")
+            return TextGenModelOutput(text="", score=0)
 
         input_data = input.dict()
 
@@ -155,7 +155,9 @@ class PalmCodeGenBaseModel(TextGenBaseModel):
             raise VertexModelInternalError(ex.message, errors=(ex,))
 
         for prediction in predictions:
-            return TextGenModelOutput(text=prediction.get("content"))
+            return TextGenModelOutput(
+                text=prediction.get("content"), score=prediction.get("score")
+            )
 
     @property
     def model_name(self) -> str:

@@ -59,12 +59,12 @@ async def test_palm_model_generate(
     client = Mock()
     palm_model = model(client=client, project="test", location="some location")
     palm_model._generate = AsyncMock(
-        side_effect=lambda *_: TextGenModelOutput(text=expected_output)
+        side_effect=lambda *_: TextGenModelOutput(text=expected_output, score=0)
     )
 
     result = await palm_model.generate(prefix, suffix)
 
-    assert result == TextGenModelOutput(text=expected_output)
+    assert result == TextGenModelOutput(text=expected_output, score=0)
 
     if expected_generate_args:
         palm_model._generate.assert_called_with(*expected_generate_args)
