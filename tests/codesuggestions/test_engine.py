@@ -218,8 +218,10 @@ async def test_model_engine_codegen(
             "random completion",
             None,
             MetadataPromptBuilder(
-                prefix=MetadataCodeContent(length=6, length_tokens=2),
-                suffix=MetadataCodeContent(length=0, length_tokens=0),
+                components={
+                    "prefix": MetadataCodeContent(length=6, length_tokens=2),
+                    "suffix": MetadataCodeContent(length=0, length_tokens=0),
+                },
                 imports=MetadataExtraInfo(
                     name="imports",
                     pre=MetadataCodeContent(length=0, length_tokens=0),
@@ -242,8 +244,10 @@ async def test_model_engine_codegen(
             "random completion\nnew line",
             None,
             MetadataPromptBuilder(
-                prefix=MetadataCodeContent(length=6, length_tokens=2),
-                suffix=MetadataCodeContent(length=0, length_tokens=0),
+                components={
+                    "prefix": MetadataCodeContent(length=6, length_tokens=2),
+                    "suffix": MetadataCodeContent(length=0, length_tokens=0),
+                },
                 imports=MetadataExtraInfo(
                     name="imports",
                     pre=MetadataCodeContent(length=0, length_tokens=0),
@@ -266,8 +270,10 @@ async def test_model_engine_codegen(
             "random completion\nnew line",
             ops.LanguageId.PYTHON,
             MetadataPromptBuilder(
-                prefix=MetadataCodeContent(length=3494, length_tokens=500),
-                suffix=MetadataCodeContent(length=1002, length_tokens=500),
+                components={
+                    "prefix": MetadataCodeContent(length=3494, length_tokens=500),
+                    "suffix": MetadataCodeContent(length=1002, length_tokens=500),
+                },
                 imports=MetadataExtraInfo(
                     name="imports",
                     pre=MetadataCodeContent(length=0, length_tokens=0),
@@ -290,8 +296,10 @@ async def test_model_engine_codegen(
             "random completion\nnew line",
             ops.LanguageId.PYTHON,
             MetadataPromptBuilder(
-                prefix=MetadataCodeContent(length=2984, length_tokens=995),
-                suffix=MetadataCodeContent(length=0, length_tokens=0),
+                components={
+                    "prefix": MetadataCodeContent(length=2984, length_tokens=995),
+                    "suffix": MetadataCodeContent(length=0, length_tokens=0),
+                },
                 imports=MetadataExtraInfo(
                     name="imports",
                     pre=MetadataCodeContent(length=22, length_tokens=5),
@@ -365,18 +373,19 @@ async def test_model_engine_palm(
         )
         assert 0 <= completion.metadata.imports.post.length_tokens <= max_imports_len
 
+        components = completion.metadata.components
         body_len = (
             text_gen_base_model.MAX_MODEL_LEN
             - completion.metadata.imports.post.length_tokens
         )
         max_suffix_len = int(body_len * ModelEnginePalm.MAX_TOKENS_SUFFIX_PERCENT)
-        assert 0 <= completion.metadata.suffix.length_tokens <= max_suffix_len
+        assert 0 <= components["suffix"].length_tokens <= max_suffix_len
 
-        max_prefix_len = body_len - completion.metadata.suffix.length_tokens
-        assert 0 <= completion.metadata.prefix.length_tokens <= max_prefix_len
+        max_prefix_len = body_len - components["suffix"].length_tokens
+        assert 0 <= components["prefix"].length_tokens <= max_prefix_len
 
-    assert True if len(prefix) > 0 else len(prefix) == completion.metadata.prefix.length
-    assert True if len(suffix) > 0 else len(suffix) == completion.metadata.suffix.length
+    assert True if len(prefix) > 0 else len(prefix) == components["prefix"].length
+    assert True if len(suffix) > 0 else len(suffix) == components["suffix"].length
 
     if expected_completion:
         engine.instrumentator.watcher.register_model_output_length.assert_called_with(

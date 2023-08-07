@@ -1,7 +1,7 @@
 import json
 from abc import ABC, abstractmethod
 from pathlib import Path
-from typing import Any, NamedTuple, Optional
+from typing import Any, Mapping, NamedTuple, Optional
 
 from prometheus_client import Counter
 
@@ -40,8 +40,7 @@ class MetadataExtraInfo(NamedTuple):
 
 
 class MetadataPromptBuilder(NamedTuple):
-    prefix: MetadataCodeContent
-    suffix: MetadataCodeContent
+    components: Mapping[str, MetadataCodeContent]
     imports: Optional[MetadataExtraInfo] = None
     function_signatures: Optional[MetadataExtraInfo] = None
 

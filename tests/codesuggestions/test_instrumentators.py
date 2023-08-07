@@ -18,8 +18,10 @@ class TestTextGenModelInstrumentator:
         prefix = "a b c"  # expected len: 3
         suffix = "d\ne"  # expected len: 2
         metadata = MetadataPromptBuilder(
-            prefix=MetadataCodeContent(length=10, length_tokens=2),
-            suffix=MetadataCodeContent(length=10, length_tokens=2),
+            components={
+                "prefix": MetadataCodeContent(length=10, length_tokens=2),
+                "suffix": MetadataCodeContent(length=10, length_tokens=2),
+            },
             imports=MetadataExtraInfo(
                 name="name",
                 pre=MetadataCodeContent(length=0, length_tokens=0),
