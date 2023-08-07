@@ -31,6 +31,8 @@ test_data = dict(
         768: Project(id=768, full_name="full_name_3"),
     },
     third_party_rollout_percentage=50,
+    snowplow_enabled=True,
+    snowplow_endpoint="https://blizzard.local",
 )
 
 
@@ -69,6 +71,8 @@ def mock_env_vars(tmp_path, request):
         "F_THIRD_PARTY_ROLLOUT_PERCENTAGE": str(
             int(request.param["third_party_rollout_percentage"])
         ),
+        "SNOWPLOW_ENABLED": str(int(request.param["snowplow_enabled"])),
+        "SNOWPLOW_ENDPOINT": request.param["snowplow_endpoint"],
     }
 
     with mock.patch.dict(os.environ, envs):
@@ -117,6 +121,9 @@ def test_config(mock_env_vars, configuration):
         config.feature_flags.third_party_rollout_percentage
         == configuration["third_party_rollout_percentage"]
     )
+
+    assert config.tracking.snowplow_enabled == configuration["snowplow_enabled"]
+    assert config.tracking.snowplow_endpoint == configuration["snowplow_endpoint"]
 
 
 @pytest.mark.parametrize(

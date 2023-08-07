@@ -30,6 +30,7 @@ def main():
     fast_api_container = FastApiContainer()
     fast_api_container.config.auth.from_value(config.auth._asdict())
     fast_api_container.config.fastapi.from_value(config.fastapi._asdict())
+    fast_api_container.config.tracking.from_value(config.tracking._asdict())
 
     code_suggestions_container = CodeSuggestionsContainer()
     code_suggestions_container.config.triton.from_value(config.triton._asdict())

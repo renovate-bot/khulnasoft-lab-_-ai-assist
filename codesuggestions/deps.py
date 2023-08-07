@@ -17,6 +17,11 @@ from codesuggestions.models import (
 from codesuggestions.suggestions import CodeSuggestions
 from codesuggestions.suggestions.processing import ModelEngineCodegen, ModelEnginePalm
 from codesuggestions.tokenizer import init_tokenizer
+from codesuggestions.tracking import (
+    SnowplowClient,
+    SnowplowClientConfiguration,
+    SnowplowClientStub,
+)
 
 __all__ = [
     "FastApiContainer",
@@ -44,6 +49,13 @@ def _init_vertex_grpc_client(api_endpoint: str, real_or_fake):
     )
     yield client
     client.transport.close()
+
+
+def _init_snowplow_client(enabled: bool, configuration: SnowplowClientConfiguration):
+    if not enabled:
+        return SnowplowClientStub()
+
+    return SnowplowClient(configuration)
 
 
 def _create_gitlab_codegen_model_provider(grpc_client_triton, real_or_fake):
@@ -129,6 +141,17 @@ class FastApiContainer(containers.DeclarativeContainer):
     telemetry_middleware = providers.Factory(
         middleware.MiddlewareModelTelemetry,
         skip_endpoints=_PROBS_ENDPOINTS,
+    )
+
+    snowplow_config = providers.Resource(
+        SnowplowClientConfiguration,
+        endpoint=config.tracking.snowplow_endpoint,
+    )
+
+    snowplow_client = providers.Resource(
+        _init_snowplow_client,
+        enabled=config.tracking.snowplow_enabled,
+        configuration=snowplow_config,
     )
 
 
