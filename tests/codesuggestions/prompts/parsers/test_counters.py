@@ -351,6 +351,27 @@ $myApp->performCalculations();
 ?>
 """
 
+KOTLIN_SAMPLE_SOURCE = """
+import kotlin.collections.*
+import java.util.Random
+
+// Define a dice
+class Dice(val sides: Int) {
+    private val random = Random()
+
+    fun roll(): Int {
+        return random.nextInt(sides) + 1
+    }
+}
+
+/* This is a main function */
+fun main() {
+    val sixSidedDice = Dice(6)
+    val rollResult = sixSidedDice.roll()
+    println("Rolled a $rollResult")
+}
+"""
+
 
 @pytest.mark.parametrize(
     ("lang_id", "source_code", "target_symbols_counts"),
@@ -452,6 +473,17 @@ $myApp->performCalculations();
                 "class_declaration": 1,
             },
         ),
+        (
+            LanguageId.KOTLIN,
+            KOTLIN_SAMPLE_SOURCE,
+            {
+                "import_header": 2,
+                "line_comment": 1,
+                "class_declaration": 1,
+                "function_declaration": 2,
+                "multiline_comment": 1,
+            },
+        ),
     ],
 )
 def test_symbol_counter(
@@ -465,14 +497,3 @@ def test_symbol_counter(
     assert len(output) == len(target_symbols_counts)
     for symbol, expected_count in target_symbols_counts.items():
         assert output[symbol] == expected_count
-
-
-@pytest.mark.parametrize(
-    "not_supported_lang_id",
-    [
-        LanguageId.KOTLIN,
-    ],
-)
-def test_lang_id_not_supported(not_supported_lang_id: LanguageId):
-    with pytest.raises(ValueError):
-        CodeParser.from_language_id("", not_supported_lang_id)

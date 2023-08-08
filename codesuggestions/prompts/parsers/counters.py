@@ -155,6 +155,16 @@ class TsCounterVisitor(BaseCounterVisitor):
     ]
 
 
+class KotlinCounterVisitor(BaseCounterVisitor):
+    _TARGET_SYMBOLS = [
+        "import_header",
+        "function_declaration",
+        "class_declaration",
+        "line_comment",
+        "multiline_comment",
+    ]
+
+
 class CounterVisitorFactory:
     _LANG_ID_VISITORS = {
         LanguageId.C: CCounterVisitor,
@@ -169,6 +179,7 @@ class CounterVisitorFactory:
         LanguageId.RUST: RustCounterVisitor,
         LanguageId.SCALA: ScalaCounterVisitor,
         LanguageId.TS: TsCounterVisitor,
+        LanguageId.KOTLIN: KotlinCounterVisitor,
     }
 
     @staticmethod

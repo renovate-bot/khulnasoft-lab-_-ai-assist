@@ -25,6 +25,7 @@ class LanguageId(Enum):
     SCALA = 11
     TS = 12
     KOTLIN = 13
+    SWIFT = 14
 
 
 _ALL_LANGS = {
@@ -41,6 +42,7 @@ _ALL_LANGS = {
     LanguageId.SCALA: {"scala"},
     LanguageId.TS: {"ts", "tsx"},
     LanguageId.KOTLIN: {"kts", "kt"},
+    LanguageId.SWIFT: {"swift"},
 }
 
 _EXTENSION_TO_LANG_ID = {

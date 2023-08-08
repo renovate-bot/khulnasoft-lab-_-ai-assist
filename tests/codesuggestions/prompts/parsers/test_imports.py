@@ -56,6 +56,10 @@ SCALA_SOURCE_SAMPLE = """// Scala test
 import java.util._
 """
 
+KOTLIN_SOURCE_SAMPLE = """// Kotlin test
+import java.util.Random
+"""
+
 
 @pytest.mark.parametrize(
     ("lang_id", "source_code", "expected_output"),
@@ -91,6 +95,7 @@ import java.util._
             JAVASCRIPT_SOURCE_SAMPLE,
             ["import { someFunction } from './module';"],
         ),
+        (LanguageId.KOTLIN, KOTLIN_SOURCE_SAMPLE, ["import java.util.Random"]),
     ],
 )
 def test_import_extractor(lang_id: LanguageId, source_code: str, expected_output: str):
@@ -115,6 +120,7 @@ def test_import_extractor(lang_id: LanguageId, source_code: str, expected_output
         (LanguageId.RUST, "nothing to use here"),
         (LanguageId.SCALA, "nothing to import here"),
         (LanguageId.TS, "nothing to import here"),
+        (LanguageId.KOTLIN, "nothing to import here"),
     ],
 )
 def test_unparseable(lang_id: LanguageId, source_code: str):

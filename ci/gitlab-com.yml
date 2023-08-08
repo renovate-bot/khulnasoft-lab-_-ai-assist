@@ -55,8 +55,8 @@ cache:
     - $PIP_CACHE_DIR
     - $POETRY_CACHE_DIR
     - requirements.txt
-    - lib/
-    - vendor/
+    - scripts/lib/
+    - scripts/vendor/
 
 .poetry:
   before_script:
