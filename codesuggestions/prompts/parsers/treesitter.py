@@ -19,28 +19,13 @@ from codesuggestions.prompts.parsers.imports import ImportVisitorFactory
 from codesuggestions.prompts.parsers.treetraversal import tree_dfs
 from codesuggestions.suggestions.processing.ops import (
     LanguageId,
+    ProgramLanguage,
     convert_point_to_relative_point_in_node,
     split_on_point,
 )
 
 
 class CodeParser(BaseCodeParser):
-    LANG_ID_TO_LANGUAGE = {
-        LanguageId.C: "c",
-        LanguageId.CPP: "cpp",
-        LanguageId.CSHARP: "c_sharp",
-        LanguageId.GO: "go",
-        LanguageId.JAVA: "java",
-        LanguageId.JS: "javascript",
-        LanguageId.PHP: "php",
-        LanguageId.PYTHON: "python",
-        LanguageId.RUBY: "ruby",
-        LanguageId.RUST: "rust",
-        LanguageId.SCALA: "scala",
-        LanguageId.TS: "typescript",
-        LanguageId.KOTLIN: "kotlin",
-    }
-
     def __init__(self, tree: Tree, lang_id: LanguageId):
         self.tree = tree
         self.lang_id = lang_id
@@ -125,13 +110,14 @@ class CodeParser(BaseCodeParser):
         if lib_path is None:
             lib_path = "%s/tree-sitter-languages.so" % os.getenv("LIB_DIR", "/usr/lib")
 
-        lang_def = cls.LANG_ID_TO_LANGUAGE.get(lang_id, None)
-        if lang_def is None:
+        if lang_id is None:
             raise ValueError(f"Unsupported language: {lang_id}")
+
+        lang_def = ProgramLanguage.from_language_id(lang_id)
 
         try:
             parser = Parser()
-            parser.set_language(Language(lib_path, lang_def))
+            parser.set_language(Language(lib_path, lang_def.grammar_name))
             tree = parser.parse(bytes(content, "utf8"))
         except TypeError as ex:
             raise ValueError(f"Unsupported code content: {str(ex)}")

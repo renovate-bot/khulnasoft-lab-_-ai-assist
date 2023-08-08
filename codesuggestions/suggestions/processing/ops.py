@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import Optional, Union
+from typing import NamedTuple, Optional, Union
 
 from transformers import PreTrainedTokenizer
 from tree_sitter import Node
@@ -17,26 +17,57 @@ __all__ = [
 ]
 
 
+class _LanguageDef(NamedTuple):
+    lang_id: LanguageId
+    grammar_name: str
+    human_name: str
+    extensions: frozenset[str]
+
+
 _ALL_LANGS = {
-    LanguageId.C: {"c", "h"},
-    LanguageId.CPP: {"cpp", "hpp", "c++", "h++", "cc", "hh", "C", "H"},
-    LanguageId.CSHARP: {"cs"},
-    LanguageId.GO: {"go"},
-    LanguageId.JAVA: {"java"},
-    LanguageId.JS: {"js"},
-    LanguageId.PHP: {"php", "php3", "php4", "php5", "phps", "phpt"},
-    LanguageId.PYTHON: {"py"},
-    LanguageId.RUBY: {"rb"},
-    LanguageId.RUST: {"rs"},
-    LanguageId.SCALA: {"scala"},
-    LanguageId.TS: {"ts", "tsx"},
-    LanguageId.KOTLIN: {"kts", "kt"},
-    LanguageId.SWIFT: {"swift"},
+    _LanguageDef(LanguageId.C, "c", "C", frozenset({"c", "h"})),
+    _LanguageDef(
+        LanguageId.CPP,
+        "cpp",
+        "C++",
+        frozenset({"cpp", "hpp", "c++", "h++", "cc", "hh", "C", "H"}),
+    ),
+    _LanguageDef(LanguageId.CSHARP, "c_sharp", "C#", frozenset({"cs"})),
+    _LanguageDef(LanguageId.GO, "go", "Go", frozenset({"go"})),
+    _LanguageDef(LanguageId.JAVA, "java", "Java", frozenset({"java"})),
+    _LanguageDef(LanguageId.JS, "javascript", "JavaScript", frozenset({"js"})),
+    _LanguageDef(
+        LanguageId.PHP,
+        "php",
+        "PHP",
+        frozenset({"php", "php3", "php4", "php5", "phps", "phpt"}),
+    ),
+    _LanguageDef(LanguageId.PYTHON, "python", "Python", frozenset({"py"})),
+    _LanguageDef(LanguageId.RUBY, "ruby", "Ruby", frozenset({"rb"})),
+    _LanguageDef(LanguageId.RUST, "rust", "Rust", frozenset({"rs"})),
+    _LanguageDef(LanguageId.SCALA, "scala", "Scala", frozenset({"scala"})),
+    _LanguageDef(LanguageId.TS, "typescript", "TypeScript", frozenset({"ts", "tsx"})),
+    _LanguageDef(LanguageId.KOTLIN, "kotlin", "Kotlin", frozenset({"kts", "kt"})),
 }
 
+_LANG_ID_TO_LANG_DEF = {value.lang_id: value for value in _ALL_LANGS}
+
 _EXTENSION_TO_LANG_ID = {
-    value: key for key, values in _ALL_LANGS.items() for value in values
+    ext: language.lang_id for language in _ALL_LANGS for ext in language.extensions
 }
+
+
+class ProgramLanguage:
+    def __init__(self, lang_id: LanguageId):
+        self._lang_id = lang_id
+        self._lang_def = _LANG_ID_TO_LANG_DEF.get(lang_id)
+
+    def __getattr__(self, name):
+        return getattr(self._lang_def, name)
+
+    @classmethod
+    def from_language_id(cls, lang_id: LanguageId):
+        return ProgramLanguage(lang_id)
 
 
 def prepend_lang_id(s: str, lang_id: Optional[LanguageId]):
