@@ -80,7 +80,7 @@ prometheus-stackdriver-exporter:
   stackdriver:
     projectId: unreview-poc-390200e5
     metrics:
-      typePrefixes: "file.googleapis.com"
+      typePrefixes: "file.googleapis.com,aiplatform.googleapis.com"
   serviceMonitor:
     enabled: true
     namespace: fauxpilot
