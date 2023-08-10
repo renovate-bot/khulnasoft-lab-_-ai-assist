@@ -50,11 +50,11 @@ class _CodeInfo(NamedTuple):
 
     @property
     def total_length_tokens(self):
-        return sum([info.length_tokens for info in self.content])
+        return sum(info.length_tokens for info in self.content)
 
     @property
     def total_length(self):
-        return sum([len(info.text) for info in self.content])
+        return sum(len(info.text) for info in self.content)
 
 
 class _Prompt(NamedTuple):
