@@ -98,6 +98,12 @@ def setup_logging(app: ASGIApp, logging_config: LoggingConfig):
     # Use OUR `ProcessorFormatter` to format all `logging` entries.
     handler.setFormatter(formatter)
     root_logger = logging.getLogger()
+
+    # `snowplow_tracker` calls logging.basicConfig(), which adds a handler
+    # to the root logger, in multiple places. To avoid having duplicate
+    # messages in the root logger, clear out its handlers.
+    root_logger.handlers.clear()
+
     root_logger.addHandler(handler)
     root_logger.setLevel(logging_config.level.upper())
 
