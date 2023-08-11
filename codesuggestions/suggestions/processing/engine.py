@@ -1,4 +1,3 @@
-from pathlib import Path
 from typing import Any, Callable, NamedTuple, Optional
 
 import structlog
@@ -7,14 +6,8 @@ from transformers import PreTrainedTokenizer
 from codesuggestions.instrumentators import TextGenModelInstrumentator
 from codesuggestions.models import (
     PalmCodeGenBaseModel,
-    TextGenBaseModel,
     VertexModelInternalError,
     VertexModelInvalidArgument,
-)
-from codesuggestions.prompts import (
-    PromptTemplate,
-    PromptTemplateBase,
-    PromptTemplateFewShot,
 )
 from codesuggestions.prompts.parsers import CodeParser
 from codesuggestions.suggestions.processing.base import (
@@ -25,18 +18,11 @@ from codesuggestions.suggestions.processing.base import (
     ModelEngineBase,
     ModelEngineOutput,
 )
-from codesuggestions.suggestions.processing.ops import (
-    LanguageId,
-    prepend_lang_id,
-    remove_incomplete_lines,
-    trim_by_max_len,
-    trim_by_sep,
-)
+from codesuggestions.suggestions.processing.ops import LanguageId
 
 log = structlog.stdlib.get_logger("codesuggestions")
 
 __all__ = [
-    "ModelEngineCodegen",
     "ModelEnginePalm",
 ]
 
@@ -191,85 +177,6 @@ class _PromptBuilder:
                 function_signatures=self._metadata.get("function_signatures", None),
             ),
         )
-
-
-class ModelEngineCodegen(ModelEngineBase):
-    FILE_EXAMPLES = "examples.json"
-    EXAMPLES_TEMPLATE = "base.tpl"
-    COMPLETION_TEMPLATE = "completion.tpl"
-
-    SEP_CODE_BLOCK = "```"
-
-    def __init__(
-        self,
-        model: TextGenBaseModel,
-        prompt_tpls: dict[LanguageId, PromptTemplateBase],
-        sep_code_block: str,
-    ):
-        self.model = model
-        self.prompt_tpls = prompt_tpls
-        self.sep_code_block = sep_code_block
-
-    async def _generate_completion(
-        self,
-        prefix: str,
-        suffix: str,
-        file_name: str,
-        lang_id: LanguageId,
-        **kwargs: Any,
-    ) -> ModelEngineOutput:
-        prompt = self._build_prompt(prefix, lang_id)
-        model_metadata = MetadataModel(
-            name=self.model.model_name, engine=self.model.model_engine
-        )
-
-        if res := self.model.generate(prompt, suffix, **kwargs):
-            completion = self._clean_completions(res.text)
-            return ModelEngineOutput(
-                text=completion,
-                model=model_metadata,
-            )
-
-        return ModelEngineOutput(text="", model=model_metadata)
-
-    def _build_prompt(self, content: str, lang_id: Optional[LanguageId]) -> str:
-        prompt = trim_by_max_len(content, self.model.MAX_MODEL_LEN)
-
-        if prompt_tpl := self.prompt_tpls.get(lang_id, None):
-            prompt = prompt_tpl.apply(lang=lang_id.name.lower(), prompt=prompt)
-        else:
-            prompt = prepend_lang_id(prompt, lang_id)
-
-        return prompt
-
-    def _clean_completions(self, completion: str) -> str:
-        completion = remove_incomplete_lines(
-            trim_by_sep(completion, sep=self.sep_code_block)
-        )
-
-        return completion
-
-    @classmethod
-    def from_local_templates(
-        cls,
-        tpl_dir: Path,
-        model: TextGenBaseModel,
-        tpl_completion: str = COMPLETION_TEMPLATE,
-        tpl_examples: str = EXAMPLES_TEMPLATE,
-        file_examples: str = FILE_EXAMPLES,
-        sep_code_block: str = SEP_CODE_BLOCK,
-    ):
-        all_examples = cls._read_json(tpl_dir / file_examples)
-
-        prompt_tpls = dict()
-        for key_example, examples in all_examples.items():
-            tpl_examples = PromptTemplate.from_local_file(tpl_dir / tpl_examples)
-            tpl = PromptTemplateFewShot.from_local_file(
-                tpl_dir / tpl_completion, examples, tpl_examples
-            )
-            prompt_tpls[_KEY_EXAMPLE_LANG_ID[key_example]] = tpl
-
-        return cls(model, prompt_tpls, sep_code_block)
 
 
 class ModelEnginePalm(ModelEngineBase):

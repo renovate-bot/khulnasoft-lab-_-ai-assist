@@ -4,7 +4,6 @@ from typing import Any, NamedTuple, Optional
 
 __all__ = [
     "Config",
-    "TritonConfig",
     "FastApiConfig",
     "AuthConfig",
     "PalmTextModelConfig",
@@ -17,11 +16,6 @@ __all__ = [
 class LoggingConfig(NamedTuple):
     level: str
     json: bool
-
-
-class TritonConfig(NamedTuple):
-    host: str
-    port: int
 
 
 class FastApiConfig(NamedTuple):
@@ -53,10 +47,6 @@ class PalmTextModelConfig(NamedTuple):
     project: str
     location: str
     vertex_api_endpoint: str
-    real_or_fake: str
-
-
-class GitLabCodegenModelConfig(NamedTuple):
     real_or_fake: str
 
 
@@ -95,13 +85,6 @@ class Config:
         return LoggingConfig(
             level=Config._get_value("LOG_LEVEL", "INFO"),
             json=Config._str_to_bool(Config._get_value("LOG_FORMAT_JSON", "True")),
-        )
-
-    @property
-    def triton(self) -> TritonConfig:
-        return TritonConfig(
-            host=Config._get_value("TRITON_HOST", "triton"),
-            port=int(Config._get_value("TRITON_PORT", 8001)),
         )
 
     @property
@@ -172,14 +155,6 @@ class Config:
             vertex_api_endpoint=Config._get_value(
                 "VERTEX_API_ENDPOINT", "us-central1-aiplatform.googleapis.com"
             ),
-            real_or_fake=Config._parse_fake_models(
-                Config._get_value("USE_FAKE_MODELS", "False")
-            ),
-        )
-
-    @property
-    def gitlab_codegen_model(self) -> GitLabCodegenModelConfig:
-        return GitLabCodegenModelConfig(
             real_or_fake=Config._parse_fake_models(
                 Config._get_value("USE_FAKE_MODELS", "False")
             ),

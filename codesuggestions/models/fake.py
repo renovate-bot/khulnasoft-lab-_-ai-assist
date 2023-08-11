@@ -3,32 +3,8 @@ from typing import Optional
 from codesuggestions.models import TextGenBaseModel, TextGenModelOutput
 
 __all__ = [
-    "FakeGitLabCodeGenModel",
     "FakePalmTextGenModel",
 ]
-
-
-class FakeGitLabCodeGenModel(TextGenBaseModel):
-    @property
-    def model_name(self) -> str:
-        return "fake-gitlab-codegen"
-
-    @property
-    def model_engine(self) -> str:
-        return "fake-gitlab-engine"
-
-    def generate(
-        self,
-        prompt: str,
-        suffix: str,
-        temperature: float = 0.0,
-        max_output_tokens: int = 0,
-        top_p: float = 0.0,
-        top_k: int = 0,
-    ) -> Optional[TextGenModelOutput]:
-        return TextGenModelOutput(
-            text="fake code suggestion from GitLab Codegen", score=0
-        )
 
 
 class FakePalmTextGenModel(TextGenBaseModel):

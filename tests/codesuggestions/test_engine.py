@@ -16,7 +16,6 @@ from codesuggestions.suggestions.processing import (
     MetadataExtraInfo,
     MetadataModel,
     MetadataPromptBuilder,
-    ModelEngineCodegen,
     ModelEnginePalm,
     ops,
 )
@@ -131,78 +130,6 @@ def _side_effect_with_invalid_arg_exception(
 
 def token_length(s: str):
     return len(tokenizer(s)["input_ids"])
-
-
-@pytest.mark.asyncio
-@pytest.mark.parametrize(
-    "content,file_name,model_gen_func,model_output,expected_completion",
-    [
-        (
-            "random prompt",
-            "filename.py",
-            _side_effect_few_shot_tpl,
-            "random completion",
-            "random completion",
-        ),
-        (
-            "random prompt",
-            "filename.py",
-            _side_effect_few_shot_tpl,
-            "random completion\nnew line",
-            "random completion",
-        ),
-        (
-            "random prompt",
-            "filename.py",
-            _side_effect_few_shot_tpl,
-            "random completion```",
-            "random completion",
-        ),
-        (
-            "random prompt",
-            "filename.py",
-            _side_effect_few_shot_tpl,
-            "random completion```\nnew line",
-            "random completion",
-        ),
-        ("random prompt", "filename.py", _side_effect_few_shot_tpl, "", ""),
-        (
-            "random prompt",
-            "filename.unk",
-            _side_effect_unknown_tpl,
-            "random completion",
-            "random completion",
-        ),
-        (
-            "random prompt",
-            "filename.unk",
-            _side_effect_unknown_tpl,
-            "random completion\nnew line",
-            "random completion",
-        ),
-    ],
-)
-async def test_model_engine_codegen(
-    text_gen_base_model,
-    tpl_codegen_dir,
-    content,
-    file_name,
-    model_gen_func,
-    model_output,
-    expected_completion,
-):
-    _side_effect = model_gen_func(content, "", file_name, model_output)
-    text_gen_base_model.generate = Mock(side_effect=_side_effect)
-
-    engine = ModelEngineCodegen.from_local_templates(
-        tpl_codegen_dir,
-        text_gen_base_model,
-    )
-
-    completion = await engine.generate_completion(content, "", file_name)
-
-    assert completion.text == expected_completion
-    assert completion.model is not None
 
 
 @pytest.mark.asyncio

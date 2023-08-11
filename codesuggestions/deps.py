@@ -1,5 +1,3 @@
-from pathlib import Path
-
 from dependency_injector import containers, providers
 from py_grpc_prometheus.prometheus_client_interceptor import PromClientInterceptor
 
@@ -7,15 +5,12 @@ from codesuggestions.api import middleware
 from codesuggestions.api.rollout.model import ModelRollout, ModelRolloutWithFallbackPlan
 from codesuggestions.auth import GitLabAuthProvider, GitLabOidcProvider
 from codesuggestions.models import (
-    FakeGitLabCodeGenModel,
     FakePalmTextGenModel,
-    GitLabCodeGen,
     PalmCodeGenModel,
-    grpc_connect_triton,
     grpc_connect_vertex,
 )
 from codesuggestions.suggestions import CodeSuggestions
-from codesuggestions.suggestions.processing import ModelEngineCodegen, ModelEnginePalm
+from codesuggestions.suggestions.processing import ModelEnginePalm
 from codesuggestions.tokenizer import init_tokenizer
 from codesuggestions.tracking import (
     SnowplowClient,
@@ -29,12 +24,6 @@ __all__ = [
 ]
 
 _PROBS_ENDPOINTS = ["/monitoring/healthz", "/metrics"]
-
-
-def _init_triton_grpc_client(host: str, port: int, interceptor: PromClientInterceptor):
-    client = grpc_connect_triton(host, port, interceptor)
-    yield client
-    client.close()
 
 
 def _init_vertex_grpc_client(api_endpoint: str, real_or_fake):
@@ -56,17 +45,6 @@ def _init_snowplow_client(enabled: bool, configuration: SnowplowClientConfigurat
         return SnowplowClientStub()
 
     return SnowplowClient(configuration)
-
-
-def _create_gitlab_codegen_model_provider(grpc_client_triton, real_or_fake):
-    return providers.Selector(
-        real_or_fake,
-        real=providers.Singleton(
-            GitLabCodeGen,
-            grpc_client=grpc_client_triton,
-        ),
-        fake=providers.Singleton(FakeGitLabCodeGenModel),
-    )
 
 
 def _create_palm_engine_providers(
@@ -173,13 +151,6 @@ class CodeSuggestionsContainer(containers.DeclarativeContainer):
         enable_client_stream_send_time_histogram=True,
     )
 
-    grpc_client_triton = providers.Resource(
-        _init_triton_grpc_client,
-        host=config.triton.host,
-        port=config.triton.port,
-        interceptor=interceptor,
-    )
-
     grpc_client_vertex = providers.Resource(
         _init_vertex_grpc_client,
         api_endpoint=config.palm_text_model.vertex_api_endpoint,
@@ -188,22 +159,11 @@ class CodeSuggestionsContainer(containers.DeclarativeContainer):
 
     tokenizer = providers.Resource(init_tokenizer)
 
-    palm_model_rollout = providers.Callable(
-        # take the first model only as the primary one if several passed
-        lambda model_names: ModelRollout(model_names[0]),
-        model_names=config.palm_text_model.names,
-    )
-
     model_rollout_plan = providers.Resource(
         ModelRolloutWithFallbackPlan,
         rollout_percentage=config.feature_flags.third_party_rollout_percentage,
-        primary_model=palm_model_rollout,
-        fallback_model=ModelRollout.GITLAB_CODEGEN,
-    )
-
-    model_gitlab_codegen = _create_gitlab_codegen_model_provider(
-        grpc_client_triton,
-        config.gitlab_codegen_model.real_or_fake,
+        primary_model=ModelRollout.GOOGLE_CODE_GECKO,
+        fallback_model=ModelRollout.GOOGLE_CODE_BISON,
     )
 
     engines_palm_codegen = _create_palm_engine_providers(
@@ -214,22 +174,8 @@ class CodeSuggestionsContainer(containers.DeclarativeContainer):
         config.palm_text_model.real_or_fake,
     )
 
-    engine_codegen_factory_template = providers.Callable(
-        ModelEngineCodegen.from_local_templates,
-        tpl_dir=Path(__file__).parent / "_assets" / "tpl" / "codegen",
-    )
-
     engine_factory = providers.FactoryAggregate(
-        **{
-            ModelRollout.GITLAB_CODEGEN: providers.Factory(
-                engine_codegen_factory_template,
-                model=model_gitlab_codegen,
-            ),
-            **{
-                ModelRollout(name): engine
-                for name, engine in engines_palm_codegen.items()
-            },
-        }
+        **{ModelRollout(name): engine for name, engine in engines_palm_codegen.items()}
     )
 
     code_suggestions = providers.Factory(

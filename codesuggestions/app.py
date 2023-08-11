@@ -33,10 +33,6 @@ def main():
     fast_api_container.config.tracking.from_value(config.tracking._asdict())
 
     code_suggestions_container = CodeSuggestionsContainer()
-    code_suggestions_container.config.triton.from_value(config.triton._asdict())
-    code_suggestions_container.config.gitlab_codegen_model.from_value(
-        config.gitlab_codegen_model._asdict()
-    )
     code_suggestions_container.config.palm_text_model.from_value(
         config.palm_text_model._asdict()
     )
