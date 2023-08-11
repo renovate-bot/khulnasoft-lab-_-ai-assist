@@ -1,4 +1,3 @@
-import json
 from abc import ABC, abstractmethod
 from pathlib import Path
 from typing import Any, Mapping, NamedTuple, Optional
@@ -105,8 +104,3 @@ class ModelEngineBase(ABC):
         symbol_map: dict,
     ) -> None:
         watch_container.register_prompt_symbols(symbol_map)
-
-    @staticmethod
-    def _read_json(filepath: Path) -> dict[str, list]:
-        with open(str(filepath), "r") as f:
-            return json.load(f)

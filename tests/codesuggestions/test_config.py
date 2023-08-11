@@ -8,8 +8,6 @@ from codesuggestions import Config, Project
 
 test_data = dict(
     google_vertex_ai_credentials="path/key.json",
-    triton_host="localhost",
-    triton_port=5000,
     api_host="localhost",
     api_port=8080,
     metrics_host="127.0.0.1",
@@ -48,8 +46,6 @@ def mock_env_vars(tmp_path, request):
     tmp_file_limited_access.write_text(text)
 
     envs = {
-        "TRITON_HOST": request.param["triton_host"],
-        "TRITON_PORT": str(request.param["triton_port"]),
         "FASTAPI_API_HOST": request.param["api_host"],
         "FASTAPI_API_PORT": str(request.param["api_port"]),
         "FASTAPI_API_METRICS_HOST": request.param["metrics_host"],
@@ -83,9 +79,6 @@ def mock_env_vars(tmp_path, request):
 @pytest.mark.parametrize("configuration", [test_data])
 def test_config(mock_env_vars, configuration):
     config = Config()
-
-    assert config.triton.host == configuration["triton_host"]
-    assert config.triton.port == configuration["triton_port"]
 
     assert config.fastapi.api_host == configuration["api_host"]
     assert config.fastapi.api_port == configuration["api_port"]
@@ -137,5 +130,4 @@ def test_config_fake_models(use_fake_models, expected):
     with mock.patch.dict(os.environ, {"USE_FAKE_MODELS": use_fake_models}):
         config = Config()
 
-        assert config.gitlab_codegen_model.real_or_fake == expected
         assert config.palm_text_model.real_or_fake == expected

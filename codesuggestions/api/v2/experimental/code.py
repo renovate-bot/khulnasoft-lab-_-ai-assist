@@ -25,18 +25,6 @@ router = APIRouter(
 )
 
 
-class ModelGitLabCodegen(BaseModel):
-    class Parameters(BaseModel):
-        temperature: confloat(ge=0.0, le=1.0) = 0.2
-        max_output_tokens: conint(ge=1, le=64) = 32
-        top_p: confloat(ge=0.0, le=1.0) = 0.98
-        top_k: conint(ge=1, le=40) = 0
-
-    name: Literal[ModelRollout.GITLAB_CODEGEN]
-    prefix: constr(max_length=100000)
-    parameters: Parameters
-
-
 class ModelVertexTextBison(BaseModel):
     # Ref: https://cloud.google.com/vertex-ai/docs/generative-ai/learn/models#text_model_parameters
     class Parameters(BaseModel):
@@ -77,7 +65,6 @@ ModelAny = Union[
     ModelVertexTextBison,
     ModelVertexCodeBison,
     ModelVertexCodeGecko,
-    ModelGitLabCodegen,
 ]
 
 
