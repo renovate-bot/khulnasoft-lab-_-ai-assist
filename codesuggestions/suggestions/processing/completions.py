@@ -27,7 +27,7 @@ from codesuggestions.suggestions.processing.ops import (
 log = structlog.stdlib.get_logger("codesuggestions")
 
 __all__ = [
-    "ModelEnginePalm",
+    "ModelEngineCompletions",
 ]
 
 _KEY_EXAMPLE_LANG_ID = {
@@ -183,7 +183,7 @@ class _PromptBuilder:
         )
 
 
-class ModelEnginePalm(ModelEngineBase):
+class ModelEngineCompletions(ModelEngineBase):
     MAX_TOKENS_IMPORTS_PERCENT = 0.12  # about 245 tokens for code-gecko
     MAX_TOKENS_SUFFIX_PERCENT = 0.07  # about 126 tokens for code-gecko, if "imports" takes up all the available space
 
@@ -194,7 +194,7 @@ class ModelEnginePalm(ModelEngineBase):
             model.model_engine, model.model_name
         )
 
-    async def _generate_completion(
+    async def _generate(
         self,
         prefix: str,
         suffix: str,

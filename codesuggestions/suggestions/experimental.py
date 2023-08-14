@@ -30,7 +30,7 @@ class CodeCompletionsInternalUseCase:
     ) -> CodeCompletionsInternal:
         file_name = file_name if file_name else ""
 
-        completion = await self.engine.generate_completion(
+        completion = await self.engine.generate(
             prefix,
             suffix,
             file_name,

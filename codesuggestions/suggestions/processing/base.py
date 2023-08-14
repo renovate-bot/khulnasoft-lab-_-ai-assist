@@ -60,14 +60,12 @@ class ModelEngineOutput(NamedTuple):
 
 
 class ModelEngineBase(ABC):
-    async def generate_completion(
+    async def generate(
         self, prefix: str, suffix: str, file_name: str, **kwargs: Any
     ) -> ModelEngineOutput:
         lang_id = lang_from_filename(file_name)
         self.increment_lang_counter(file_name, lang_id)
-        return await self._generate_completion(
-            prefix, suffix, file_name, lang_id, **kwargs
-        )
+        return await self._generate(prefix, suffix, file_name, lang_id, **kwargs)
 
     def increment_lang_counter(
         self, filename: str, lang_id: Optional[LanguageId] = None
@@ -82,7 +80,7 @@ class ModelEngineBase(ABC):
         LANGUAGE_COUNTER.labels(**labels).inc()
 
     @abstractmethod
-    async def _generate_completion(
+    async def _generate(
         self,
         prefix: str,
         suffix: str,

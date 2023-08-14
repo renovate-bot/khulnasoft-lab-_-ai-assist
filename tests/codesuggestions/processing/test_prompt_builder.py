@@ -1,6 +1,6 @@
 import pytest
 
-from codesuggestions.suggestions.processing.engine import (
+from codesuggestions.suggestions.processing.completions import (
     MetadataPromptBuilder,
     _CodeContent,
     _PromptBuilder,

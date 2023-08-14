@@ -2,4 +2,5 @@
 
 from codesuggestions.suggestions.processing import ops
 from codesuggestions.suggestions.processing.base import *
-from codesuggestions.suggestions.processing.engine import *
+from codesuggestions.suggestions.processing.completions import *
+from codesuggestions.suggestions.processing.generations import *

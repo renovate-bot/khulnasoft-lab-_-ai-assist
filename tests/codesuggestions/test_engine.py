@@ -16,7 +16,7 @@ from codesuggestions.suggestions.processing import (
     MetadataExtraInfo,
     MetadataModel,
     MetadataPromptBuilder,
-    ModelEnginePalm,
+    ModelEngineCompletions,
     ops,
 )
 
@@ -285,9 +285,9 @@ async def test_model_engine_palm(
     type(text_gen_base_model).model_name = PropertyMock(return_value=model_name)
     type(text_gen_base_model).model_engine = PropertyMock(return_value=model_engine)
 
-    engine = ModelEnginePalm(text_gen_base_model, tokenizer)
+    engine = ModelEngineCompletions(text_gen_base_model, tokenizer)
     engine.instrumentator = MockInstrumentor()
-    completion = await engine.generate_completion(prefix, suffix, file_name)
+    completion = await engine.generate(prefix, suffix, file_name)
 
     assert completion.text == expected_completion
     assert completion.model == MetadataModel(name=model_name, engine=model_engine)
@@ -296,7 +296,7 @@ async def test_model_engine_palm(
     if prompt_builder_metadata:
         max_imports_len = int(
             text_gen_base_model.MAX_MODEL_LEN
-            * ModelEnginePalm.MAX_TOKENS_IMPORTS_PERCENT
+            * ModelEngineCompletions.MAX_TOKENS_IMPORTS_PERCENT
         )
         assert 0 <= completion.metadata.imports.post.length_tokens <= max_imports_len
 
@@ -305,7 +305,9 @@ async def test_model_engine_palm(
             text_gen_base_model.MAX_MODEL_LEN
             - completion.metadata.imports.post.length_tokens
         )
-        max_suffix_len = int(body_len * ModelEnginePalm.MAX_TOKENS_SUFFIX_PERCENT)
+        max_suffix_len = int(
+            body_len * ModelEngineCompletions.MAX_TOKENS_SUFFIX_PERCENT
+        )
         assert 0 <= components["suffix"].length_tokens <= max_suffix_len
 
         max_prefix_len = body_len - components["suffix"].length_tokens
@@ -434,7 +436,7 @@ def test_prompt_building_model_engine_palm(
     expected_imports: list[str],
     expected_functions: list[str],
 ):
-    engine = ModelEnginePalm(text_gen_base_model, tokenizer)
+    engine = ModelEngineCompletions(text_gen_base_model, tokenizer)
     prompt = engine._build_prompt(
         prefix=prefix, file_name=file_name, suffix=suffix, lang_id=lang_id
     )
