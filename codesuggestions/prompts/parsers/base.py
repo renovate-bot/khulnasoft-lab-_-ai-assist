@@ -1,11 +1,30 @@
 from abc import ABC, abstractmethod
+from typing import NamedTuple
 
 from tree_sitter import Node
 
 __all__ = [
+    "Point",
+    "CodeContext",
     "BaseVisitor",
     "BaseCodeParser",
 ]
+
+Point = tuple[int, int]
+
+
+class CodeContext(NamedTuple):
+    text: str
+    start: Point
+    end: Point
+
+    @classmethod
+    def from_node(cls, node: Node):
+        return cls(
+            text=node.text.decode("utf-8", errors="ignore"),
+            start=node.start_point,
+            end=node.end_point,
+        )
 
 
 class BaseVisitor(ABC):

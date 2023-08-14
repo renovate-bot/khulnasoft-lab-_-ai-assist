@@ -8,6 +8,8 @@ __all__ = [
     "remove_incomplete_lines",
     "trim_by_max_len",
     "trim_by_sep",
+    "find_alnum_point",
+    "find_position",
 ]
 
 
@@ -81,3 +83,49 @@ def trim_by_sep(s: str, sep: str = "```") -> str:
 def lang_from_filename(file_name: Union[str, Path]) -> Optional[LanguageId]:
     ext = Path(file_name).suffix.replace(".", "")
     return _EXTENSION_TO_LANG_ID.get(ext, None)
+
+
+def find_alnum_point(value: str, start_index: int = 0) -> tuple[int, int]:
+    row = 0
+    col = 0
+
+    found_row = -1
+    found_col = -1
+
+    for idx, c in enumerate(value):
+        if c == "\n":
+            # increase the row counter and reset the column one
+            row += 1
+            col = 0
+            continue
+
+        if idx >= start_index and c.isalnum():
+            found_row = row
+            found_col = col
+            break
+
+        col += 1
+
+    return found_row, found_col
+
+
+def find_position(value: str, point: tuple[int, int]) -> int:
+    row = 0
+    col = 0
+
+    for pos, c in enumerate(value):
+        if (row, col) == point:
+            return pos
+
+        if c == "\n":
+            row += 1
+            col = 0
+            continue
+
+        col += 1
+
+    # Check the last position, which is the end of the string
+    if (row, col) == point:
+        return len(value)
+
+    return -1

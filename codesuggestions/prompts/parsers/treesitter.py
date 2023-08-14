@@ -3,7 +3,13 @@ from typing import Optional
 
 from tree_sitter import Language, Node, Parser, Tree
 
-from codesuggestions.prompts.parsers.base import BaseCodeParser, BaseVisitor
+from codesuggestions.prompts.parsers.base import (
+    BaseCodeParser,
+    BaseVisitor,
+    CodeContext,
+    Point,
+)
+from codesuggestions.prompts.parsers.blocks import MinAllowedBlockVisitor
 from codesuggestions.prompts.parsers.context_extractors import ContextVisitorFactory
 from codesuggestions.prompts.parsers.counters import CounterVisitorFactory
 from codesuggestions.prompts.parsers.function_signatures import (
@@ -73,6 +79,18 @@ class CodeParser(BaseCodeParser):
         self._visit_nodes(visitor)
 
         return visitor.extract_most_relevant_context()
+
+    def min_allowed_context(self, point: Point) -> CodeContext:
+        visitor = MinAllowedBlockVisitor(point, min_block_size=2)
+        if visitor is None:
+            return CodeContext.from_node(self.tree.root_node)
+
+        self._visit_nodes(visitor)
+
+        if block_node := visitor.block:
+            return CodeContext.from_node(block_node)
+
+        return CodeContext.from_node(self.tree.root_node)
 
     def _visit_nodes(self, visitor: BaseVisitor):
         tree_dfs(self.tree, visitor)

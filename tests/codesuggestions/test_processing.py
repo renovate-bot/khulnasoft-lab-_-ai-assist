@@ -117,3 +117,42 @@ def test_trim_by_sep(completion, expected_completion):
     actual_completion = ops.trim_by_sep(completion, sep="```")
 
     assert actual_completion == expected_completion
+
+
+@pytest.mark.parametrize(
+    ("value", "start_index", "expected_point"),
+    [
+        ("     one line", 0, (0, 5)),
+        ("     another one line\n", 0, (0, 5)),
+        ("one line\n", 0, (0, 0)),
+        ("\n\n one line\n", 0, (2, 1)),
+        ("\n\n1 line\n2 line", 0, (2, 0)),
+        ("\n\n\n", 0, (-1, -1)),
+        ("    ", 0, (-1, -1)),
+        ("    \n1 line", 5, (1, 0)),
+        ("    \n    1 line", 5, (1, 4)),
+    ],
+)
+def test_find_alnum_point(value, start_index, expected_point):
+    point = ops.find_alnum_point(value, start_index=start_index)
+
+    assert point == expected_point
+
+
+@pytest.mark.parametrize(
+    ("value", "point", "expected_position"),
+    [
+        ("one line", (0, 0), 0),
+        ("one line", (1, 0), -1),
+        ("one line", (0, 9), -1),
+        ("one line", (0, 8), 8),
+        ("one line", (0, 3), 3),
+        ("first line\nsecond line\nthird line", (0, 10), 10),
+        ("first line\nsecond line\nthird line", (1, 0), 11),
+        ("", (0, 0), 0),
+    ],
+)
+def test_find_position(value: str, point: tuple[int, int], expected_position: int):
+    position = ops.find_position(value, point)
+
+    assert position == expected_position
