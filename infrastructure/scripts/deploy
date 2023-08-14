@@ -95,15 +95,10 @@ def get_helm_deployment_values(env, deploy_args):
 
     # Set the deployment tags from the previous deploy
     # or overrides via the `--deploy` argument...
-    triton_tag = deploy_args['triton'] if 'triton' in deploy_args else values['modelTriton']['triton']['image']['tag']
     model_gateway_tag = deploy_args['model-gateway'] if 'model-gateway' in deploy_args else values['modelGateway']['modelGateway']['image']['tag']
 
-    return [
-        "--set",
-        f"modelTriton.triton.image.tag={triton_tag}",
-        "--set",
-        f"modelGateway.modelGateway.image.tag={model_gateway_tag}"
-    ]
+    return ["--set", f"modelGateway.modelGateway.image.tag={model_gateway_tag}"]
+
 
 # Used to parse name=value tags for updating deployments
 class ParseDeployKwargs(argparse.Action):
