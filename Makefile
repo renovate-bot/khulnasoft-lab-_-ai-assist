@@ -5,7 +5,6 @@ TESTS_DIR := ${ROOT_DIR}/tests
 CODE_SUGGESTIONS_DIR := ${ROOT_DIR}/codesuggestions
 
 LINT_WORKING_DIR ?= ${CODE_SUGGESTIONS_DIR} \
-	${ROOT_DIR}/converter \
 	${ROOT_DIR}/infrastructure \
 	${ROOT_DIR}/scripts \
 	${TESTS_DIR}

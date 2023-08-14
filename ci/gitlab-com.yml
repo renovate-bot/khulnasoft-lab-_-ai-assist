@@ -18,12 +18,6 @@ variables:
   DOCKER_TLS_CERTDIR: "/certs"
   DOCKER_MODEL_GATEWAY: "$CI_REGISTRY_IMAGE/model-gateway"
 
-  DOCKER_MODEL_CODEGEN: "$CI_REGISTRY_IMAGE/model-codegen"
-  DOCKER_MODEL_CODEGEN_TMP: "$CI_REGISTRY_IMAGE/tmp/model-codegen"
-
-  DOCKER_MODEL_FAUXPILOT: "$CI_REGISTRY_IMAGE/model-fauxpilot"
-  DOCKER_MODEL_FAUXPILOT_TMP: "$CI_REGISTRY_IMAGE/tmp/model-fauxpilot"
-
   SAST_EXCLUDED_PATHS: "tests, tmp, api, converter, model-loader"
 
 include:
@@ -107,46 +101,6 @@ build-docker-model-gateway:
     KANIKO_BUILD_FILE: Dockerfile
     KANIKO_DESTINATION: "${DOCKER_MODEL_GATEWAY}:${CI_COMMIT_SHORT_SHA}"
 
-build-docker-model-codegen-tmp:
-  stage: build
-  extends:
-    - .kaniko_base
-  tags:
-    # This tag will tell gitlab to use the private runners
-    - ai-assist-container-build
-  variables:
-    KANIKO_BUILD_FILE: models/codegen/Dockerfile.model
-    KANIKO_BUILD_CONTEXT: models/codegen/
-    KANIKO_EXTRA_ARGS: |
-      --build-arg MODEL_NAME
-      --build-arg MODEL_ID
-  parallel:
-    matrix:
-      - MODEL_NAME: Salesforce/codegen-350M-multi
-        MODEL_ID: codegen-350M-multi
-        KANIKO_DESTINATION: "${DOCKER_MODEL_CODEGEN_TMP}:350m-multi-${CI_COMMIT_SHORT_SHA}"
-      - MODEL_NAME: Salesforce/codegen-16B-multi
-        MODEL_ID: codegen-16b-multi
-        KANIKO_DESTINATION: "${DOCKER_MODEL_CODEGEN_TMP}:16b-multi-${CI_COMMIT_SHORT_SHA}"
-  rules:
-    - changes:
-        - models/codegen/**/*
-
-build-docker-model-fauxpilot-tmp:
-  stage: build
-  extends:
-    - .kaniko_base
-  tags:
-    # This tag will tell gitlab to use the private runners
-    - ai-assist-container-build
-  variables:
-    KANIKO_BUILD_FILE: models/fauxpilot/Dockerfile.model
-    KANIKO_BUILD_CONTEXT: models/fauxpilot/
-    KANIKO_DESTINATION: "${DOCKER_MODEL_FAUXPILOT_TMP}:${CI_COMMIT_SHORT_SHA}"
-  rules:
-    - changes:
-        - models/fauxpilot/**/*
-
 tests:
   extends: .poetry
   stage: test
@@ -219,35 +173,3 @@ release-docker-model-gateway:
     RELEASED_IMAGE_LATEST: "$DOCKER_MODEL_GATEWAY:latest"
   rules:
     - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
-
-release-docker-model-codegen:
-  stage: release
-  extends: .docker-release-latest
-  cache: {}
-  parallel:
-    matrix:
-      # release codegen-small
-      - TARGET_IMAGE: "$DOCKER_MODEL_CODEGEN_TMP:350m-multi-$CI_COMMIT_SHORT_SHA"
-        RELEASED_IMAGE_COMMIT: "$DOCKER_MODEL_CODEGEN:350m-multi-$CI_COMMIT_SHORT_SHA"
-        RELEASED_IMAGE_LATEST: "$DOCKER_MODEL_CODEGEN:350m-multi-latest"
-      # release codegen-large
-      - TARGET_IMAGE: "$DOCKER_MODEL_CODEGEN_TMP:16b-multi-$CI_COMMIT_SHORT_SHA"
-        RELEASED_IMAGE_COMMIT: "$DOCKER_MODEL_CODEGEN:16b-multi-$CI_COMMIT_SHORT_SHA"
-        RELEASED_IMAGE_LATEST: "$DOCKER_MODEL_CODEGEN:16b-multi-latest"
-  rules:
-    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
-      changes:
-        - models/codegen/**/*
-
-release-docker-model-fauxpilot:
-  stage: release
-  extends: .docker-release-latest
-  cache: {}
-  variables:
-    TARGET_IMAGE: "$DOCKER_MODEL_FAUXPILOT_TMP:$CI_COMMIT_SHORT_SHA"
-    RELEASED_IMAGE_COMMIT: "$DOCKER_MODEL_FAUXPILOT:$CI_COMMIT_SHORT_SHA"
-    RELEASED_IMAGE_LATEST: "$DOCKER_MODEL_FAUXPILOT:latest"
-  rules:
-    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
-      changes:
-        - models/fauxpilot/**/*
