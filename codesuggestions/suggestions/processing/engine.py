@@ -257,7 +257,8 @@ class ModelEnginePalm(ModelEngineBase):
         prompt_len_body = (
             self.model.MAX_MODEL_LEN - prompt_len_imports - prompt_len_func_signatures
         )
-        body = self._get_body(prefix, suffix, prompt_len_body)
+        truncated_suffix = self._truncate_suffix_context(prefix, suffix, lang_id)
+        body = self._get_body(prefix, truncated_suffix, prompt_len_body)
 
         prompt_builder = _PromptBuilder(body.prefix, body.suffix, file_name, lang_id)
         # NOTE that the last thing we add here will appear first in the prefix
@@ -347,6 +348,25 @@ class ModelEnginePalm(ModelEngineBase):
         )
 
         return _CodeBody(prefix=prefix_truncated, suffix=suffix_truncated)
+
+    def _truncate_suffix_context(
+        self, prefix: str, suffix: str, lang_id: Optional[LanguageId] = None
+    ) -> str:
+        try:
+            parser = CodeParser.from_language_id(prefix + suffix, lang_id)
+        except ValueError as e:
+            log.warning(f"Failed to parse code: {e}")
+            # default to the original suffix
+            return suffix
+
+        def _make_point(prefix: str) -> tuple[int, int]:
+            lines = prefix.splitlines()
+            row = len(lines) - 1
+            col = len(lines[-1])
+            return (row, col)
+
+        truncated_suffix = parser.suffix_near_cursor(point=_make_point(prefix))
+        return truncated_suffix or suffix
 
     def _truncate_content(
         self, val: str, max_length: int, truncation_side: str = "left"

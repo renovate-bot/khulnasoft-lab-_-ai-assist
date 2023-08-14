@@ -17,7 +17,11 @@ from codesuggestions.prompts.parsers.function_signatures import (
 )
 from codesuggestions.prompts.parsers.imports import ImportVisitorFactory
 from codesuggestions.prompts.parsers.treetraversal import tree_dfs
-from codesuggestions.suggestions.processing.ops import LanguageId
+from codesuggestions.suggestions.processing.ops import (
+    LanguageId,
+    convert_point_to_relative_point_in_node,
+    split_on_point,
+)
 
 
 class CodeParser(BaseCodeParser):
@@ -71,7 +75,23 @@ class CodeParser(BaseCodeParser):
 
         return counts
 
-    def context_near_cursor(self, point: tuple[int, int]) -> Node:
+    def suffix_near_cursor(self, point: tuple[int, int]) -> Optional[str]:
+        """
+        Finds the suffix near the cursor based on language-specific rules.
+
+        Returns None if there are no rules for the language or no relevant context was found.
+        """
+        node = self._context_near_cursor(point)
+        if not node:
+            return None
+
+        point_in_node = convert_point_to_relative_point_in_node(node, point)
+        _, suffix = split_on_point(
+            node.text.decode("utf-8", errors="ignore"), point_in_node
+        )
+        return suffix
+
+    def _context_near_cursor(self, point: tuple[int, int]) -> Optional[Node]:
         visitor = ContextVisitorFactory.from_language_id(self.lang_id, point)
         if visitor is None:
             return None

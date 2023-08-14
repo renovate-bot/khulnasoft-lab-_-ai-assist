@@ -331,6 +331,34 @@ async def test_model_engine_palm(
         engine.instrumentator.watcher.register_prompt_symbols.assert_not_called
 
 
+JAVASCRIPT_SOURCE_SAMPLE = """
+import React, { useState } from "react";
+
+const App = () => {
+  const [date, setDate] = useState(new Date());
+  const [number, setNumber] = useState(0);
+
+  const addNumber = () => {
+    setNumber(sum(number, 1));
+  };
+
+  const getDateString = () => {
+    return dateFns.format(date, "YYYY-MM-DD");
+  };
+
+  return (
+    <div>
+      <h1>Date: {getDateString()}</h1>
+      <h1>Number: {number}</h1>
+      <button onClick={addNumber}>Add 1</button>
+    </div>
+  );
+};
+
+export default App;
+"""
+
+
 @pytest.mark.parametrize(
     (
         "prefix",
@@ -386,6 +414,14 @@ def fib(n: int) -> int:
 """,
                 "# def fib(n: int) -> int:",
             ],
+        ),
+        (
+            JAVASCRIPT_SOURCE_SAMPLE[:50],
+            JAVASCRIPT_SOURCE_SAMPLE[50:],
+            "app.js",
+            ops.LanguageId.JS,
+            ['import React, { useState } from "react"'],
+            [],
         ),
     ],
 )
