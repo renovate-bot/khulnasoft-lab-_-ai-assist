@@ -2,15 +2,13 @@ from time import time
 from typing import Optional
 
 import structlog
-from dependency_injector.providers import Factory, FactoryAggregate
 from dependency_injector.wiring import Provide, inject
-from fastapi import APIRouter, Depends, Request
+from fastapi import APIRouter, Depends
 from pydantic import BaseModel, conlist, constr
 
-from codesuggestions.api.rollout import ModelRolloutBasePlan
 from codesuggestions.deps import CodeSuggestionsContainer
 from codesuggestions.instrumentators.base import Telemetry, TelemetryInstrumentator
-from codesuggestions.suggestions import CodeSuggestions
+from codesuggestions.suggestions import CodeCompletions
 
 __all__ = [
     "router",
@@ -19,7 +17,7 @@ __all__ = [
 log = structlog.stdlib.get_logger("codesuggestions")
 
 router = APIRouter(
-    prefix="/completions",
+    prefix="",
     tags=["completions"],
 )
 
@@ -56,26 +54,17 @@ class SuggestionsResponse(BaseModel):
     choices: list[Choice]
 
 
-@router.post("", response_model=SuggestionsResponse)
+# TODO: Rename this endpoint to `/code/completions`
+@router.post("/completions", response_model=SuggestionsResponse)
 @inject
 async def completions(
-    req: Request,
     payload: SuggestionsRequest,
-    model_rollout_plan: ModelRolloutBasePlan = Depends(
-        Provide[CodeSuggestionsContainer.model_rollout_plan]
-    ),
-    engine_factory: FactoryAggregate = Depends(
-        Provide[CodeSuggestionsContainer.engine_factory.provider]
-    ),
-    code_suggestions: Factory[CodeSuggestions] = Depends(
-        Provide[CodeSuggestionsContainer.code_suggestions.provider]
+    code_completions: CodeCompletions = Depends(
+        Provide[CodeSuggestionsContainer.code_completions]
     ),
 ):
-    model_name = model_rollout_plan.route(req.user, payload.project_id)
-    usecase = code_suggestions(engine=engine_factory(model_name))
-
     with TelemetryInstrumentator().watch(payload.telemetry):
-        suggestion = await usecase(
+        suggestion = await code_completions(
             payload.current_file.content_above_cursor,
             payload.current_file.content_below_cursor,
             payload.current_file.file_name,

@@ -9,7 +9,7 @@ from codesuggestions.suggestions.processing import (
     MetadataExtraInfo,
     MetadataPromptBuilder,
 )
-from codesuggestions.suggestions.processing.engine import _Prompt
+from codesuggestions.suggestions.processing.completions import _Prompt
 
 
 class TestTextGenModelInstrumentator:

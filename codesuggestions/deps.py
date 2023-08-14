@@ -2,15 +2,18 @@ from dependency_injector import containers, providers
 from py_grpc_prometheus.prometheus_client_interceptor import PromClientInterceptor
 
 from codesuggestions.api import middleware
-from codesuggestions.api.rollout.model import ModelRollout, ModelRolloutWithFallbackPlan
+from codesuggestions.api.rollout.model import ModelRollout
 from codesuggestions.auth import GitLabAuthProvider, GitLabOidcProvider
 from codesuggestions.models import (
     FakePalmTextGenModel,
     PalmCodeGenModel,
     grpc_connect_vertex,
 )
-from codesuggestions.suggestions import CodeSuggestions
-from codesuggestions.suggestions.processing import ModelEnginePalm
+from codesuggestions.suggestions import CodeCompletions
+from codesuggestions.suggestions.processing import (
+    ModelEngineCompletions,
+    ModelEngineGenerations,
+)
 from codesuggestions.tokenizer import init_tokenizer
 from codesuggestions.tracking import (
     SnowplowClient,
@@ -47,37 +50,60 @@ def _init_snowplow_client(enabled: bool, configuration: SnowplowClientConfigurat
     return SnowplowClient(configuration)
 
 
-def _create_palm_engine_providers(
-    grpc_client_vertex, tokenizer, project, location, real_or_fake
-):
-    model_names = [
-        ModelRollout.GOOGLE_TEXT_BISON,
-        ModelRollout.GOOGLE_CODE_BISON,
-        ModelRollout.GOOGLE_CODE_GECKO,
-    ]
+def _create_vertex_model(name, grpc_client_vertex, project, location, real_or_fake):
+    return providers.Selector(
+        real_or_fake,
+        real=providers.Singleton(
+            PalmCodeGenModel.from_model_name,
+            client=grpc_client_vertex,
+            project=project,
+            location=location,
+            name=name,
+        ),
+        fake=providers.Singleton(FakePalmTextGenModel),
+    )
 
-    models = {
-        name: providers.Selector(
+
+def _create_engine_code_completions(model_provider, tokenizer):
+    return providers.Factory(
+        ModelEngineCompletions,
+        model=model_provider,
+        tokenizer=tokenizer,
+    )
+
+
+def _create_engine_code_generations(model_provider):
+    return providers.Factory(
+        ModelEngineGenerations,
+        model=model_provider,
+    )
+
+
+def _all_vertex_models(names, grpc_client_vertex, project, location, real_or_fake):
+    return {
+        name: _create_vertex_model(
+            name,
+            grpc_client_vertex,
+            project,
+            location,
             real_or_fake,
-            real=providers.Singleton(
-                PalmCodeGenModel.from_model_name,
-                client=grpc_client_vertex,
-                project=project,
-                location=location,
-                name=name,
-            ),
-            fake=providers.Singleton(FakePalmTextGenModel),
         )
-        for name in model_names
+        for name in names
     }
 
+
+def _all_engines(models, tokenizer):
     return {
-        name: providers.Factory(
-            ModelEnginePalm,
-            model=model,
-            tokenizer=tokenizer,
-        )
-        for name, model in models.items()
+        ModelRollout.GOOGLE_CODE_GECKO: _create_engine_code_completions(
+            models[ModelRollout.GOOGLE_CODE_GECKO], tokenizer
+        ),
+        **{
+            model_name: _create_engine_code_generations(models[model_name])
+            for model_name in [
+                ModelRollout.GOOGLE_TEXT_BISON,
+                ModelRollout.GOOGLE_CODE_BISON,
+            ]
+        },
     }
 
 
@@ -159,25 +185,24 @@ class CodeSuggestionsContainer(containers.DeclarativeContainer):
 
     tokenizer = providers.Resource(init_tokenizer)
 
-    model_rollout_plan = providers.Resource(
-        ModelRolloutWithFallbackPlan,
-        rollout_percentage=config.feature_flags.third_party_rollout_percentage,
-        primary_model=ModelRollout.GOOGLE_CODE_GECKO,
-        fallback_model=ModelRollout.GOOGLE_CODE_BISON,
-    )
-
-    engines_palm_codegen = _create_palm_engine_providers(
+    models = _all_vertex_models(
+        [
+            ModelRollout.GOOGLE_TEXT_BISON,
+            ModelRollout.GOOGLE_CODE_BISON,
+            ModelRollout.GOOGLE_CODE_GECKO,
+        ],
         grpc_client_vertex,
-        tokenizer,
         config.palm_text_model.project,
         config.palm_text_model.location,
         config.palm_text_model.real_or_fake,
     )
 
-    engine_factory = providers.FactoryAggregate(
-        **{ModelRollout(name): engine for name, engine in engines_palm_codegen.items()}
-    )
+    engines = _all_engines(models, tokenizer)
 
-    code_suggestions = providers.Factory(
-        CodeSuggestions,
+    # TODO: We keep engine factory to support experimental API endpoints.
+    # TODO: Would be great to move such dependencies to a separate experimental container
+    engine_factory = providers.FactoryAggregate(**engines)
+
+    code_completions = providers.Factory(
+        CodeCompletions, engine=engines[ModelRollout.GOOGLE_CODE_GECKO]
     )
