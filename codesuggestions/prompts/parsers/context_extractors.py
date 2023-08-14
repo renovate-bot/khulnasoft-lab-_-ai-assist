@@ -70,7 +70,7 @@ class BaseContextVisitor(BaseVisitor):
 
 
 class PythonContextVisitor(BaseContextVisitor):
-    _CONTEXT_IMPORTANCE = [
+    _TARGET_SYMBOLS = [
         "class_definition",
         "function_definition",
         "module",

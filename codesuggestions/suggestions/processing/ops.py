@@ -2,6 +2,8 @@ from enum import Enum
 from pathlib import Path
 from typing import Optional, Union
 
+from tree_sitter import Node
+
 __all__ = [
     "LanguageId",
     "prepend_lang_id",
@@ -129,3 +131,41 @@ def find_position(value: str, point: tuple[int, int]) -> int:
         return len(value)
 
     return -1
+
+
+def split_on_point(source_code: str, point: tuple[int, int]) -> tuple[str, str]:
+    """
+    Splits the source_code into a prefix and a suffix
+    """
+    pos = point_to_position(source_code, point)
+    prefix = source_code[:pos]
+    suffix = source_code[pos:]
+    return (prefix, suffix)
+
+
+def point_to_position(source_code: str, point: tuple[int, int]) -> int:
+    """
+    Converts a point to a linear position in the source_code.
+    """
+    row, col = point
+    lines = source_code.splitlines()
+
+    if row >= len(lines) or col > len(lines[row]):
+        raise ValueError("Invalid point")
+
+    pos = 0
+    for line in lines[:row]:
+        pos += len(line) + 1
+    pos += col
+    return pos
+
+
+def convert_point_to_relative_point_in_node(
+    node: Node, point: tuple[int, int]
+) -> tuple[int, int]:
+    """
+    Converts the global point to the relative point within the node.
+    """
+    row = point[0] - node.start_point[0]
+    col = point[1] - node.start_point[1]
+    return (row, col)
