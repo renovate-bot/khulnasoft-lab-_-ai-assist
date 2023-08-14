@@ -18,7 +18,7 @@ variables:
   DOCKER_TLS_CERTDIR: "/certs"
   DOCKER_MODEL_GATEWAY: "$CI_REGISTRY_IMAGE/model-gateway"
 
-  SAST_EXCLUDED_PATHS: "tests, tmp, api, converter, model-loader"
+  SAST_EXCLUDED_PATHS: "tests, tmp, api"
 
 include:
   - template: Jobs/Dependency-Scanning.gitlab-ci.yml

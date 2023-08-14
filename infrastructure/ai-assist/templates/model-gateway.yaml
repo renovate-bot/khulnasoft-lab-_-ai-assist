@@ -42,10 +42,6 @@ spec:
               mountPath: "/etc/third-party-ai-limited-access"
               readOnly: true
           env:
-            - name: TRITON_HOST
-              value: {{ quote .Values.modelGateway.modelGateway.env.tritonHost }}
-            - name: TRITON_PORT
-              value: {{ quote .Values.modelGateway.modelGateway.env.tritonPort }}
             - name: FASTAPI_API_PORT
               value: {{ quote .Values.modelGateway.modelGateway.env.fastapiApiPort }}
             - name: GITLAB_URL

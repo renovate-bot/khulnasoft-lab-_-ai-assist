@@ -21,8 +21,6 @@ modelGateway:
       gitlabUrl: https://gitlab.com
       gitlabApiUrl: https://gitlab.com/api/v4/
       customerPortalBaseUrl: https://customers.gitlab.com
-      tritonHost: model-k8s-triton-headless
-      tritonPort: "8001"
       googleCloudProfiler: true
       vertex_code_model_name: "code-gecko"
 
@@ -50,27 +48,6 @@ modelK8SGateway:
     type: "code_suggestions"
   service:
     type: ClusterIP
-
-modelK8STriton:
-  labels:
-    type: "code_suggestions"
-  service:
-    type: ClusterIP
-
-modelTriton:
-  labels:
-    type: "code_suggestions"
-  replicas: 0
-  triton:
-    env:
-      modelRepository: /data/models
-      tritonBin: /opt/tritonserver/bin/tritonserver
-    image:
-      repository: registry.gitlab.com/gitlab-org/modelops/applied-ml/code-suggestions/ai-assist/tmp/triton-server
-      tag: "" # this is set via helm command line arguments
-    resources:
-      limits:
-        gpu: 2
 
 modelStorage:
   labels:
