@@ -18,7 +18,11 @@ from codesuggestions.suggestions.processing.base import (
     ModelEngineBase,
     ModelEngineOutput,
 )
-from codesuggestions.suggestions.processing.ops import LanguageId
+from codesuggestions.suggestions.processing.ops import (
+    LanguageId,
+    find_alnum_point,
+    find_position,
+)
 
 log = structlog.stdlib.get_logger("codesuggestions")
 
@@ -218,8 +222,11 @@ class ModelEnginePalm(ModelEngineBase):
                 ):
                     watch_container.register_model_output_length(res.text)
                     watch_container.register_model_score(res.score)
+
+                    completion = trim_by_min_allowed_context(prefix, res.text, lang_id)
+
                     return ModelEngineOutput(
-                        text=res.text,
+                        text=completion,
                         model=model_metadata,
                         lang_id=lang_id,
                         metadata=prompt.metadata,
@@ -374,3 +381,32 @@ class ModelEnginePalm(ModelEngineBase):
             self.log_symbol_map(watch_container, symbol_map)
         except ValueError as e:
             log.warning(f"Failed to parse code: {e}")
+
+
+def trim_by_min_allowed_context(
+    prefix: str,
+    completion: str,
+    lang_id: Optional[LanguageId] = None,
+) -> str:
+    code_sample = f"{prefix}{completion}"
+    len_prefix = len(prefix)
+    target_point = find_alnum_point(code_sample, start_index=len_prefix)
+    if target_point == (-1, -1):
+        return completion
+
+    try:
+        parser = CodeParser.from_language_id(
+            code_sample,
+            lang_id,
+        )
+        context = parser.min_allowed_context(target_point)
+        end_pos = find_position(code_sample, context.end)
+        if end_pos == -1:
+            return completion
+
+        out = code_sample[len_prefix:end_pos]
+    except ValueError as e:
+        log.warning(f"Failed to parse code: {e}")
+        out = completion
+
+    return out
