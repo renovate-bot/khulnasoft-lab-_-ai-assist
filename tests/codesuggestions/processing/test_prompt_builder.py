@@ -1,8 +1,8 @@
 import pytest
 
+from codesuggestions.suggestions.processing import CodeContent
 from codesuggestions.suggestions.processing.completions import (
     MetadataPromptBuilder,
-    _CodeContent,
     _PromptBuilder,
 )
 from codesuggestions.suggestions.processing.ops import LanguageId
@@ -46,8 +46,8 @@ def test_prompt_builder(
     expected_suffix: str,
 ):
     prompt_builder = _PromptBuilder(
-        _CodeContent(prefix, length_tokens=1),
-        _CodeContent(suffix, length_tokens=1),
+        CodeContent(prefix, length_tokens=1),
+        CodeContent(suffix, length_tokens=1),
         file_name,
         lang_id=lang_id,
     )

@@ -108,7 +108,7 @@ class TextGenModelInstrumentator:
 
     @contextmanager
     def watch(self, prompt, **kwargs: Any):
-        prompt_string = prompt.prefix + prompt.suffix
+        prompt_string = f"{prompt.prefix}{prompt.suffix if prompt.suffix else ''}"
         prompt_length = len(prompt_string)
         prompt_length_stripped = len(remove_whitespace(prompt_string))
 

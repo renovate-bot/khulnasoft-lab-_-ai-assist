@@ -8,7 +8,7 @@ from pydantic import BaseModel, conlist, constr
 
 from codesuggestions.deps import CodeSuggestionsContainer
 from codesuggestions.instrumentators.base import Telemetry, TelemetryInstrumentator
-from codesuggestions.suggestions import CodeCompletions
+from codesuggestions.suggestions import CodeCompletions, CodeGenerations
 
 __all__ = [
     "router",
@@ -54,8 +54,8 @@ class SuggestionsResponse(BaseModel):
     choices: list[Choice]
 
 
-# TODO: Rename this endpoint to `/code/completions`
 @router.post("/completions", response_model=SuggestionsResponse)
+@router.post("/code/completions", response_model=SuggestionsResponse)
 @inject
 async def completions(
     payload: SuggestionsRequest,
@@ -65,6 +65,35 @@ async def completions(
 ):
     with TelemetryInstrumentator().watch(payload.telemetry):
         suggestion = await code_completions(
+            payload.current_file.content_above_cursor,
+            payload.current_file.content_below_cursor,
+            payload.current_file.file_name,
+        )
+
+    return SuggestionsResponse(
+        id="id",
+        created=int(time()),
+        model=SuggestionsResponse.Model(
+            engine=suggestion.model.engine,
+            name=suggestion.model.name,
+            lang=suggestion.lang(),
+        ),
+        choices=[
+            SuggestionsResponse.Choice(text=suggestion.text),
+        ],
+    )
+
+
+@router.post("/code/generations", response_model=SuggestionsResponse)
+@inject
+async def generations(
+    payload: SuggestionsRequest,
+    code_generations: CodeGenerations = Depends(
+        Provide[CodeSuggestionsContainer.code_generations]
+    ),
+):
+    with TelemetryInstrumentator().watch(payload.telemetry):
+        suggestion = await code_generations(
             payload.current_file.content_above_cursor,
             payload.current_file.content_below_cursor,
             payload.current_file.file_name,

@@ -9,7 +9,7 @@ from codesuggestions.models import (
     PalmCodeGenModel,
     grpc_connect_vertex,
 )
-from codesuggestions.suggestions import CodeCompletions
+from codesuggestions.suggestions import CodeCompletions, CodeGenerations
 from codesuggestions.suggestions.processing import (
     ModelEngineCompletions,
     ModelEngineGenerations,
@@ -72,10 +72,11 @@ def _create_engine_code_completions(model_provider, tokenizer):
     )
 
 
-def _create_engine_code_generations(model_provider):
+def _create_engine_code_generations(model_provider, tokenizer):
     return providers.Factory(
         ModelEngineGenerations,
         model=model_provider,
+        tokenizer=tokenizer,
     )
 
 
@@ -98,7 +99,7 @@ def _all_engines(models, tokenizer):
             models[ModelRollout.GOOGLE_CODE_GECKO], tokenizer
         ),
         **{
-            model_name: _create_engine_code_generations(models[model_name])
+            model_name: _create_engine_code_generations(models[model_name], tokenizer)
             for model_name in [
                 ModelRollout.GOOGLE_TEXT_BISON,
                 ModelRollout.GOOGLE_CODE_BISON,
@@ -205,4 +206,8 @@ class CodeSuggestionsContainer(containers.DeclarativeContainer):
 
     code_completions = providers.Factory(
         CodeCompletions, engine=engines[ModelRollout.GOOGLE_CODE_GECKO]
+    )
+
+    code_generations = providers.Factory(
+        CodeGenerations, engine=engines[ModelRollout.GOOGLE_CODE_BISON]
     )
