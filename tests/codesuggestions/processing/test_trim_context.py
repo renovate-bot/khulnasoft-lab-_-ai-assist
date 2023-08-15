@@ -1,6 +1,8 @@
 import pytest
 
-from codesuggestions.suggestions.processing.engine import trim_by_min_allowed_context
+from codesuggestions.suggestions.processing.completions import (
+    trim_by_min_allowed_context,
+)
 from codesuggestions.suggestions.processing.ops import LanguageId, find_cursor_position
 
 PYTHON_SAMPLE_1 = """
