@@ -55,6 +55,9 @@ expected_log_keys = [
     "user_agent",
     "event",
     "log_level",
+    "gitlab_realm",
+    "gitlab_instance_id",
+    "gitlab_global_user_id",
 ]
 forbidden_error = {"error": "Forbidden by auth provider"}
 
