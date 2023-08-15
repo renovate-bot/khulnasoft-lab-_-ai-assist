@@ -1,19 +1,26 @@
 from abc import ABC, abstractmethod
 from pathlib import Path
-from typing import Any, Mapping, NamedTuple, Optional
+from typing import Any, NamedTuple, Optional
 
 from prometheus_client import Counter
+from transformers import PreTrainedTokenizer
 
 from codesuggestions.instrumentators import TextGenModelInstrumentator
-from codesuggestions.suggestions.processing.ops import LanguageId, lang_from_filename
+from codesuggestions.models import PalmCodeGenBaseModel
+from codesuggestions.suggestions.processing.ops import lang_from_filename
+from codesuggestions.suggestions.processing.typing import (
+    CodeContent,
+    LanguageId,
+    MetadataCodeContent,
+    MetadataModel,
+    MetadataPromptBuilder,
+)
 
 __all__ = [
-    "MetadataCodeContent",
-    "MetadataExtraInfo",
-    "MetadataPromptBuilder",
     "ModelEngineOutput",
-    "MetadataModel",
     "ModelEngineBase",
+    "Prompt",
+    "PromptBuilderBase",
 ]
 
 LANGUAGE_COUNTER = Counter(
@@ -27,28 +34,6 @@ CODE_SYMBOL_COUNTER = Counter(
 )
 
 
-class MetadataCodeContent(NamedTuple):
-    length: int
-    length_tokens: int
-
-
-class MetadataExtraInfo(NamedTuple):
-    name: str
-    pre: MetadataCodeContent
-    post: MetadataCodeContent
-
-
-class MetadataPromptBuilder(NamedTuple):
-    components: Mapping[str, MetadataCodeContent]
-    imports: Optional[MetadataExtraInfo] = None
-    function_signatures: Optional[MetadataExtraInfo] = None
-
-
-class MetadataModel(NamedTuple):
-    name: str
-    engine: str
-
-
 class ModelEngineOutput(NamedTuple):
     text: str
     model: MetadataModel
@@ -60,6 +45,13 @@ class ModelEngineOutput(NamedTuple):
 
 
 class ModelEngineBase(ABC):
+    def __init__(self, model: PalmCodeGenBaseModel, tokenizer: PreTrainedTokenizer):
+        self.model = model
+        self.tokenizer = tokenizer
+        self.instrumentator = TextGenModelInstrumentator(
+            model.model_engine, model.model_name
+        )
+
     async def generate(
         self, prefix: str, suffix: str, file_name: str, **kwargs: Any
     ) -> ModelEngineOutput:
@@ -102,3 +94,38 @@ class ModelEngineBase(ABC):
         symbol_map: dict,
     ) -> None:
         watch_container.register_prompt_symbols(symbol_map)
+
+
+class Prompt(NamedTuple):
+    prefix: str
+    metadata: MetadataPromptBuilder
+    suffix: Optional[str] = None
+
+
+class PromptBuilderBase(ABC):
+    def __init__(
+        self,
+        prefix: CodeContent,
+        suffix: Optional[CodeContent] = None,
+        lang_id: Optional[LanguageId] = None,
+    ):
+        self.lang_id = lang_id
+        self._prefix = prefix.text
+
+        self._metadata = {
+            "prefix": MetadataCodeContent(
+                length=len(prefix.text),
+                length_tokens=prefix.length_tokens,
+            ),
+        }
+
+        if suffix:
+            self._suffix = suffix.text
+            self._metadata["suffix"] = MetadataCodeContent(
+                length=len(suffix.text),
+                length_tokens=suffix.length_tokens,
+            )
+
+    @abstractmethod
+    def build(self) -> Prompt:
+        pass

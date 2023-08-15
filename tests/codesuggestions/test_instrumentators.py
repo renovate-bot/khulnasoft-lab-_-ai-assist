@@ -9,7 +9,7 @@ from codesuggestions.suggestions.processing import (
     MetadataExtraInfo,
     MetadataPromptBuilder,
 )
-from codesuggestions.suggestions.processing.completions import _Prompt
+from codesuggestions.suggestions.processing.completions import Prompt
 
 
 class TestTextGenModelInstrumentator:
@@ -28,7 +28,7 @@ class TestTextGenModelInstrumentator:
                 post=MetadataCodeContent(length=0, length_tokens=0),
             ),
         )
-        prompt = _Prompt(prefix=prefix, suffix=suffix, metadata=metadata)
+        prompt = Prompt(prefix=prefix, suffix=suffix, metadata=metadata)
         model_engine = "vertex-ai"
         model_name = "code-gecko"
         feature_category = "code_suggestions"

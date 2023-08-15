@@ -11,17 +11,23 @@ from codesuggestions.models import (
 )
 from codesuggestions.prompts.parsers import CodeParser
 from codesuggestions.suggestions.processing.base import (
+    ModelEngineBase,
+    ModelEngineOutput,
+    Prompt,
+    PromptBuilderBase,
+)
+from codesuggestions.suggestions.processing.ops import (
+    find_alnum_point,
+    find_cursor_position,
+    truncate_content,
+)
+from codesuggestions.suggestions.processing.typing import (
+    CodeContent,
+    LanguageId,
     MetadataCodeContent,
     MetadataExtraInfo,
     MetadataModel,
     MetadataPromptBuilder,
-    ModelEngineBase,
-    ModelEngineOutput,
-)
-from codesuggestions.suggestions.processing.ops import (
-    LanguageId,
-    find_alnum_point,
-    find_cursor_position,
 )
 
 log = structlog.stdlib.get_logger("codesuggestions")
@@ -35,18 +41,13 @@ _KEY_EXAMPLE_LANG_ID = {
 }
 
 
-class _CodeContent(NamedTuple):
-    text: str
-    length_tokens: int
-
-
 class _CodeBody(NamedTuple):
-    prefix: _CodeContent
-    suffix: _CodeContent
+    prefix: CodeContent
+    suffix: CodeContent
 
 
 class _CodeInfo(NamedTuple):
-    content: list[_CodeContent]
+    content: list[CodeContent]
 
     @property
     def total_length_tokens(self):
@@ -55,12 +56,6 @@ class _CodeInfo(NamedTuple):
     @property
     def total_length(self):
         return sum([len(info.text) for info in self.content])
-
-
-class _Prompt(NamedTuple):
-    prefix: str
-    suffix: str
-    metadata: MetadataPromptBuilder
 
 
 def _double_slash_comment(comment: str) -> str:
@@ -85,7 +80,7 @@ COMMENT_GENERATOR: dict[LanguageId, Callable[[str], str]] = {
 }
 
 
-class _PromptBuilder:
+class _PromptBuilder(PromptBuilderBase):
     LANG_ID_TO_HUMAN_NAME = {
         LanguageId.C: "C",
         LanguageId.CPP: "C++",
@@ -104,27 +99,14 @@ class _PromptBuilder:
 
     def __init__(
         self,
-        prefix: _CodeContent,
-        suffix: _CodeContent,
+        prefix: CodeContent,
+        suffix: CodeContent,
         file_name: str,
         lang_id: Optional[LanguageId] = None,
     ):
-        self.lang_id = lang_id
+        super().__init__(prefix, suffix, lang_id)
+
         self.file_name = file_name
-
-        self._prefix = prefix.text
-        self._suffix = suffix.text
-
-        self._metadata = {
-            "prefix": MetadataCodeContent(
-                length=len(prefix.text),
-                length_tokens=prefix.length_tokens,
-            ),
-            "suffix": MetadataCodeContent(
-                length=len(suffix.text),
-                length_tokens=suffix.length_tokens,
-            ),
-        }
 
     def add_extra_info(
         self, extra_info: _CodeInfo, max_total_length_tokens: int, extra_info_name: str
@@ -166,10 +148,10 @@ class _PromptBuilder:
         )
         return f"{header}\n{self._prefix}"
 
-    def build(self) -> _Prompt:
+    def build(self) -> Prompt:
         new_prefix = self._prepend_comments()
 
-        return _Prompt(
+        return Prompt(
             prefix=new_prefix,
             suffix=self._suffix,
             metadata=MetadataPromptBuilder(
@@ -188,11 +170,7 @@ class ModelEngineCompletions(ModelEngineBase):
     MAX_TOKENS_SUFFIX_PERCENT = 0.07  # about 126 tokens for code-gecko, if "imports" takes up all the available space
 
     def __init__(self, model: PalmCodeGenBaseModel, tokenizer: PreTrainedTokenizer):
-        self.model = model
-        self.tokenizer = tokenizer
-        self.instrumentator = TextGenModelInstrumentator(
-            model.model_engine, model.model_name
-        )
+        super().__init__(model, tokenizer)
 
     async def _generate(
         self,
@@ -242,7 +220,7 @@ class ModelEngineCompletions(ModelEngineBase):
         file_name: str,
         suffix: str,
         lang_id: Optional[LanguageId] = None,
-    ) -> _Prompt:
+    ) -> Prompt:
         imports = self._get_imports(prefix, lang_id)
         prompt_len_imports_max = int(
             self.model.MAX_MODEL_LEN * self.MAX_TOKENS_IMPORTS_PERCENT
@@ -326,7 +304,7 @@ class ModelEngineCompletions(ModelEngineBase):
         )
 
         code_contents = [
-            _CodeContent(text=text, length_tokens=length)
+            CodeContent(text=text, length_tokens=length)
             for text, length in zip(contents, contents_tokenized["length"])
         ]
 
@@ -334,14 +312,16 @@ class ModelEngineCompletions(ModelEngineBase):
 
     def _get_body(self, prefix: str, suffix: str, max_length: int) -> _CodeBody:
         suffix_len = int(max_length * self.MAX_TOKENS_SUFFIX_PERCENT)
-        suffix_truncated = self._truncate_content(
+        suffix_truncated = truncate_content(
+            self.tokenizer,
             suffix,
             max_length=suffix_len,
             truncation_side="right",
         )
 
         prefix_len = max_length - suffix_truncated.length_tokens
-        prefix_truncated = self._truncate_content(
+        prefix_truncated = truncate_content(
+            self.tokenizer,
             prefix,
             max_length=prefix_len,
             truncation_side="left",
@@ -367,26 +347,6 @@ class ModelEngineCompletions(ModelEngineBase):
 
         truncated_suffix = parser.suffix_near_cursor(point=_make_point(prefix))
         return truncated_suffix or suffix
-
-    def _truncate_content(
-        self, val: str, max_length: int, truncation_side: str = "left"
-    ) -> _CodeContent:
-        self.tokenizer.truncation_side = truncation_side
-
-        tokens = self.tokenizer(
-            val,
-            max_length=max_length,
-            truncation=True,
-            return_attention_mask=False,
-            add_special_tokens=False,
-        )
-
-        decoded = self.tokenizer.decode(tokens["input_ids"])
-
-        return _CodeContent(
-            text=decoded,
-            length_tokens=len(tokens["input_ids"]),
-        )
 
     def _count_symbols(
         self,

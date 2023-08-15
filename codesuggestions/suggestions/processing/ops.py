@@ -1,35 +1,20 @@
-from enum import Enum
 from pathlib import Path
 from typing import Optional, Union
 
+from transformers import PreTrainedTokenizer
 from tree_sitter import Node
 
+from codesuggestions.suggestions.processing.typing import CodeContent, LanguageId
+
 __all__ = [
-    "LanguageId",
     "prepend_lang_id",
     "remove_incomplete_lines",
     "trim_by_max_len",
     "trim_by_sep",
     "find_alnum_point",
     "find_cursor_position",
+    "truncate_content",
 ]
-
-
-class LanguageId(Enum):
-    C = 1
-    CPP = 2
-    CSHARP = 3
-    GO = 4
-    JAVA = 5
-    JS = 6
-    PHP = 7
-    PYTHON = 8
-    RUBY = 9
-    RUST = 10
-    SCALA = 11
-    TS = 12
-    KOTLIN = 13
-    SWIFT = 14
 
 
 _ALL_LANGS = {
@@ -156,3 +141,29 @@ def convert_point_to_relative_point_in_node(
     row = point[0] - node.start_point[0]
     col = point[1] - node.start_point[1]
     return (row, col)
+
+
+def truncate_content(
+    tokenizer: PreTrainedTokenizer,
+    val: str,
+    max_length: int,
+    truncation_side: str = "left",
+) -> CodeContent:
+    prev_truncation_side = tokenizer.truncation_side
+    tokenizer.truncation_side = truncation_side
+
+    tokens = tokenizer(
+        val,
+        max_length=max_length,
+        truncation=True,
+        return_attention_mask=False,
+        add_special_tokens=False,
+    )
+
+    decoded = tokenizer.decode(tokens["input_ids"])
+    tokenizer.truncation_side = prev_truncation_side
+
+    return CodeContent(
+        text=decoded,
+        length_tokens=len(tokens["input_ids"]),
+    )
