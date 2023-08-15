@@ -149,10 +149,21 @@ def test_find_alnum_point(value, start_index, expected_point):
         ("one line", (0, 3), 3),
         ("first line\nsecond line\nthird line", (0, 10), 10),
         ("first line\nsecond line\nthird line", (1, 0), 11),
-        ("", (0, 0), 0),
+        ("", (0, 0), -1),
+        (None, (0, 0), -1),
+        (None, (5, 5), -1),
+        ("", (1, 0), -1),
+        ("", (0, 1), -1),
+        ("one line", (0, 8), 8),
+        ("one line\nsecond line", (1, 11), 20),
+        ("one line\r\nsecond line", (1, 11), 20),
+        ("first\r\nsecond\r\nthird", (2, 4), 17),
+        ("first\nsecond\nthird", (2, 4), 17),
     ],
 )
-def test_find_position(value: str, point: tuple[int, int], expected_position: int):
-    position = ops.find_position(value, point)
+def test_find_cursor_position(
+    value: str, point: tuple[int, int], expected_position: int
+):
+    position = ops.find_cursor_position(value, point)
 
     assert position == expected_position

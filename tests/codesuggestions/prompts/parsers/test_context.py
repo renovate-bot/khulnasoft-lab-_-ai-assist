@@ -6,7 +6,7 @@ from codesuggestions.prompts.parsers.context_extractors import BaseContextVisito
 from codesuggestions.prompts.parsers.treetraversal import tree_dfs
 from codesuggestions.suggestions.processing.ops import (
     LanguageId,
-    point_to_position,
+    find_cursor_position,
     split_on_point,
 )
 
@@ -354,7 +354,7 @@ def test_suffix_near_cursor(
     print("-----------------------")
     print("source_code:")
     print("-----------------------")
-    pos = point_to_position(source_code, target_point)
+    pos = find_cursor_position(source_code, target_point)
     print(_highlight_position(pos, source_code))
 
     actual_truncated_suffix = parser.suffix_near_cursor(target_point)

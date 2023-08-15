@@ -11,7 +11,7 @@ __all__ = [
     "trim_by_max_len",
     "trim_by_sep",
     "find_alnum_point",
-    "find_position",
+    "find_cursor_position",
 ]
 
 
@@ -111,47 +111,34 @@ def find_alnum_point(value: str, start_index: int = 0) -> tuple[int, int]:
     return found_row, found_col
 
 
-def find_position(value: str, point: tuple[int, int]) -> int:
-    row = 0
-    col = 0
-
-    for pos, c in enumerate(value):
-        if (row, col) == point:
-            return pos
-
-        if c == "\n":
-            row += 1
-            col = 0
-            continue
-
-        col += 1
-
-    # Check the last position, which is the end of the string
-    if (row, col) == point:
-        return len(value)
-
-    return -1
-
-
-def split_on_point(source_code: str, point: tuple[int, int]) -> tuple[str, str]:
+def split_on_point(
+    source_code: str, point: tuple[int, int]
+) -> tuple[Optional[str], Optional[str]]:
     """
-    Splits the source_code into a prefix and a suffix
+    Splits the source_code into a prefix and a suffix.
+    Returns (None,None) if the splitting point is invalid.
     """
-    pos = point_to_position(source_code, point)
+    pos = find_cursor_position(source_code, point)
+    if pos == -1:
+        return (None, None)
+
     prefix = source_code[:pos]
     suffix = source_code[pos:]
     return (prefix, suffix)
 
 
-def point_to_position(source_code: str, point: tuple[int, int]) -> int:
+def find_cursor_position(source_code: str, point: tuple[int, int]) -> int:
     """
-    Converts a point to a linear position in the source_code.
+    Converts a 2D point to its 1D position in the source_code.
     """
+    if not source_code:
+        return -1
+
     row, col = point
     lines = source_code.splitlines()
 
     if row >= len(lines) or col > len(lines[row]):
-        raise ValueError("Invalid point")
+        return -1
 
     pos = 0
     for line in lines[:row]:

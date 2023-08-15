@@ -21,7 +21,7 @@ from codesuggestions.suggestions.processing.base import (
 from codesuggestions.suggestions.processing.ops import (
     LanguageId,
     find_alnum_point,
-    find_position,
+    find_cursor_position,
 )
 
 log = structlog.stdlib.get_logger("codesuggestions")
@@ -420,7 +420,7 @@ def trim_by_min_allowed_context(
             lang_id,
         )
         context = parser.min_allowed_context(target_point)
-        end_pos = find_position(code_sample, context.end)
+        end_pos = find_cursor_position(code_sample, context.end)
         if end_pos == -1:
             return completion
 
