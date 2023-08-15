@@ -22,6 +22,32 @@ app = Starlette(
 client = TestClient(app)
 
 
+def test_x_gitlab_headers_logged_when_set():
+    with capture_logs() as cap_logs:
+        client.post(
+            "/",
+            headers={
+                "X-Gitlab-Instance-Id": "ABC",
+                "X-Gitlab-Global-User-Id": "DEF",
+                "X-Gitlab-Realm": "saas",
+            },
+            data={"foo": "bar"},
+        )
+
+    assert cap_logs[0]["gitlab_instance_id"] == "ABC"
+    assert cap_logs[0]["gitlab_global_user_id"] == "DEF"
+    assert cap_logs[0]["gitlab_realm"] == "saas"
+
+
+def test_x_gitlab_headers_not_logged_when_not_set():
+    with capture_logs() as cap_logs:
+        client.post("/", headers={}, data={"foo": "bar"})
+
+    assert cap_logs[0]["gitlab_instance_id"] is None
+    assert cap_logs[0]["gitlab_global_user_id"] is None
+    assert cap_logs[0]["gitlab_realm"] is None
+
+
 def test_exeption_capture():
     with capture_logs() as cap_logs:
         response = client.post("/", headers={}, data={"foo": "bar"})

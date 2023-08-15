@@ -141,6 +141,11 @@ class MiddlewareLogRequest(Middleware):
                     duration_s=elapsed_time,
                     cpu_s=cpu_time,
                     user_agent=request.headers.get("User-Agent"),
+                    gitlab_instance_id=request.headers.get("X-Gitlab-Instance-Id"),
+                    gitlab_global_user_id=request.headers.get(
+                        "X-Gitlab-Global-User-Id"
+                    ),
+                    gitlab_realm=request.headers.get("X-Gitlab-Realm"),
                 )
                 fields.update(context.data)
 
@@ -208,7 +213,11 @@ class MiddlewareAuthentication(Middleware):
             auth_provider = self._auth_provider(headers)
 
             user = auth_provider.authenticate(token)
-            context["gitlab_realm"] = user.claims.gitlab_realm
+            # We will send this with an HTTP header field going forward since we are
+            # retiring direct access to the gateway from clients, which was the main
+            # reason this value was carried in the access token.
+            if user.claims.gitlab_realm:
+                context["gitlab_realm"] = user.claims.gitlab_realm
 
             if not user.authenticated:
                 raise AuthenticationError("Forbidden by auth provider")
