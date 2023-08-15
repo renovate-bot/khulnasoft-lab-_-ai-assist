@@ -1,7 +1,7 @@
 import pytest
 
 from codesuggestions.suggestions.processing.engine import trim_by_min_allowed_context
-from codesuggestions.suggestions.processing.ops import LanguageId, find_position
+from codesuggestions.suggestions.processing.ops import LanguageId, find_cursor_position
 
 PYTHON_SAMPLE_1 = """
 class LineBasedCodeSnippets(BaseCodeSnippetsIterator):
@@ -78,13 +78,13 @@ def test_trim_by_min_allowed_context(
     code_sample: str, point: tuple[int, int], lang_id: LanguageId, expected_range: list
 ):
     code_sample = code_sample.strip("\n")
-    pos = find_position(code_sample, point)
+    pos = find_cursor_position(code_sample, point)
 
     prefix = code_sample[:pos]
     completion = code_sample[pos:]
 
-    expected_start = find_position(code_sample, expected_range[0])
-    expected_end = find_position(code_sample, expected_range[1])
+    expected_start = find_cursor_position(code_sample, expected_range[0])
+    expected_end = find_cursor_position(code_sample, expected_range[1])
 
     actual_string = trim_by_min_allowed_context(prefix, completion, lang_id)
     expected_string = code_sample[expected_start:expected_end]
