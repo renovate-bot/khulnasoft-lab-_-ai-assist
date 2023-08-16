@@ -25,7 +25,6 @@ class LanguageId(Enum):
     SCALA = 11
     TS = 12
     KOTLIN = 13
-    SWIFT = 14
 
 
 class MetadataCodeContent(NamedTuple):
