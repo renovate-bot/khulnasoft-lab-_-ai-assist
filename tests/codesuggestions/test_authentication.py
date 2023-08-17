@@ -56,7 +56,9 @@ expected_log_keys = [
     "event",
     "log_level",
 ]
-forbidden_error = {"error": "Forbidden by auth provider"}
+forbidden_error = {
+    "error": "Invalid authentication token type - only OIDC is supported"
+}
 
 
 @pytest.mark.parametrize(
@@ -73,7 +75,7 @@ forbidden_error = {"error": "Forbidden by auth provider"}
             {"Authorization": "Bearer 12345"},
             None,
             forbidden_error,
-            ["auth_duration_s", "gitlab_realm"],
+            ["auth_duration_s"],
         ),
         # With project_id
         (
@@ -84,7 +86,7 @@ forbidden_error = {"error": "Forbidden by auth provider"}
             },
             json.dumps({"project_id": 12345, "project_path": "a/b/c"}),
             forbidden_error,
-            ["auth_duration_s", "gitlab_realm"],
+            ["auth_duration_s"],
         ),
         # Invalid JSON payload
         (
@@ -95,7 +97,7 @@ forbidden_error = {"error": "Forbidden by auth provider"}
             },
             "this is not JSON{",
             forbidden_error,
-            ["auth_duration_s", "gitlab_realm"],
+            ["auth_duration_s"],
         ),
     ],
 )
