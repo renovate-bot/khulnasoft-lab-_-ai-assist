@@ -16,7 +16,7 @@ from codesuggestions.suggestions.processing.ops import LanguageId
         (["f.cs"], LanguageId.CSHARP),
         (["f.go"], LanguageId.GO),
         (["f.java"], LanguageId.JAVA),
-        (["f.js"], LanguageId.JS),
+        (["f.js", "f.jsx"], LanguageId.JS),
         (["f.php", "f.php3", "f.php4", "f.php5", "f.phps", "f.phpt"], LanguageId.PHP),
         (["f.py"], LanguageId.PYTHON),
         (["f.rb"], LanguageId.RUBY),
