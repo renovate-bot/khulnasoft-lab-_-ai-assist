@@ -230,7 +230,9 @@ class MiddlewareAuthentication(Middleware):
             if auth_type == self.OIDC_AUTH:
                 return self.oidc_auth_provider
 
-            return self.key_auth_provider
+            raise AuthenticationError(
+                "Invalid authentication token type - only OIDC is supported"
+            )
 
     @staticmethod
     def on_auth_error(_: Request, e: Exception):
