@@ -332,6 +332,10 @@ class ModelEngineCompletions(ModelEngineBase):
     def _truncate_suffix_context(
         self, prefix: str, suffix: str, lang_id: Optional[LanguageId] = None
     ) -> str:
+        # no point in truncating the suffix if the prefix is empty
+        if not prefix:
+            return suffix
+
         try:
             parser = CodeParser.from_language_id(prefix + suffix, lang_id)
         except ValueError as e:
@@ -339,8 +343,8 @@ class ModelEngineCompletions(ModelEngineBase):
             # default to the original suffix
             return suffix
 
-        def _make_point(prefix: str) -> tuple[int, int]:
-            lines = prefix.splitlines()
+        def _make_point(source_code: str) -> tuple[int, int]:
+            lines = source_code.splitlines()
             row = len(lines) - 1
             col = len(lines[-1])
             return (row, col)

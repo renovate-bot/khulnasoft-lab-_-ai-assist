@@ -263,6 +263,17 @@ def token_length(s: str):
             "",
             None,
         ),
+        (
+            "",
+            "",
+            "app.js",
+            _side_effect_with_suffix,
+            "",
+            ops.LanguageId.JS,
+            None,
+            "",
+            None,
+        ),
     ],
 )
 async def test_model_engine_palm(
@@ -313,8 +324,13 @@ async def test_model_engine_palm(
         max_prefix_len = body_len - components["suffix"].length_tokens
         assert 0 <= components["prefix"].length_tokens <= max_prefix_len
 
-    assert True if len(prefix) > 0 else len(prefix) == components["prefix"].length
-    assert True if len(suffix) > 0 else len(suffix) == components["suffix"].length
+    if len(prefix) <= 0:
+        if completion.metadata:
+            assert len(prefix) == completion.metadata.components["prefix"].length
+
+    if len(suffix) <= 0:
+        if completion.metadata:
+            assert len(suffix) == completion.metadata.components["suffix"].length
 
     if expected_completion:
         engine.instrumentator.watcher.register_model_output_length.assert_called_with(
