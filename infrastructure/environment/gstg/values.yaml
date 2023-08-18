@@ -7,6 +7,7 @@ aiassist:
         gitlabUrl: https://staging.gitlab.com
         gitlabApiUrl: https://staging.gitlab.com/api/v4/
         customerPortalBaseUrl: https://customers.staging.gitlab.com
+        snowplowEnabled: false
 
   modelTriton:
     replicas: 1
