@@ -23,6 +23,8 @@ modelGateway:
       customerPortalBaseUrl: https://customers.gitlab.com
       googleCloudProfiler: true
       vertex_code_model_name: "code-gecko"
+      snowplowEnabed: true
+      snowplowEndpoint: snowplow.trx.gitlab.net
 
     flags:
       # See https://gitlab.com/gitlab-org/modelops/applied-ml/code-suggestions/ai-assist/-/issues/156#note_1429416583

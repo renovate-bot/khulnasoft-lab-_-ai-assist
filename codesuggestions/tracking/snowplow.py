@@ -5,6 +5,7 @@ from typing import Optional
 from snowplow_tracker import AsyncEmitter, SelfDescribingJson, StructuredEvent, Tracker
 
 __all__ = [
+    "Client",
     "RequestCount",
     "SnowplowClient",
     "SnowplowClientConfiguration",

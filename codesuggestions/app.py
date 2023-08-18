@@ -30,7 +30,6 @@ def main():
     fast_api_container = FastApiContainer()
     fast_api_container.config.auth.from_value(config.auth._asdict())
     fast_api_container.config.fastapi.from_value(config.fastapi._asdict())
-    fast_api_container.config.tracking.from_value(config.tracking._asdict())
 
     code_suggestions_container = CodeSuggestionsContainer()
     code_suggestions_container.config.palm_text_model.from_value(
@@ -39,6 +38,7 @@ def main():
     code_suggestions_container.config.feature_flags.from_value(
         config.feature_flags._asdict()
     )
+    code_suggestions_container.config.tracking.from_value(config.tracking._asdict())
 
     app = create_fast_api_server()
     setup_logging(app, config.logging)

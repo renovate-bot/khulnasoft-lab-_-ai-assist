@@ -55,6 +55,10 @@ spec:
             # for profile output
             - name: GOOGLE_CLOUD_PROFILER
               value: {{ quote .Values.modelGateway.modelGateway.env.googleCloudProfiler }}
+            - name: SNOWPLOW_ENABLED
+              value: {{ quote .Values.modelGateway.modelGateway.env.snowplowEnabled }}
+            - name: SNOWPLOW_ENDPOINT
+              value: {{ quote .Values.modelGateway.modelGateway.env.snowplowEndpoint }}
 
             # Feature flag limiting third-party access to certain ProjectIds on
             # GitLab.com

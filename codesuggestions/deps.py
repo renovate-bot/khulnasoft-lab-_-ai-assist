@@ -19,6 +19,7 @@ from codesuggestions.tracking import (
     SnowplowClient,
     SnowplowClientConfiguration,
     SnowplowClientStub,
+    SnowplowInstrumentator,
 )
 
 __all__ = [
@@ -148,17 +149,6 @@ class FastApiContainer(containers.DeclarativeContainer):
         skip_endpoints=_PROBS_ENDPOINTS,
     )
 
-    snowplow_config = providers.Resource(
-        SnowplowClientConfiguration,
-        endpoint=config.tracking.snowplow_endpoint,
-    )
-
-    snowplow_client = providers.Resource(
-        _init_snowplow_client,
-        enabled=config.tracking.snowplow_enabled,
-        configuration=snowplow_config,
-    )
-
 
 class CodeSuggestionsContainer(containers.DeclarativeContainer):
     wiring_config = containers.WiringConfiguration(
@@ -210,4 +200,20 @@ class CodeSuggestionsContainer(containers.DeclarativeContainer):
 
     code_generations = providers.Factory(
         CodeGenerations, engine=engines[ModelRollout.GOOGLE_CODE_BISON]
+    )
+
+    snowplow_config = providers.Resource(
+        SnowplowClientConfiguration,
+        endpoint=config.tracking.snowplow_endpoint,
+    )
+
+    snowplow_client = providers.Resource(
+        _init_snowplow_client,
+        enabled=config.tracking.snowplow_enabled,
+        configuration=snowplow_config,
+    )
+
+    snowplow_instrumentator = providers.Resource(
+        SnowplowInstrumentator,
+        client=snowplow_client,
     )

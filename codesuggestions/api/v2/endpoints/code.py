@@ -3,12 +3,14 @@ from typing import Optional
 
 import structlog
 from dependency_injector.wiring import Provide, inject
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Request
 from pydantic import BaseModel, conlist, constr
 
 from codesuggestions.deps import CodeSuggestionsContainer
 from codesuggestions.instrumentators.base import Telemetry, TelemetryInstrumentator
 from codesuggestions.suggestions import CodeCompletions, CodeGenerations
+from codesuggestions.suggestions.processing.ops import lang_from_filename
+from codesuggestions.tracking.instrumentator import SnowplowInstrumentator
 
 __all__ = [
     "router",
@@ -58,11 +60,20 @@ class SuggestionsResponse(BaseModel):
 @router.post("/code/completions", response_model=SuggestionsResponse)
 @inject
 async def completions(
+    req: Request,
     payload: SuggestionsRequest,
     code_completions: CodeCompletions = Depends(
         Provide[CodeSuggestionsContainer.code_completions]
     ),
+    snowplow_instrumentator: SnowplowInstrumentator = Depends(
+        Provide[CodeSuggestionsContainer.snowplow_instrumentator]
+    ),
 ):
+    try:
+        track_snowplow_event(req, payload, snowplow_instrumentator)
+    except Exception as e:
+        log.error(f"failed to track Snowplow event: {e}")
+
     with TelemetryInstrumentator().watch(payload.telemetry):
         suggestion = await code_completions(
             payload.current_file.content_above_cursor,
@@ -87,11 +98,20 @@ async def completions(
 @router.post("/code/generations", response_model=SuggestionsResponse)
 @inject
 async def generations(
+    req: Request,
     payload: SuggestionsRequest,
     code_generations: CodeGenerations = Depends(
         Provide[CodeSuggestionsContainer.code_generations]
     ),
+    snowplow_instrumentator: SnowplowInstrumentator = Depends(
+        Provide[CodeSuggestionsContainer.snowplow_instrumentator]
+    ),
 ):
+    try:
+        track_snowplow_event(req, payload, snowplow_instrumentator)
+    except Exception as e:
+        log.error(f"failed to track Snowplow event: {e}")
+
     with TelemetryInstrumentator().watch(payload.telemetry):
         suggestion = await code_generations(
             payload.current_file.content_above_cursor,
@@ -110,4 +130,27 @@ async def generations(
         choices=[
             SuggestionsResponse.Choice(text=suggestion.text),
         ],
+    )
+
+
+def track_snowplow_event(
+    req: Request,
+    payload: SuggestionsRequest,
+    snowplow_instrumentator: SnowplowInstrumentator,
+):
+    language = lang_from_filename(payload.current_file.file_name) or ""
+    if language:
+        language = language.name.lower()
+
+    gitlab_realm = ""
+    if req.user and req.user.claims:
+        gitlab_realm = req.user.claims.gitlab_realm
+
+    snowplow_instrumentator.watch(
+        telemetry=payload.telemetry,
+        prefix_length=len(payload.current_file.content_above_cursor),
+        suffix_length=len(payload.current_file.content_below_cursor),
+        language=language,
+        user_agent=req.headers.get("User-Agent", ""),
+        gitlab_realm=gitlab_realm,
     )
