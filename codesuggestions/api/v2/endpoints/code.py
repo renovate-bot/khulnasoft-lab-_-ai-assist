@@ -6,6 +6,11 @@ from dependency_injector.wiring import Provide, inject
 from fastapi import APIRouter, Depends, Request
 from pydantic import BaseModel, conlist, constr
 
+from codesuggestions.api.middleware import (
+    X_GITLAB_GLOBAL_USER_ID_HEADER,
+    X_GITLAB_INSTANCE_ID_HEADER,
+    X_GITLAB_REALM_HEADER,
+)
 from codesuggestions.deps import CodeSuggestionsContainer
 from codesuggestions.instrumentators.base import Telemetry, TelemetryInstrumentator
 from codesuggestions.suggestions import CodeCompletions, CodeGenerations
@@ -142,8 +147,10 @@ def track_snowplow_event(
     if language:
         language = language.name.lower()
 
-    gitlab_realm = ""
-    if req.user and req.user.claims:
+    # gitlab-rails 16.3+ sends an X-Gitlab-Realm header
+    gitlab_realm = req.headers.get(X_GITLAB_REALM_HEADER)
+    # older versions don't serve code suggestions, so we read this from the IDE token claim
+    if not gitlab_realm and req.user and req.user.claims:
         gitlab_realm = req.user.claims.gitlab_realm
 
     snowplow_instrumentator.watch(
@@ -152,5 +159,7 @@ def track_snowplow_event(
         suffix_length=len(payload.current_file.content_below_cursor),
         language=language,
         user_agent=req.headers.get("User-Agent", ""),
-        gitlab_realm=gitlab_realm,
+        gitlab_realm=gitlab_realm if gitlab_realm else "",
+        gitlab_instance_id=req.headers.get(X_GITLAB_INSTANCE_ID_HEADER, ""),
+        gitlab_global_user_id=req.headers.get(X_GITLAB_GLOBAL_USER_ID_HEADER, ""),
     )

@@ -21,6 +21,8 @@ class SnowplowInstrumentator:
         language: str,
         user_agent: str,
         gitlab_realm: str,
+        gitlab_instance_id: str,
+        gitlab_global_user_id: str,
     ) -> None:
         request_counts = []
         for stats in telemetry:
@@ -43,6 +45,8 @@ class SnowplowInstrumentator:
                 language=language,
                 user_agent=user_agent,
                 gitlab_realm=gitlab_realm,
+                gitlab_instance_id=gitlab_instance_id,
+                gitlab_global_user_id=gitlab_global_user_id,
             )
         )
 

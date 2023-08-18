@@ -46,6 +46,8 @@ class SnowplowEventContext:
     language: str
     user_agent: str
     gitlab_realm: str
+    gitlab_instance_id: str
+    gitlab_global_user_id: str
 
 
 @dataclass

@@ -74,6 +74,8 @@ class TestSnowplowClient:
             language="python",
             user_agent="vs-code-gitlab-workflow",
             gitlab_realm="saas",
+            gitlab_instance_id="ABCDEF",
+            gitlab_global_user_id="123XYZ",
         )
         event = SnowplowEvent(
             context=context,
@@ -131,6 +133,8 @@ class TestSnowplowInstrumentator:
             language="ruby",
             user_agent="vs-code",
             gitlab_realm="saas",
+            gitlab_instance_id="9ebada7a-f5e2-477a-8609-17797fa95cb9",
+            gitlab_global_user_id="XTuMnZ6XTWkP3yh0ZwXualmOZvm2Gg/bk9jyfkL7Y6k=",
         )
 
         mock_client.track.assert_called_once()
@@ -144,3 +148,8 @@ class TestSnowplowInstrumentator:
         assert event.language == "ruby"
         assert event.user_agent == "vs-code"
         assert event.gitlab_realm == "saas"
+        assert event.gitlab_instance_id == "9ebada7a-f5e2-477a-8609-17797fa95cb9"
+        assert (
+            event.gitlab_global_user_id
+            == "XTuMnZ6XTWkP3yh0ZwXualmOZvm2Gg/bk9jyfkL7Y6k="
+        )
