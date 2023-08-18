@@ -23,7 +23,7 @@ modelGateway:
       customerPortalBaseUrl: https://customers.gitlab.com
       googleCloudProfiler: true
       vertex_code_model_name: "code-gecko"
-      snowplowEnabed: true
+      snowplowEnabled: true
       snowplowEndpoint: snowplow.trx.gitlab.net
 
     flags:
