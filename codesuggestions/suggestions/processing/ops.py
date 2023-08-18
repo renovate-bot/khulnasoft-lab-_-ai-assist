@@ -35,7 +35,7 @@ _ALL_LANGS = {
     _LanguageDef(LanguageId.CSHARP, "c_sharp", "C#", frozenset({"cs"})),
     _LanguageDef(LanguageId.GO, "go", "Go", frozenset({"go"})),
     _LanguageDef(LanguageId.JAVA, "java", "Java", frozenset({"java"})),
-    _LanguageDef(LanguageId.JS, "javascript", "JavaScript", frozenset({"js"})),
+    _LanguageDef(LanguageId.JS, "javascript", "JavaScript", frozenset({"js", "jsx"})),
     _LanguageDef(
         LanguageId.PHP,
         "php",
