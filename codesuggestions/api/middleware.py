@@ -40,6 +40,10 @@ __all__ = [
 log = logging.getLogger("codesuggestions")
 access_logger = structlog.stdlib.get_logger("api.access")
 
+X_GITLAB_REALM_HEADER = "X-Gitlab-Realm"
+X_GITLAB_INSTANCE_ID_HEADER = "X-Gitlab-Instance-Id"
+X_GITLAB_GLOBAL_USER_ID_HEADER = "X-Gitlab-Global-User-Id"
+
 
 class _PathResolver:
     def __init__(self, endpoints: list[str]):
@@ -141,11 +145,11 @@ class MiddlewareLogRequest(Middleware):
                     duration_s=elapsed_time,
                     cpu_s=cpu_time,
                     user_agent=request.headers.get("User-Agent"),
-                    gitlab_instance_id=request.headers.get("X-Gitlab-Instance-Id"),
+                    gitlab_instance_id=request.headers.get(X_GITLAB_INSTANCE_ID_HEADER),
                     gitlab_global_user_id=request.headers.get(
-                        "X-Gitlab-Global-User-Id"
+                        X_GITLAB_GLOBAL_USER_ID_HEADER
                     ),
-                    gitlab_realm=request.headers.get("X-Gitlab-Realm"),
+                    gitlab_realm=request.headers.get(X_GITLAB_REALM_HEADER),
                 )
                 fields.update(context.data)
 
