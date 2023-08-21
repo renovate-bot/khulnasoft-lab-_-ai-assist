@@ -99,7 +99,7 @@ async def completions(
         choices=[
             SuggestionsResponse.Choice(text=suggestion.text),
         ],
-        experiments=suggestion.metadata.experiments
+        experiments=suggestion.metadata.experiments,
     )
 
 
