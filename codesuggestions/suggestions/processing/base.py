@@ -5,6 +5,7 @@ from typing import Any, NamedTuple, Optional
 from prometheus_client import Counter
 from transformers import PreTrainedTokenizer
 
+from codesuggestions.experimentation import ExperimentTelemetry
 from codesuggestions.instrumentators import TextGenModelInstrumentator
 from codesuggestions.models import PalmCodeGenBaseModel
 from codesuggestions.suggestions.processing.ops import lang_from_filename
@@ -31,6 +32,10 @@ LANGUAGE_COUNTER = Counter(
 
 CODE_SYMBOL_COUNTER = Counter(
     "code_suggestions_prompt_symbols", "Prompt symbols count", ["lang", "symbol"]
+)
+
+EXPERIMENT_COUNTER = Counter(
+    "code_suggestions_experiments", "Ongoing experiments", ["name", "variant"]
 )
 
 
@@ -94,6 +99,10 @@ class ModelEngineBase(ABC):
         symbol_map: dict,
     ) -> None:
         watch_container.register_prompt_symbols(symbol_map)
+
+    def increment_experiment_counter(self, experiments: list[ExperimentTelemetry]):
+        for exp in experiments:
+            EXPERIMENT_COUNTER.labels(name=exp.name, variant=exp.variant).inc()
 
 
 class Prompt(NamedTuple):

@@ -1,4 +1,4 @@
 # flake8: noqa
 
-from codesuggestions import api, auth, deps, models
+from codesuggestions import api, auth, deps, experimentation, models
 from codesuggestions.config import *

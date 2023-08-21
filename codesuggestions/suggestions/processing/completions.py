@@ -3,6 +3,7 @@ from typing import Any, Callable, NamedTuple, Optional
 import structlog
 from transformers import PreTrainedTokenizer
 
+from codesuggestions.experimentation import ExperimentRegistry, ExperimentTelemetry
 from codesuggestions.instrumentators import TextGenModelInstrumentator
 from codesuggestions.models import (
     PalmCodeGenBaseModel,
@@ -103,10 +104,12 @@ class _PromptBuilder(PromptBuilderBase):
         suffix: CodeContent,
         file_name: str,
         lang_id: Optional[LanguageId] = None,
+        experiments: Optional[list[ExperimentTelemetry]] = [],
     ):
         super().__init__(prefix, suffix, lang_id)
 
         self.file_name = file_name
+        self._metadata["experiments"] = experiments
 
     def add_extra_info(
         self, extra_info: _CodeInfo, max_total_length_tokens: int, extra_info_name: str
@@ -161,6 +164,7 @@ class _PromptBuilder(PromptBuilderBase):
                 },
                 imports=self._metadata.get("imports", None),
                 function_signatures=self._metadata.get("function_signatures", None),
+                experiments=self._metadata["experiments"],
             ),
         )
 
@@ -169,8 +173,14 @@ class ModelEngineCompletions(ModelEngineBase):
     MAX_TOKENS_IMPORTS_PERCENT = 0.12  # about 245 tokens for code-gecko
     MAX_TOKENS_SUFFIX_PERCENT = 0.07  # about 126 tokens for code-gecko, if "imports" takes up all the available space
 
-    def __init__(self, model: PalmCodeGenBaseModel, tokenizer: PreTrainedTokenizer):
+    def __init__(
+        self,
+        model: PalmCodeGenBaseModel,
+        tokenizer: PreTrainedTokenizer,
+        experiment_registry: ExperimentRegistry,
+    ):
         super().__init__(model, tokenizer)
+        self.experiment_registry = experiment_registry
 
     async def _generate(
         self,
@@ -194,6 +204,9 @@ class ModelEngineCompletions(ModelEngineBase):
             try:
                 # count symbols of the final prompt
                 self._count_symbols(prompt.prefix, lang_id, watch_container)
+
+                # log experiments included in this request
+                self._count_experiments(prompt.metadata.experiments, watch_container)
 
                 if res := await self.model.generate(
                     prompt.prefix, prompt.suffix, **kwargs
@@ -235,10 +248,23 @@ class ModelEngineCompletions(ModelEngineBase):
         prompt_len_body = (
             self.model.MAX_MODEL_LEN - prompt_len_imports - prompt_len_func_signatures
         )
-        truncated_suffix = self._truncate_suffix_context(prefix, suffix, lang_id)
-        body = self._get_body(prefix, truncated_suffix, prompt_len_body)
 
-        prompt_builder = _PromptBuilder(body.prefix, body.suffix, file_name, lang_id)
+        experiments = []
+        if lang_id == LanguageId.PYTHON and (
+            exp := self.experiment_registry.get_experiment("exp_truncate_suffix_python")
+        ):
+            experiment_output = exp.run(
+                logger=log, prefix=prefix, suffix=suffix, lang_id=lang_id
+            )
+            experiments.append(experiment_output.telemetry)
+            truncated_suffix = experiment_output.output
+            body = self._get_body(prefix, truncated_suffix, prompt_len_body)
+        else:
+            body = self._get_body(prefix, suffix, prompt_len_body)
+
+        prompt_builder = _PromptBuilder(
+            body.prefix, body.suffix, file_name, lang_id, experiments
+        )
         # NOTE that the last thing we add here will appear first in the prefix
         prompt_builder.add_extra_info(
             func_signatures,
@@ -329,29 +355,6 @@ class ModelEngineCompletions(ModelEngineBase):
 
         return _CodeBody(prefix=prefix_truncated, suffix=suffix_truncated)
 
-    def _truncate_suffix_context(
-        self, prefix: str, suffix: str, lang_id: Optional[LanguageId] = None
-    ) -> str:
-        # no point in truncating the suffix if the prefix is empty
-        if not prefix:
-            return suffix
-
-        try:
-            parser = CodeParser.from_language_id(prefix + suffix, lang_id)
-        except ValueError as e:
-            log.warning(f"Failed to parse code: {e}")
-            # default to the original suffix
-            return suffix
-
-        def _make_point(source_code: str) -> tuple[int, int]:
-            lines = source_code.splitlines()
-            row = len(lines) - 1
-            col = len(lines[-1])
-            return (row, col)
-
-        truncated_suffix = parser.suffix_near_cursor(point=_make_point(prefix))
-        return truncated_suffix or suffix
-
     def _count_symbols(
         self,
         prompt: str,
@@ -365,6 +368,14 @@ class ModelEngineCompletions(ModelEngineBase):
             self.log_symbol_map(watch_container, symbol_map)
         except ValueError as e:
             log.warning(f"Failed to parse code: {e}")
+
+    def _count_experiments(
+        self,
+        experiments: list[ExperimentTelemetry],
+        watch_container: TextGenModelInstrumentator.WatchContainer,
+    ) -> None:
+        watch_container.register_experiments(experiments)
+        self.increment_experiment_counter(experiments)
 
 
 def trim_by_min_allowed_context(

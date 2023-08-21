@@ -1,6 +1,8 @@
 from enum import Enum
 from typing import Mapping, NamedTuple, Optional
 
+from codesuggestions.experimentation.base import ExperimentTelemetry
+
 __all__ = [
     "LanguageId",
     "MetadataCodeContent",
@@ -42,6 +44,7 @@ class MetadataPromptBuilder(NamedTuple):
     components: Mapping[str, MetadataCodeContent]
     imports: Optional[MetadataExtraInfo] = None
     function_signatures: Optional[MetadataExtraInfo] = None
+    experiments: Optional[list[ExperimentTelemetry]] = []
 
 
 class MetadataModel(NamedTuple):
