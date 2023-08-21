@@ -8,6 +8,8 @@ __all__ = [
 
 
 class FakePalmTextGenModel(TextGenBaseModel):
+    MAX_MODEL_LEN = 2048
+
     @property
     def model_name(self) -> str:
         return "fake-palm-model"

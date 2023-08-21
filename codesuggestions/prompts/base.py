@@ -1,4 +1,5 @@
 from abc import ABC, abstractmethod
+from functools import cache
 from pathlib import Path
 from typing import Any
 
@@ -20,6 +21,7 @@ class PromptTemplateBase(ABC):
         pass
 
     @staticmethod
+    @cache
     def _read_tpl_raw(filepath: Path) -> str:
         with open(str(filepath), encoding="utf-8") as file:
             return file.read()
