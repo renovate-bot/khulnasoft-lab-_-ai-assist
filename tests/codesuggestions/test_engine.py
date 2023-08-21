@@ -324,13 +324,9 @@ async def test_model_engine_palm(
         max_prefix_len = body_len - components["suffix"].length_tokens
         assert 0 <= components["prefix"].length_tokens <= max_prefix_len
 
-    if len(prefix) <= 0:
-        if completion.metadata:
-            assert len(prefix) == completion.metadata.components["prefix"].length
-
-    if len(suffix) <= 0:
-        if completion.metadata:
-            assert len(suffix) == completion.metadata.components["suffix"].length
+    if not prefix and completion.metadata:
+        assert 0 == completion.metadata.components["prefix"].length
+        assert 0 == completion.metadata.components["suffix"].length
 
     if expected_completion:
         engine.instrumentator.watcher.register_model_output_length.assert_called_with(
