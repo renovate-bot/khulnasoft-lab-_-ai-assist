@@ -6,9 +6,9 @@ stages:
   - release
 
 include:
-  - project: 'gitlab-com/gl-infra/common-ci-tasks'
-    ref: v1.72.1  # renovate:managed
-    file: 'oidc.yml'
+  - project: "gitlab-com/gl-infra/common-ci-tasks"
+    ref: v1.72.1 # renovate:managed
+    file: "oidc.yml"
 
 variables:
   # renovate: datasource=docker depName=registry.gitlab.com/gitlab-com/gl-infra/k8s-workloads/common/k8-helm-ci versioning=docker
@@ -30,7 +30,7 @@ helm-diff-gstg:
     - scripts/deploy init gstg
     - scripts/deploy diff gstg
   tags:
-      - k8s-workloads
+    - k8s-workloads
   rules:
     - if: $CI_COMMIT_BRANCH != $CI_DEFAULT_BRANCH
 
@@ -46,7 +46,7 @@ helm-apply-gstg:
     - scripts/deploy diff gstg
     - scripts/deploy --debug sync gstg --no-dry-run
   tags:
-      - k8s-workloads
+    - k8s-workloads
   rules:
     - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
 
@@ -66,9 +66,9 @@ helm-deploy-gstg:
     - scripts/deploy diff gstg --deploy ${DEPLOYMENT}=${TAG}
     - scripts/deploy --debug sync gstg --no-dry-run --deploy ${DEPLOYMENT}=${TAG}
   tags:
-      - k8s-workloads
+    - k8s-workloads
   rules:
-    - when: manual
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
 
 helm-diff-gprd:
   resource_group: gprd
@@ -81,7 +81,7 @@ helm-diff-gprd:
     - scripts/deploy init gprd
     - scripts/deploy diff gprd
   tags:
-      - k8s-workloads
+    - k8s-workloads
   rules:
     - if: $CI_COMMIT_BRANCH != $CI_DEFAULT_BRANCH
 
@@ -98,7 +98,7 @@ helm-apply-gprd:
     - scripts/deploy diff gprd
     - scripts/deploy --debug sync gprd --no-dry-run
   tags:
-      - k8s-workloads
+    - k8s-workloads
   rules:
     - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
 
@@ -118,7 +118,7 @@ helm-deploy-gprd:
     - scripts/deploy diff gprd --deploy ${DEPLOYMENT}=${TAG}
     - scripts/deploy --debug sync gprd --no-dry-run --deploy ${DEPLOYMENT}=${TAG}
   tags:
-      - k8s-workloads
+    - k8s-workloads
   rules:
     - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
       when: manual
@@ -134,7 +134,7 @@ helm-diff-runner:
     - scripts/deploy init runner
     - scripts/deploy diff runner
   tags:
-      - k8s-workloads
+    - k8s-workloads
   rules:
     - if: $CI_COMMIT_BRANCH != $CI_DEFAULT_BRANCH
 
@@ -150,6 +150,6 @@ helm-apply-runner:
     - scripts/deploy diff runner
     - scripts/deploy --debug sync runner --no-dry-run
   tags:
-      - k8s-workloads
+    - k8s-workloads
   rules:
     - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
