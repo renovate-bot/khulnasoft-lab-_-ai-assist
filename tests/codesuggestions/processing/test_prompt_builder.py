@@ -50,6 +50,7 @@ def test_prompt_builder(
         CodeContent(suffix, length_tokens=1),
         file_name,
         lang_id=lang_id,
+        experiments=None,
     )
 
     prompt = prompt_builder.build()

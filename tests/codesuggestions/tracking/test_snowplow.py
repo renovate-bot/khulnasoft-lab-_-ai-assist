@@ -140,7 +140,11 @@ class TestSnowplowInstrumentator:
         mock_client.track.assert_called_once()
 
         event = mock_client.track.call_args[0][0].context
+
         assert len(event.request_counts) == 2
+
+        del telemetry_1.__dict__["experiments"]
+        del telemetry_2.__dict__["experiments"]
         assert event.request_counts[0].__dict__ == telemetry_1.__dict__
         assert event.request_counts[1].__dict__ == telemetry_2.__dict__
         assert event.prefix_length == 11
