@@ -44,7 +44,7 @@ def variant_1(**kwargs) -> str:
 
 def make_experiment() -> Experiment:
     return Experiment(
-        name="exp_truncate_suffix_python",
+        name="exp_truncate_suffix",
         description="Truncate the suffix based on the context around the cursor",
         variants=[
             variant_control,
