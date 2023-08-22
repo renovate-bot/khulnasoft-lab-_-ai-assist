@@ -57,7 +57,7 @@ class SuggestionsResponse(BaseModel):
 
     id: str
     model: Model
-    experiments: list[ExperimentTelemetry]
+    experiments: list[ExperimentTelemetry] = []
     object: str = "text_completion"
     created: int
     choices: list[Choice]
