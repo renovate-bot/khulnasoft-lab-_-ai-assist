@@ -9,31 +9,7 @@ create a GitLab owned AI Assistant to help developers write secure code by the
 
 ### Authentication
 
-The Code Suggestions API supports three types of authentication.
-
-- Personal access tokens.
-- OAuth 2.0 tokens.
-- Code Suggestions access tokens.
-
-#### Personal access tokens
-
-You can use personal access tokens (PAT) to authenticate with the API by passing it in the
-`Authorization` header.
-
-```shell
-curl --header "Authorization: Bearer <personal_access_token>" "https://codesuggestions.gitlab.com/v2/completions"
-```
-
-#### OAuth 2.0 tokens
-
-You can use an OAuth 2.0 token to authenticate with the API by passing it in the `Authorization`
-header.
-
-```shell
-curl --header "Authorization: Bearer <oauth_token>" "https://codesuggestions.gitlab.com/v2/completions"
-```
-
-#### Code Suggestions access tokens
+The Code Suggestions API supports authentication via Code Suggestions access tokens.
 
 You can use an Code Suggestions access token to authenticate with the API by passing it in the
 `Authorization` header and specifying the `X-Gitlab-Authentication-Type` header.
@@ -64,6 +40,9 @@ POST v2/completions
 | `telemetry.model_engine`            | string | no       | The model engine used for completions (max_len: **100,000**)       | `vertex-ai`               |
 | `telemetry.model_name`              | string | no       | The model name used for completions (max_len: **50**)              | `code-gecko`              |
 | `telemetry.lang`                    | string | no       | The language used for completions (max_len: **50**)                | `python`                  |
+| `telemetry.experiments`             | array  | no       | The list of experiments run from previous request                  |                           |
+| `telemetry.experiments.name`        | string | yes      | The experiment name                                                | `exp_truncate_suffix`     |
+| `telemetry.experiments.variant`     | int    | yes      | The experiment variant                                             | `0`                       |
 | `telemetry.requests`                | int    | yes      | The number of previously requested completions                     | `1`                       |
 | `telemetry.accepts`                 | int    | yes      | The number of previously accepted completions                      | `1`                       |
 | `telemetry.errors`                  | int    | yes      | The number of previously failed completions                        | `0`                       |
@@ -72,6 +51,7 @@ POST v2/completions
 curl --request POST \
   --url 'https://codesuggestions.gitlab.com/v2/completions' \
   --header 'Authorization: Bearer <access_token>' \
+  --header 'X-Gitlab-Authentication-Type: oidc' \
   --header 'Content-Type: application/json' \
   --data-raw '{
     "prompt_version": 1,
@@ -87,6 +67,12 @@ curl --request POST \
         "model_engine": "vertex-ai",
         "model_name": "code-gecko",
         "lang": "python",
+        "experiments": [
+          {
+            "name": "exp_truncate_suffix",
+            "variant": 0
+          }
+        ],
         "requests": 1,
         "accepts": 1,
         "errors": 0
@@ -103,6 +89,12 @@ curl --request POST \
     "name": "code-gecko",
     "lang": "python"
   },
+  "experiments": [
+    {
+      "name": "exp_truncate_suffix",
+      "variant": 0
+    }
+  ]
   "object": "text_completion",
   "created": 1682031100,
   "choices": [
@@ -154,7 +146,7 @@ make lint
 make test
 ```
 
-There is an [internal recording](https://youtu.be/SXfLOYm4zS4) for GitLab members that provides an overview of this project. 
+There is an [internal recording](https://youtu.be/SXfLOYm4zS4) for GitLab members that provides an overview of this project.
 
 ### Frameworks
 
@@ -165,13 +157,13 @@ This project is built with the following frameworks:
 
 ### Project architecture
 
-This repository follows [The Clean Architecture](https://blog.cleancoder.com/uncle-bob/2012/08/13/the-clean-architecture.html) paradigm, 
+This repository follows [The Clean Architecture](https://blog.cleancoder.com/uncle-bob/2012/08/13/the-clean-architecture.html) paradigm,
 which define layers present in the system as well as their relations with each other, please refer to the linked article for more details.
 
 ### Project structure
 
-This project was from [FauxPilot](https://github.com/moyix/fauxpilot/blob/main/docker-compose.yaml) as a base, however, due to the business 
-direction change GitLab for a time being decided to not train models on its own. With that significant part of this repository became 
+This project was from [FauxPilot](https://github.com/moyix/fauxpilot/blob/main/docker-compose.yaml) as a base, however, due to the business
+direction change GitLab for a time being decided to not train models on its own. With that significant part of this repository became
 deprecated and is no longer in active use, including:
 
 1. All code in `/models` directory
