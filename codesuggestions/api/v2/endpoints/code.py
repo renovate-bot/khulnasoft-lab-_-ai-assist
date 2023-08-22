@@ -12,6 +12,7 @@ from codesuggestions.api.middleware import (
     X_GITLAB_REALM_HEADER,
 )
 from codesuggestions.deps import CodeSuggestionsContainer
+from codesuggestions.experimentation.base import ExperimentTelemetry
 from codesuggestions.instrumentators.base import Telemetry, TelemetryInstrumentator
 from codesuggestions.suggestions import CodeCompletions, CodeGenerations
 from codesuggestions.suggestions.processing.ops import lang_from_filename
@@ -59,6 +60,7 @@ class SuggestionsResponse(BaseModel):
     object: str = "text_completion"
     created: int
     choices: list[Choice]
+    experiments: list[ExperimentTelemetry]
 
 
 @router.post("/completions", response_model=SuggestionsResponse)
@@ -97,6 +99,7 @@ async def completions(
         choices=[
             SuggestionsResponse.Choice(text=suggestion.text),
         ],
+        experiments=suggestion.metadata.experiments,
     )
 
 
