@@ -6,7 +6,7 @@ class PostProcessor:
         """Execute a number of post-processing actions on a text.
 
         Args:
-           completion: A text to process
+           text: A text to process
 
         Returns:
            A resulted output
