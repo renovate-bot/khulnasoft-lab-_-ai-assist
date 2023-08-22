@@ -40,7 +40,7 @@ TEST_SUFFIX = "some suffix"
             TEST_PREFIX,
             TEST_SUFFIX,
             "some output",
-            [CodeBisonModelInput(TEST_PREFIX), 0.2, 32, 0.95, 40],
+            [CodeBisonModelInput(TEST_PREFIX), 0.2, 2048, 0.95, 40],
         ),
         (PalmCodeBisonModel, "", TEST_SUFFIX, "", None),
         (
