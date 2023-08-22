@@ -2,16 +2,81 @@ from dataclasses import asdict
 from unittest import mock
 
 import pytest
-from fastapi import Request
+from fastapi import FastAPI, Request
+from fastapi.testclient import TestClient
 from snowplow_tracker import Snowplow
 
+from codesuggestions import Config
+from codesuggestions.api import create_fast_api_server
+from codesuggestions.api.v2.api import api_router
 from codesuggestions.api.v2.endpoints.code import (
     CurrentFile,
     SuggestionsRequest,
     track_snowplow_event,
 )
+from codesuggestions.deps import CodeSuggestionsContainer
+from codesuggestions.experimentation.base import ExperimentTelemetry
 from codesuggestions.instrumentators.base import Telemetry
+from codesuggestions.suggestions.processing.base import ModelEngineOutput
+from codesuggestions.suggestions.processing.typing import (
+    LanguageId,
+    MetadataCodeContent,
+    MetadataModel,
+    MetadataPromptBuilder,
+)
 from codesuggestions.tracking.instrumentator import SnowplowInstrumentator
+
+
+class TestCodeCompletions:
+    @pytest.fixture(scope="class")
+    def client(self):
+        app = FastAPI()
+        app.include_router(api_router)
+        client = TestClient(app)
+        yield client
+
+    def test_successful_response(self, client):
+        model_output = ModelEngineOutput(
+            text="def search",
+            model=MetadataModel(name="code-gecko", engine="vertex-ai"),
+            lang_id=LanguageId.PYTHON,
+            metadata=MetadataPromptBuilder(
+                components={
+                    "prefix": MetadataCodeContent(length=10, length_tokens=2),
+                    "suffix": MetadataCodeContent(length=10, length_tokens=2),
+                },
+                experiments=[ExperimentTelemetry(name="truncate_suffix", variant=1)],
+            ),
+        )
+
+        code_completions_mock = mock.AsyncMock(return_value=model_output)
+        container = CodeSuggestionsContainer()
+
+        with container.code_completions.override(code_completions_mock):
+            response = client.post(
+                "/v2/completions",
+                json={
+                    "prompt_version": 1,
+                    "project_path": "gitlab-org/gitlab",
+                    "project_id": 278964,
+                    "current_file": {
+                        "file_name": "main.py",
+                        "content_above_cursor": "# Create a fast binary search\n",
+                        "content_below_cursor": "\n",
+                    },
+                },
+            )
+
+        assert response.status_code == 200
+
+        body = response.json()
+        assert body["choices"][0]["text"] == "def search"
+        assert body["experiments"] == [{"name": "truncate_suffix", "variant": 1}]
+        assert body["model"] == {
+            "engine": "vertex-ai",
+            "lang": "python",
+            "name": "code-gecko",
+        }
 
 
 class TestSnowplowInstrumentator:

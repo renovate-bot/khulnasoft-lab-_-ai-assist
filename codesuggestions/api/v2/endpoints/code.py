@@ -57,10 +57,10 @@ class SuggestionsResponse(BaseModel):
 
     id: str
     model: Model
+    experiments: list[ExperimentTelemetry]
     object: str = "text_completion"
     created: int
     choices: list[Choice]
-    experiments: list[ExperimentTelemetry]
 
 
 @router.post("/completions", response_model=SuggestionsResponse)
@@ -96,10 +96,10 @@ async def completions(
             name=suggestion.model.name,
             lang=suggestion.lang(),
         ),
+        experiments=suggestion.metadata.experiments,
         choices=[
             SuggestionsResponse.Choice(text=suggestion.text),
         ],
-        experiments=suggestion.metadata.experiments,
     )
 
 
