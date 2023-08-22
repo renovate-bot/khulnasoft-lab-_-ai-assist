@@ -215,6 +215,42 @@ class SuggestionsResponse(BaseModel):
     choices: list[Choice]
 """
 
+TYPESCRIPT_INTERFACE_SAMPLE = """
+interface Person {
+  firstName: string;
+  lastName: string;
+  age: number;
+  sayHello: () => void;
+}
+
+class Student implements Person {
+  firstName: string;
+  lastName: string;
+  age: number;
+
+  constructor(firstName: string, lastName: string, age: number) {
+    this.firstName = firstName;
+    this.lastName = lastName;
+    this.age = age;
+  }
+
+  sayHello() {
+    console.log(`Hello, govna`);
+  }
+}
+"""
+
+TYPESCRIPT_CALL_EXPRESSION_SAMPLE = """
+import "@testing-library/cypress/add-commands";
+import "./commands";
+
+Cypress.on("uncaught:exception", (err) => {
+  return false;
+});
+
+Cypress.on("before:run", () => { // don't care
+"""
+
 
 @pytest.mark.parametrize(
     (
@@ -335,6 +371,31 @@ class SuggestionsResponse(BaseModel):
     object: str = "text_completion"
     created: int
     choices: list[Choice]
+"""[1:-1],
+            # fmt: on
+        ),
+        (  # TS: Test interface
+            LanguageId.TS,
+            TYPESCRIPT_INTERFACE_SAMPLE[1:],
+            (3, 0),
+            # fmt: off
+            TYPESCRIPT_INTERFACE_SAMPLE[1:61],
+"""
+  age: number;
+  sayHello: () => void;
+}
+"""[1:-1],
+            # fmt: on
+        ),
+        (  # TS: Test interface
+            LanguageId.TS,
+            TYPESCRIPT_CALL_EXPRESSION_SAMPLE[1:],
+            (4, 0),
+            # fmt: off
+            TYPESCRIPT_CALL_EXPRESSION_SAMPLE[1:115],
+"""
+  return false;
+})
 """[1:-1],
             # fmt: on
         ),

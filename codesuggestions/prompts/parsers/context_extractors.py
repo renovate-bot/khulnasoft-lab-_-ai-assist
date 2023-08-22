@@ -77,6 +77,17 @@ class PythonContextVisitor(BaseContextVisitor):
     ]
 
 
+class TsContextVisitor(BaseContextVisitor):
+    _TARGET_SYMBOLS = [
+        "class_declaration",
+        "interface_declaration",
+        "function_declaration",
+        "generator_function_declaration",
+        "call_expression",
+        "program",
+    ]
+
+
 class ContextVisitorFactory:
     _LANG_ID_VISITORS = {
         # LanguageId.C: CCounterVisitor,
@@ -90,7 +101,7 @@ class ContextVisitorFactory:
         # LanguageId.RUBY: RubyCounterVisitor,
         # LanguageId.RUST: RustCounterVisitor,
         # LanguageId.SCALA: ScalaCounterVisitor,
-        # LanguageId.TS: TsCounterVisitor,
+        LanguageId.TS: TsContextVisitor,
     }
 
     @staticmethod
