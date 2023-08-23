@@ -58,7 +58,9 @@ class ModelEngineGenerations(ModelEngineBase):
             except (VertexModelInvalidArgument, VertexModelInternalError) as ex:
                 watch_container.register_model_exception(str(ex), ex.code)
 
-        return ModelEngineOutput(text="", model=model_metadata)
+        return ModelEngineOutput(
+            text="", model=model_metadata, metadata=MetadataPromptBuilder(components={})
+        )
 
     def _build_prompt(self, prefix: str, lang_id: LanguageId):
         prefix_truncated = truncate_content(

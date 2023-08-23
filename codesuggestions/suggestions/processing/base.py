@@ -42,8 +42,8 @@ EXPERIMENT_COUNTER = Counter(
 class ModelEngineOutput(NamedTuple):
     text: str
     model: MetadataModel
+    metadata: MetadataPromptBuilder
     lang_id: Optional[LanguageId] = None
-    metadata: Optional[MetadataPromptBuilder] = None
 
     def lang(self) -> str:
         return self.lang_id.name.lower() if self.lang_id else ""

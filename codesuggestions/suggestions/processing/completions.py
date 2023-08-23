@@ -198,7 +198,10 @@ class ModelEngineCompletions(ModelEngineBase):
         model_metadata = MetadataModel(
             name=self.model.model_name, engine=self.model.model_engine
         )
-        empty_output = ModelEngineOutput(text="", model=model_metadata)
+
+        empty_output = ModelEngineOutput(
+            text="", model=model_metadata, metadata=MetadataPromptBuilder(components={})
+        )
 
         # TODO: keep watching the suffix length until logging ModelEngineOutput in the upper layer
         with self.instrumentator.watch(
