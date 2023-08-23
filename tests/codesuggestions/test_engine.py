@@ -18,10 +18,12 @@ from codesuggestions.suggestions.processing import (
     MetadataModel,
     MetadataPromptBuilder,
     ModelEngineCompletions,
+    PostProcessor,
     ops,
 )
 
 tokenizer = AutoTokenizer.from_pretrained("Salesforce/codegen2-16B")
+post_processor = PostProcessor()
 
 
 class MockInstrumentor:
@@ -298,7 +300,10 @@ async def test_model_engine_palm(
     type(text_gen_base_model).model_engine = PropertyMock(return_value=model_engine)
 
     engine = ModelEngineCompletions(
-        text_gen_base_model, tokenizer, ExperimentRegistry()
+        model=text_gen_base_model,
+        tokenizer=tokenizer,
+        post_processor=post_processor,
+        experiment_registry=ExperimentRegistry(),
     )
     engine.instrumentator = MockInstrumentor()
     completion = await engine.generate(prefix, suffix, file_name)
@@ -452,7 +457,10 @@ def test_prompt_building_model_engine_palm(
     expected_functions: list[str],
 ):
     engine = ModelEngineCompletions(
-        text_gen_base_model, tokenizer, ExperimentRegistry()
+        model=text_gen_base_model,
+        tokenizer=tokenizer,
+        post_processor=post_processor,
+        experiment_registry=ExperimentRegistry(),
     )
     prompt = engine._build_prompt(
         prefix=prefix, file_name=file_name, suffix=suffix, lang_id=lang_id

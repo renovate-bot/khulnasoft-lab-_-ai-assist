@@ -22,6 +22,7 @@ from codesuggestions.suggestions.processing.ops import (
     find_cursor_position,
     truncate_content,
 )
+from codesuggestions.suggestions.processing.post_processor import PostProcessor
 from codesuggestions.suggestions.processing.typing import (
     CodeContent,
     LanguageId,
@@ -177,9 +178,11 @@ class ModelEngineCompletions(ModelEngineBase):
         self,
         model: PalmCodeGenBaseModel,
         tokenizer: PreTrainedTokenizer,
+        post_processor: PostProcessor,
         experiment_registry: ExperimentRegistry,
     ):
         super().__init__(model, tokenizer)
+        self.post_processor = post_processor
         self.experiment_registry = experiment_registry
 
     async def _generate(
@@ -214,6 +217,7 @@ class ModelEngineCompletions(ModelEngineBase):
                     watch_container.register_model_output_length(res.text)
                     watch_container.register_model_score(res.score)
 
+                    completion = self.post_processor.process(res.text)
                     completion = trim_by_min_allowed_context(prefix, res.text, lang_id)
 
                     return ModelEngineOutput(
