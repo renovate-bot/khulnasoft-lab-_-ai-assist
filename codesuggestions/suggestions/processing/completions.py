@@ -250,9 +250,7 @@ class ModelEngineCompletions(ModelEngineBase):
         )
 
         experiments = []
-        if lang_id == LanguageId.PYTHON and (
-            exp := self.experiment_registry.get_experiment("exp_truncate_suffix")
-        ):
+        if exp := self.experiment_registry.get_experiment("exp_truncate_suffix"):
             experiment_output = exp.run(
                 logger=log, prefix=prefix, suffix=suffix, lang_id=lang_id
             )
