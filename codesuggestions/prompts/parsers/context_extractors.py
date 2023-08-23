@@ -39,11 +39,11 @@ class BaseContextVisitor(BaseVisitor):
         rect_top_left: tuple[int, int],
         rect_bottom_right: tuple[int, int],
     ):
-        target_row, target_col = target_point
-        start_row, start_col = rect_top_left
-        end_row, end_col = rect_bottom_right
+        target_row, _ = target_point
+        start_row, _ = rect_top_left
+        end_row, _ = rect_bottom_right
 
-        return start_row <= target_row <= end_row and start_col <= target_col <= end_col
+        return start_row <= target_row <= end_row
 
     def extract_most_relevant_context(
         self, priority_list: Optional[List[str]] = None
@@ -77,6 +77,15 @@ class PythonContextVisitor(BaseContextVisitor):
     ]
 
 
+class JsContextVisitor(BaseContextVisitor):
+    _TARGET_SYMBOLS = [
+        "class_declaration",
+        "lexical_declaration",
+        "function_declaration",
+        "generator_function_declaration",
+    ]
+
+
 class TsContextVisitor(BaseContextVisitor):
     _TARGET_SYMBOLS = [
         "class_declaration",
@@ -95,7 +104,7 @@ class ContextVisitorFactory:
         # LanguageId.CSHARP: CsharpCounterVisitor,
         # LanguageId.GO: GoCounterVisitor,
         # LanguageId.JAVA: JavaCounterVisitor,
-        # LanguageId.JS: JsCounterVisitor,
+        LanguageId.JS: JsContextVisitor,
         # LanguageId.PHP: PhpCounterVisitor,
         LanguageId.PYTHON: PythonContextVisitor,
         # LanguageId.RUBY: RubyCounterVisitor,

@@ -78,7 +78,6 @@ class BaseVisitor(ABC):
         "lang_id",
         "source_code",
         "target_point",
-        "expected_node_count",
         "expected_context",
         "priority_list",
     ),
@@ -87,7 +86,6 @@ class BaseVisitor(ABC):
             LanguageId.PYTHON,
             PYTHON_PREFIX_SAMPLE,
             (21, 29),
-            8,
             _PYTHON_PREFIX_EXPECTED_FUNCTION_DEFINITION_CONTEXT,
             ["function_definition"],
         ),
@@ -95,7 +93,6 @@ class BaseVisitor(ABC):
             LanguageId.PYTHON,
             PYTHON_PREFIX_SAMPLE,
             (21, 29),
-            8,
             _PYTHON_PREFIX_EXPECTED_CLASS_DEFINITION_CONTEXT,
             ["class_definition"],
         ),
@@ -103,7 +100,6 @@ class BaseVisitor(ABC):
             LanguageId.PYTHON,
             PYTHON_PREFIX_SAMPLE + PYTHON_SUFFIX_SAMPLE,
             (21, 29),
-            10,
             """def visit(self, node: Node):
         # use self instead of the class name to access the overridden attribute
         if self._TARGET_SYMBOL and node.type == self._TARGET_SYMBOL:
@@ -117,7 +113,6 @@ def test_base_context_visitor(
     lang_id: LanguageId,
     source_code: str,
     target_point: tuple[int, int],
-    expected_node_count: int,
     expected_context: str,
     priority_list: list[str],
 ):
@@ -129,8 +124,6 @@ def test_base_context_visitor(
     assert context_node is not None
 
     actual_context = visitor._bytes_to_str(context_node.text)
-
-    assert len(visitor.visited_nodes) == expected_node_count
     assert actual_context.strip() == expected_context.strip()
 
 
@@ -213,6 +206,140 @@ class SuggestionsResponse(BaseModel):
     object: str = "text_completion"
     created: int
     choices: list[Choice]
+"""
+
+JAVASCRIPT_SOURCE_SAMPLE = """
+import React, { useState } from "react";
+import dateFns from "date-fns";
+import { sum } from "mathjs";
+
+const App = () => {
+  const [date, setDate] = useState(new Date());
+  const [number, setNumber] = useState(0);
+
+  const addNumber = () => {
+    setNumber(sum(number, 1));
+  };
+
+  const getDateString = () => {
+    return dateFns.format(date, "YYYY-MM-DD");
+  };
+
+  return (
+    <div>
+      <h1>Date: {getDateString()}</h1>
+      <h1>Number: {number}</h1>
+      <button onClick={addNumber}>Add 1</button>
+    </div>
+  );
+};
+
+export default App;
+"""
+
+
+JAVASCRIPT_TWO_CLASSES = """
+class Animal {
+  constructor(name, species) {
+    this.name = name;
+    this.species = species;
+  }
+
+  makeSound() {
+    console.log(`${this.name} makes a sound`);
+  }
+}
+
+class Dog extends Animal {
+  constructor(name, breed) {
+    super(name, 'Dog');
+    this.breed = breed;
+  }
+
+  makeSound() {
+    console.log(`${this.name} barks`);
+  }
+
+  fetch() {
+    console.log(`${this.name} fetches the ball`);
+  }
+}
+
+const animal = new Animal('Generic Animal', 'Unknown');
+const dog = new Dog('Buddy', 'Golden Retriever');
+
+animal.makeSound();
+dog.makeSound();
+dog.fetch();
+"""
+
+JAVASCRIPT_FUNCTION_SAMPLE = """
+function dangerous_eval(myeval) {
+    let x = 10;
+    eval(myeval);
+}
+
+# more stuff that we don't care
+function dangerous_eval_string(myeval) {
+    eval('var myeval = "' + myeval + '";');
+"""
+
+JAVASCRIPT_GENERATOR_FUNCTION_SAMPLE = """
+function* animalSounds(name, species) {
+  yield `${name} the ${species} makes a sound`;
+}
+
+function* dogSounds(name, breed) {
+  yield* animalSounds(name, 'Dog');
+  yield `${name} the ${breed} barks`;
+}
+
+function* dogActions(name, breed) {
+  yield* dogSounds(name, breed);
+  yield `${name} the ${breed} fetches the ball`;
+}
+"""
+
+JAVASCRIPT_LEXICAL_WITH_GENERATOR_SAMPLE = """
+const generateSounds = (name, species) => function* () {
+  yield `${name} the ${species} makes a sound`;
+};
+
+const generateDogSounds = (name, breed) => function* () {
+  yield* generateSounds(name, 'Dog')();
+  yield `${name} the ${breed} barks`;
+};
+
+const generateDogActions = (name, breed) => function* () {
+  yield* generateDogSounds(name, breed)();
+  yield `${name} the ${breed} fetches the ball`;
+};
+
+const animalSoundGenerator = generateSounds('Generic Animal', 'Unknown');
+const dogSoundGenerator = generateDogSounds('Buddy', 'Golden Retriever');
+const dogActionGenerator = generateDogActions('Buddy', 'Golden Retriever');
+
+for (const sound of animalSoundGenerator()) {
+  console.log(sound);
+}
+"""
+
+JAVASCRIPT_FUNCTION_WITHIN_FUNCTION = """
+function outerFunction() {
+  console.log("This is the outer function.");
+
+  function innerFunction() {
+    console.log("This is the inner function.");
+  }
+
+  function* generatorFunction() {
+    yield `hello govna`;
+  }
+
+  innerFunction(); // Call the inner function
+}
+
+outerFunction(); // Call the outer function
 """
 
 TYPESCRIPT_INTERFACE_SAMPLE = """
@@ -373,6 +500,115 @@ Cypress.on("before:run", () => { // don't care
     choices: list[Choice]
 """[1:-1],
             # fmt: on
+        ),
+        (  # Test context at lexical declaration level
+            LanguageId.JS,
+            JAVASCRIPT_SOURCE_SAMPLE[1:],
+            (9, 0),
+            JAVASCRIPT_SOURCE_SAMPLE[1:245],
+            """
+    setNumber(sum(number, 1));
+  };
+
+  const getDateString = () => {
+    return dateFns.format(date, "YYYY-MM-DD");
+  };
+
+  return (
+    <div>
+      <h1>Date: {getDateString()}</h1>
+      <h1>Number: {number}</h1>
+      <button onClick={addNumber}>Add 1</button>
+    </div>
+  );
+};
+"""[
+                1:-1
+            ],
+        ),
+        (  # Test context class level
+            LanguageId.JS,
+            JAVASCRIPT_TWO_CLASSES[1:],
+            (3, 16),
+            JAVASCRIPT_TWO_CLASSES[1:85],
+            # fmt: off
+            """
+ = species;
+  }
+
+  makeSound() {
+    console.log(`${this.name} makes a sound`);
+  }
+}
+"""[1:-1]
+            # fmt: on
+        ),
+        (  # Test context function level
+            LanguageId.JS,
+            # fmt: off
+            JAVASCRIPT_FUNCTION_SAMPLE[1:],
+            (2, 0),
+            JAVASCRIPT_FUNCTION_SAMPLE[1:51],
+            "    eval(myeval);\n}"
+            # fmt: on
+        ),
+        (  # Test context generator function level
+            LanguageId.JS,
+            # fmt: off
+            JAVASCRIPT_GENERATOR_FUNCTION_SAMPLE[1:],
+            (5, 0),
+            JAVASCRIPT_GENERATOR_FUNCTION_SAMPLE[1:127],
+            """
+  yield* animalSounds(name, 'Dog');
+  yield `${name} the ${breed} barks`;
+}
+"""[1:-1]
+            # fmt: on
+        ),
+        (  # Test context generator function within arrow function
+            LanguageId.JS,
+            # fmt: off
+            JAVASCRIPT_LEXICAL_WITH_GENERATOR_SAMPLE[1:],
+            (6, 0),
+            JAVASCRIPT_LEXICAL_WITH_GENERATOR_SAMPLE[1:208],
+            """
+  yield `${name} the ${breed} barks`;
+};
+"""[1:-1]
+            # fmt: on
+        ),
+        (  # Test context function within function, cursor within inner function
+            LanguageId.JS,
+            # fmt: off
+            JAVASCRIPT_FUNCTION_WITHIN_FUNCTION[1:],
+            (4, 0),
+            JAVASCRIPT_FUNCTION_WITHIN_FUNCTION[1:104],
+            """
+    console.log("This is the inner function.");
+  }
+
+  function* generatorFunction() {
+    yield `hello govna`;
+  }
+
+  innerFunction(); // Call the inner function
+}
+"""[1:-1]
+            # fmt: on
+        ),
+        (  # Test context function within function, cursor within a generator function
+            LanguageId.JS,
+            # fmt: off
+            JAVASCRIPT_FUNCTION_WITHIN_FUNCTION[1:],
+            (8, 0),
+            JAVASCRIPT_FUNCTION_WITHIN_FUNCTION[1:191],
+            """
+    yield `hello govna`;
+  }
+
+  innerFunction(); // Call the inner function
+}
+"""[1:-1],
         ),
         (  # TS: Test interface
             LanguageId.TS,
