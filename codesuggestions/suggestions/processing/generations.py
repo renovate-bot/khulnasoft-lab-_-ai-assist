@@ -115,7 +115,7 @@ class ModelEngineGenerations(ModelEngineBase):
         prefix_truncated = truncate_content(
             self.tokenizer,
             prefix,
-            max_length=self.model.MAX_MODEL_LEN - len(tpl_tokens),
+            max_length=max(self.model.MAX_MODEL_LEN - len(tpl_tokens), 0),
             truncation_side="left",
         )
 
