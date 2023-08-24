@@ -137,13 +137,14 @@ def token_length(s: str):
 
 @pytest.mark.asyncio
 @pytest.mark.parametrize(
-    "prefix,suffix,file_name,model_gen_func,model_output,"
+    "prefix,suffix,file_name,editor_language,model_gen_func,model_output,"
     "language,prompt_builder_metadata,expected_completion,expected_prompt_symbol_counts",
     [
         (
             "prompt",
             "",
             "f.unk",
+            None,
             _side_effect_unknown_tpl_palm,
             "random completion",
             None,
@@ -170,6 +171,34 @@ def token_length(s: str):
             "prompt",
             "",
             "f.unk",
+            "typescript",
+            _side_effect_unknown_tpl_palm,
+            "random completion",
+            None,
+            MetadataPromptBuilder(
+                components={
+                    "prefix": MetadataCodeContent(length=6, length_tokens=2),
+                    "suffix": MetadataCodeContent(length=0, length_tokens=0),
+                },
+                imports=MetadataExtraInfo(
+                    name="imports",
+                    pre=MetadataCodeContent(length=0, length_tokens=0),
+                    post=MetadataCodeContent(length=0, length_tokens=0),
+                ),
+                function_signatures=MetadataExtraInfo(
+                    name="function_signatures",
+                    pre=MetadataCodeContent(length=0, length_tokens=0),
+                    post=MetadataCodeContent(length=0, length_tokens=0),
+                ),
+            ),
+            "random completion",
+            None,
+        ),
+        (
+            "prompt",
+            "",
+            "f.unk",
+            None,
             _side_effect_unknown_tpl_palm,
             "random completion\nnew line",
             None,
@@ -196,6 +225,7 @@ def token_length(s: str):
             "prompt " * 2048,
             "abc " * 4096,
             "f.py",
+            None,
             _side_effect_with_suffix,
             "random completion\nnew line",
             ops.LanguageId.PYTHON,
@@ -222,6 +252,7 @@ def token_length(s: str):
             "import os\nimport pytest\n" + "prompt" * 2048,
             "",
             "f.py",
+            None,
             _side_effect_with_imports,
             "random completion\nnew line",
             ops.LanguageId.PYTHON,
@@ -248,6 +279,7 @@ def token_length(s: str):
             "random_prefix",
             "random_suffix",
             "f.unk",
+            "",
             _side_effect_with_internal_exception,
             "unreturned completion due to an exception",
             None,
@@ -259,6 +291,7 @@ def token_length(s: str):
             "random_prefix",
             "random_suffix",
             "f.unk",
+            "",
             _side_effect_with_invalid_arg_exception,
             "unreturned completion due to an exception",
             None,
@@ -270,6 +303,7 @@ def token_length(s: str):
             "",
             "",
             "app.js",
+            "",
             _side_effect_with_suffix,
             "",
             ops.LanguageId.JS,
@@ -284,6 +318,7 @@ async def test_model_engine_palm(
     prefix,
     suffix,
     file_name,
+    editor_language,
     model_gen_func,
     model_output,
     language,
@@ -306,7 +341,7 @@ async def test_model_engine_palm(
         experiment_registry=ExperimentRegistry(),
     )
     engine.instrumentator = MockInstrumentor()
-    completion = await engine.generate(prefix, suffix, file_name)
+    completion = await engine.generate(prefix, suffix, file_name, editor_language)
 
     assert completion.text == expected_completion
     assert completion.model == MetadataModel(name=model_name, engine=model_engine)
