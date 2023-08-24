@@ -3,13 +3,13 @@ from typing import Optional
 
 import pytest
 
-from codesuggestions._assets import TPL_DIR
 from codesuggestions.prompts import PromptTemplate
 from codesuggestions.suggestions.processing import CodeContent
 from codesuggestions.suggestions.processing.completions import (
     MetadataPromptBuilder,
     _PromptBuilder,
 )
+from codesuggestions.suggestions.processing.generations import TPL_GENERATION_BASE
 from codesuggestions.suggestions.processing.generations import (
     PromptBuilder as PromptBuilderGenerations,
 )
@@ -84,7 +84,7 @@ def test_completions_prompt_builder(
 def test_generations_prompt_builder(
     prefix: CodeContent, file_name: str, lang_id: Optional[LanguageId]
 ):
-    tpl = PromptTemplate.from_local_file(TPL_DIR / "code-bison/1/prompt.tpl")
+    tpl = PromptTemplate(TPL_GENERATION_BASE)
     builder = PromptBuilderGenerations(prefix, file_name, lang_id=lang_id)
     builder.add_template(tpl)
     prompt = builder.build()

@@ -1,9 +1,6 @@
-from pathlib import Path
-
 from dependency_injector import containers, providers
 from py_grpc_prometheus.prometheus_client_interceptor import PromClientInterceptor
 
-from codesuggestions._assets import TPL_DIR
 from codesuggestions.api import middleware
 from codesuggestions.api.rollout.model import ModelRollout
 from codesuggestions.auth import GitLabAuthProvider, GitLabOidcProvider
@@ -13,7 +10,6 @@ from codesuggestions.models import (
     PalmCodeGenModel,
     grpc_connect_vertex,
 )
-from codesuggestions.prompts import PromptTemplate
 from codesuggestions.suggestions import CodeCompletions, CodeGenerations
 from codesuggestions.suggestions.processing import (
     ModelEngineCompletions,
@@ -54,16 +50,6 @@ def _init_snowplow_client(enabled: bool, configuration: SnowplowClientConfigurat
         return SnowplowClientStub()
 
     return SnowplowClient(configuration)
-
-
-def _init_prompt_templates(path: Path):
-    # the PromptTemplate class caches all subsequent calls to from_local_file
-    # we call from_local_file in the init section to prevent any runtime I/O operations.
-    # we can consider implementing a prompt template registry class with a follow-up MR
-
-    tpls = [PromptTemplate.from_local_file(p) for p in path.glob("**/prompt.tpl")]
-
-    yield tpls
 
 
 def _create_vertex_model(name, grpc_client_vertex, project, location, real_or_fake):
@@ -193,9 +179,6 @@ class CodeSuggestionsContainer(containers.DeclarativeContainer):
     )
 
     tokenizer = providers.Resource(init_tokenizer)
-
-    # preload code-bison prompt templates
-    _ = providers.Resource(_init_prompt_templates, path=TPL_DIR / "code-bison")
 
     models = _all_vertex_models(
         [

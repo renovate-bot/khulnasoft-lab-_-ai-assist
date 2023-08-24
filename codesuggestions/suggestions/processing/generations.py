@@ -1,14 +1,7 @@
 from pathlib import Path
 from typing import Any, Optional
 
-from transformers import PreTrainedTokenizer
-
-from codesuggestions._assets import TPL_DIR
-from codesuggestions.models import (
-    PalmCodeGenBaseModel,
-    VertexModelInternalError,
-    VertexModelInvalidArgument,
-)
+from codesuggestions.models import VertexModelInternalError, VertexModelInvalidArgument
 from codesuggestions.prompts import PromptTemplate
 from codesuggestions.suggestions.processing.base import (
     CodeContent,
@@ -26,9 +19,18 @@ from codesuggestions.suggestions.processing.ops import (
 )
 
 __all__ = [
+    "TPL_GENERATION_BASE",
     "PromptBuilder",
     "ModelEngineGenerations",
 ]
+
+TPL_GENERATION_BASE = """
+```{lang}
+{prefix}
+```
+""".strip(
+    "\n"
+)
 
 
 class PromptBuilder(PromptBuilderBase):
@@ -64,18 +66,6 @@ class PromptBuilder(PromptBuilderBase):
 
 
 class ModelEngineGenerations(ModelEngineBase):
-    def __init__(
-        self,
-        model: PalmCodeGenBaseModel,
-        tokenizer: PreTrainedTokenizer,
-        tpl_version: int = 1,
-    ):
-        super().__init__(model, tokenizer)
-
-        self.tpl = PromptTemplate.from_local_file(
-            TPL_DIR / model.model_name / str(tpl_version) / "prompt.tpl"
-        )
-
     async def _generate(
         self,
         prefix: str,
@@ -112,13 +102,16 @@ class ModelEngineGenerations(ModelEngineBase):
     def _build_prompt(
         self, prefix: str, file_name: str, lang_id: Optional[LanguageId] = None
     ):
+        tpl = PromptTemplate(TPL_GENERATION_BASE)
+
         # Get the length of the prompt template to truncate the prefix accordingly
         tpl_tokens = self.tokenizer(
-            self.tpl.raw,
+            tpl.raw,
             return_attention_mask=False,
             add_special_tokens=False,
         )["input_ids"]
 
+        prefix = prefix.rstrip("\n")
         prefix_truncated = truncate_content(
             self.tokenizer,
             prefix,
@@ -127,7 +120,7 @@ class ModelEngineGenerations(ModelEngineBase):
         )
 
         prompt_builder = PromptBuilder(prefix_truncated, file_name, lang_id=lang_id)
-        prompt_builder.add_template(self.tpl)
+        prompt_builder.add_template(tpl)
         prompt = prompt_builder.build()
 
         return prompt
