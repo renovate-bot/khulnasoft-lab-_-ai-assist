@@ -1,0 +1,10 @@
+apiVersion: runway/v1.0.0-beta
+kind: RunwayService
+metadata:
+  name: ai_gateway
+  owner: ai_assisted
+spec:
+  image: "$CI_REGISTRY_IMAGE/model-gateway:${CI_COMMIT_SHORT_SHA}"
+  observability:
+    scrape_targets:
+      - "localhost:8082"
