@@ -3,4 +3,3 @@ aiassist:
   serviceAccount:
     # The service account email to use with this account
     iamServiceAccountEmail: ai-assist-fauxpilot@unreview-poc-390200e5.iam.gserviceaccount.com
-runner: {}

@@ -25,12 +25,6 @@ env_configs = {
         'helmfile': 'helmfile.yaml',
         'resolve_deploys': True
     },
-    'runner': {
-        'kube_ctx': 'gke_unreview-poc-390200e5_us-central1-c_ai-assist-test',
-        'cluster_name': 'ai-assist-test',
-        'helmfile': 'helmfile-runner.yaml',
-        'resolve_deploys': False
-    }
 }
 
 infra_dir = os.path.realpath(os.path.join(os.path.dirname(__file__), ".."))
