@@ -35,7 +35,7 @@ include:
     ref: v1.8.0 # renovate:managed
     file: "service-project/runway.yml"
     inputs:
-      runway_service_id: model-gateway-n2bsxg
+      runway_service_id: ai-gateway
       image: "$CI_REGISTRY_IMAGE/model-gateway:${CI_COMMIT_SHORT_SHA}"
       runway_version: v1.8.0 # please keep in sync with `ref` above
 
