@@ -1,7 +1,10 @@
-from typing import Any
+from pathlib import Path
+from typing import Any, Optional
 
 from codesuggestions.models import VertexModelInternalError, VertexModelInvalidArgument
+from codesuggestions.prompts import PromptTemplate
 from codesuggestions.suggestions.processing.base import (
+    CodeContent,
     MetadataModel,
     MetadataPromptBuilder,
     ModelEngineBase,
@@ -9,14 +12,48 @@ from codesuggestions.suggestions.processing.base import (
     Prompt,
     PromptBuilderBase,
 )
-from codesuggestions.suggestions.processing.ops import LanguageId, truncate_content
+from codesuggestions.suggestions.processing.ops import (
+    LanguageId,
+    strip_code_block_markdown,
+    truncate_content,
+)
 
 __all__ = [
+    "TPL_GENERATION_BASE",
+    "PromptBuilder",
     "ModelEngineGenerations",
 ]
 
+TPL_GENERATION_BASE = """
+```{lang}
+{prefix}
+```
+""".strip(
+    "\n"
+)
 
-class _PromptBuilder(PromptBuilderBase):
+
+class PromptBuilder(PromptBuilderBase):
+    def __init__(
+        self, prefix: CodeContent, file_name: str, lang_id: Optional[LanguageId] = None
+    ):
+        super().__init__(prefix, lang_id=lang_id)
+
+        self.file_name = file_name
+
+    def add_template(self, tpl: PromptTemplate, **kwargs: Any):
+        # We use either the language name or the file extension
+        # if we couldn't determine the language before
+        lang_repl = (
+            self.lang_id.name.lower()
+            if self.lang_id
+            else Path(self.file_name).suffix.replace(".", "")
+        )
+
+        # TODO: We're not building a context right now
+        # TODO: so let's put everything in the prefix as a short term solution
+        self._prefix = tpl.apply(prefix=self._prefix, lang=lang_repl, **kwargs)
+
     def build(self) -> Prompt:
         return Prompt(
             prefix=self._prefix,
@@ -34,22 +71,24 @@ class ModelEngineGenerations(ModelEngineBase):
         prefix: str,
         _suffix: str,
         file_name: str,
-        lang_id: LanguageId,
+        lang_id: Optional[LanguageId] = None,
         **kwargs: Any,
     ) -> ModelEngineOutput:
         model_metadata = MetadataModel(
             name=self.model.model_name, engine=self.model.model_engine
         )
 
-        prompt = self._build_prompt(prefix, lang_id)
+        prompt = self._build_prompt(prefix, file_name, lang_id=lang_id)
         with self.instrumentator.watch(prompt) as watch_container:
             try:
                 if res := await self.model.generate(prompt.prefix, "", **kwargs):
                     watch_container.register_model_output_length(res.text)
                     watch_container.register_model_score(res.score)
 
+                    generation = strip_code_block_markdown(res.text)
+
                     return ModelEngineOutput(
-                        text=res.text,
+                        text=generation,
                         model=model_metadata,
                         lang_id=lang_id,
                         metadata=prompt.metadata,
@@ -62,15 +101,28 @@ class ModelEngineGenerations(ModelEngineBase):
             text="", model=model_metadata, metadata=MetadataPromptBuilder(components={})
         )
 
-    def _build_prompt(self, prefix: str, lang_id: LanguageId):
+    def _build_prompt(
+        self, prefix: str, file_name: str, lang_id: Optional[LanguageId] = None
+    ):
+        tpl = PromptTemplate(TPL_GENERATION_BASE)
+
+        # Get the length of the prompt template to truncate the prefix accordingly
+        tpl_tokens = self.tokenizer(
+            tpl.raw,
+            return_attention_mask=False,
+            add_special_tokens=False,
+        )["input_ids"]
+
+        prefix = prefix.rstrip("\n")
         prefix_truncated = truncate_content(
             self.tokenizer,
             prefix,
-            max_length=self.model.MAX_MODEL_LEN,
+            max_length=max(self.model.MAX_MODEL_LEN - len(tpl_tokens), 0),
             truncation_side="left",
         )
 
-        prompt_builder = _PromptBuilder(prefix_truncated, lang_id=lang_id)
+        prompt_builder = PromptBuilder(prefix_truncated, file_name, lang_id=lang_id)
+        prompt_builder.add_template(tpl)
         prompt = prompt_builder.build()
 
         return prompt

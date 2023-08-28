@@ -1,3 +1,4 @@
+import re
 from pathlib import Path
 from typing import NamedTuple, Optional, Union
 
@@ -14,6 +15,7 @@ __all__ = [
     "find_alnum_point",
     "find_cursor_position",
     "truncate_content",
+    "strip_code_block_markdown",
 ]
 
 
@@ -55,6 +57,8 @@ _LANG_ID_TO_LANG_DEF = {value.lang_id: value for value in _ALL_LANGS}
 _EXTENSION_TO_LANG_ID = {
     ext: language.lang_id for language in _ALL_LANGS for ext in language.extensions
 }
+
+_RE_MARKDOWN_CODE_BLOCK_BEGIN = re.compile(r"^`{3}\S*\n", flags=re.MULTILINE)
 
 
 class ProgramLanguage:
@@ -198,3 +202,10 @@ def truncate_content(
         text=decoded,
         length_tokens=len(tokens["input_ids"]),
     )
+
+
+def strip_code_block_markdown(text: str) -> str:
+    text = _RE_MARKDOWN_CODE_BLOCK_BEGIN.sub("", text, count=0)
+    text = text.rstrip("`")
+
+    return text
