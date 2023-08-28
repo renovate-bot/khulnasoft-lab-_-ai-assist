@@ -325,12 +325,14 @@ Code suggestions is continuously deployed to [Runway](https://about.gitlab.com/h
 
 This deployment is not yet serving production traffic from `codesuggestions.gitlab.com`, but the aim is to shift this soon ([&1064](https://gitlab.com/groups/gitlab-com/gl-infra/-/epics/1064)). Once this is complete and we are confident in the stability, we can deprecate the legacy Kubernetes-based deployment.
 
-When an MR gets merged, CI will build a new Docker image, and trigger a Runway downstream pipeline that will deploy this image to staging, and then production. Downstream pipelines run against the [deployment project](https://gitlab.com/gitlab-com/gl-infra/platform/runway/deployments/model-gateway-n2bsxg).
+When an MR gets merged, CI will build a new Docker image, and trigger a Runway downstream pipeline that will deploy this image to staging, and then production. Downstream pipelines run against the [deployment project](https://gitlab.com/gitlab-com/gl-infra/platform/runway/deployments/ai-gateway).
 
 The deployment is available at:
 
-- `https://model-gateway-n2bsxg.staging.runway.gitlab.net` (staging)
-- `https://model-gateway-n2bsxg.runway.gitlab.net` (production)
+- `https://ai-gateway.staging.runway.gitlab.net` (staging)
+- `https://ai-gateway.runway.gitlab.net` (production)
+
+The service overview dashboard is available at [https://dashboards.gitlab.net/d/ai-gateway-main/ai-gateway-overview](https://dashboards.gitlab.net/d/ai-gateway-main/ai-gateway-overview).
 
 For more information and assistance, please check out:
 
