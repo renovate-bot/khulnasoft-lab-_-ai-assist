@@ -1,5 +1,5 @@
 ---
-image: python:3.9.13
+image: python:3.9.17
 
 stages:
   - lint
