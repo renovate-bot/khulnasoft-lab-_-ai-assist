@@ -48,7 +48,7 @@ TEST_SUFFIX = "some suffix"
             TEST_PREFIX,
             TEST_SUFFIX,
             "some output",
-            [CodeGeckoModelInput(TEST_PREFIX, TEST_SUFFIX), 0.2, 32, 0.95, 40],
+            [CodeGeckoModelInput(TEST_PREFIX, TEST_SUFFIX), 0.2, 64, 0.95, 40],
         ),
         (PalmCodeGeckoModel, "", TEST_SUFFIX, "", None),
     ],
