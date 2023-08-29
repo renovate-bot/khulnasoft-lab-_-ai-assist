@@ -65,7 +65,7 @@ def test_completions_prompt_builder(
 
     assert prompt.prefix == expected_prefix
     assert prompt.suffix == expected_suffix
-    assert type(prompt.metadata) is MetadataPromptBuilder
+    assert isinstance(prompt.metadata, MetadataPromptBuilder)
 
 
 @pytest.mark.parametrize(
