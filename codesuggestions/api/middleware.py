@@ -178,12 +178,10 @@ class MiddlewareAuthentication(Middleware):
 
         def __init__(
             self,
-            key_auth_provider: AuthProvider,
             oidc_auth_provider: AuthProvider,
             bypass_auth: bool,
             path_resolver: _PathResolver,
         ):
-            self.key_auth_provider = key_auth_provider
             self.oidc_auth_provider = oidc_auth_provider
             self.bypass_auth = bypass_auth
             self.path_resolver = path_resolver
@@ -245,7 +243,6 @@ class MiddlewareAuthentication(Middleware):
 
     def __init__(
         self,
-        key_auth_provider: AuthProvider,
         oidc_auth_provider: AuthProvider,
         bypass_auth: bool = False,
         skip_endpoints: Optional[list] = None,
@@ -255,7 +252,7 @@ class MiddlewareAuthentication(Middleware):
         super().__init__(
             AuthenticationMiddleware,
             backend=MiddlewareAuthentication.AuthBackend(
-                key_auth_provider, oidc_auth_provider, bypass_auth, path_resolver
+                oidc_auth_provider, bypass_auth, path_resolver
             ),
             on_error=MiddlewareAuthentication.on_auth_error,
         )

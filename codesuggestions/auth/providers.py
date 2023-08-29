@@ -1,20 +1,17 @@
 import logging
-import os
 import urllib.parse
 from abc import ABC, abstractmethod
 from collections import defaultdict
 from datetime import datetime, timedelta
-from hashlib import pbkdf2_hmac
 
 import requests
 from jose import JWTError, jwt
 
-from codesuggestions.auth.cache import AuthRecord, LocalAuthCache
+from codesuggestions.auth.cache import LocalAuthCache
 from codesuggestions.auth.user import User, UserClaims
 
 __all__ = [
     "AuthProvider",
-    "GitLabAuthProvider",
     "GitLabOidcProvider",
 ]
 
@@ -25,76 +22,6 @@ class AuthProvider(ABC):
     @abstractmethod
     def authenticate(self, *args, **kwargs) -> User:
         pass
-
-
-class GitLabAuthProvider(AuthProvider):
-    REQUEST_TIMEOUT_SECONDS = 1
-
-    def __init__(self, base_url: str, expiry_seconds: int = 3600):
-        self.base_url = base_url
-        self.expiry_seconds = expiry_seconds
-        self.cache = LocalAuthCache()
-        self.salt = os.urandom(16)
-
-    def _request_code_suggestions_allowed(self, token: str) -> User:
-        end_point = "ml/ai-assist"
-        url = urllib.parse.urljoin(self.base_url, end_point)
-        headers = dict(Authorization=f"Bearer {token}")
-
-        user_authenticated = False
-        third_party_enabled = False
-
-        try:
-            res = requests.get(
-                url=url, headers=headers, timeout=self.REQUEST_TIMEOUT_SECONDS
-            )
-            if 200 <= res.status_code < 300:
-                res_body = res.json()
-                user_authenticated = res_body.get("user_is_allowed", False)
-                third_party_enabled = res_body.get(
-                    "third_party_ai_features_enabled", False
-                )
-        except requests.exceptions.RequestException as e:
-            logging.error(f"Unable to authenticate user with GitLab API: {e}")
-
-        return User(
-            authenticated=user_authenticated,
-            claims=UserClaims(is_third_party_ai_default=third_party_enabled),
-        )
-
-    def _is_auth_required(self, record: AuthRecord) -> bool:
-        if record is None:
-            return True
-
-        if record.exp <= datetime.now():
-            # Key is in cache but it's expired
-            return True
-
-        return False
-
-    def _cache_auth(self, key: str, user: User):
-        exp = datetime.now() + timedelta(seconds=self.expiry_seconds)
-        self.cache.set(key, user, exp)
-
-    def _hash_token(self, token: str) -> str:
-        return pbkdf2_hmac("sha256", token.encode(), self.salt, 10_000).hex()
-
-    def authenticate(self, token: str) -> User:
-        """
-        Checks if the user is allowed to use Code Suggestions
-        :param token: Users Personal Access Token or OAuth token
-        :return: bool
-        """
-        key = self._hash_token(token)
-        record = self.cache.get(key)
-        if not self._is_auth_required(record):
-            return record.value
-
-        # authenticate user sending the GitLab API request
-        user = self._request_code_suggestions_allowed(token)
-        self._cache_auth(key, user)
-
-        return user
 
 
 class GitLabOidcProvider(AuthProvider):

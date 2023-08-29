@@ -5,45 +5,7 @@ import pytest
 import responses
 from jose import jwt
 
-from codesuggestions.auth import GitLabAuthProvider, GitLabOidcProvider
-
-
-@pytest.mark.parametrize(
-    ("expiry_seconds", "wait", "want_calls"),
-    [
-        # second request is within expiry
-        (3600, 1, 1),
-        # second request is after expiry
-        (1, 2, 2),
-    ],
-)
-@responses.activate
-def test_gitlab_auth_provider(expiry_seconds, wait, want_calls):
-    ai_assist_response = responses.get(
-        "http://test.com/ml/ai-assist",
-        body='{"user_is_allowed": true, "third_party_ai_features_enabled": true}',
-        status=200,
-    )
-
-    auth_provider = GitLabAuthProvider(
-        base_url="http://test.com", expiry_seconds=expiry_seconds
-    )
-
-    user = auth_provider.authenticate("token")
-
-    assert user is not None
-    assert user.authenticated is True
-    assert user.claims.is_third_party_ai_default is True
-
-    sleep(wait)
-
-    user = auth_provider.authenticate("token")
-
-    assert user is not None
-    assert user.authenticated is True
-    assert user.claims.is_third_party_ai_default is True
-
-    assert ai_assist_response.call_count == want_calls
+from codesuggestions.auth import GitLabOidcProvider
 
 
 class TestGitLabOidcProvider:
