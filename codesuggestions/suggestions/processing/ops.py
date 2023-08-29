@@ -12,7 +12,7 @@ __all__ = [
     "remove_incomplete_lines",
     "trim_by_max_len",
     "trim_by_sep",
-    "find_alnum_point",
+    "find_non_whitespace_point",
     "find_cursor_position",
     "truncate_content",
     "strip_code_block_markdown",
@@ -107,7 +107,7 @@ def lang_from_filename(file_name: Union[str, Path]) -> Optional[LanguageId]:
     return _EXTENSION_TO_LANG_ID.get(ext, None)
 
 
-def find_alnum_point(value: str, start_index: int = 0) -> tuple[int, int]:
+def find_non_whitespace_point(value: str, start_index: int = 0) -> tuple[int, int]:
     row = 0
     col = 0
 
@@ -121,7 +121,7 @@ def find_alnum_point(value: str, start_index: int = 0) -> tuple[int, int]:
             col = 0
             continue
 
-        if idx >= start_index and c.isalnum():
+        if idx >= start_index and not c.isspace():
             found_row = row
             found_col = col
             break
