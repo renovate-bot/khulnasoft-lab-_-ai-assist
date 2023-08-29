@@ -18,8 +18,8 @@ from codesuggestions.suggestions.processing.base import (
     PromptBuilderBase,
 )
 from codesuggestions.suggestions.processing.ops import (
-    find_alnum_point,
     find_cursor_position,
+    find_non_whitespace_point,
     truncate_content,
 )
 from codesuggestions.suggestions.processing.post_processor import PostProcessor
@@ -390,7 +390,7 @@ def trim_by_min_allowed_context(
 ) -> str:
     code_sample = f"{prefix}{completion}"
     len_prefix = len(prefix)
-    target_point = find_alnum_point(code_sample, start_index=len_prefix)
+    target_point = find_non_whitespace_point(code_sample, start_index=len_prefix)
     if target_point == (-1, -1):
         return completion
 

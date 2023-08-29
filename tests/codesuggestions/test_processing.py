@@ -123,6 +123,8 @@ def test_trim_by_sep(completion, expected_completion):
     ("value", "start_index", "expected_point"),
     [
         ("     one line", 0, (0, 5)),
+        ("{     one line", 0, (0, 0)),
+        ("=     one line", 0, (0, 0)),
         ("     another one line\n", 0, (0, 5)),
         ("one line\n", 0, (0, 0)),
         ("\n\n one line\n", 0, (2, 1)),
@@ -133,8 +135,8 @@ def test_trim_by_sep(completion, expected_completion):
         ("    \n    1 line", 5, (1, 4)),
     ],
 )
-def test_find_alnum_point(value, start_index, expected_point):
-    point = ops.find_alnum_point(value, start_index=start_index)
+def test_find_non_whitespace_point(value, start_index, expected_point):
+    point = ops.find_non_whitespace_point(value, start_index=start_index)
 
     assert point == expected_point
 
