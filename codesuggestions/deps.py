@@ -3,7 +3,7 @@ from py_grpc_prometheus.prometheus_client_interceptor import PromClientIntercept
 
 from codesuggestions.api import middleware
 from codesuggestions.api.rollout.model import ModelRollout
-from codesuggestions.auth import GitLabAuthProvider, GitLabOidcProvider
+from codesuggestions.auth import GitLabOidcProvider
 from codesuggestions.experimentation import experiment_registry_provider
 from codesuggestions.models import (
     FakePalmTextGenModel,
@@ -127,11 +127,6 @@ class FastApiContainer(containers.DeclarativeContainer):
 
     config = providers.Configuration()
 
-    auth_provider = providers.Singleton(
-        GitLabAuthProvider,
-        base_url=config.auth.gitlab_api_base_url,
-    )
-
     oidc_provider = providers.Singleton(
         GitLabOidcProvider,
         oidc_providers=providers.Dict(
@@ -144,7 +139,6 @@ class FastApiContainer(containers.DeclarativeContainer):
 
     auth_middleware = providers.Factory(
         middleware.MiddlewareAuthentication,
-        auth_provider,
         oidc_provider,
         bypass_auth=config.auth.bypass,
         skip_endpoints=_PROBS_ENDPOINTS,

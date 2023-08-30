@@ -36,7 +36,7 @@ app = Starlette(
     middleware=[
         Middleware(RawContextMiddleware),
         MiddlewareLogRequest(),
-        MiddlewareAuthentication(StubKeyAuthProvider(), None, False, None),
+        MiddlewareAuthentication(None, False, None),
     ],
     routes=[Route("/", endpoint=homepage, methods=["POST"])],
 )
