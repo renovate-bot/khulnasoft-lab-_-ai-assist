@@ -4,4 +4,4 @@ helm 3.12.0 # datasource=github-releases depName=helm/helm
 helmfile 0.154.0 # datasource=github-releases depName=helmfile/helmfile
 nodejs 18.16.1 # datasource=node depName=nodejs/node
 poetry 1.5.1 # datasource=pypi depName=poetry
-python 3.9.17 # datasource=github-tags depName=python/cpython
+python 3.9.18 # datasource=github-tags depName=python/cpython
