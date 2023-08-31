@@ -8,3 +8,7 @@ spec:
   observability:
     scrape_targets:
       - "localhost:8082"
+  resources:
+    limits:
+      cpu: 2
+      memory: 2G
