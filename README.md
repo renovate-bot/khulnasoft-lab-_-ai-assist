@@ -222,14 +222,8 @@ value `'None'`.
 1. Update the `.env` file in the root folder with the following variables:
 
    ```
-   AUTH_BYPASS_EXTERNAL=true
-   F_IS_THIRD_PARTY_AI_DEFAULT=true
-   F_THIRD_PARTY_ROLLOUT_PERCENTAGE=100
    PALM_TEXT_MODEL_NAME=code-gecko
    PALM_TEXT_PROJECT=unreview-poc-390200e5
-   FASTAPI_DOCS_URL=/docs
-   FASTAPI_OPENAPI_URL=/openapi.json
-   FASTAPI_API_PORT=5052
    ```
 
 1. Start the model-gateway server locally: `poetry run codesuggestions`
