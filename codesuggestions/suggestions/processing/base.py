@@ -27,7 +27,7 @@ __all__ = [
 LANGUAGE_COUNTER = Counter(
     "code_suggestions_prompt_language",
     "Language count by number",
-    ["lang", "extension"],
+    ["lang", "extension", "editor_lang"],
 )
 
 CODE_SYMBOL_COUNTER = Counter(
@@ -58,19 +58,30 @@ class ModelEngineBase(ABC):
         )
 
     async def generate(
-        self, prefix: str, suffix: str, file_name: str, **kwargs: Any
+        self,
+        prefix: str,
+        suffix: str,
+        file_name: str,
+        editor_lang_id: Optional[str] = None,
+        **kwargs: Any
     ) -> ModelEngineOutput:
         lang_id = lang_from_filename(file_name)
-        self.increment_lang_counter(file_name, lang_id)
+        self.increment_lang_counter(file_name, lang_id, editor_lang_id)
         return await self._generate(prefix, suffix, file_name, lang_id, **kwargs)
 
     def increment_lang_counter(
-        self, filename: str, lang_id: Optional[LanguageId] = None
+        self,
+        filename: str,
+        lang_id: Optional[LanguageId] = None,
+        editor_lang_id: Optional[str] = None,
     ):
-        labels = {"lang": None}
+        labels = {"lang": None, "editor_lang": None}
 
         if lang_id:
             labels["lang"] = lang_id.name.lower()
+
+        if editor_lang_id:
+            labels["editor_lang"] = editor_lang_id
 
         labels["extension"] = Path(filename).suffix[1:]
 

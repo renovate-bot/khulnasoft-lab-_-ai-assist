@@ -16,8 +16,9 @@ class CodeCompletions:
         prefix: str,
         suffix: str,
         file_name: str,
+        language_identifier: str,
     ) -> ModelEngineOutput:
-        return self.engine.generate(prefix, suffix, file_name)
+        return self.engine.generate(prefix, suffix, file_name, language_identifier)
 
 
 class CodeGenerations:
@@ -29,5 +30,6 @@ class CodeGenerations:
         prefix: str,
         suffix: str,
         file_name: str,
+        language_identifier: str,
     ) -> ModelEngineOutput:
-        return self.engine.generate(prefix, suffix, file_name)
+        return self.engine.generate(prefix, suffix, file_name, language_identifier)

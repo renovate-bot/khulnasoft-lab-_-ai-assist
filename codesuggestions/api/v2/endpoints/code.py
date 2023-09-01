@@ -32,6 +32,9 @@ router = APIRouter(
 
 class CurrentFile(BaseModel):
     file_name: constr(strip_whitespace=True, max_length=255)
+    language_identifier: Optional[
+        constr(max_length=255)
+    ]  # https://code.visualstudio.com/docs/languages/identifiers
     content_above_cursor: constr(max_length=100000)
     content_below_cursor: constr(max_length=100000)
 
@@ -86,6 +89,7 @@ async def completions(
             payload.current_file.content_above_cursor,
             payload.current_file.content_below_cursor,
             payload.current_file.file_name,
+            payload.current_file.language_identifier,
         )
 
     return SuggestionsResponse(
@@ -125,6 +129,7 @@ async def generations(
             payload.current_file.content_above_cursor,
             payload.current_file.content_below_cursor,
             payload.current_file.file_name,
+            payload.current_file.language_identifier,
         )
 
     return SuggestionsResponse(
