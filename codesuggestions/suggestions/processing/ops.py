@@ -2,6 +2,7 @@ import re
 from pathlib import Path
 from typing import NamedTuple, Optional, Union
 
+import numpy as np
 from transformers import PreTrainedTokenizer
 from tree_sitter import Node
 
@@ -16,6 +17,8 @@ __all__ = [
     "find_cursor_position",
     "truncate_content",
     "strip_code_block_markdown",
+    "find_newline_position",
+    "find_common_lines",
 ]
 
 
@@ -129,6 +132,87 @@ def find_non_whitespace_point(value: str, start_index: int = 0) -> tuple[int, in
         col += 1
 
     return found_row, found_col
+
+
+def find_newline_position(value: str, start_index: int = 0) -> int:
+    """
+    Finds the nearest newline position close to `start_index`
+    """
+    substring = value[:start_index]
+    substring_rstrip = substring.rstrip(" \t")
+
+    if substring_rstrip.endswith("\n"):
+        return len(substring)
+
+    for idx, c in enumerate(value[start_index:]):
+        if c == "\n":
+            return len(substring) + idx + 1
+
+    return -1
+
+
+def find_common_lines(source: list[str], target: list[str]) -> list[tuple]:
+    """
+    Finds the common strings between two lists, keeping track of repeated ranges.
+    Example:
+    ----------
+    >>> source = ["abc", "def", "g"]
+    >>> target = ["abc", "def", "c", "abc"]
+    >>> find_common_lines(source, target)
+        [(0,1), (3,)]
+
+    :param source: A list of strings to which we compare the target
+    :param target: A list of strings we compare against the source
+    :return: A list of indices of common strings grouped if they are consecutive lines
+    """
+
+    len_source = len(source)
+    len_target = len(target)
+
+    # The 0th row and column always contain zero values to simplify
+    # the LCS algorithm implementation
+    L = np.zeros((len_source + 1, len_target + 1), dtype=int)
+
+    # Tabulated implementation for the LCS problem.
+    # Complexity: O(len_source*len_target)
+    # Goal: find all common lines and their sequences to collect them into groups later
+    for i in range(len_source + 1):
+        for j in range(len_target + 1):
+            if i == 0 or j == 0:
+                L[i, j] = 0
+            elif source[i - 1] == target[j - 1]:
+                # Optimization: start groups of size larger than `1` with `2`, otherwise start with `1`
+                # Goal: when getting the maximum over the rows, we need to take larger groups into account first
+                prev_match = L[i - 1, j - 1]
+                L[i - 1, j - 1] = prev_match + 1 if prev_match == 1 else prev_match
+
+                # The LCS step according to the tabulated implementation
+                L[i, j] = L[i - 1, j - 1] + 1
+            else:
+                L[i, j] = 0
+
+    # Get the line numbers with the max value, the length of the 1D array equals to `len_source+1`
+    target_max = L.argmax(axis=0)
+
+    # Collect only those lines that match `source`.
+    # Note: since we padded the L matrix with zeros, we need to trim the array when getting the indices
+    target_lines = target_max > 0
+    target_matches = target_max[target_lines]
+    target_lines_idx = np.where(target_lines[1:])[0]
+
+    if len(target_lines_idx) == 0:
+        return []
+
+    # Group common lines
+    # Groups of size larger than `1` always contain consecutive lines
+    # E.g.:
+    # Input: [0,4,5,6,7]
+    # Output: [(0,), (4,5,6), (7,)]
+    diff_matches = np.diff(target_matches)
+    groups = np.split(target_lines_idx, np.where(diff_matches != 1)[0] + 1)
+    groups = list(map(tuple, groups))
+
+    return groups
 
 
 def split_on_point(

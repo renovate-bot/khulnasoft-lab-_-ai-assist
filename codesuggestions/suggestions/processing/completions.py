@@ -220,8 +220,8 @@ class ModelEngineCompletions(ModelEngineBase):
                     watch_container.register_model_output_length(res.text)
                     watch_container.register_model_score(res.score)
 
-                    completion = self.post_processor.process(res.text)
                     completion = trim_by_min_allowed_context(prefix, res.text, lang_id)
+                    completion = self.post_processor.process(prompt.prefix, completion)
 
                     return ModelEngineOutput(
                         text=completion,
