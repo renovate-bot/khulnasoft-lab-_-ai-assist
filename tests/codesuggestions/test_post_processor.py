@@ -107,7 +107,7 @@ def print_hello_world():
 PREFIX_PYTHON_2 = """
 # This code has a filename of app.py and is written in Python.
 def print_hello_world():
-\t\t
+\t
 """.strip(
     "\n"
 )
@@ -137,16 +137,16 @@ def test_strip_whitespaces(completion, expected_output):
 @pytest.mark.parametrize(
     ("context", "completion", "expected"),
     [
-        (PREFIX_JAVASCRIPT_1, COMPLETION_JAVASCRIPT_1_1, "only"),
+        (PREFIX_JAVASCRIPT_1, COMPLETION_JAVASCRIPT_1_1, "only\n"),
         (PREFIX_JAVASCRIPT_1, COMPLETION_JAVASCRIPT_1_2, "only"),
         (PREFIX_JAVASCRIPT_1, COMPLETION_JAVASCRIPT_1_3, COMPLETION_JAVASCRIPT_1_3),
         (PREFIX_JAVASCRIPT_2, COMPLETION_JAVASCRIPT_2_1, "\n\n\n"),
         (
             PREFIX_JAVASCRIPT_3,
             COMPLETION_JAVASCRIPT_3_1,
-            "\n newFunctionForValidatingEmail, writeStringBackwards };",
+            " newFunctionForValidatingEmail, writeStringBackwards };",
         ),
-        (PREFIX_PYTHON_1, COMPLETION_PYTHON_1_1, "\n\t"),
+        (PREFIX_PYTHON_1, COMPLETION_PYTHON_1_1, ""),
         (PREFIX_PYTHON_2, COMPLETION_PYTHON_2_1, '\n\tprint("hello world")'),
         ("   ", "", ""),
         ("def hello_world():", "\n\n  ", "\n\n  "),

@@ -36,13 +36,13 @@ def strip_whitespaces(text: str) -> str:
 def clean_model_reflection(context: str, completion: str) -> str:
     text = f"{context}{completion}"
 
-    br_pos = find_newline_position(text, start_index=len(context) - 1)
+    br_pos = find_newline_position(text, start_index=len(context))
     if br_pos == -1:
         # Only the current line was completed, no need to dedupe completion
         return completion
 
-    lines_before = text[:br_pos].splitlines()
-    lines_after = text[br_pos:].splitlines()
+    lines_before = _split_code_lines(text[:br_pos])
+    lines_after = _split_code_lines(text[br_pos:])
 
     common_lines = find_common_lines(
         source=[line.strip() for line in lines_before],
@@ -68,8 +68,24 @@ def clean_model_reflection(context: str, completion: str) -> str:
     lines_completion.extend(lines_after[prev_line:])
 
     # Get the completion of the current line + processed lines
-    completion = text[len(context) : br_pos - 1]
-    if completion_suf := "\n".join(lines_completion):
-        completion = f"{completion}\n{completion_suf}"
+    completion = text[len(context) : br_pos]
+    completion = "".join([completion, *lines_completion])
 
     return completion
+
+
+def _split_code_lines(s: str) -> list[str]:
+    lines_split = s.splitlines(keepends=True)
+    lines_processed = []
+
+    for i, line in enumerate(lines_split):
+        line = line.rstrip("\n")
+        if i > 0:
+            line = "\n" + line
+
+        lines_processed.append(line)
+
+    if len(lines_split) and lines_split[-1].endswith("\n"):
+        lines_processed.append("\n")
+
+    return lines_processed
