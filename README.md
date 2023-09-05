@@ -134,9 +134,9 @@ Note that the VRAM requirements listed by `setup.sh` are _total_ -- if you have 
 across them. So, if you have two NVIDIA RTX 3080 GPUs, you _should_ be able to run the 6B model by putting half on each
 GPU.
 
-- Google Cloud SDK
+### Google Cloud SDK
 
-Install cloud sdk by following the [GCP docs](https://cloud.google.com/sdk/docs/install). Post installation, authorize your google account to setup credentials using the command - `gcloud init`.
+Install and setup cloud sdk by following the [GCP docs](https://cloud.google.com/sdk/docs/install). Post installation, authorize your google account to setup credentials using the command - `gcloud init`.
 
 ## Developing
 
