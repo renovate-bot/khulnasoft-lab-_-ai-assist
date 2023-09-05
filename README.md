@@ -134,6 +134,10 @@ Note that the VRAM requirements listed by `setup.sh` are _total_ -- if you have 
 across them. So, if you have two NVIDIA RTX 3080 GPUs, you _should_ be able to run the 6B model by putting half on each
 GPU.
 
+- Google Cloud SDK
+
+Install cloud sdk by following the [GCP docs](https://cloud.google.com/sdk/docs/install). Post installation, authorize your google account to setup credentials using the command - `gcloud init`.
+
 ## Developing
 
 Before submitting merge requests, run lints and tests with the following commands
@@ -195,8 +199,8 @@ API_EXTERNAL_PORT=5001  # External port for the API used in docker-compose
 METRICS_EXTERNAL_PORT=8082  # External port for the /metrics endpoint used in docker-compose
 F_IS_THIRD_PARTY_AI_DEFAULT=true
 F_THIRD_PARTY_ROLLOUT_PERCENTAGE=100
-PALM_TEXT_MODEL_NAME=code-gecko
-PALM_TEXT_PROJECT=unreview-poc-390200e5
+PALM_TEXT_MODEL_NAME=text-bison
+PALM_TEXT_PROJECT=ai-enablement-dev-69497ba7
 FASTAPI_API_HOST=0.0.0.0
 FASTAPI_API_PORT=5000
 FASTAPI_METRICS_HOST=0.0.0.0
@@ -223,8 +227,14 @@ value `'None'`.
 1. Update the `.env` file in the root folder with the following variables:
 
    ```
-   PALM_TEXT_MODEL_NAME=code-gecko
-   PALM_TEXT_PROJECT=unreview-poc-390200e5
+   AUTH_BYPASS_EXTERNAL=true
+   F_IS_THIRD_PARTY_AI_DEFAULT=true
+   F_THIRD_PARTY_ROLLOUT_PERCENTAGE=100
+   PALM_TEXT_MODEL_NAME=text-bison
+   PALM_TEXT_PROJECT=ai-enablement-dev-69497ba7
+   FASTAPI_DOCS_URL=/docs
+   FASTAPI_OPENAPI_URL=/openapi.json
+   FASTAPI_API_PORT=5052
    ```
 1. Ensure you're authenticated with the `gcloud` CLI by running `gcloud auth application-default login`
 1. Start the model-gateway server locally: `poetry run codesuggestions`
