@@ -122,6 +122,7 @@ You'll need:
 - An NVIDIA GPU with Compute Capability >= 6.0 and enough VRAM to run the model you want.
 - [`nvidia-docker`](https://github.com/NVIDIA/nvidia-docker)
 - `curl` and `zstd` for downloading and unpacking the models.
+- [`gcloud` CLI](https://cloud.google.com/docs/authentication/provide-credentials-adc#how-to)
 
 If you're working locally, you'll also need other tools to build a
 [`tree-sitter`](https://tree-sitter.github.io/tree-sitter/) library:
@@ -225,7 +226,7 @@ value `'None'`.
    PALM_TEXT_MODEL_NAME=code-gecko
    PALM_TEXT_PROJECT=unreview-poc-390200e5
    ```
-
+1. Ensure you're authenticated with the `gcloud` CLI by running `gcloud auth application-default login`
 1. Start the model-gateway server locally: `poetry run codesuggestions`
 1. Open `http://0.0.0.0:5052/docs` in your browser and run any requests to the codegen model
 
