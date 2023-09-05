@@ -172,6 +172,51 @@ def test_find_cursor_position(
 
 
 @pytest.mark.parametrize(
+    ("value", "start_index", "expected_position"),
+    [
+        ("one line\nanother line", 0, 9),
+        ("one line\nanother line", 8, 9),
+        ("one line\nanother line", 5, 9),
+        ("one line\nanother line", 9, 9),
+        ("one line\nanother line\n", 0, 9),
+        ("one line\nanother line\n", 0, 9),
+        ("one line\n\tanother line\n", 0, 9),
+        ("one line\n\tanother line\n", 10, 10),
+        ("one line\n\t\tanother line\n", 11, 11),
+        ("one line\nanother line", 10, -1),
+        ("one line", 0, -1),
+    ],
+)
+def test_find_newline_position(value: str, start_index: int, expected_position: int):
+    actual = ops.find_newline_position(value, start_index=start_index)
+
+    assert actual == expected_position
+
+
+@pytest.mark.parametrize(
+    ("source", "target", "expected"),
+    [
+        ([], [], []),
+        ([], ["abc"], []),
+        (["abc"], [], []),
+        (["abc"], ["def"], []),
+        (["abc", "def"], ["abc", "def"], [(0, 1)]),
+        (["abc", "abc", "a", "abc", "def"], ["abc", "def", "a"], [(0, 1), (2,)]),
+        (
+            ["b", "abc", "def", "a", "abc", "def"],
+            ["abc", "def", "c", "abc", "def", "k"],
+            [(0, 1), (3, 4)],
+        ),
+        (["abc"], ["abc"], [(0,)]),
+    ],
+)
+def test_find_common_lines(source: list, target: list, expected: list):
+    actual = ops.find_common_lines(source, target)
+
+    assert actual == expected
+
+
+@pytest.mark.parametrize(
     ("text", "expected_value"),
     [
         ("first line\nsecond line", "first line\nsecond line"),
