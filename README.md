@@ -1,4 +1,4 @@
-# GitLab AI Assist
+# GitLab AI Gateway
 
 This project is based on the open source project
 [FauxPilot](https://github.com/moyix/fauxpilot/blob/main/docker-compose.yaml) as an initial iteration in an effort to
@@ -292,48 +292,76 @@ Feature.enable(:ai_assist_api)
 Feature.enable(:ai_assist_flag, g)
 ```
 
-This will allow the feature to actually return `{"user_is_allowed": true }`.
-
 ## Authentication
 
-The intended use of this API is to be called from the
-[GitLab VS code extension](https://gitlab.com/gitlab-org/gitlab-vscode-extension), the extension authenticates users
-against the GitLab Rails API. However, we can not rely on the VS Extension to authorize users for AI Assist as it runs
-on the client side, we need a server side check. So in order to do that, the extension passes along the user's token via
-a header to the AI Assist API, this token is subsequently used to make a `GET` call to `/v4/ml/ai-assist` on behalf of
-the user to verify that it can indeed use AI Assist. The response `{"user_is_allowed": bool}` will be cached for 1 hour
-to not burden the Rails API with an excessive amount of calls.
+The intended use of this API is to be called from a client such as the
+[GitLab VS Code Extension](https://gitlab.com/gitlab-org/gitlab-vscode-extension)
+and other language servers. The client authenticates users against the GitLab
+API using their OAuth or Personal Access Tokens (PAT). Once GitLab successfully
+authenticates the request, it generates a JSON Web Token (JWT) and forwards the
+code suggestions request to this Gateway.
 
-Below diagram described the authentication flow in blue.
+The following diagram describes the authentication flow.
 
-![Diagram](https://docs.google.com/drawings/d/e/2PACX-1vQyFs0-irUGf_t6imgBiVSfnMf4oh45w4QEusVvwlGZy22tyCErG7JV2IC87e7DvT7b8_Ni8V77BkUW/pub?w=1022&h=390)
+```mermaid
+sequenceDiagram
+    autonumber
+
+    participant C as Client
+    participant G as GitLab
+    participant AI as AI Gateway
+
+    C->>+G: /code_suggestions/completions<br>with OAuth/PAT
+    G->>+AI: /completions with JWT
+
+    AI->>AI: validate JWKS exist
+
+    alt JWKS missing
+        AI-->>+G: /.well-known/openid-configuration
+        G-->>-AI: jwks_uri
+        AI-->>+G: /oauth/discovery/keys
+        G-->>-AI: JWKS
+        AI->>AI: cache for 24 hours
+    end
+
+    AI-->>-G: suggestions
+    G-->>-C: suggestions
+```
 
 ## Component overview
 
-In above diagram the main components are shown.
+In above diagram, the main components are shown.
 
-### VS Code extension
+### Client
 
-The VS Code extension has the following functions:
+The Client has the following functions:
 
 1. Determine input parameters
    1. Stop sequences
    1. Gather code for the prompt
-1. Send the input parameters to the AI Assist API using the OpenAI package
-1. Parse results from AI Assist and present them as `inlineCompletions`
+1. Send the input parameters to the AI Gateway API.
+1. Parse results from AI Gateway and present them as `inlineCompletions`.
 
-### AI Assist API
+We are supporting the following clients:
 
-Is written in Python and uses the FastApi framework along with Uvicorn. It has the following functions
+- [GitLab VS Code Extension](https://gitlab.com/gitlab-org/gitlab-vscode-extension)
+- [GitLab Language Server for Code Suggestions](https://gitlab.com/gitlab-org/editor-extensions/gitlab-language-server-for-code-suggestions)
 
-1. Provide a REST API for incoming calls on `/v2/completions`
-1. Authenticate incoming requests against GitLab `/v4/ml/ai-assist` and cache the result
-1. Convert the prompt into a format that can be used by GCP Vertex AI
-1. Call Vertex AI, await the result and parse it back as a response
+### AI Gateway API
+
+Is written in Python and uses the [FastAPI](https://fastapi.tiangolo.com) framework
+along with Uvicorn. It has the following functions:
+
+1. Provide a REST API for incoming calls such as `/completions`.
+1. Authenticate incoming requests using GitLab JSON Web Key Sets (JWKS).
+1. Convert the prompt into a format that can be used by GCP Vertex AI API.
+1. Call Vertex AI API, await the result and parse it back as a response.
 
 ### GitLab API
 
-The endpoint `/v4/ml/ai-assist` checks if a user meets the requirements to use AI Assist and returns a boolean.
+The endpoint `/.well-known/openid-configuration` is to get the JWKS URI. We then
+call this URI to fetch the JWKS. We cache the JWKS for 24 hours and use it to validate
+the authenticity of the suggestion requests.
 
 ## Deployment to Runway
 
