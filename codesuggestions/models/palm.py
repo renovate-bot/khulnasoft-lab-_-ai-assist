@@ -140,6 +140,8 @@ class PalmCodeGenBaseModel(TextGenBaseModel):
         }
         parameters = json_format.ParseDict(parameters_dict, struct_pb2.Value())
 
+        log.debug("codegen vertex call:", input=input_data, parameters=parameters_dict)
+
         try:
             response = await self.client.predict(
                 endpoint=self.endpoint,

@@ -16,6 +16,7 @@ __all__ = [
 class LoggingConfig(NamedTuple):
     level: str
     json: bool
+    log_to_file: bool
 
 
 class FastApiConfig(NamedTuple):
@@ -85,6 +86,7 @@ class Config:
         return LoggingConfig(
             level=Config._get_value("LOG_LEVEL", "INFO"),
             json=Config._str_to_bool(Config._get_value("LOG_FORMAT_JSON", "True")),
+            log_to_file=Config._get_value("LOG_TO_FILE", ""),
         )
 
     @property

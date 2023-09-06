@@ -41,6 +41,7 @@ EXPERIMENT_COUNTER = Counter(
 
 class ModelEngineOutput(NamedTuple):
     text: str
+    score: float
     model: MetadataModel
     metadata: MetadataPromptBuilder
     lang_id: Optional[LanguageId] = None

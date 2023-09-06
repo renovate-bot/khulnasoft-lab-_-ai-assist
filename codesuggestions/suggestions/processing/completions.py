@@ -200,7 +200,10 @@ class ModelEngineCompletions(ModelEngineBase):
         )
 
         empty_output = ModelEngineOutput(
-            text="", model=model_metadata, metadata=MetadataPromptBuilder(components={})
+            text="",
+            score=0,
+            model=model_metadata,
+            metadata=MetadataPromptBuilder(components={}),
         )
 
         # TODO: keep watching the suffix length until logging ModelEngineOutput in the upper layer
@@ -225,6 +228,7 @@ class ModelEngineCompletions(ModelEngineBase):
 
                     return ModelEngineOutput(
                         text=completion,
+                        score=res.score,
                         model=model_metadata,
                         lang_id=lang_id,
                         metadata=prompt.metadata,

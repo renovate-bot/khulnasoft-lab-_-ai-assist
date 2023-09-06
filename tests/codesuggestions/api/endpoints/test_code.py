@@ -38,6 +38,7 @@ class TestCodeCompletions:
     def test_successful_response(self, client):
         model_output = ModelEngineOutput(
             text="def search",
+            score=0,
             model=MetadataModel(name="code-gecko", engine="vertex-ai"),
             lang_id=LanguageId.PYTHON,
             metadata=MetadataPromptBuilder(
@@ -203,7 +204,7 @@ class TestSnowplowInstrumentator:
         assert args["gitlab_global_user_id"] == expected_user_id
 
 
-class TestCodeGenaration:
+class TestCodeGeneration:
     @pytest.fixture(scope="class")
     def client(self):
         app = FastAPI()
@@ -239,6 +240,7 @@ class TestCodeGenaration:
     ):
         model_output = ModelEngineOutput(
             text="foo",
+            score=0,
             model=MetadataModel(name="some-model", engine="some-engine"),
             lang_id=LanguageId.PYTHON,
             metadata=MetadataPromptBuilder(

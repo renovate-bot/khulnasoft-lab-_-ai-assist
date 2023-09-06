@@ -92,6 +92,7 @@ class ModelEngineGenerations(ModelEngineBase):
 
                     return ModelEngineOutput(
                         text=generation,
+                        score=res.score,
                         model=model_metadata,
                         lang_id=lang_id,
                         metadata=prompt.metadata,

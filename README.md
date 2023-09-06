@@ -249,6 +249,17 @@ code suggestions, while allowing you to run an otherwise fully functional model 
 This can be useful for testing middleware, request/response interface contracts, logging, and other
 uses cases that do not require an AI model to execute.
 
+### Logging requests and responses during development
+
+AI Gateway workflow includes additional pre- and post-processing steps. 
+If you want to log data between different steps for development purposes, 
+please update the `.env` file by setting the following variables:
+
+```
+LOG_LEVEL=debug
+LOG_TO_FILE=../modelgateway_debug.log
+```
+
 ## Local development using GDK
 
 You can either run `make develop-local` or `docker-compose -f docker-compose.dev.yaml up --build --remove-orphans` this

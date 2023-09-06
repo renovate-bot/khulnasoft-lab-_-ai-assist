@@ -98,6 +98,13 @@ async def completions(
     except Exception as e:
         log.error(f"failed to track Snowplow event: {e}")
 
+    log.debug(
+        "code completion input:",
+        prefix=payload.current_file.content_above_cursor,
+        suffix=payload.current_file.content_below_cursor,
+        current_file_name=payload.current_file.file_name,
+    )
+
     with TelemetryInstrumentator().watch(payload.telemetry):
         suggestion = await code_completions(
             payload.current_file.content_above_cursor,
@@ -105,6 +112,13 @@ async def completions(
             payload.current_file.file_name,
             payload.current_file.language_identifier,
         )
+
+    log.debug(
+        "code completion suggestion:",
+        suggestion=suggestion.text,
+        score=suggestion.score,
+        language=suggestion.lang(),
+    )
 
     return SuggestionsResponse(
         id="id",
@@ -138,6 +152,13 @@ async def generations(
     except Exception as e:
         log.error(f"failed to track Snowplow event: {e}")
 
+    log.debug(
+        "code creation input:",
+        prefix=payload.current_file.content_above_cursor,
+        suffix=payload.current_file.content_below_cursor,
+        current_file_name=payload.current_file.file_name,
+    )
+
     prompt = None
     if payload.prompt_version >= 2:
         prompt = payload.prompt
@@ -150,6 +171,12 @@ async def generations(
             payload.current_file.language_identifier,
             prompt_input=prompt,
         )
+
+    log.debug(
+        "code creation suggestion:",
+        suggestion=suggestion.text,
+        language=suggestion.lang(),
+    )
 
     return SuggestionsResponse(
         id="id",
