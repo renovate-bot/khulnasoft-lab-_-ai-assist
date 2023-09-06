@@ -1,5 +1,6 @@
 import logging
 import sys
+from pathlib import Path
 
 import structlog
 from asgi_correlation_id import CorrelationIdMiddleware
@@ -94,7 +95,12 @@ def setup_logging(app: ASGIApp, logging_config: LoggingConfig):
         ],
     )
 
-    handler = logging.StreamHandler()
+    if logging_config.log_to_file:
+        file = Path(logging_config.log_to_file).resolve()
+        handler = logging.FileHandler(filename=str(file), mode="a")
+    else:
+        handler = logging.StreamHandler()
+
     # Use OUR `ProcessorFormatter` to format all `logging` entries.
     handler.setFormatter(formatter)
     root_logger = logging.getLogger()
