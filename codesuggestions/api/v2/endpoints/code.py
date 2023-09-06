@@ -1,10 +1,10 @@
 from time import time
-from typing import Optional
+from typing import Annotated, Literal, Optional, Union
 
 import structlog
 from dependency_injector.wiring import Provide, inject
 from fastapi import APIRouter, Depends, Request
-from pydantic import BaseModel, conlist, constr
+from pydantic import BaseModel, Field, conlist, constr
 
 from codesuggestions.api.middleware import (
     X_GITLAB_GLOBAL_USER_ID_HEADER,
@@ -40,11 +40,25 @@ class CurrentFile(BaseModel):
 
 
 class SuggestionsRequest(BaseModel):
-    prompt_version: int = 1
     project_path: Optional[constr(strip_whitespace=True, max_length=255)]
     project_id: Optional[int]
     current_file: CurrentFile
     telemetry: conlist(Telemetry, max_items=10) = []
+
+
+class SuggestionsRequestV1(SuggestionsRequest):
+    prompt_version: Literal[1] = 1
+
+
+class SuggestionsRequestV2(SuggestionsRequest):
+    prompt_version: Literal[2]
+    prompt: str
+
+
+SuggestionRequestWithVersion = Annotated[
+    Union[SuggestionsRequestV1, SuggestionsRequestV2],
+    Field(discriminator="prompt_version"),
+]
 
 
 class SuggestionsResponse(BaseModel):
@@ -71,7 +85,7 @@ class SuggestionsResponse(BaseModel):
 @inject
 async def completions(
     req: Request,
-    payload: SuggestionsRequest,
+    payload: SuggestionsRequestV1,
     code_completions: CodeCompletions = Depends(
         Provide[CodeSuggestionsContainer.code_completions]
     ),
@@ -111,7 +125,7 @@ async def completions(
 @inject
 async def generations(
     req: Request,
-    payload: SuggestionsRequest,
+    payload: SuggestionRequestWithVersion,
     code_generations: CodeGenerations = Depends(
         Provide[CodeSuggestionsContainer.code_generations]
     ),
@@ -124,12 +138,17 @@ async def generations(
     except Exception as e:
         log.error(f"failed to track Snowplow event: {e}")
 
+    prompt = None
+    if payload.prompt_version >= 2:
+        prompt = payload.prompt
+
     with TelemetryInstrumentator().watch(payload.telemetry):
         suggestion = await code_generations(
             payload.current_file.content_above_cursor,
             payload.current_file.content_below_cursor,
             payload.current_file.file_name,
             payload.current_file.language_identifier,
+            prompt_input=prompt,
         )
 
     return SuggestionsResponse(
