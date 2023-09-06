@@ -31,5 +31,8 @@ class CodeGenerations:
         suffix: str,
         file_name: str,
         language_identifier: str,
+        prompt_input: str = None,
     ) -> ModelEngineOutput:
-        return self.engine.generate(prefix, suffix, file_name, language_identifier)
+        return self.engine.generate(
+            prefix, suffix, file_name, language_identifier, prompt_input=prompt_input
+        )

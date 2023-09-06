@@ -72,13 +72,16 @@ class ModelEngineGenerations(ModelEngineBase):
         _suffix: str,
         file_name: str,
         lang_id: Optional[LanguageId] = None,
+        prompt_input: Optional[str] = None,
         **kwargs: Any,
     ) -> ModelEngineOutput:
         model_metadata = MetadataModel(
             name=self.model.model_name, engine=self.model.model_engine
         )
+        prompt = self._build_prompt(
+            prefix, file_name, lang_id=lang_id, prompt_input=prompt_input
+        )
 
-        prompt = self._build_prompt(prefix, file_name, lang_id=lang_id)
         with self.instrumentator.watch(prompt) as watch_container:
             try:
                 if res := await self.model.generate(prompt.prefix, "", **kwargs):
@@ -102,8 +105,18 @@ class ModelEngineGenerations(ModelEngineBase):
         )
 
     def _build_prompt(
-        self, prefix: str, file_name: str, lang_id: Optional[LanguageId] = None
+        self,
+        prefix: str,
+        file_name: str,
+        lang_id: Optional[LanguageId] = None,
+        prompt_input: Optional[str] = None,
     ):
+        # If a prompt input was provided, we can skip the pre-processing
+        if prompt_input:
+            return Prompt(
+                prefix=prompt_input, metadata=MetadataPromptBuilder(components={})
+            )
+
         tpl = PromptTemplate(TPL_GENERATION_BASE)
 
         # Get the length of the prompt template to truncate the prefix accordingly

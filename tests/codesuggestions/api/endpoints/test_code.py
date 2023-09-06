@@ -201,3 +201,76 @@ class TestSnowplowInstrumentator:
         assert args["gitlab_realm"] == expected_realm
         assert args["gitlab_instance_id"] == expected_instance_id
         assert args["gitlab_global_user_id"] == expected_user_id
+
+
+class TestCodeGenaration:
+    @pytest.fixture(scope="class")
+    def client(self):
+        app = FastAPI()
+        app.include_router(api_router)
+        client = TestClient(app)
+        yield client
+
+    @pytest.mark.parametrize(
+        (
+            "prompt_version",
+            "prefix",
+            "prompt",
+            "want_called",
+            "want_status",
+            "want_prompt",
+        ),
+        [
+            (1, "foo", None, True, 200, None),
+            (1, "foo", "bar", True, 200, None),
+            (2, "foo", "bar", True, 200, "bar"),
+            (2, "foo", None, False, 422, None),  # v2 request need the prompt field
+        ],
+    )
+    def test_request_versioning(
+        self,
+        client,
+        prompt_version,
+        prefix,
+        prompt,
+        want_called,
+        want_status,
+        want_prompt,
+    ):
+        model_output = ModelEngineOutput(
+            text="foo",
+            model=MetadataModel(name="some-model", engine="some-engine"),
+            lang_id=LanguageId.PYTHON,
+            metadata=MetadataPromptBuilder(
+                components={
+                    "prefix": MetadataCodeContent(length=10, length_tokens=2),
+                    "suffix": MetadataCodeContent(length=10, length_tokens=2),
+                },
+                experiments=[ExperimentTelemetry(name="truncate_suffix", variant=1)],
+            ),
+        )
+
+        code_generations_mock = mock.AsyncMock(return_value=model_output)
+        container = CodeSuggestionsContainer()
+
+        with container.code_generations.override(code_generations_mock):
+            response = client.post(
+                "/v2/code/generations",
+                json={
+                    "prompt_version": prompt_version,
+                    "project_path": "gitlab-org/gitlab",
+                    "project_id": 278964,
+                    "current_file": {
+                        "file_name": "main.py",
+                        "content_above_cursor": prefix,
+                        "content_below_cursor": "\n",
+                    },
+                    "prompt": prompt,
+                },
+            )
+
+        assert response.status_code == want_status
+        assert code_generations_mock.called == want_called
+        if code_generations_mock.called:
+            prompt_input = code_generations_mock.call_args_list[0][1]["prompt_input"]
+            assert prompt_input == want_prompt
