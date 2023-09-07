@@ -31,6 +31,12 @@ __all__ = [
 
 _PROBS_ENDPOINTS = ["/monitoring/healthz", "/metrics"]
 
+_VERTEX_MODELS_VERSIONS = {
+    ModelRollout.GOOGLE_TEXT_BISON: f"{ModelRollout.GOOGLE_TEXT_BISON}@001",
+    ModelRollout.GOOGLE_CODE_BISON: f"{ModelRollout.GOOGLE_CODE_BISON}@001",
+    ModelRollout.GOOGLE_CODE_GECKO: f"{ModelRollout.GOOGLE_CODE_GECKO}@001",
+}
+
 
 def _init_vertex_grpc_client(api_endpoint: str, real_or_fake):
     if real_or_fake == "fake":
@@ -87,16 +93,18 @@ def _create_engine_code_generations(model_provider, tokenizer):
     )
 
 
-def _all_vertex_models(names, grpc_client_vertex, project, location, real_or_fake):
+def _all_vertex_models(
+    models_key_name, grpc_client_vertex, project, location, real_or_fake
+):
     return {
-        name: _create_vertex_model(
-            name,
+        model_key: _create_vertex_model(
+            model_name,
             grpc_client_vertex,
             project,
             location,
             real_or_fake,
         )
-        for name in names
+        for model_key, model_name in models_key_name.items()
     }
 
 
@@ -184,11 +192,7 @@ class CodeSuggestionsContainer(containers.DeclarativeContainer):
     post_processor = providers.Resource(PostProcessor)
 
     models = _all_vertex_models(
-        [
-            ModelRollout.GOOGLE_TEXT_BISON,
-            ModelRollout.GOOGLE_CODE_BISON,
-            ModelRollout.GOOGLE_CODE_GECKO,
-        ],
+        _VERTEX_MODELS_VERSIONS,
         grpc_client_vertex,
         config.palm_text_model.project,
         config.palm_text_model.location,
