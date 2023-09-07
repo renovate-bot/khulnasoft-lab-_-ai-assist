@@ -1,36 +1,28 @@
-__all__ = [
-    "PostProcessor",
-    "strip_whitespaces",
-    "clean_model_reflection",
-]
+import re
+from typing import Optional
 
+import structlog
+
+from codesuggestions.prompts.parsers import CodeParser
 from codesuggestions.suggestions.processing.ops import (
     find_common_lines,
+    find_cursor_position,
     find_newline_position,
+    find_non_whitespace_point,
 )
+from codesuggestions.suggestions.processing.typing import LanguageId
+
+__all__ = [
+    "clean_model_reflection",
+    "trim_by_min_allowed_context",
+    "strip_code_block_markdown",
+]
+
+log = structlog.stdlib.get_logger("codesuggestions")
+
 
 _COMMENT_IDENTIFIERS = ["/*", "//", "#"]
-
-
-class PostProcessor:
-    def process(self, code_context: str, text: str) -> str:
-        """Execute a number of post-processing actions on a text.
-
-        Args:
-           text: A text to process
-
-        Returns:
-           A resulted output
-        """
-
-        text = clean_model_reflection(code_context, text)
-        text = strip_whitespaces(text)
-
-        return text
-
-
-def strip_whitespaces(text: str) -> str:
-    return "" if text.isspace() else text
+_RE_MARKDOWN_CODE_BLOCK_BEGIN = re.compile(r"^`{3}\S*\n", flags=re.MULTILINE)
 
 
 def clean_model_reflection(context: str, completion: str) -> str:
@@ -72,6 +64,42 @@ def clean_model_reflection(context: str, completion: str) -> str:
     completion = "".join([completion, *lines_completion])
 
     return completion
+
+
+def trim_by_min_allowed_context(
+    prefix: str,
+    completion: str,
+    lang_id: Optional[LanguageId] = None,
+) -> str:
+    code_sample = f"{prefix}{completion}"
+    len_prefix = len(prefix)
+    target_point = find_non_whitespace_point(code_sample, start_index=len_prefix)
+    if target_point == (-1, -1):
+        return completion
+
+    try:
+        parser = CodeParser.from_language_id(
+            code_sample,
+            lang_id,
+        )
+        context = parser.min_allowed_context(target_point)
+        end_pos = find_cursor_position(code_sample, context.end)
+        if end_pos == -1:
+            return completion
+
+        out = code_sample[len_prefix:end_pos]
+    except ValueError as e:
+        log.warning(f"Failed to parse code: {e}")
+        out = completion
+
+    return out
+
+
+def strip_code_block_markdown(text: str) -> str:
+    text = _RE_MARKDOWN_CODE_BLOCK_BEGIN.sub("", text, count=0)
+    text = text.rstrip("`")
+
+    return text
 
 
 def _split_code_lines(s: str) -> list[str]:

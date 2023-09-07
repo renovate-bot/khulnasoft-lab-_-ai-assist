@@ -18,12 +18,11 @@ from codesuggestions.suggestions.processing import (
     MetadataModel,
     MetadataPromptBuilder,
     ModelEngineCompletions,
-    PostProcessor,
     ops,
 )
+from codesuggestions.suggestions.processing.post.completions import PostProcessor
 
 tokenizer = AutoTokenizer.from_pretrained("Salesforce/codegen2-16B")
-post_processor = PostProcessor()
 
 
 class MockInstrumentor:
@@ -337,7 +336,7 @@ async def test_model_engine_palm(
     engine = ModelEngineCompletions(
         model=text_gen_base_model,
         tokenizer=tokenizer,
-        post_processor=post_processor,
+        post_processor=PostProcessor,
         experiment_registry=ExperimentRegistry(),
     )
     engine.instrumentator = MockInstrumentor()
@@ -494,7 +493,7 @@ def test_prompt_building_model_engine_palm(
     engine = ModelEngineCompletions(
         model=text_gen_base_model,
         tokenizer=tokenizer,
-        post_processor=post_processor,
+        post_processor=PostProcessor,
         experiment_registry=ExperimentRegistry(),
     )
     prompt = engine._build_prompt(

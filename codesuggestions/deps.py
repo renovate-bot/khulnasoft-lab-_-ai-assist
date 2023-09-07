@@ -14,7 +14,12 @@ from codesuggestions.suggestions import CodeCompletions, CodeGenerations
 from codesuggestions.suggestions.processing import (
     ModelEngineCompletions,
     ModelEngineGenerations,
-    PostProcessor,
+)
+from codesuggestions.suggestions.processing.post.completions import (
+    PostProcessor as PostProcessorCompletions,
+)
+from codesuggestions.suggestions.processing.post.generations import (
+    PostProcessor as PostProcessorGenerations,
 )
 from codesuggestions.tokenizer import init_tokenizer
 from codesuggestions.tracking import (
@@ -67,14 +72,12 @@ def _create_vertex_model(name, grpc_client_vertex, project, location, real_or_fa
     )
 
 
-def _create_engine_code_completions(
-    model_provider, tokenizer, post_processor, experiment_registry
-):
+def _create_engine_code_completions(model_provider, tokenizer, experiment_registry):
     return providers.Factory(
         ModelEngineCompletions,
         model=model_provider,
         tokenizer=tokenizer,
-        post_processor=post_processor,
+        post_processor=providers.Factory(PostProcessorCompletions).provider,
         experiment_registry=experiment_registry,
     )
 
@@ -84,6 +87,7 @@ def _create_engine_code_generations(model_provider, tokenizer):
         ModelEngineGenerations,
         model=model_provider,
         tokenizer=tokenizer,
+        post_processor=providers.Factory(PostProcessorGenerations).provider,
     )
 
 
@@ -100,14 +104,13 @@ def _all_vertex_models(names, grpc_client_vertex, project, location, real_or_fak
     }
 
 
-def _all_engines(models, tokenizer, post_processor):
+def _all_engines(models, tokenizer):
     experiment_registry = experiment_registry_provider()
     # TODO: add experiment_registry to _create_engine_code_generations
     return {
         ModelRollout.GOOGLE_CODE_GECKO: _create_engine_code_completions(
             models[ModelRollout.GOOGLE_CODE_GECKO],
             tokenizer,
-            post_processor,
             experiment_registry,
         ),
         **{
@@ -181,8 +184,6 @@ class CodeSuggestionsContainer(containers.DeclarativeContainer):
 
     tokenizer = providers.Resource(init_tokenizer)
 
-    post_processor = providers.Resource(PostProcessor)
-
     models = _all_vertex_models(
         [
             ModelRollout.GOOGLE_TEXT_BISON,
@@ -195,7 +196,7 @@ class CodeSuggestionsContainer(containers.DeclarativeContainer):
         config.palm_text_model.real_or_fake,
     )
 
-    engines = _all_engines(models, tokenizer, post_processor)
+    engines = _all_engines(models, tokenizer)
 
     # TODO: We keep engine factory to support experimental API endpoints.
     # TODO: Would be great to move such dependencies to a separate experimental container

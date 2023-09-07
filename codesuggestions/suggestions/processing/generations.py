@@ -1,7 +1,14 @@
 from pathlib import Path
 from typing import Any, Optional
 
-from codesuggestions.models import VertexModelInternalError, VertexModelInvalidArgument
+from dependency_injector.providers import Factory
+from transformers import PreTrainedTokenizer
+
+from codesuggestions.models import (
+    PalmCodeGenBaseModel,
+    VertexModelInternalError,
+    VertexModelInvalidArgument,
+)
 from codesuggestions.prompts import PromptTemplate
 from codesuggestions.suggestions.processing.base import (
     CodeContent,
@@ -12,17 +19,15 @@ from codesuggestions.suggestions.processing.base import (
     Prompt,
     PromptBuilderBase,
 )
-from codesuggestions.suggestions.processing.ops import (
-    LanguageId,
-    strip_code_block_markdown,
-    truncate_content,
-)
+from codesuggestions.suggestions.processing.ops import LanguageId, truncate_content
 
 __all__ = [
     "TPL_GENERATION_BASE",
     "PromptBuilder",
     "ModelEngineGenerations",
 ]
+
+from codesuggestions.suggestions.processing.post.generations import PostProcessor
 
 TPL_GENERATION_BASE = """
 ```{lang}
@@ -66,6 +71,15 @@ class PromptBuilder(PromptBuilderBase):
 
 
 class ModelEngineGenerations(ModelEngineBase):
+    def __init__(
+        self,
+        model: PalmCodeGenBaseModel,
+        tokenizer: PreTrainedTokenizer,
+        post_processor: Factory[PostProcessor],
+    ):
+        super().__init__(model, tokenizer)
+        self.post_processor_factory = post_processor
+
     async def _generate(
         self,
         prefix: str,
@@ -88,7 +102,8 @@ class ModelEngineGenerations(ModelEngineBase):
                     watch_container.register_model_output_length(res.text)
                     watch_container.register_model_score(res.score)
 
-                    generation = strip_code_block_markdown(res.text)
+                    # TODO: Move the call to the use case class
+                    generation = self.post_processor_factory().process(res.text)
 
                     return ModelEngineOutput(
                         text=generation,
@@ -102,7 +117,10 @@ class ModelEngineGenerations(ModelEngineBase):
                 watch_container.register_model_exception(str(ex), ex.code)
 
         return ModelEngineOutput(
-            text="", model=model_metadata, metadata=MetadataPromptBuilder(components={})
+            text="",
+            score=0,
+            model=model_metadata,
+            metadata=MetadataPromptBuilder(components={}),
         )
 
     def _build_prompt(

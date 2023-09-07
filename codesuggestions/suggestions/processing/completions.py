@@ -1,6 +1,7 @@
 from typing import Any, Callable, NamedTuple, Optional
 
 import structlog
+from dependency_injector.providers import Factory
 from transformers import PreTrainedTokenizer
 
 from codesuggestions.experimentation import ExperimentRegistry, ExperimentTelemetry
@@ -17,12 +18,8 @@ from codesuggestions.suggestions.processing.base import (
     Prompt,
     PromptBuilderBase,
 )
-from codesuggestions.suggestions.processing.ops import (
-    find_cursor_position,
-    find_non_whitespace_point,
-    truncate_content,
-)
-from codesuggestions.suggestions.processing.post_processor import PostProcessor
+from codesuggestions.suggestions.processing.ops import truncate_content
+from codesuggestions.suggestions.processing.post.completions import PostProcessor
 from codesuggestions.suggestions.processing.typing import (
     CodeContent,
     LanguageId,
@@ -178,11 +175,11 @@ class ModelEngineCompletions(ModelEngineBase):
         self,
         model: PalmCodeGenBaseModel,
         tokenizer: PreTrainedTokenizer,
-        post_processor: PostProcessor,
+        post_processor: Factory[PostProcessor],
         experiment_registry: ExperimentRegistry,
     ):
         super().__init__(model, tokenizer)
-        self.post_processor = post_processor
+        self.post_processor_factory = post_processor
         self.experiment_registry = experiment_registry
 
     async def _generate(
@@ -223,8 +220,10 @@ class ModelEngineCompletions(ModelEngineBase):
                     watch_container.register_model_output_length(res.text)
                     watch_container.register_model_score(res.score)
 
-                    completion = trim_by_min_allowed_context(prefix, res.text, lang_id)
-                    completion = self.post_processor.process(prompt.prefix, completion)
+                    # TODO: Move the call to the use case class
+                    completion = self.post_processor_factory(
+                        prompt.prefix, lang_id=lang_id
+                    ).process(res.text)
 
                     return ModelEngineOutput(
                         text=completion,
@@ -385,32 +384,3 @@ class ModelEngineCompletions(ModelEngineBase):
     ) -> None:
         watch_container.register_experiments(experiments)
         self.increment_experiment_counter(experiments)
-
-
-def trim_by_min_allowed_context(
-    prefix: str,
-    completion: str,
-    lang_id: Optional[LanguageId] = None,
-) -> str:
-    code_sample = f"{prefix}{completion}"
-    len_prefix = len(prefix)
-    target_point = find_non_whitespace_point(code_sample, start_index=len_prefix)
-    if target_point == (-1, -1):
-        return completion
-
-    try:
-        parser = CodeParser.from_language_id(
-            code_sample,
-            lang_id,
-        )
-        context = parser.min_allowed_context(target_point)
-        end_pos = find_cursor_position(code_sample, context.end)
-        if end_pos == -1:
-            return completion
-
-        out = code_sample[len_prefix:end_pos]
-    except ValueError as e:
-        log.warning(f"Failed to parse code: {e}")
-        out = completion
-
-    return out
