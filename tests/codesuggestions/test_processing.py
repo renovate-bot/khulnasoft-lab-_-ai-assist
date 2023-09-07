@@ -217,20 +217,14 @@ def test_find_common_lines(source: list, target: list, expected: list):
 
 
 @pytest.mark.parametrize(
-    ("text", "expected_value"),
+    "completion,expected_output",
     [
-        ("first line\nsecond line", "first line\nsecond line"),
-        ("```\nfirst line\nsecond line```", "first line\nsecond line"),
-        ("```unk\nfirst line\nsecond line```", "first line\nsecond line"),
-        ("```unk\nfirst line\nsecond line", "first line\nsecond line"),
-        ("\nfirst line\nsecond line```", "\nfirst line\nsecond line"),
-        ("```python\none line```", "one line"),
-        ("```TypeScript\none line```", "one line"),
-        ("```java_script\none line```", "one line"),
-        ("```unknown_lang_123\none line```", "one line"),
+        ("        ", ""),
+        ("\n    \t", ""),
+        ("\n hello \t world", "\n hello \t world"),
     ],
 )
-def test_strip_code_block_markdown(text: str, expected_value: str):
-    actual_value = ops.strip_code_block_markdown(text)
+def test_strip_whitespaces(completion, expected_output):
+    actual = ops.strip_whitespaces(completion)
 
-    assert actual_value == expected_value
+    assert actual == expected_output

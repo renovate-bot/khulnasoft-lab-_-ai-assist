@@ -1,9 +1,6 @@
 import pytest
 
-from codesuggestions.suggestions.processing.post_processor import (
-    clean_model_reflection,
-    strip_whitespaces,
-)
+from codesuggestions.suggestions.processing.post.ops import clean_model_reflection
 
 PREFIX_JAVASCRIPT_1 = """
 // This code has a filename of test-2.js and is written in JavaScript.
@@ -118,20 +115,6 @@ COMPLETION_PYTHON_2_1 = """
 """.strip(
     "\n"
 )
-
-
-@pytest.mark.parametrize(
-    "completion,expected_output",
-    [
-        ("        ", ""),
-        ("\n    \t", ""),
-        ("\n hello \t world", "\n hello \t world"),
-    ],
-)
-def test_strip_whitespaces(completion, expected_output):
-    actual = strip_whitespaces(completion)
-
-    assert actual == expected_output
 
 
 @pytest.mark.parametrize(

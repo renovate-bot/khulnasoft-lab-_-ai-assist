@@ -1,9 +1,7 @@
 import pytest
 
-from codesuggestions.suggestions.processing.completions import (
-    trim_by_min_allowed_context,
-)
 from codesuggestions.suggestions.processing.ops import LanguageId, find_cursor_position
+from codesuggestions.suggestions.processing.post.ops import trim_by_min_allowed_context
 
 PYTHON_SAMPLE_1 = """
 class LineBasedCodeSnippets(BaseCodeSnippetsIterator):
@@ -37,7 +35,7 @@ public class FactorialCalculator {
         long factorial = calculateFactorial(number);
         System.out.println("Factorial of " + number + " is: " + factorial);
     }
-    
+
     public static long calculateFactorial(int n) {
         if (n == 0 || n == 1) {
             return 1;
