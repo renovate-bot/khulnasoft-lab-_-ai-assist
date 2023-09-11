@@ -16,6 +16,7 @@ __all__ = [
     "clean_model_reflection",
     "trim_by_min_allowed_context",
     "strip_code_block_markdown",
+    "prepend_new_line",
 ]
 
 log = structlog.stdlib.get_logger("codesuggestions")
@@ -100,6 +101,17 @@ def strip_code_block_markdown(text: str) -> str:
     text = text.rstrip("`")
 
     return text
+
+
+def prepend_new_line(code_context: str, completion: str) -> str:
+    if (
+        len(completion)
+        and not code_context.endswith("\n")
+        and not completion.startswith("\n")
+    ):
+        completion = "\n" + completion
+
+    return completion
 
 
 def _split_code_lines(s: str) -> list[str]:
