@@ -21,3 +21,19 @@ def test_strip_code_block_markdown(text: str, expected_value: str):
     actual_value = ops.strip_code_block_markdown(text)
 
     assert actual_value == expected_value
+
+
+@pytest.mark.parametrize(
+    ("code_context", "completion", "expected_value"),
+    [
+        ("", "", ""),
+        ("code context", "", ""),
+        ("code context", "\ncompletion", "\ncompletion"),
+        ("code context", "completion", "\ncompletion"),
+        ("code context\n", "completion", "completion"),
+    ],
+)
+def test_prepend_new_line(code_context: str, completion: str, expected_value: str):
+    actual_value = ops.prepend_new_line(code_context, completion)
+
+    assert actual_value == expected_value

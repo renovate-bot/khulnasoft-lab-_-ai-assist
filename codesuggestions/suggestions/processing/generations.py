@@ -103,7 +103,7 @@ class ModelEngineGenerations(ModelEngineBase):
                     watch_container.register_model_score(res.score)
 
                     # TODO: Move the call to the use case class
-                    generation = self.post_processor_factory().process(res.text)
+                    generation = self.post_processor_factory(prefix).process(res.text)
 
                     return ModelEngineOutput(
                         text=generation,
