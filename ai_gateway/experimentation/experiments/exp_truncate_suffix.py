@@ -10,8 +10,8 @@ def variant_1(**kwargs) -> str:
 
     from structlog import BoundLogger
 
+    from ai_gateway.code_suggestions.processing.ops import LanguageId
     from ai_gateway.prompts.parsers.treesitter import CodeParser
-    from ai_gateway.suggestions.processing.ops import LanguageId
 
     def _truncate_suffix_context(
         logger: BoundLogger,

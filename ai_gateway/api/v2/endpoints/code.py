@@ -11,11 +11,11 @@ from ai_gateway.api.middleware import (
     X_GITLAB_INSTANCE_ID_HEADER,
     X_GITLAB_REALM_HEADER,
 )
+from ai_gateway.code_suggestions import CodeCompletions, CodeGenerations
+from ai_gateway.code_suggestions.processing.ops import lang_from_filename
 from ai_gateway.deps import CodeSuggestionsContainer
 from ai_gateway.experimentation.base import ExperimentTelemetry
 from ai_gateway.instrumentators.base import Telemetry, TelemetryInstrumentator
-from ai_gateway.suggestions import CodeCompletions, CodeGenerations
-from ai_gateway.suggestions.processing.ops import lang_from_filename
 from ai_gateway.tracking.instrumentator import SnowplowInstrumentator
 
 __all__ = [

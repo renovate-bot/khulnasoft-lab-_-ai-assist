@@ -11,9 +11,9 @@ from pydantic.fields import Field
 from pydantic.types import confloat, conint, conlist
 
 from ai_gateway.api.rollout import ModelRollout
+from ai_gateway.code_suggestions.experimental import CodeCompletionsInternalUseCase
 from ai_gateway.deps import CodeSuggestionsContainer
 from ai_gateway.instrumentators.base import Telemetry, TelemetryInstrumentator
-from ai_gateway.suggestions.experimental import CodeCompletionsInternalUseCase
 
 __all__ = ["router"]
 
