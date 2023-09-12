@@ -1,9 +1,9 @@
 import pytest
 from tree_sitter import Node
 
-from codesuggestions.prompts.parsers import CodeParser, tree_bfs, tree_dfs
-from codesuggestions.prompts.parsers.base import BaseVisitor
-from codesuggestions.suggestions.processing.ops import LanguageId
+from ai_gateway.prompts.parsers import CodeParser, tree_bfs, tree_dfs
+from ai_gateway.prompts.parsers.base import BaseVisitor
+from ai_gateway.suggestions.processing.ops import LanguageId
 
 JAVA_SAMPLE_SOURCE = """
 import org.springframework.boot.SpringApplication;

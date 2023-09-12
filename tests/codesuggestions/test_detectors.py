@@ -1,6 +1,6 @@
 import pytest
 
-from codesuggestions.suggestions.detectors import (
+from ai_gateway.suggestions.detectors import (
     Detected,
     DetectorBasicAuthSecrets,
     DetectorKeywordsSecrets,

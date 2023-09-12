@@ -6,25 +6,25 @@ from fastapi import FastAPI, Request
 from fastapi.testclient import TestClient
 from snowplow_tracker import Snowplow
 
-from codesuggestions import Config
-from codesuggestions.api import create_fast_api_server
-from codesuggestions.api.v2.api import api_router
-from codesuggestions.api.v2.endpoints.code import (
+from ai_gateway import Config
+from ai_gateway.api import create_fast_api_server
+from ai_gateway.api.v2.api import api_router
+from ai_gateway.api.v2.endpoints.code import (
     CurrentFile,
     SuggestionsRequest,
     track_snowplow_event,
 )
-from codesuggestions.deps import CodeSuggestionsContainer
-from codesuggestions.experimentation.base import ExperimentTelemetry
-from codesuggestions.instrumentators.base import Telemetry
-from codesuggestions.suggestions.processing.base import ModelEngineOutput
-from codesuggestions.suggestions.processing.typing import (
+from ai_gateway.deps import CodeSuggestionsContainer
+from ai_gateway.experimentation.base import ExperimentTelemetry
+from ai_gateway.instrumentators.base import Telemetry
+from ai_gateway.suggestions.processing.base import ModelEngineOutput
+from ai_gateway.suggestions.processing.typing import (
     LanguageId,
     MetadataCodeContent,
     MetadataModel,
     MetadataPromptBuilder,
 )
-from codesuggestions.tracking.instrumentator import SnowplowInstrumentator
+from ai_gateway.tracking.instrumentator import SnowplowInstrumentator
 
 
 class TestCodeCompletions:

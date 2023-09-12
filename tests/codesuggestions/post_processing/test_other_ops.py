@@ -1,6 +1,6 @@
 import pytest
 
-from codesuggestions.suggestions.processing.post import ops
+from ai_gateway.suggestions.processing.post import ops
 
 
 @pytest.mark.parametrize(

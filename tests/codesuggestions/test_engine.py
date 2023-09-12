@@ -5,14 +5,14 @@ from unittest.mock import AsyncMock, Mock, PropertyMock
 import pytest
 from transformers import AutoTokenizer
 
-from codesuggestions.experimentation import ExperimentRegistry
-from codesuggestions.models import (
+from ai_gateway.experimentation import ExperimentRegistry
+from ai_gateway.models import (
     PalmCodeGenBaseModel,
     TextGenModelOutput,
     VertexModelInternalError,
     VertexModelInvalidArgument,
 )
-from codesuggestions.suggestions.processing import (
+from ai_gateway.suggestions.processing import (
     MetadataCodeContent,
     MetadataExtraInfo,
     MetadataModel,
@@ -20,7 +20,7 @@ from codesuggestions.suggestions.processing import (
     ModelEngineCompletions,
     ops,
 )
-from codesuggestions.suggestions.processing.post.completions import PostProcessor
+from ai_gateway.suggestions.processing.post.completions import PostProcessor
 
 tokenizer = AutoTokenizer.from_pretrained("Salesforce/codegen2-16B")
 

@@ -1,7 +1,7 @@
 import pytest
 
-from codesuggestions.suggestions.processing.ops import LanguageId, find_cursor_position
-from codesuggestions.suggestions.processing.post.ops import trim_by_min_allowed_context
+from ai_gateway.suggestions.processing.ops import LanguageId, find_cursor_position
+from ai_gateway.suggestions.processing.post.ops import trim_by_min_allowed_context
 
 PYTHON_SAMPLE_1 = """
 class LineBasedCodeSnippets(BaseCodeSnippetsIterator):

@@ -5,7 +5,7 @@ import pytest
 import responses
 from jose import jwt
 
-from codesuggestions.auth import GitLabOidcProvider
+from ai_gateway.auth import GitLabOidcProvider
 
 
 class TestGitLabOidcProvider:

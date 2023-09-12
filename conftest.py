@@ -3,14 +3,14 @@ from unittest.mock import Mock
 
 import pytest
 
-from codesuggestions.models import TextGenBaseModel
+from ai_gateway.models import TextGenBaseModel
 
 pytest_plugins = ("pytest_asyncio",)
 
 
 @pytest.fixture
 def tpl_codegen_dir() -> Path:
-    assets_dir = Path(__file__).parent / "codesuggestions" / "_assets"
+    assets_dir = Path(__file__).parent / "ai_gateway" / "_assets"
     tpl_dir = assets_dir / "tpl"
     return tpl_dir / "codegen"
 
