@@ -37,7 +37,7 @@ POST v2/completions
 | `current_file.content_above_cursor` | string | yes      | The content above cursor (max_len: **100,000**)                    | `import numpy as np`      |
 | `current_file.content_below_cursor` | string | yes      | The content below cursor (max_len: **100,000**)                    | `def __main__:\n`         |
 | `telemetry`                         | array  | no       | The list of telemetry data from previous request (max_len: **10**) |                           |
-| `telemetry.model_engine`            | string | no       | The model engine used for completions (max_len: **100,000**)       | `vertex-ai`               |
+| `telemetry.model_engine`            | string | no       | The model engine used for completions (max_len: **50**)            | `vertex-ai`               |
 | `telemetry.model_name`              | string | no       | The model name used for completions (max_len: **50**)              | `code-gecko`              |
 | `telemetry.lang`                    | string | no       | The language used for completions (max_len: **50**)                | `python`                  |
 | `telemetry.experiments`             | array  | no       | The list of experiments run from previous request                  |                           |
