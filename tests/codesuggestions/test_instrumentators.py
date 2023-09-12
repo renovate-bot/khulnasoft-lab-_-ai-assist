@@ -3,13 +3,13 @@ from unittest import mock
 import pytest
 from starlette_context import request_cycle_context
 
-from codesuggestions.instrumentators.base import TextGenModelInstrumentator
-from codesuggestions.suggestions.processing import (
+from ai_gateway.instrumentators.base import TextGenModelInstrumentator
+from ai_gateway.suggestions.processing import (
     MetadataCodeContent,
     MetadataExtraInfo,
     MetadataPromptBuilder,
 )
-from codesuggestions.suggestions.processing.completions import Prompt
+from ai_gateway.suggestions.processing.completions import Prompt
 
 
 class TestTextGenModelInstrumentator:

@@ -1,6 +1,6 @@
 import pytest
 
-from codesuggestions.prompts import PromptTemplate, PromptTemplateFewShot
+from ai_gateway.prompts import PromptTemplate, PromptTemplateFewShot
 
 
 @pytest.mark.parametrize(

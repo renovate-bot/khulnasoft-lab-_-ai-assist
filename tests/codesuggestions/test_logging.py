@@ -5,7 +5,7 @@ from starlette.testclient import TestClient
 from starlette_context.middleware import RawContextMiddleware
 from structlog.testing import capture_logs
 
-from codesuggestions.api.middleware import MiddlewareLogRequest
+from ai_gateway.api.middleware import MiddlewareLogRequest
 
 
 def broken_page(request):

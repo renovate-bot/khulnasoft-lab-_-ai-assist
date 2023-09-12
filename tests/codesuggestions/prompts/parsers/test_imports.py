@@ -1,7 +1,7 @@
 import pytest
 
-from codesuggestions.prompts.parsers import CodeParser
-from codesuggestions.suggestions.processing.base import LanguageId
+from ai_gateway.prompts.parsers import CodeParser
+from ai_gateway.suggestions.processing.base import LanguageId
 
 GO_SOURCE_SAMPLE = """package main
 

@@ -3,12 +3,12 @@ requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
 
 [tool.poetry]
-name = "codesuggestions"
+name = "ai_gateway"
 version = "0.1.0"
 description = "Code generation provided by GitLab.com"
 authors = ["GitLab AI Assisted"]
 readme = "README.md"
-packages = [{ include = "codesuggestions" }]
+packages = [{ include = "ai_gateway" }]
 
 [tool.poetry.dependencies]
 python = "~3.9"
@@ -52,12 +52,12 @@ isort = "^5.12.0"
 black = "^23.3.0"
 
 [tool.pytest.ini_options]
-addopts = "--disable-warnings --cov=codesuggestions --cov-report=term --cov-report=html"
+addopts = "--disable-warnings --cov=ai_gateway --cov-report=term --cov-report=html"
 testpaths = ["tests/codesuggestions"]
 filterwarnings = ["error::UserWarning"]
 
 [tool.poetry.scripts]
-codesuggestions = "codesuggestions.app:main"
+ai_gateway = "ai_gateway.app:main"
 
 [tool.isort]
 profile = "black"

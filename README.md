@@ -174,7 +174,7 @@ deprecated and is no longer in active use, including:
 1. All code in `/models` directory
 1. All code in `/converter` directory
 
-For the Code Suggestion feature most of the code is hosted at `/codesuggestions`. In that directory following artifacts can be of interest:
+For the Code Suggestion feature most of the code is hosted at `/ai_gateway`. In that directory following artifacts can be of interest:
 
 1. `app.py` - main entry point for web application
 1. `suggestions/engine.py` - that contains `ModelEnginePalm` that is responsible for high-level orchestration of prompt transformation for external models
@@ -182,7 +182,7 @@ For the Code Suggestion feature most of the code is hosted at `/codesuggestions`
 1. `api/v2/experimental/code.py` - implements experimental endpoints that route requests to fixed external models for experimentation and testing
 
 This project utilizes middleware to provide additional mechanisms that are not strictly feature-related including authorization and logging.
-Middlewares are hosted at `codesuggestions/api/middleware.py` and interact with the `context` global variable that represents the API request.
+Middlewares are hosted at `ai_gateway/api/middleware.py` and interact with the `context` global variable that represents the API request.
 
 ## Configuration
 
@@ -237,7 +237,7 @@ value `'None'`.
    FASTAPI_API_PORT=5052
    ```
 1. Ensure you're authenticated with the `gcloud` CLI by running `gcloud auth application-default login`
-1. Start the model-gateway server locally: `poetry run codesuggestions`
+1. Start the model-gateway server locally: `poetry run ai_gateway`
 1. Open `http://0.0.0.0:5052/docs` in your browser and run any requests to the codegen model
 
 ### Faking out AI models

@@ -1,7 +1,7 @@
 import pytest
 
-from codesuggestions.suggestions.processing import ops
-from codesuggestions.suggestions.processing.ops import LanguageId
+from ai_gateway.suggestions.processing import ops
+from ai_gateway.suggestions.processing.ops import LanguageId
 
 
 @pytest.mark.parametrize(

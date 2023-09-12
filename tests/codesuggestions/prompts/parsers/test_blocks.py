@@ -1,8 +1,8 @@
 import pytest
 
-from codesuggestions.prompts.parsers import CodeParser, MinAllowedBlockVisitor, Point
-from codesuggestions.prompts.parsers.treetraversal import tree_dfs
-from codesuggestions.suggestions.processing.ops import LanguageId
+from ai_gateway.prompts.parsers import CodeParser, MinAllowedBlockVisitor, Point
+from ai_gateway.prompts.parsers.treetraversal import tree_dfs
+from ai_gateway.suggestions.processing.ops import LanguageId
 
 PYTHON_SAMPLE = """
 class BaseContextVisitor(BaseVisitor):

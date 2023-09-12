@@ -10,11 +10,8 @@ from starlette.testclient import TestClient
 from starlette_context.middleware import RawContextMiddleware
 from structlog.testing import capture_logs
 
-from codesuggestions.api.middleware import (
-    MiddlewareAuthentication,
-    MiddlewareLogRequest,
-)
-from codesuggestions.auth import User, UserClaims
+from ai_gateway.api.middleware import MiddlewareAuthentication, MiddlewareLogRequest
+from ai_gateway.auth import User, UserClaims
 
 
 @requires("authenticated")

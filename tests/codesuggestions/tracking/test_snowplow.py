@@ -4,8 +4,8 @@ from unittest import mock
 import pytest
 from snowplow_tracker import Snowplow
 
-from codesuggestions.instrumentators.base import Telemetry
-from codesuggestions.tracking import (
+from ai_gateway.instrumentators.base import Telemetry
+from ai_gateway.tracking import (
     RequestCount,
     SnowplowClient,
     SnowplowClientConfiguration,

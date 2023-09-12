@@ -4,7 +4,7 @@ from unittest import mock
 
 import pytest
 
-from codesuggestions import Config, Project
+from ai_gateway import Config, Project
 
 test_data = dict(
     google_vertex_ai_credentials="path/key.json",

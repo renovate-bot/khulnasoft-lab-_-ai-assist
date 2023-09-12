@@ -3,17 +3,17 @@ from typing import Optional
 
 import pytest
 
-from codesuggestions.prompts import PromptTemplate
-from codesuggestions.suggestions.processing import CodeContent
-from codesuggestions.suggestions.processing.completions import (
+from ai_gateway.prompts import PromptTemplate
+from ai_gateway.suggestions.processing import CodeContent
+from ai_gateway.suggestions.processing.completions import (
     MetadataPromptBuilder,
     _PromptBuilder,
 )
-from codesuggestions.suggestions.processing.generations import TPL_GENERATION_BASE
-from codesuggestions.suggestions.processing.generations import (
+from ai_gateway.suggestions.processing.generations import TPL_GENERATION_BASE
+from ai_gateway.suggestions.processing.generations import (
     PromptBuilder as PromptBuilderGenerations,
 )
-from codesuggestions.suggestions.processing.ops import LanguageId
+from ai_gateway.suggestions.processing.ops import LanguageId
 
 
 @pytest.mark.parametrize(

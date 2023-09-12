@@ -50,10 +50,10 @@ FROM base-image as final
 COPY --from=install-image /opt/venv /opt/venv
 COPY --from=install-image /app/scripts/lib/*.so /usr/lib
 
-COPY codesuggestions/ codesuggestions/
+COPY ai_gateway/ ai_gateway/
 
 # Environment variable TRANSFORMERS_CACHE controls where files are downloaded
 COPY --from=install-image /app/scripts/bootstrap.py .
 RUN poetry run python bootstrap.py
 
-CMD ["poetry", "run", "codesuggestions"]
+CMD ["poetry", "run", "ai_gateway"]

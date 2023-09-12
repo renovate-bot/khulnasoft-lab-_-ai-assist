@@ -1,7 +1,7 @@
 import pytest
 
-from codesuggestions.api.middleware import GitLabUser, UserClaims
-from codesuggestions.api.rollout.model import ModelRollout, ModelRolloutWithFallbackPlan
+from ai_gateway.api.middleware import GitLabUser, UserClaims
+from ai_gateway.api.rollout.model import ModelRollout, ModelRolloutWithFallbackPlan
 
 
 @pytest.mark.parametrize(

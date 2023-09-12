@@ -4,7 +4,7 @@ import pytest
 from google.api_core.exceptions import InternalServerError, InvalidArgument
 from google.cloud.aiplatform.gapic import PredictionServiceAsyncClient
 
-from codesuggestions.models.palm import (
+from ai_gateway.models.palm import (
     CodeBisonModelInput,
     CodeGeckoModelInput,
     PalmCodeBisonModel,

@@ -1,6 +1,6 @@
 import pytest
 
-from codesuggestions.suggestions.processing.post.ops import clean_model_reflection
+from ai_gateway.suggestions.processing.post.ops import clean_model_reflection
 
 PREFIX_JAVASCRIPT_1 = """
 // This code has a filename of test-2.js and is written in JavaScript.

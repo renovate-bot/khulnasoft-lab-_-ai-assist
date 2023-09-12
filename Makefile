@@ -2,9 +2,9 @@ MONITORING_NAMESPACE ?= monitoring
 
 ROOT_DIR := $(shell pwd)
 TESTS_DIR := ${ROOT_DIR}/tests
-CODE_SUGGESTIONS_DIR := ${ROOT_DIR}/codesuggestions
+AI_GATEWAY_DIR := ${ROOT_DIR}/ai_gateway
 
-LINT_WORKING_DIR ?= ${CODE_SUGGESTIONS_DIR} \
+LINT_WORKING_DIR ?= ${AI_GATEWAY_DIR} \
 	${ROOT_DIR}/infrastructure \
 	${ROOT_DIR}/scripts \
 	${TESTS_DIR}
@@ -25,7 +25,7 @@ test-local:
 
 .PHONY: lint-local
 lint-local:
-	$(COMPOSE) run -v "$(ROOT_DIR):/app" api bash -c 'poetry install --with lint && poetry run flake8 codesuggestions'
+	$(COMPOSE) run -v "$(ROOT_DIR):/app" api bash -c 'poetry install --with lint && poetry run flake8 ai_gateway'
 
 clean:
 	$(COMPOSE) rm -s -v -f

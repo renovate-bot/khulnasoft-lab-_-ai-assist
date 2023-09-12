@@ -1,6 +1,6 @@
 import pytest
 
-from codesuggestions.prompts.snippets import CodeSnippet, LineBasedCodeSnippets
+from ai_gateway.prompts.snippets import CodeSnippet, LineBasedCodeSnippets
 
 PYTHON_SOURCE_SAMPLE = """
 import os

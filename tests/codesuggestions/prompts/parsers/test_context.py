@@ -1,10 +1,10 @@
 import pytest
 from tree_sitter import Node
 
-from codesuggestions.prompts.parsers import CodeParser
-from codesuggestions.prompts.parsers.context_extractors import BaseContextVisitor
-from codesuggestions.prompts.parsers.treetraversal import tree_dfs
-from codesuggestions.suggestions.processing.ops import (
+from ai_gateway.prompts.parsers import CodeParser
+from ai_gateway.prompts.parsers.context_extractors import BaseContextVisitor
+from ai_gateway.prompts.parsers.treetraversal import tree_dfs
+from ai_gateway.suggestions.processing.ops import (
     LanguageId,
     find_cursor_position,
     split_on_point,
