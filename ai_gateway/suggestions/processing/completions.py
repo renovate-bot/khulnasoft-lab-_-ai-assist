@@ -13,6 +13,7 @@ from ai_gateway.models import (
 )
 from ai_gateway.prompts.parsers import CodeParser
 from ai_gateway.suggestions.processing.base import (
+    MINIMIMUM_CONFIDENCE_SCORE,
     ModelEngineBase,
     ModelEngineOutput,
     Prompt,
@@ -220,10 +221,14 @@ class ModelEngineCompletions(ModelEngineBase):
                     watch_container.register_model_output_length(res.text)
                     watch_container.register_model_score(res.score)
 
-                    # TODO: Move the call to the use case class
-                    completion = self.post_processor_factory(
-                        prompt.prefix, lang_id=lang_id
-                    ).process(res.text)
+                    if res.score > MINIMIMUM_CONFIDENCE_SCORE:
+                        # TODO: Move the call to the use case class
+                        completion = self.post_processor_factory(
+                            prompt.prefix, lang_id=lang_id
+                        ).process(res.text)
+                    else:
+                        watch_container.register_is_discarded()
+                        completion = ""
 
                     return ModelEngineOutput(
                         text=completion,

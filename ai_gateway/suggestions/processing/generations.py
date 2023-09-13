@@ -11,6 +11,7 @@ from ai_gateway.models import (
 )
 from ai_gateway.prompts import PromptTemplate
 from ai_gateway.suggestions.processing.base import (
+    MINIMIMUM_CONFIDENCE_SCORE,
     CodeContent,
     MetadataModel,
     MetadataPromptBuilder,
@@ -102,8 +103,14 @@ class ModelEngineGenerations(ModelEngineBase):
                     watch_container.register_model_output_length(res.text)
                     watch_container.register_model_score(res.score)
 
-                    # TODO: Move the call to the use case class
-                    generation = self.post_processor_factory(prefix).process(res.text)
+                    if res.score > MINIMIMUM_CONFIDENCE_SCORE:
+                        # TODO: Move the call to the use case class
+                        generation = self.post_processor_factory(prefix).process(
+                            res.text
+                        )
+                    else:
+                        watch_container.register_is_discarded()
+                        generation = ""
 
                     return ModelEngineOutput(
                         text=generation,
