@@ -38,7 +38,7 @@ _PROBS_ENDPOINTS = ["/monitoring/healthz", "/metrics"]
 
 _VERTEX_MODELS_VERSIONS = {
     ModelRollout.GOOGLE_TEXT_BISON: f"{ModelRollout.GOOGLE_TEXT_BISON}@001",
-    ModelRollout.GOOGLE_CODE_BISON: f"{ModelRollout.GOOGLE_CODE_BISON}@001",
+    ModelRollout.GOOGLE_CODE_BISON: f"{ModelRollout.GOOGLE_CODE_BISON}@latest",
     ModelRollout.GOOGLE_CODE_GECKO: f"{ModelRollout.GOOGLE_CODE_GECKO}@001",
 }
 
