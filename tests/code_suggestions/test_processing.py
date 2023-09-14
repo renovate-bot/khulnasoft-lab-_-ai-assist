@@ -34,6 +34,32 @@ def test_resolve_lang_from_filepath(file_names, expected_lang_id):
 
 
 @pytest.mark.parametrize(
+    "editor_langs,expected_lang_id",
+    [
+        (["unknown", "file"], None),
+        (["c"], LanguageId.C),
+        (["cpp"], LanguageId.CPP),
+        (["csharp"], LanguageId.CSHARP),
+        (["go"], LanguageId.GO),
+        (["java"], LanguageId.JAVA),
+        (["javascript", "javascriptreact"], LanguageId.JS),
+        (["php"], LanguageId.PHP),
+        (["python"], LanguageId.PYTHON),
+        (["ruby"], LanguageId.RUBY),
+        (["rust"], LanguageId.RUST),
+        (["scala"], LanguageId.SCALA),
+        (["typescript", "typescriptreact"], LanguageId.TS),
+        (["kotlin"], LanguageId.KOTLIN),
+    ],
+)
+def test_resolve_lang_from_editor_name(editor_langs, expected_lang_id):
+    for name in editor_langs:
+        lang_id = ops.lang_from_editor_lang(name)
+
+        assert lang_id == expected_lang_id
+
+
+@pytest.mark.parametrize(
     "lang_id,prompt,prompt_constructed",
     [
         (None, "model prompt", "model prompt"),

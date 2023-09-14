@@ -26,38 +26,79 @@ class _LanguageDef(NamedTuple):
     grammar_name: str
     human_name: str
     extensions: frozenset[str]
+    editor_names: frozenset[str]
 
 
 _ALL_LANGS = {
-    _LanguageDef(LanguageId.C, "c", "C", frozenset({"c", "h"})),
+    _LanguageDef(LanguageId.C, "c", "C", frozenset({"c", "h"}), frozenset({"c"})),
     _LanguageDef(
         LanguageId.CPP,
         "cpp",
         "C++",
         frozenset({"cpp", "hpp", "c++", "h++", "cc", "hh", "C", "H"}),
+        frozenset({"cpp"}),
     ),
-    _LanguageDef(LanguageId.CSHARP, "c_sharp", "C#", frozenset({"cs"})),
-    _LanguageDef(LanguageId.GO, "go", "Go", frozenset({"go"})),
-    _LanguageDef(LanguageId.JAVA, "java", "Java", frozenset({"java"})),
-    _LanguageDef(LanguageId.JS, "javascript", "JavaScript", frozenset({"js", "jsx"})),
+    _LanguageDef(
+        LanguageId.CSHARP, "c_sharp", "C#", frozenset({"cs"}), frozenset({"csharp"})
+    ),
+    _LanguageDef(LanguageId.GO, "go", "Go", frozenset({"go"}), frozenset({"go"})),
+    _LanguageDef(
+        LanguageId.JAVA,
+        "java",
+        "Java",
+        frozenset({"java"}),
+        frozenset({"java"}),
+    ),
+    _LanguageDef(
+        LanguageId.JS,
+        "javascript",
+        "JavaScript",
+        frozenset({"js", "jsx"}),
+        frozenset({"javascript", "javascriptreact"}),
+    ),
     _LanguageDef(
         LanguageId.PHP,
         "php",
         "PHP",
         frozenset({"php", "php3", "php4", "php5", "phps", "phpt"}),
+        frozenset({"php"}),
     ),
-    _LanguageDef(LanguageId.PYTHON, "python", "Python", frozenset({"py"})),
-    _LanguageDef(LanguageId.RUBY, "ruby", "Ruby", frozenset({"rb"})),
-    _LanguageDef(LanguageId.RUST, "rust", "Rust", frozenset({"rs"})),
-    _LanguageDef(LanguageId.SCALA, "scala", "Scala", frozenset({"scala"})),
-    _LanguageDef(LanguageId.TS, "typescript", "TypeScript", frozenset({"ts", "tsx"})),
-    _LanguageDef(LanguageId.KOTLIN, "kotlin", "Kotlin", frozenset({"kts", "kt"})),
+    _LanguageDef(
+        LanguageId.PYTHON, "python", "Python", frozenset({"py"}), frozenset({"python"})
+    ),
+    _LanguageDef(
+        LanguageId.RUBY, "ruby", "Ruby", frozenset({"rb"}), frozenset({"ruby"})
+    ),
+    _LanguageDef(
+        LanguageId.RUST, "rust", "Rust", frozenset({"rs"}), frozenset({"rust"})
+    ),
+    _LanguageDef(
+        LanguageId.SCALA, "scala", "Scala", frozenset({"scala"}), frozenset({"scala"})
+    ),
+    _LanguageDef(
+        LanguageId.TS,
+        "typescript",
+        "TypeScript",
+        frozenset({"ts", "tsx"}),
+        frozenset({"typescript", "typescriptreact"}),
+    ),
+    _LanguageDef(
+        LanguageId.KOTLIN,
+        "kotlin",
+        "Kotlin",
+        frozenset({"kts", "kt"}),
+        frozenset({"kotlin"}),
+    ),
 }
 
 _LANG_ID_TO_LANG_DEF = {value.lang_id: value for value in _ALL_LANGS}
 
 _EXTENSION_TO_LANG_ID = {
     ext: language.lang_id for language in _ALL_LANGS for ext in language.extensions
+}
+
+_EDITOR_LANG_TO_LANG_ID = {
+    name: language.lang_id for language in _ALL_LANGS for name in language.editor_names
 }
 
 
@@ -105,6 +146,10 @@ def trim_by_sep(s: str, sep: str = "```") -> str:
 def lang_from_filename(file_name: Union[str, Path]) -> Optional[LanguageId]:
     ext = Path(file_name).suffix.replace(".", "")
     return _EXTENSION_TO_LANG_ID.get(ext, None)
+
+
+def lang_from_editor_lang(editor_lang: str) -> Optional[LanguageId]:
+    return _EDITOR_LANG_TO_LANG_ID.get(editor_lang, None)
 
 
 def find_non_whitespace_point(value: str, start_index: int = 0) -> tuple[int, int]:
