@@ -4,22 +4,22 @@ from py_grpc_prometheus.prometheus_client_interceptor import PromClientIntercept
 from ai_gateway.api import middleware
 from ai_gateway.api.rollout.model import ModelRollout
 from ai_gateway.auth import GitLabOidcProvider
+from ai_gateway.code_suggestions import CodeCompletions, CodeGenerations
+from ai_gateway.code_suggestions.processing import (
+    ModelEngineCompletions,
+    ModelEngineGenerations,
+)
+from ai_gateway.code_suggestions.processing.post.completions import (
+    PostProcessor as PostProcessorCompletions,
+)
+from ai_gateway.code_suggestions.processing.post.generations import (
+    PostProcessor as PostProcessorGenerations,
+)
 from ai_gateway.experimentation import experiment_registry_provider
 from ai_gateway.models import (
     FakePalmTextGenModel,
     PalmCodeGenModel,
     grpc_connect_vertex,
-)
-from ai_gateway.suggestions import CodeCompletions, CodeGenerations
-from ai_gateway.suggestions.processing import (
-    ModelEngineCompletions,
-    ModelEngineGenerations,
-)
-from ai_gateway.suggestions.processing.post.completions import (
-    PostProcessor as PostProcessorCompletions,
-)
-from ai_gateway.suggestions.processing.post.generations import (
-    PostProcessor as PostProcessorGenerations,
 )
 from ai_gateway.tokenizer import init_tokenizer
 from ai_gateway.tracking import (

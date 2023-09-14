@@ -10,7 +10,7 @@ __all__ = [
     "ImportVisitorFactory",
 ]
 
-from ai_gateway.suggestions.processing.ops import LanguageId
+from ai_gateway.code_suggestions.processing.ops import LanguageId
 
 
 class BaseImportVisitor(BaseVisitor):
