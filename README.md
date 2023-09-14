@@ -177,7 +177,7 @@ deprecated and is no longer in active use, including:
 For the Code Suggestion feature most of the code is hosted at `/ai_gateway`. In that directory following artifacts can be of interest:
 
 1. `app.py` - main entry point for web application
-1. `suggestions/engine.py` - that contains `ModelEnginePalm` that is responsible for high-level orchestration of prompt transformation for external models
+1. `code_suggestions/engine.py` - that contains `ModelEnginePalm` that is responsible for high-level orchestration of prompt transformation for external models
 1. `api/v2/endpoints/code.py` - that houses implementation of main production Code Suggestion API
 1. `api/v2/experimental/code.py` - implements experimental endpoints that route requests to fixed external models for experimentation and testing
 

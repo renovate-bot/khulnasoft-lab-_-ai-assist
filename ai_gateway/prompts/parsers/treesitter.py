@@ -3,6 +3,12 @@ from typing import Optional
 
 from tree_sitter import Language, Node, Parser, Tree
 
+from ai_gateway.code_suggestions.processing.ops import (
+    LanguageId,
+    ProgramLanguage,
+    convert_point_to_relative_point_in_node,
+    split_on_point,
+)
 from ai_gateway.prompts.parsers.base import (
     BaseCodeParser,
     BaseVisitor,
@@ -17,12 +23,6 @@ from ai_gateway.prompts.parsers.function_signatures import (
 )
 from ai_gateway.prompts.parsers.imports import ImportVisitorFactory
 from ai_gateway.prompts.parsers.treetraversal import tree_dfs
-from ai_gateway.suggestions.processing.ops import (
-    LanguageId,
-    ProgramLanguage,
-    convert_point_to_relative_point_in_node,
-    split_on_point,
-)
 
 
 class CodeParser(BaseCodeParser):
