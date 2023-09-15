@@ -5,7 +5,10 @@ from typing import Any, NamedTuple, Optional
 from prometheus_client import Counter
 from transformers import PreTrainedTokenizer
 
-from ai_gateway.code_suggestions.processing.ops import lang_from_filename
+from ai_gateway.code_suggestions.processing.ops import (
+    lang_from_editor_lang,
+    lang_from_filename,
+)
 from ai_gateway.code_suggestions.processing.typing import (
     CodeContent,
     LanguageId,
@@ -70,6 +73,10 @@ class ModelEngineBase(ABC):
     ) -> ModelEngineOutput:
         lang_id = lang_from_filename(file_name)
         self.increment_lang_counter(file_name, lang_id, editor_lang_id)
+
+        if lang_id is None and editor_lang_id:
+            lang_id = lang_from_editor_lang(editor_lang_id)
+
         return await self._generate(prefix, suffix, file_name, lang_id, **kwargs)
 
     def increment_lang_counter(

@@ -170,10 +170,37 @@ def token_length(s: str):
             "prompt",
             "",
             "f.unk",
-            "typescript",
+            None,
             _side_effect_unknown_tpl_palm,
             "random completion",
             None,
+            MetadataPromptBuilder(
+                components={
+                    "prefix": MetadataCodeContent(length=6, length_tokens=2),
+                    "suffix": MetadataCodeContent(length=0, length_tokens=0),
+                },
+                imports=MetadataExtraInfo(
+                    name="imports",
+                    pre=MetadataCodeContent(length=0, length_tokens=0),
+                    post=MetadataCodeContent(length=0, length_tokens=0),
+                ),
+                function_signatures=MetadataExtraInfo(
+                    name="function_signatures",
+                    pre=MetadataCodeContent(length=0, length_tokens=0),
+                    post=MetadataCodeContent(length=0, length_tokens=0),
+                ),
+            ),
+            "random completion",
+            None,
+        ),
+        (
+            "prompt",
+            "",
+            "f.unk",
+            "typescript",
+            _side_effect_unknown_tpl_palm,
+            "random completion",
+            ops.LanguageId.TS,
             MetadataPromptBuilder(
                 components={
                     "prefix": MetadataCodeContent(length=6, length_tokens=2),
