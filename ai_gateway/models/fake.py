@@ -1,6 +1,6 @@
 from typing import Optional
 
-from ai_gateway.models import TextGenBaseModel, TextGenModelOutput
+from ai_gateway.models import ModelMetadata, TextGenBaseModel, TextGenModelOutput
 
 __all__ = [
     "FakePalmTextGenModel",
@@ -9,12 +9,8 @@ __all__ = [
 
 class FakePalmTextGenModel(TextGenBaseModel):
     @property
-    def model_name(self) -> str:
-        return "fake-palm-model"
-
-    @property
-    def model_engine(self) -> str:
-        return "fake-palm-engine"
+    def metadata(self) -> ModelMetadata:
+        return ModelMetadata(name="fake-palm-model", engine="fake-palm-engine")
 
     async def generate(
         self,

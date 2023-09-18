@@ -8,7 +8,6 @@ __all__ = [
     "MetadataCodeContent",
     "MetadataExtraInfo",
     "MetadataPromptBuilder",
-    "MetadataModel",
     "CodeContent",
 ]
 
@@ -45,11 +44,6 @@ class MetadataPromptBuilder(NamedTuple):
     imports: Optional[MetadataExtraInfo] = None
     function_signatures: Optional[MetadataExtraInfo] = None
     experiments: Optional[list[ExperimentTelemetry]] = []
-
-
-class MetadataModel(NamedTuple):
-    name: str
-    engine: str
 
 
 class CodeContent(NamedTuple):

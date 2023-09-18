@@ -5,6 +5,7 @@ from google.cloud.aiplatform.gapic import PredictionServiceAsyncClient
 
 __all__ = [
     "ModelAPICallError",
+    "ModelMetadata",
     "TextGenModelOutput",
     "TextGenBaseModel",
     "grpc_connect_vertex",
@@ -35,6 +36,11 @@ class ModelAPICallError(Exception):
         return list(self._details)
 
 
+class ModelMetadata(NamedTuple):
+    name: str
+    engine: str
+
+
 class ModelInput(ABC):
     @abstractmethod
     def is_valid(self) -> bool:
@@ -58,12 +64,7 @@ class TextGenBaseModel(ABC):
 
     @property
     @abstractmethod
-    def model_name(self) -> str:
-        pass
-
-    @property
-    @abstractmethod
-    def model_engine(self) -> str:
+    def metadata(self) -> ModelMetadata:
         pass
 
     @abstractmethod

@@ -8,7 +8,7 @@ from google.api_core.exceptions import InternalServerError, InvalidArgument
 from google.cloud.aiplatform.gapic import PredictionServiceAsyncClient
 from google.protobuf import json_format, struct_pb2
 
-from ai_gateway.models import TextGenBaseModel, TextGenModelOutput
+from ai_gateway.models import ModelMetadata, TextGenBaseModel, TextGenModelOutput
 from ai_gateway.models.base import ModelAPICallError, ModelInput
 
 __all__ = [
@@ -107,15 +107,15 @@ class PalmCodeGenBaseModel(TextGenBaseModel):
         self.client = client
         self.timeout = timeout
 
-        self._model_name = (
-            model_name.value
-            if model_version == "latest" or model_version == ""
-            else PalmCodeGenBaseModel.SEP_MODEL_VERSION.join(
-                [model_name, model_version]
-            )
+        model_version = "latest" if model_version == "" else model_version
+        model_name = PalmCodeGenBaseModel.SEP_MODEL_VERSION.join(
+            [model_name, model_version]
         )
 
-        self.endpoint = f"projects/{project}/locations/{location}/publishers/google/models/{self.model_name}"
+        self._metadata = ModelMetadata(
+            name=model_name, engine=PalmCodeGenBaseModel._MODEL_ENGINE
+        )
+        self.endpoint = f"projects/{project}/locations/{location}/publishers/google/models/{model_name}"
 
     async def _generate(
         self,
@@ -162,12 +162,8 @@ class PalmCodeGenBaseModel(TextGenBaseModel):
             )
 
     @property
-    def model_name(self) -> str:
-        return self._model_name
-
-    @property
-    def model_engine(self) -> str:
-        return PalmCodeGenBaseModel._MODEL_ENGINE
+    def metadata(self) -> ModelMetadata:
+        return self._metadata
 
     @abstractmethod
     async def generate(
