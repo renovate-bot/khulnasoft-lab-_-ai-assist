@@ -1,4 +1,3 @@
-from dataclasses import asdict
 from unittest import mock
 
 import pytest
@@ -6,8 +5,6 @@ from fastapi import FastAPI, Request
 from fastapi.testclient import TestClient
 from snowplow_tracker import Snowplow
 
-from ai_gateway import Config
-from ai_gateway.api import create_fast_api_server
 from ai_gateway.api.v2.api import api_router
 from ai_gateway.api.v2.endpoints.code import (
     CurrentFile,
@@ -18,12 +15,12 @@ from ai_gateway.code_suggestions.processing.base import ModelEngineOutput
 from ai_gateway.code_suggestions.processing.typing import (
     LanguageId,
     MetadataCodeContent,
-    MetadataModel,
     MetadataPromptBuilder,
 )
 from ai_gateway.deps import CodeSuggestionsContainer
 from ai_gateway.experimentation.base import ExperimentTelemetry
 from ai_gateway.instrumentators.base import Telemetry
+from ai_gateway.models import ModelMetadata
 from ai_gateway.tracking.instrumentator import SnowplowInstrumentator
 
 
@@ -39,7 +36,7 @@ class TestCodeCompletions:
         model_output = ModelEngineOutput(
             text="def search",
             score=0,
-            model=MetadataModel(name="code-gecko", engine="vertex-ai"),
+            model=ModelMetadata(name="code-gecko", engine="vertex-ai"),
             lang_id=LanguageId.PYTHON,
             metadata=MetadataPromptBuilder(
                 components={
@@ -241,7 +238,7 @@ class TestCodeGeneration:
         model_output = ModelEngineOutput(
             text="foo",
             score=0,
-            model=MetadataModel(name="some-model", engine="some-engine"),
+            model=ModelMetadata(name="some-model", engine="some-engine"),
             lang_id=LanguageId.PYTHON,
             metadata=MetadataPromptBuilder(
                 components={

@@ -7,7 +7,6 @@ from transformers import PreTrainedTokenizer
 from ai_gateway.code_suggestions.processing.base import (
     MINIMIMUM_CONFIDENCE_SCORE,
     CodeContent,
-    MetadataModel,
     MetadataPromptBuilder,
     ModelEngineBase,
     ModelEngineOutput,
@@ -90,9 +89,6 @@ class ModelEngineGenerations(ModelEngineBase):
         prompt_input: Optional[str] = None,
         **kwargs: Any,
     ) -> ModelEngineOutput:
-        model_metadata = MetadataModel(
-            name=self.model.model_name, engine=self.model.model_engine
-        )
         prompt = self._build_prompt(
             prefix, file_name, lang_id=lang_id, prompt_input=prompt_input
         )
@@ -115,7 +111,7 @@ class ModelEngineGenerations(ModelEngineBase):
                     return ModelEngineOutput(
                         text=generation,
                         score=res.score,
-                        model=model_metadata,
+                        model=self.model.metadata,
                         lang_id=lang_id,
                         metadata=prompt.metadata,
                     )
@@ -126,7 +122,7 @@ class ModelEngineGenerations(ModelEngineBase):
         return ModelEngineOutput(
             text="",
             score=0,
-            model=model_metadata,
+            model=self.model.metadata,
             metadata=MetadataPromptBuilder(components={}),
         )
 

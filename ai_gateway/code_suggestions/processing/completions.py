@@ -18,7 +18,6 @@ from ai_gateway.code_suggestions.processing.typing import (
     LanguageId,
     MetadataCodeContent,
     MetadataExtraInfo,
-    MetadataModel,
     MetadataPromptBuilder,
 )
 from ai_gateway.experimentation import ExperimentRegistry, ExperimentTelemetry
@@ -193,14 +192,10 @@ class ModelEngineCompletions(ModelEngineBase):
     ) -> ModelEngineOutput:
         prompt = self._build_prompt(prefix, file_name, suffix, lang_id)
 
-        model_metadata = MetadataModel(
-            name=self.model.model_name, engine=self.model.model_engine
-        )
-
         empty_output = ModelEngineOutput(
             text="",
             score=0,
-            model=model_metadata,
+            model=self.model.metadata,
             metadata=MetadataPromptBuilder(components={}),
         )
 
@@ -233,7 +228,7 @@ class ModelEngineCompletions(ModelEngineBase):
                     return ModelEngineOutput(
                         text=completion,
                         score=res.score,
-                        model=model_metadata,
+                        model=self.model.metadata,
                         lang_id=lang_id,
                         metadata=prompt.metadata,
                     )

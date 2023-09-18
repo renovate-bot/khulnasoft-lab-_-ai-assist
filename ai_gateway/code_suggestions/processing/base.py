@@ -13,12 +13,11 @@ from ai_gateway.code_suggestions.processing.typing import (
     CodeContent,
     LanguageId,
     MetadataCodeContent,
-    MetadataModel,
     MetadataPromptBuilder,
 )
 from ai_gateway.experimentation import ExperimentTelemetry
 from ai_gateway.instrumentators import TextGenModelInstrumentator
-from ai_gateway.models import PalmCodeGenBaseModel
+from ai_gateway.models import ModelMetadata, PalmCodeGenBaseModel
 
 __all__ = [
     "ModelEngineOutput",
@@ -47,7 +46,7 @@ MINIMIMUM_CONFIDENCE_SCORE = -10
 class ModelEngineOutput(NamedTuple):
     text: str
     score: float
-    model: MetadataModel
+    model: ModelMetadata
     metadata: MetadataPromptBuilder
     lang_id: Optional[LanguageId] = None
 
@@ -60,7 +59,7 @@ class ModelEngineBase(ABC):
         self.model = model
         self.tokenizer = tokenizer
         self.instrumentator = TextGenModelInstrumentator(
-            model.model_engine, model.model_name
+            model.metadata.engine, model.metadata.name
         )
 
     async def generate(

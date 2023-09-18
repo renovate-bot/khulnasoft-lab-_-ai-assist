@@ -8,7 +8,6 @@ from transformers import AutoTokenizer
 from ai_gateway.code_suggestions.processing import (
     MetadataCodeContent,
     MetadataExtraInfo,
-    MetadataModel,
     MetadataPromptBuilder,
     ModelEngineCompletions,
     ops,
@@ -16,6 +15,7 @@ from ai_gateway.code_suggestions.processing import (
 from ai_gateway.code_suggestions.processing.post.completions import PostProcessor
 from ai_gateway.experimentation import ExperimentRegistry
 from ai_gateway.models import (
+    ModelMetadata,
     PalmCodeGenBaseModel,
     TextGenModelOutput,
     VertexModelInternalError,
@@ -355,10 +355,10 @@ async def test_model_engine_palm(
     model_name = "palm-model"
     model_engine = "vertex-ai"
     _side_effect = model_gen_func(prefix, suffix, file_name, model_output)
+    _model_metadata = ModelMetadata(name=model_name, engine=model_engine)
 
     text_gen_base_model.generate = AsyncMock(side_effect=_side_effect)
-    type(text_gen_base_model).model_name = PropertyMock(return_value=model_name)
-    type(text_gen_base_model).model_engine = PropertyMock(return_value=model_engine)
+    type(text_gen_base_model).metadata = PropertyMock(return_value=_model_metadata)
 
     engine = ModelEngineCompletions(
         model=text_gen_base_model,
@@ -370,7 +370,7 @@ async def test_model_engine_palm(
     completion = await engine.generate(prefix, suffix, file_name, editor_language)
 
     assert completion.text == expected_completion
-    assert completion.model == MetadataModel(name=model_name, engine=model_engine)
+    assert completion.model == _model_metadata
     assert completion.lang_id == language
 
     if prompt_builder_metadata:
