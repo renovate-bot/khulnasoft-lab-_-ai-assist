@@ -18,12 +18,9 @@ variables:
   DOCKER_TLS_CERTDIR: "/certs"
   DOCKER_MODEL_GATEWAY: "$CI_REGISTRY_IMAGE/model-gateway"
 
-  TARGET_IMAGE: "$DOCKER_MODEL_GATEWAY:$CI_COMMIT_SHORT_SHA"
-
   SAST_EXCLUDED_PATHS: "tests, tmp, api"
 
 include:
-  - template: Jobs/Container-Scanning.gitlab-ci.yml
   - template: Jobs/Dependency-Scanning.gitlab-ci.yml
   - template: Jobs/SAST.gitlab-ci.yml
   - template: Jobs/Secret-Detection.gitlab-ci.yml
@@ -39,7 +36,7 @@ include:
     file: "service-project/runway.yml"
     inputs:
       runway_service_id: ai-gateway
-      image: "${TARGET_IMAGE}"
+      image: "$CI_REGISTRY_IMAGE/model-gateway:${CI_COMMIT_SHORT_SHA}"
       runway_version: v1.10.0 # please keep in sync with `ref` above
 
 cache:
@@ -101,7 +98,7 @@ build-docker-model-gateway:
     - .kaniko_base
   variables:
     KANIKO_BUILD_FILE: Dockerfile
-    KANIKO_DESTINATION: "${TARGET_IMAGE}"
+    KANIKO_DESTINATION: "${DOCKER_MODEL_GATEWAY}:${CI_COMMIT_SHORT_SHA}"
 
 tests:
   extends: .poetry
@@ -121,19 +118,6 @@ tests:
     reports:
       junit:
         - .test-reports/*.xml
-
-container_scanning:
-  stage: test
-  needs:
-    - build-docker-model-gateway
-  rules:
-    - if: $CONTAINER_SCANNING_DISABLED
-      when: never
-    - if: $CI_COMMIT_BRANCH && $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
-    - if: $CI_MERGE_REQUEST_IID
-    - if: $CI_COMMIT_TAG
-  variables:
-    CS_IMAGE: $TARGET_IMAGE
 
 gemnasium-python-dependency_scanning:
   stage: test
@@ -173,6 +157,7 @@ release-docker-model-gateway:
   stage: release
   extends: .docker-release-latest
   variables:
+    TARGET_IMAGE: "$DOCKER_MODEL_GATEWAY:$CI_COMMIT_SHORT_SHA"
     RELEASED_IMAGE_LATEST: "$DOCKER_MODEL_GATEWAY:latest"
   rules:
     - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
