@@ -29,6 +29,7 @@ router = APIRouter(
     tags=["completions"],
 )
 
+
 class CurrentFile(BaseModel):
     file_name: constr(strip_whitespace=True, max_length=255)
     language_identifier: Optional[
