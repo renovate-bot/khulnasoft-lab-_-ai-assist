@@ -212,7 +212,6 @@ FASTAPI_METRICS_PORT=8082
 AUTH_BYPASS_EXTERNAL=False  # Can be used for local development to bypass the GitLab server side check
 GITLAB_URL=https://gitlab.com/  # Can be changed to GDK: http://127.0.0.1:3000/
 GITLAB_API_URL=https://gitlab.com/api/v4/  # Can be changed to GDK: http://127.0.0.1:3000/api/v4/
-USE_LOCAL_CACHE=True  # Uses a local in-memory cache instead of Redis
 ```
 
 Note that the `FASTAPI_xxx_URL` values must either be commented out or
@@ -252,8 +251,8 @@ uses cases that do not require an AI model to execute.
 
 ### Logging requests and responses during development
 
-AI Gateway workflow includes additional pre- and post-processing steps. 
-If you want to log data between different steps for development purposes, 
+AI Gateway workflow includes additional pre- and post-processing steps.
+If you want to log data between different steps for development purposes,
 please update the `.env` file by setting the following variables:
 
 ```
