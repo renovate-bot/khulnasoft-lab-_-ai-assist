@@ -154,7 +154,7 @@ async def generations(
 
     log.debug(
         "code creation input:",
-        prompt=payload.prompt,
+        prompt=payload.prompt if hasattr(payload, "prompt") else None,
         prefix=payload.current_file.content_above_cursor,
         suffix=payload.current_file.content_below_cursor,
         current_file_name=payload.current_file.file_name,
