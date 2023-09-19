@@ -86,6 +86,32 @@ import testing;
     "\n"
 )
 
+PREFIX_JAVASCRIPT_4 = """
+ // This code has a filename of test.js and is written in JavaScript.
+import testing;
+
+const newFunctionForValidatingEmail = (email) => {
+  return emailRegex.test(email);
+}
+
+// For the mask XYZ
+const writeStringBackwards = (inpStr) => {
+  let outStr = '';
+  for (let i = inpStr.length - 1; i >= 0; i--) {
+    outStr += inpStr[i];
+  }
+  return outSt
+""".strip(
+    "\n"
+)
+
+COMPLETION_JAVASCRIPT_4_1 = """
+r;\n}\n\nconst maskXYZ = (inpStr) => {\n  let outStr = '';
+""".strip(
+    "\n"
+)
+
+
 PREFIX_PYTHON_1 = """
 # This code has a filename of app.py and is written in Python.
 def print_hello_world():
@@ -129,6 +155,7 @@ COMPLETION_PYTHON_2_1 = """
             COMPLETION_JAVASCRIPT_3_1,
             " newFunctionForValidatingEmail, writeStringBackwards };",
         ),
+        (PREFIX_JAVASCRIPT_4, COMPLETION_JAVASCRIPT_4_1, COMPLETION_JAVASCRIPT_4_1),
         (PREFIX_PYTHON_1, COMPLETION_PYTHON_1_1, ""),
         (PREFIX_PYTHON_2, COMPLETION_PYTHON_2_1, '\n\tprint("hello world")'),
         ("   ", "", ""),

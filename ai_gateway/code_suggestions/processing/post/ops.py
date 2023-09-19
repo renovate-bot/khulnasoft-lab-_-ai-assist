@@ -1,4 +1,5 @@
 import re
+from collections import Counter
 from typing import Optional
 
 import structlog
@@ -23,10 +24,36 @@ log = structlog.stdlib.get_logger("codesuggestions")
 
 
 _COMMENT_IDENTIFIERS = ["/*", "//", "#"]
+_SPECIAL_CHARS = "()[];.,$%&^*@#!{}/"
 _RE_MARKDOWN_CODE_BLOCK_BEGIN = re.compile(r"^`{3}\S*\n", flags=re.MULTILINE)
 
 
 def clean_model_reflection(context: str, completion: str) -> str:
+    def _is_single_line_comment(lines: list[str]):
+        return len(lines) == 1 and lines[0].lstrip().startswith(
+            tuple(_COMMENT_IDENTIFIERS)
+        )
+
+    def _contains_special_characters(lines: list[str], max_p: float):
+        counter = Counter("".join(line.strip() for line in lines))
+
+        special_characters_count = sum(
+            [counter.get(c, 0) for c in tuple(_SPECIAL_CHARS)]
+        )
+        total_count = sum(counter.values())
+
+        return (special_characters_count / total_count) >= max_p
+
+    def _is_large_group(
+        group: tuple,
+        lines: list[str],
+        min_size: int = 2,
+        max_special_chars: float = 0.45,
+    ):
+        return len(group) >= min_size and not _contains_special_characters(
+            lines, max_special_chars
+        )
+
     text = f"{context}{completion}"
 
     br_pos = find_newline_position(text, start_index=len(context))
@@ -49,11 +76,13 @@ def clean_model_reflection(context: str, completion: str) -> str:
         target_lines = lines_after[start_line : end_line + 1]
         lines_completion.extend(lines_after[prev_line:start_line])
 
-        if len(group) == 1 and not target_lines[0].lstrip().startswith(
-            tuple(_COMMENT_IDENTIFIERS)
+        if not (
+            _is_single_line_comment(target_lines)
+            or _is_large_group(group, target_lines)
         ):
-            # This line doesn't look like a comment, no need to dedup
-            lines_completion.append(target_lines[0])
+            # Add appropriate lines to the final completion
+            # and ignore other lines
+            lines_completion.extend(target_lines)
 
         prev_line = end_line + 1
 
