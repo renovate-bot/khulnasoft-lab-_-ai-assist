@@ -57,6 +57,26 @@ module Gitlab
 end
 """
 
+JAVASCRIPT_SAMPLE_1 = """
+ // This code has a filename of test.js and is written in JavaScript.
+
+const newFunctionForValidatingEmail = (email) => {
+  return emailRegex.test(email);
+}
+
+// For the mask XYZ
+const writeStringBackwards = (inpStr) => {
+  let outStr = '';
+  for (let i = inpStr.length - 1; i >= 0; i--) {
+    outStr += inpStr[i];
+  }
+  return outStr;
+}
+
+const reverseString = (inpStr) => {
+  let outStr = '';
+"""
+
 
 @pytest.mark.parametrize(
     ("code_sample", "point", "lang_id", "expected_range"),
@@ -72,6 +92,8 @@ end
         (JAVA_SAMPLE_1, (10, 12), LanguageId.JAVA, [(10, 12), (11, 55)]),
         # Complete the `test` function
         (RUBY_SAMPLE_1, (7, 4), LanguageId.RUBY, [(7, 4), (9, 7)]),
+        # Return the end of block only
+        (JAVASCRIPT_SAMPLE_1, (12, 14), LanguageId.JS, [(12, 14), (13, 1)]),
     ],
 )
 def test_trim_by_min_allowed_context(

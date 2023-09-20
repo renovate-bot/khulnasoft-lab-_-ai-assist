@@ -58,7 +58,7 @@ class BaseContextVisitor(BaseVisitor):
             LanguageId.PYTHON,
             PYTHON_SAMPLE,
             (2, 0),
-            "class_definition",
+            "list",
         ),
         (
             LanguageId.PYTHON,

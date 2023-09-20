@@ -280,7 +280,7 @@ def token_length(s: str):
             "f.py",
             None,
             _side_effect_with_imports,
-            "random completion\nnew line",
+            "random completion",
             ops.LanguageId.PYTHON,
             MetadataPromptBuilder(
                 components={
@@ -298,7 +298,7 @@ def token_length(s: str):
                     post=MetadataCodeContent(length=0, length_tokens=0),
                 ),
             ),
-            "random completion\nnew line",
+            "random completion",
             {"comment": 1, "import_statement": 2},
         ),
         (

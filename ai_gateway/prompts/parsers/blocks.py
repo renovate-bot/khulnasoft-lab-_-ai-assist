@@ -22,7 +22,12 @@ class MinAllowedBlockVisitor(BaseVisitor):
         start_row, start_col = node.start_point
         end_row, end_col = node.end_point
 
-        return start_row <= target_row <= end_row and start_col <= target_col <= end_col
+        if start_row == target_row:
+            return start_col <= target_col
+        if end_row == target_row:
+            return end_col >= target_col
+
+        return start_row < target_row < end_row
 
     def _is_block_candidate(self, node: Node) -> bool:
         if node.end_point[0] - node.start_point[0] + 1 >= self.min_block_size:
