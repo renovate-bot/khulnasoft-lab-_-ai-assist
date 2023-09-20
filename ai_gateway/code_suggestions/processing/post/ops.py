@@ -1,6 +1,6 @@
 import re
 from collections import Counter
-from typing import Optional
+from typing import Any, Optional
 
 import structlog
 
@@ -28,30 +28,39 @@ _SPECIAL_CHARS = "()[];.,$%&^*@#!{}/"
 _RE_MARKDOWN_CODE_BLOCK_BEGIN = re.compile(r"^`{3}\S*\n", flags=re.MULTILINE)
 
 
-def clean_model_reflection(context: str, completion: str) -> str:
+def clean_model_reflection(context: str, completion: str, **kwargs: Any) -> str:
     def _is_single_line_comment(lines: list[str]):
         return len(lines) == 1 and lines[0].lstrip().startswith(
             tuple(_COMMENT_IDENTIFIERS)
         )
 
-    def _contains_special_characters(lines: list[str], max_p: float):
-        counter = Counter("".join(line.strip() for line in lines))
-
+    def _with_special_characters(counter: Counter, min_p: float):
         special_characters_count = sum(
             [counter.get(c, 0) for c in tuple(_SPECIAL_CHARS)]
         )
         total_count = sum(counter.values())
 
-        return (special_characters_count / total_count) >= max_p
+        return (special_characters_count / total_count) >= min_p
+
+    def _with_low_diversity(counter: Counter, min_p: float):
+        unique_count = len(counter)
+        total_count = sum(counter.values())
+
+        return (unique_count / total_count) >= min_p
 
     def _is_large_group(
         group: tuple,
         lines: list[str],
-        min_size: int = 2,
-        max_special_chars: float = 0.45,
+        min_block_size: int = 5,
+        min_special_chars: float = 0.25,
+        min_diversity_chars: float = 0.35,
     ):
-        return len(group) >= min_size and not _contains_special_characters(
-            lines, max_special_chars
+        counter = Counter("".join(line.strip() for line in lines))
+
+        return (
+            len(group) >= min_block_size
+            and not _with_special_characters(counter, min_special_chars)
+            and not _with_low_diversity(counter, min_diversity_chars)
         )
 
     text = f"{context}{completion}"
@@ -78,7 +87,7 @@ def clean_model_reflection(context: str, completion: str) -> str:
 
         if not (
             _is_single_line_comment(target_lines)
-            or _is_large_group(group, target_lines)
+            or _is_large_group(group, target_lines, **kwargs)
         ):
             # Add appropriate lines to the final completion
             # and ignore other lines
