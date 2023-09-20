@@ -129,9 +129,7 @@ async def completions(
             lang=suggestion.lang(),
         ),
         experiments=suggestion.metadata.experiments,
-        choices=[
-            SuggestionsResponse.Choice(text=suggestion.text),
-        ],
+        choices=_suggestion_choices(suggestion.text),
     )
 
 
@@ -188,10 +186,12 @@ async def generations(
             name=suggestion.model.name,
             lang=suggestion.lang(),
         ),
-        choices=[
-            SuggestionsResponse.Choice(text=suggestion.text),
-        ],
+        choices=_suggestion_choices(suggestion.text),
     )
+
+
+def _suggestion_choices(text: str) -> list:
+    return [SuggestionsResponse.Choice(text=text)] if text else []
 
 
 def track_snowplow_event(

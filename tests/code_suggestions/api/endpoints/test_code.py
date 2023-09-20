@@ -9,6 +9,7 @@ from ai_gateway.api.v2.api import api_router
 from ai_gateway.api.v2.endpoints.code import (
     CurrentFile,
     SuggestionsRequest,
+    SuggestionsResponse,
     track_snowplow_event,
 )
 from ai_gateway.code_suggestions.processing.base import ModelEngineOutput
@@ -32,21 +33,78 @@ class TestCodeCompletions:
         client = TestClient(app)
         yield client
 
-    def test_successful_response(self, client):
-        model_output = ModelEngineOutput(
-            text="def search",
-            score=0,
-            model=ModelMetadata(name="code-gecko", engine="vertex-ai"),
-            lang_id=LanguageId.PYTHON,
-            metadata=MetadataPromptBuilder(
-                components={
-                    "prefix": MetadataCodeContent(length=10, length_tokens=2),
-                    "suffix": MetadataCodeContent(length=10, length_tokens=2),
+    @pytest.mark.parametrize(
+        ("model_output", "expected_response"),
+        [
+            # non-empty suggestions from model
+            (
+                ModelEngineOutput(
+                    text="def search",
+                    score=0,
+                    model=ModelMetadata(name="code-gecko", engine="vertex-ai"),
+                    lang_id=LanguageId.PYTHON,
+                    metadata=MetadataPromptBuilder(
+                        components={
+                            "prefix": MetadataCodeContent(length=10, length_tokens=2),
+                            "suffix": MetadataCodeContent(length=10, length_tokens=2),
+                        },
+                        experiments=[
+                            ExperimentTelemetry(name="truncate_suffix", variant=1)
+                        ],
+                    ),
+                ),
+                {
+                    "id": "id",
+                    "model": {
+                        "engine": "vertex-ai",
+                        "name": "code-gecko",
+                        "lang": "python",
+                    },
+                    "experiments": [{"name": "truncate_suffix", "variant": 1}],
+                    "object": "text_completion",
+                    "created": 1695182638,
+                    "choices": [
+                        {
+                            "text": "def search",
+                            "index": 0,
+                            "finish_reason": "length",
+                        }
+                    ],
                 },
-                experiments=[ExperimentTelemetry(name="truncate_suffix", variant=1)],
             ),
-        )
-
+            # empty suggestions from model
+            (
+                ModelEngineOutput(
+                    text="",
+                    score=0,
+                    model=ModelMetadata(name="code-gecko", engine="vertex-ai"),
+                    lang_id=LanguageId.PYTHON,
+                    metadata=MetadataPromptBuilder(
+                        components={
+                            "prefix": MetadataCodeContent(length=10, length_tokens=2),
+                            "suffix": MetadataCodeContent(length=10, length_tokens=2),
+                        },
+                        experiments=[
+                            ExperimentTelemetry(name="truncate_suffix", variant=1)
+                        ],
+                    ),
+                ),
+                {
+                    "id": "id",
+                    "model": {
+                        "engine": "vertex-ai",
+                        "name": "code-gecko",
+                        "lang": "python",
+                    },
+                    "experiments": [{"name": "truncate_suffix", "variant": 1}],
+                    "object": "text_completion",
+                    "created": 1695182638,
+                    "choices": [],
+                },
+            ),
+        ],
+    )
+    def test_successful_response(self, client, model_output, expected_response):
         code_completions_mock = mock.AsyncMock(return_value=model_output)
         container = CodeSuggestionsContainer()
 
@@ -68,13 +126,10 @@ class TestCodeCompletions:
         assert response.status_code == 200
 
         body = response.json()
-        assert body["choices"][0]["text"] == "def search"
-        assert body["experiments"] == [{"name": "truncate_suffix", "variant": 1}]
-        assert body["model"] == {
-            "engine": "vertex-ai",
-            "lang": "python",
-            "name": "code-gecko",
-        }
+
+        assert body["choices"] == expected_response["choices"]
+        assert body["experiments"] == expected_response["experiments"]
+        assert body["model"] == expected_response["model"]
 
 
 class TestSnowplowInstrumentator:
@@ -201,7 +256,7 @@ class TestSnowplowInstrumentator:
         assert args["gitlab_global_user_id"] == expected_user_id
 
 
-class TestCodeGeneration:
+class TestCodeGenerations:
     @pytest.fixture(scope="class")
     def client(self):
         app = FastAPI()
@@ -214,15 +269,73 @@ class TestCodeGeneration:
             "prompt_version",
             "prefix",
             "prompt",
+            "model_output_text",
             "want_called",
             "want_status",
             "want_prompt",
+            "want_choices",
         ),
         [
-            (1, "foo", None, True, 200, None),
-            (1, "foo", "bar", True, 200, None),
-            (2, "foo", "bar", True, 200, "bar"),
-            (2, "foo", None, False, 422, None),  # v2 request need the prompt field
+            (
+                1,
+                "foo",
+                None,
+                "foo",
+                True,
+                200,
+                None,
+                [{"text": "foo", "index": 0, "finish_reason": "length"}],
+            ),
+            (
+                1,
+                "foo",
+                "bar",
+                "foo",
+                True,
+                200,
+                None,
+                [{"text": "foo", "index": 0, "finish_reason": "length"}],
+            ),
+            (
+                1,
+                "foo",
+                "bar",
+                "",
+                True,
+                200,
+                None,
+                [],
+            ),  # v1 empty suggestions from model
+            (
+                2,
+                "foo",
+                "bar",
+                "foo",
+                True,
+                200,
+                "bar",
+                [{"text": "foo", "index": 0, "finish_reason": "length"}],
+            ),
+            (
+                2,
+                "foo",
+                None,
+                "foo",
+                False,
+                422,
+                None,
+                None,
+            ),  # v2 request need the prompt field
+            (
+                2,
+                "foo",
+                "bar",
+                "",
+                True,
+                200,
+                "bar",
+                [],
+            ),  # v2 empty suggestions from model
         ],
     )
     def test_request_versioning(
@@ -231,12 +344,14 @@ class TestCodeGeneration:
         prompt_version,
         prefix,
         prompt,
+        model_output_text,
         want_called,
         want_status,
         want_prompt,
+        want_choices,
     ):
         model_output = ModelEngineOutput(
-            text="foo",
+            text=model_output_text,
             score=0,
             model=ModelMetadata(name="some-model", engine="some-engine"),
             lang_id=LanguageId.PYTHON,
@@ -273,3 +388,7 @@ class TestCodeGeneration:
         if code_generations_mock.called:
             prompt_input = code_generations_mock.call_args_list[0][1]["prompt_input"]
             assert prompt_input == want_prompt
+
+        if want_status == 200:
+            body = response.json()
+            assert body["choices"] == want_choices
