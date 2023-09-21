@@ -1,7 +1,7 @@
 from abc import abstractmethod
 from enum import Enum
 from http.client import BAD_REQUEST, INTERNAL_SERVER_ERROR
-from typing import Optional
+from typing import Optional, Sequence
 
 import structlog
 from google.api_core.exceptions import InternalServerError, InvalidArgument
@@ -124,6 +124,7 @@ class PalmCodeGenBaseModel(TextGenBaseModel):
         max_output_tokens: int,
         top_p: float,
         top_k: int,
+        stop_sequences: Optional[Sequence[str]] = None,
     ) -> Optional[TextGenModelOutput]:
         if not input.is_valid():
             return TextGenModelOutput(text="", score=0)
@@ -138,6 +139,9 @@ class PalmCodeGenBaseModel(TextGenBaseModel):
             "topP": top_p,
             "topK": top_k,
         }
+        if stop_sequences:
+            parameters_dict["stopSequences"] = stop_sequences
+
         parameters = json_format.ParseDict(parameters_dict, struct_pb2.Value())
 
         log.debug("codegen vertex call:", input=input_data, parameters=parameters_dict)
@@ -174,6 +178,7 @@ class PalmCodeGenBaseModel(TextGenBaseModel):
         max_output_tokens: int = 32,
         top_p: float = 0.95,
         top_k: int = 40,
+        stop_sequences: Optional[Sequence[str]] = None,
     ) -> Optional[TextGenModelOutput]:
         pass
 
@@ -198,10 +203,16 @@ class PalmTextBisonModel(PalmCodeGenBaseModel):
         max_output_tokens: int = 32,
         top_p: float = 0.95,
         top_k: int = 40,
+        stop_sequences: Optional[Sequence[str]] = None,
     ) -> Optional[TextGenModelOutput]:
         model_input = TextBisonModelInput(prompt)
         res = await self._generate(
-            model_input, temperature, max_output_tokens, top_p, top_k
+            model_input,
+            temperature,
+            max_output_tokens,
+            top_p,
+            top_k,
+            stop_sequences,
         )
 
         return res
@@ -227,10 +238,16 @@ class PalmCodeBisonModel(PalmCodeGenBaseModel):
         max_output_tokens: int = 2048,
         top_p: float = 0.95,
         top_k: int = 40,
+        stop_sequences: Optional[Sequence[str]] = None,
     ) -> Optional[TextGenModelOutput]:
         model_input = CodeBisonModelInput(prompt)
         res = await self._generate(
-            model_input, temperature, max_output_tokens, top_p, top_k
+            model_input,
+            temperature,
+            max_output_tokens,
+            top_p,
+            top_k,
+            stop_sequences,
         )
 
         return res
@@ -238,6 +255,7 @@ class PalmCodeBisonModel(PalmCodeGenBaseModel):
 
 class PalmCodeGeckoModel(PalmCodeGenBaseModel):
     MAX_MODEL_LEN = 2048
+    DEFAULT_STOP_SEQUENCES = ["\n\n"]
 
     def __init__(
         self,
@@ -256,10 +274,20 @@ class PalmCodeGeckoModel(PalmCodeGenBaseModel):
         max_output_tokens: int = 64,
         top_p: float = 0.95,
         top_k: int = 40,
+        stop_sequences: Optional[Sequence[str]] = None,
     ) -> Optional[TextGenModelOutput]:
         model_input = CodeGeckoModelInput(prompt, suffix)
+
+        if not stop_sequences:
+            stop_sequences = PalmCodeGeckoModel.DEFAULT_STOP_SEQUENCES
+
         res = await self._generate(
-            model_input, temperature, max_output_tokens, top_p, top_k
+            model_input,
+            temperature,
+            max_output_tokens,
+            top_p,
+            top_k,
+            stop_sequences,
         )
 
         return res
