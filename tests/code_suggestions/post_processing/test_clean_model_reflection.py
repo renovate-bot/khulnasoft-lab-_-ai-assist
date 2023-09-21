@@ -86,6 +86,32 @@ import testing;
     "\n"
 )
 
+PREFIX_JAVASCRIPT_4 = """
+ // This code has a filename of test.js and is written in JavaScript.
+import testing;
+
+const newFunctionForValidatingEmail = (email) => {
+  return emailRegex.test(email);
+}
+
+// For the mask XYZ
+const writeStringBackwards = (inpStr) => {
+  let outStr = '';
+  for (let i = inpStr.length - 1; i >= 0; i--) {
+    outStr += inpStr[i];
+  }
+  return outSt
+""".strip(
+    "\n"
+)
+
+COMPLETION_JAVASCRIPT_4_1 = """
+r;\n}\n\nconst maskXYZ = (inpStr) => {\n  let outStr = '';
+""".strip(
+    "\n"
+)
+
+
 PREFIX_PYTHON_1 = """
 # This code has a filename of app.py and is written in Python.
 def print_hello_world():
@@ -117,25 +143,55 @@ COMPLETION_PYTHON_2_1 = """
 )
 
 
+PREFIX_RUBY_1 = """
+# frozen_string_literal: true                    
+                                                 
+require 'carrierwave/orm/activerecord'           
+                                                 
+class Project < ApplicationRecord
+  include Gitlab::ConfigHelper
+  include Gitlab::VisibilityLevel
+
+  def print_name
+    puts name
+  end
+
+# Create new code for the following description: method which checks if name is valid
+"""
+
+COMPLETION_RUBY_1_1 = """
+def valid_name?
+  name.present? && name.length <= 255
+end
+
+# Create new code for the following description: method which checks if name is valid
+"""
+
+
 @pytest.mark.parametrize(
-    ("context", "completion", "expected"),
+    ("context", "completion", "min_block_size", "expected"),
     [
-        (PREFIX_JAVASCRIPT_1, COMPLETION_JAVASCRIPT_1_1, "only\n"),
-        (PREFIX_JAVASCRIPT_1, COMPLETION_JAVASCRIPT_1_2, "only"),
-        (PREFIX_JAVASCRIPT_1, COMPLETION_JAVASCRIPT_1_3, COMPLETION_JAVASCRIPT_1_3),
-        (PREFIX_JAVASCRIPT_2, COMPLETION_JAVASCRIPT_2_1, "\n\n\n"),
+        (PREFIX_JAVASCRIPT_1, COMPLETION_JAVASCRIPT_1_1, 2, "only\n"),
+        (PREFIX_JAVASCRIPT_1, COMPLETION_JAVASCRIPT_1_2, 2, "only"),
+        (PREFIX_JAVASCRIPT_1, COMPLETION_JAVASCRIPT_1_3, 2, COMPLETION_JAVASCRIPT_1_3),
+        (PREFIX_JAVASCRIPT_2, COMPLETION_JAVASCRIPT_2_1, 3, "\n\n\n"),
         (
             PREFIX_JAVASCRIPT_3,
             COMPLETION_JAVASCRIPT_3_1,
+            3,
             " newFunctionForValidatingEmail, writeStringBackwards };",
         ),
-        (PREFIX_PYTHON_1, COMPLETION_PYTHON_1_1, ""),
-        (PREFIX_PYTHON_2, COMPLETION_PYTHON_2_1, '\n\tprint("hello world")'),
-        ("   ", "", ""),
-        ("def hello_world():", "\n\n  ", "\n\n  "),
+        (PREFIX_JAVASCRIPT_4, COMPLETION_JAVASCRIPT_4_1, 3, COMPLETION_JAVASCRIPT_4_1),
+        (PREFIX_PYTHON_1, COMPLETION_PYTHON_1_1, 3, ""),
+        (PREFIX_PYTHON_2, COMPLETION_PYTHON_2_1, 3, '\n\tprint("hello world")'),
+        (PREFIX_RUBY_1, COMPLETION_RUBY_1_1, 5, COMPLETION_RUBY_1_1),
+        ("   ", "", 3, ""),
+        ("def hello_world():", "\n\n  ", 3, "\n\n  "),
     ],
 )
-def test_clean_model_reflection(context: str, completion: str, expected: str):
-    actual = clean_model_reflection(context, completion)
+def test_clean_model_reflection(
+    context: str, completion: str, min_block_size: int, expected: str
+):
+    actual = clean_model_reflection(context, completion, min_block_size=min_block_size)
 
     assert actual == expected
