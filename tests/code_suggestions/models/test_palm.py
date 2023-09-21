@@ -1,8 +1,10 @@
+from typing import Sequence
 from unittest.mock import AsyncMock, Mock
 
 import pytest
 from google.api_core.exceptions import InternalServerError, InvalidArgument
 from google.cloud.aiplatform.gapic import PredictionServiceAsyncClient
+from google.protobuf import json_format
 
 from ai_gateway.models.palm import (
     CodeBisonModelInput,
@@ -32,7 +34,7 @@ TEST_SUFFIX = "some suffix"
             TEST_PREFIX,
             TEST_SUFFIX,
             "some output",
-            [TextBisonModelInput(TEST_PREFIX), 0.2, 32, 0.95, 40],
+            [TextBisonModelInput(TEST_PREFIX), 0.2, 32, 0.95, 40, None],
         ),
         (PalmTextBisonModel, "", TEST_SUFFIX, "", None),
         (
@@ -40,7 +42,7 @@ TEST_SUFFIX = "some suffix"
             TEST_PREFIX,
             TEST_SUFFIX,
             "some output",
-            [CodeBisonModelInput(TEST_PREFIX), 0.2, 2048, 0.95, 40],
+            [CodeBisonModelInput(TEST_PREFIX), 0.2, 2048, 0.95, 40, None],
         ),
         (PalmCodeBisonModel, "", TEST_SUFFIX, "", None),
         (
@@ -48,13 +50,24 @@ TEST_SUFFIX = "some suffix"
             TEST_PREFIX,
             TEST_SUFFIX,
             "some output",
-            [CodeGeckoModelInput(TEST_PREFIX, TEST_SUFFIX), 0.2, 64, 0.95, 40],
+            [
+                CodeGeckoModelInput(TEST_PREFIX, TEST_SUFFIX),
+                0.2,
+                64,
+                0.95,
+                40,
+                ["\n\n"],
+            ],
         ),
         (PalmCodeGeckoModel, "", TEST_SUFFIX, "", None),
     ],
 )
 async def test_palm_model_generate(
-    model, prefix, suffix, expected_output, expected_generate_args
+    model,
+    prefix,
+    suffix,
+    expected_output,
+    expected_generate_args,
 ):
     client = Mock()
     palm_model = model(client=client, project="test", location="some location")
@@ -151,3 +164,52 @@ def test_palm_model_from_name(
 
     assert model.metadata.name == expected_metadata_name
     assert model.metadata.engine == "vertex-ai"
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    ("model", "stop_sequences", "expected_stop_sequences"),
+    [
+        (
+            PalmTextBisonModel,
+            None,
+            None,
+        ),
+        (
+            PalmCodeBisonModel,
+            None,
+            None,
+        ),
+        (
+            PalmCodeGeckoModel,
+            None,
+            ["\n\n"],  # we set this sequence by default
+        ),
+        (
+            PalmCodeGeckoModel,
+            ["\n\n"],
+            ["\n\n"],
+        ),
+        (
+            PalmCodeGeckoModel,
+            ["random stop sequence"],
+            ["random stop sequence"],
+        ),
+    ],
+)
+async def test_palm_model_stop_sequences(
+    model: PalmCodeGenBaseModel,
+    stop_sequences: Sequence[str],
+    expected_stop_sequences: Sequence[str],
+):
+    client = Mock()
+    client.predict = AsyncMock()
+    palm_model = model(client=client, project="test", location="some location")
+
+    await palm_model.generate("foo", "", stop_sequences=stop_sequences)
+
+    client.predict.assert_called_once()
+
+    parameters = client.predict.call_args[1]["parameters"]
+    params_dict = json_format.MessageToDict(parameters)
+    assert params_dict.get("stopSequences", None) == expected_stop_sequences
