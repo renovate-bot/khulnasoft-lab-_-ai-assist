@@ -367,7 +367,7 @@ the authenticity of the suggestion requests.
 
 Code suggestions is continuously deployed to [Runway](https://about.gitlab.com/handbook/engineering/infrastructure/platforms/tools/runway/).
 
-This deployment is serving a percentage of production traffic from `codesuggestions.gitlab.com`, and we are gradually increasing that traffic share ([&1064](https://gitlab.com/groups/gitlab-com/gl-infra/-/epics/1064)). Once this is complete and we are confident in the stability, we can deprecate the legacy Kubernetes-based deployment.
+This deployment is serving 30% of production traffic from `codesuggestions.gitlab.com`. 100% of production traffic wil be served as part of ([&1064](https://gitlab.com/groups/gitlab-com/gl-infra/-/epics/1064)). Once this is complete and we are confident in the stability, we can deprecate the legacy Kubernetes-based deployment.
 
 When an MR gets merged, CI will build a new Docker image, and trigger a Runway downstream pipeline that will deploy this image to staging, and then production. Downstream pipelines run against the [deployment project](https://gitlab.com/gitlab-com/gl-infra/platform/runway/deployments/ai-gateway).
 
