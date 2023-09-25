@@ -39,7 +39,7 @@ include:
     file: "service-project/runway.yml"
     inputs:
       runway_service_id: ai-gateway
-      image: "${TARGET_IMAGE}"
+      image: "$CI_REGISTRY_IMAGE/model-gateway:${CI_COMMIT_SHORT_SHA}"
       runway_version: v1.11.1 # please keep in sync with `ref` above
 
 cache:
