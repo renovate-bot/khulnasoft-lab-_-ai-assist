@@ -5,7 +5,6 @@ from dependency_injector.providers import Factory
 from transformers import PreTrainedTokenizer
 
 from ai_gateway.code_suggestions.processing.base import (
-    MINIMIMUM_CONFIDENCE_SCORE,
     CodeContent,
     MetadataPromptBuilder,
     ModelEngineBase,
@@ -99,14 +98,8 @@ class ModelEngineGenerations(ModelEngineBase):
                     watch_container.register_model_output_length(res.text)
                     watch_container.register_model_score(res.score)
 
-                    if res.score > MINIMIMUM_CONFIDENCE_SCORE:
-                        # TODO: Move the call to the use case class
-                        generation = self.post_processor_factory(prefix).process(
-                            res.text
-                        )
-                    else:
-                        watch_container.register_is_discarded()
-                        generation = ""
+                    # TODO: Move the call to the use case class
+                    generation = self.post_processor_factory(prefix).process(res.text)
 
                     return ModelEngineOutput(
                         text=generation,
