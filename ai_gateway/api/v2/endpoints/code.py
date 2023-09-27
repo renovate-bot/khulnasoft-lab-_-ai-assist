@@ -158,24 +158,21 @@ async def generations(
         current_file_name=payload.current_file.file_name,
     )
 
-    prompt = None
-    if payload.prompt_version >= 2:
-        prompt = payload.prompt
+    if payload.prompt_version == 2:
+        code_generations.with_prompt_prepared(payload.prompt)
 
     with TelemetryInstrumentator().watch(payload.telemetry):
-        suggestion = await code_generations(
+        suggestion = await code_generations.execute(
             payload.current_file.content_above_cursor,
-            payload.current_file.content_below_cursor,
             payload.current_file.file_name,
             payload.current_file.language_identifier,
-            prompt_input=prompt,
         )
 
     log.debug(
         "code creation suggestion:",
         suggestion=suggestion.text,
         score=suggestion.score,
-        language=suggestion.lang(),
+        language=suggestion.lang,
     )
 
     return SuggestionsResponse(
@@ -184,7 +181,7 @@ async def generations(
         model=SuggestionsResponse.Model(
             engine=suggestion.model.engine,
             name=suggestion.model.name,
-            lang=suggestion.lang(),
+            lang=suggestion.lang,
         ),
         choices=_suggestion_choices(suggestion.text),
     )

@@ -5,16 +5,11 @@ from ai_gateway.api import middleware
 from ai_gateway.api.rollout.model import ModelRollout
 from ai_gateway.auth import GitLabOidcProvider
 from ai_gateway.code_suggestions import CodeCompletions, CodeGenerations
-from ai_gateway.code_suggestions.processing import (
-    ModelEngineCompletions,
-    ModelEngineGenerations,
-)
+from ai_gateway.code_suggestions.processing import ModelEngineCompletions
 from ai_gateway.code_suggestions.processing.post.completions import (
     PostProcessor as PostProcessorCompletions,
 )
-from ai_gateway.code_suggestions.processing.post.generations import (
-    PostProcessor as PostProcessorGenerations,
-)
+from ai_gateway.code_suggestions.processing.pre import TokenizerTokenStrategy
 from ai_gateway.experimentation import experiment_registry_provider
 from ai_gateway.models import (
     FakePalmTextGenModel,
@@ -88,15 +83,6 @@ def _create_engine_code_completions(model_provider, tokenizer, experiment_regist
     )
 
 
-def _create_engine_code_generations(model_provider, tokenizer):
-    return providers.Factory(
-        ModelEngineGenerations,
-        model=model_provider,
-        tokenizer=tokenizer,
-        post_processor=providers.Factory(PostProcessorGenerations).provider,
-    )
-
-
 def _all_vertex_models(
     models_key_name, grpc_client_vertex, project, location, real_or_fake
 ):
@@ -121,13 +107,6 @@ def _all_engines(models, tokenizer):
             tokenizer,
             experiment_registry,
         ),
-        **{
-            model_name: _create_engine_code_generations(models[model_name], tokenizer)
-            for model_name in [
-                ModelRollout.GOOGLE_TEXT_BISON,
-                ModelRollout.GOOGLE_CODE_BISON,
-            ]
-        },
     }
 
 
@@ -209,7 +188,11 @@ class CodeSuggestionsContainer(containers.DeclarativeContainer):
     )
 
     code_generations = providers.Factory(
-        CodeGenerations, engine=engines[ModelRollout.GOOGLE_CODE_BISON]
+        CodeGenerations,
+        model=models[ModelRollout.GOOGLE_CODE_BISON],
+        tokenization_strategy=providers.Factory(
+            TokenizerTokenStrategy, tokenizer=tokenizer
+        ),
     )
 
     snowplow_config = providers.Resource(
