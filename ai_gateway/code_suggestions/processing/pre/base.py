@@ -1,5 +1,4 @@
 from abc import ABC, abstractmethod
-from enum import Enum
 from typing import Any, NamedTuple, Union
 
 from ai_gateway.code_suggestions.processing import (
@@ -10,17 +9,10 @@ from ai_gateway.code_suggestions.processing import (
 from ai_gateway.prompts import PromptTemplateBase
 
 __all__ = [
-    "CodeKind",
     "CodeContent",
     "TokenStrategyBase",
     "PromptBuilderBase",
 ]
-
-
-class CodeKind(Enum):
-    PREFIX = 1
-    SUFFIX = 2
-    SNIPPET = 3
 
 
 class CodeContent(NamedTuple):
