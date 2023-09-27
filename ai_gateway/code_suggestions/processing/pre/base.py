@@ -49,7 +49,10 @@ class PromptBuilderBase(ABC):
         # Apply all known arguments to get the number of reserved tokens
         tpl_raw = self.tpl.apply(**self.tpl_args)
         tpl_len = self.tkn_strategy.estimate_length(tpl_raw)
-        self.always_len += tpl_len
+        if tpl_len > self.total_max_len:
+            raise ValueError("the template size exceeds overall maximum length")
+
+        self.always_len = tpl_len
 
         return tpl_len
 
