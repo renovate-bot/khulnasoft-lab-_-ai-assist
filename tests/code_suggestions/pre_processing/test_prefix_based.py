@@ -1,4 +1,4 @@
-from typing import Union
+from typing import Optional, Union
 
 import pytest
 from transformers import AutoTokenizer
@@ -177,3 +177,53 @@ class TestPromptBuilderPrefixBased:
         actual = builder.build()
 
         assert actual == expected_prompt
+
+    @pytest.mark.parametrize(
+        ("prompt", "total_max_len", "ignore_exception", "expected_prompt"),
+        [
+            (
+                "random_text",
+                2048,
+                False,
+                Prompt(
+                    prefix="random_text",
+                    metadata=MetadataPromptBuilder(
+                        components={
+                            "prompt": MetadataCodeContent(length=11, length_tokens=3)
+                        }
+                    ),
+                ),
+            ),
+            ("random_text", 1, False, None),  # catch the exception raised
+            (
+                "random_text",
+                1,
+                True,
+                Prompt(
+                    prefix="random_text",
+                    metadata=MetadataPromptBuilder(
+                        components={
+                            "prompt": MetadataCodeContent(length=11, length_tokens=3)
+                        }
+                    ),
+                ),
+            ),
+        ],
+    )
+    def test_with_prompt_wrapped(
+        self,
+        prompt: str,
+        total_max_len: int,
+        ignore_exception: bool,
+        expected_prompt: Optional[Prompt],
+    ):
+        builder = PromptBuilderPrefixBased(
+            total_max_len, TokenizerTokenStrategy(self.tokenizer)
+        )
+
+        if expected_prompt or ignore_exception:
+            actual = builder.wrap(prompt, ignore_exception=True)
+            assert actual == expected_prompt
+        else:
+            with pytest.raises(ValueError):
+                builder.wrap(prompt)

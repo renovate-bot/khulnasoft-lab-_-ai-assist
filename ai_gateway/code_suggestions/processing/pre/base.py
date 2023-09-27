@@ -2,7 +2,11 @@ from abc import ABC, abstractmethod
 from enum import Enum
 from typing import Any, NamedTuple, Union
 
-from ai_gateway.code_suggestions.processing import Prompt
+from ai_gateway.code_suggestions.processing import (
+    MetadataCodeContent,
+    MetadataPromptBuilder,
+    Prompt,
+)
 from ai_gateway.prompts import PromptTemplateBase
 
 __all__ = [
@@ -56,6 +60,23 @@ class PromptBuilderBase(ABC):
         self.always_len += tpl_len
 
         return tpl_len
+
+    def wrap(self, prompt: str, ignore_exception: bool = False) -> Prompt:
+        length_tokens = self.tkn_strategy.estimate_length(prompt)
+        if length_tokens > self.total_max_len and not ignore_exception:
+            raise ValueError("the prompt size exceeds overall maximum length")
+
+        return Prompt(
+            prefix=prompt,
+            metadata=MetadataPromptBuilder(
+                components={
+                    "prompt": MetadataCodeContent(
+                        length=len(prompt),
+                        length_tokens=length_tokens,
+                    ),
+                }
+            ),
+        )
 
     @abstractmethod
     def add_content(self, *text: str, **_kwargs: Any):
