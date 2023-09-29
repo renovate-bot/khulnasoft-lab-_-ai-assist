@@ -9,9 +9,9 @@ from ai_gateway.api.v2.api import api_router
 from ai_gateway.api.v2.endpoints.code import (
     CurrentFile,
     SuggestionsRequest,
-    SuggestionsResponse,
     track_snowplow_event,
 )
+from ai_gateway.code_suggestions import CodeGenerations, CodeGenerationsOutput
 from ai_gateway.code_suggestions.processing.base import ModelEngineOutput
 from ai_gateway.code_suggestions.processing.typing import (
     LanguageId,
@@ -350,21 +350,15 @@ class TestCodeGenerations:
         want_prompt,
         want_choices,
     ):
-        model_output = ModelEngineOutput(
+        model_output = CodeGenerationsOutput(
             text=model_output_text,
             score=0,
             model=ModelMetadata(name="some-model", engine="some-engine"),
             lang_id=LanguageId.PYTHON,
-            metadata=MetadataPromptBuilder(
-                components={
-                    "prefix": MetadataCodeContent(length=10, length_tokens=2),
-                    "suffix": MetadataCodeContent(length=10, length_tokens=2),
-                },
-                experiments=[ExperimentTelemetry(name="truncate_suffix", variant=1)],
-            ),
         )
 
-        code_generations_mock = mock.AsyncMock(return_value=model_output)
+        code_generations_mock = mock.Mock(spec=CodeGenerations)
+        code_generations_mock.execute = mock.AsyncMock(return_value=model_output)
         container = CodeSuggestionsContainer()
 
         with container.code_generations.override(code_generations_mock):
@@ -384,10 +378,10 @@ class TestCodeGenerations:
             )
 
         assert response.status_code == want_status
-        assert code_generations_mock.called == want_called
-        if code_generations_mock.called:
-            prompt_input = code_generations_mock.call_args_list[0][1]["prompt_input"]
-            assert prompt_input == want_prompt
+        assert code_generations_mock.execute.called == want_called
+
+        if code_generations_mock.with_prompt_prepared.called:
+            code_generations_mock.with_prompt_prepared.assert_called_with(want_prompt)
 
         if want_status == 200:
             body = response.json()
