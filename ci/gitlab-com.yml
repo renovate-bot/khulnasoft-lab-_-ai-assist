@@ -111,13 +111,16 @@ tests:
     - apt-get update && apt install -y nodejs build-essential git
     - poetry run python scripts/build-tree-sitter-lib.py
     - mv scripts/lib/tree-sitter-languages.so /usr/lib
-    - poetry run pytest --junitxml=".test-reports/tests.xml"
+    - poetry run pytest --junitxml=".test-reports/tests.xml" --cov --cov-report term --cov-report xml:.test-reports/coverage.xml
   artifacts:
     when: always
     expire_in: 1 weeks
     reports:
       junit:
         - .test-reports/*.xml
+      coverage_report:
+        coverage_format: cobertura
+        path: .test-reports/coverage.xml
 
 gemnasium-python-dependency_scanning:
   stage: test
