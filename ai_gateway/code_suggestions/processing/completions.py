@@ -188,6 +188,7 @@ class ModelEngineCompletions(ModelEngineBase):
         suffix: str,
         file_name: str,
         lang_id: LanguageId,
+        editor_lang: Optional[str] = None,
         **kwargs: Any,
     ) -> ModelEngineOutput:
         prompt = self._build_prompt(prefix, file_name, suffix, lang_id)
@@ -209,6 +210,8 @@ class ModelEngineCompletions(ModelEngineBase):
 
                 # log experiments included in this request
                 self._count_experiments(prompt.metadata.experiments, watch_container)
+
+                watch_container.register_lang(lang_id, editor_lang)
 
                 if res := await self.model.generate(
                     prompt.prefix, prompt.suffix, **kwargs
