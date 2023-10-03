@@ -14,10 +14,10 @@ from ai_gateway.code_suggestions.processing.pre import (
 )
 from ai_gateway.instrumentators import TextGenModelInstrumentator
 from ai_gateway.models import (
+    ModelAPICallError,
+    ModelAPIError,
     ModelMetadata,
     TextGenBaseModel,
-    VertexModelInternalError,
-    VertexModelInvalidArgument,
 )
 from ai_gateway.prompts import PromptTemplate
 
@@ -114,8 +114,11 @@ class CodeGenerations:
                         lang_id=lang_id,
                     )
 
-            except (VertexModelInvalidArgument, VertexModelInternalError) as ex:
+            except ModelAPICallError as ex:
                 watch_container.register_model_exception(str(ex), ex.code)
+            except ModelAPIError as ex:
+                # TODO: https://gitlab.com/gitlab-org/modelops/applied-ml/code-suggestions/ai-assist/-/issues/294
+                watch_container.register_model_exception(str(ex), -1)
 
         return CodeGenerationsOutput(
             text="",

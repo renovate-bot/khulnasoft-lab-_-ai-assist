@@ -1,7 +1,9 @@
+from enum import Enum
 from time import time
 from typing import Annotated, Literal, Optional, Union
 
 import structlog
+from dependency_injector.providers import Factory
 from dependency_injector.wiring import Provide, inject
 from fastapi import APIRouter, Depends, Request
 from pydantic import BaseModel, Field, conlist, constr
@@ -30,6 +32,11 @@ router = APIRouter(
 )
 
 
+class ModelProvider(str, Enum):
+    VERTEX_AI = "vertex-ai"
+    ANTHROPIC = "anthropic"
+
+
 class CurrentFile(BaseModel):
     file_name: constr(strip_whitespace=True, max_length=255)
     language_identifier: Optional[
@@ -43,6 +50,7 @@ class SuggestionsRequest(BaseModel):
     project_path: Optional[constr(strip_whitespace=True, max_length=255)]
     project_id: Optional[int]
     current_file: CurrentFile
+    model_provider: Optional[Literal[ModelProvider.VERTEX_AI, ModelProvider.ANTHROPIC]]
     telemetry: conlist(Telemetry, max_items=10) = []
 
 
@@ -138,8 +146,11 @@ async def completions(
 async def generations(
     req: Request,
     payload: SuggestionRequestWithVersion,
-    code_generations: CodeGenerations = Depends(
-        Provide[CodeSuggestionsContainer.code_generations]
+    code_generations_vertex: Factory[CodeGenerations] = Depends(
+        Provide[CodeSuggestionsContainer.code_generations_vertex.provider]
+    ),
+    code_generations_anthropic: Factory[CodeGenerations] = Depends(
+        Provide[CodeSuggestionsContainer.code_generations_anthropic.provider]
     ),
     snowplow_instrumentator: SnowplowInstrumentator = Depends(
         Provide[CodeSuggestionsContainer.snowplow_instrumentator]
@@ -157,6 +168,11 @@ async def generations(
         suffix=payload.current_file.content_below_cursor,
         current_file_name=payload.current_file.file_name,
     )
+
+    if payload.model_provider == ModelProvider.ANTHROPIC:
+        code_generations = code_generations_anthropic()
+    else:
+        code_generations = code_generations_vertex()
 
     if payload.prompt_version == 2:
         code_generations.with_prompt_prepared(payload.prompt)

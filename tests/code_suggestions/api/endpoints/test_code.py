@@ -361,7 +361,7 @@ class TestCodeGenerations:
         code_generations_mock.execute = mock.AsyncMock(return_value=model_output)
         container = CodeSuggestionsContainer()
 
-        with container.code_generations.override(code_generations_mock):
+        with container.code_generations_vertex.override(code_generations_mock):
             response = client.post(
                 "/v2/code/generations",
                 json={
