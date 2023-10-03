@@ -9,6 +9,7 @@ from pydantic import BaseModel, constr
 from starlette_context import context
 
 from ai_gateway.experimentation import ExperimentTelemetry
+from ai_gateway.models import SafetyAttributes
 
 EXPERIMENT_LABELS = ["exp_names", "exp_variants"]
 METRIC_LABELS = ["model_engine", "model_name"]
@@ -115,6 +116,14 @@ class TextGenModelInstrumentator:
 
         def register_is_discarded(self):
             self.__dict__.update({"discarded": True})
+
+        def register_safety_attributes(self, safety_attributes: SafetyAttributes):
+            self.__dict__.update(
+                {
+                    "safety_categories": safety_attributes.categories,
+                    "blocked": safety_attributes.blocked,
+                }
+            )
 
         def dict(self) -> dict:
             return self.__dict__

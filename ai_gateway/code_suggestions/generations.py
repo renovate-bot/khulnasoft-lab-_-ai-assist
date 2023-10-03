@@ -101,6 +101,7 @@ class CodeGenerations:
                 if res := await self.model.generate(prompt.prefix, "", **kwargs):
                     watch_container.register_model_output_length(res.text)
                     watch_container.register_model_score(res.score)
+                    watch_container.register_safety_attributes(res.safety_attributes)
 
                     generation = PostProcessor(prefix).process(res.text)
 

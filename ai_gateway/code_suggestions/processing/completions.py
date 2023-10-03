@@ -215,6 +215,7 @@ class ModelEngineCompletions(ModelEngineBase):
                 ):
                     watch_container.register_model_output_length(res.text)
                     watch_container.register_model_score(res.score)
+                    watch_container.register_safety_attributes(res.safety_attributes)
 
                     if res.score > MINIMIMUM_CONFIDENCE_SCORE:
                         # TODO: Move the call to the use case class

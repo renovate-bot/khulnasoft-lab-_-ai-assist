@@ -2,10 +2,12 @@ from abc import ABC, abstractmethod
 from typing import Any, NamedTuple, Optional
 
 from google.cloud.aiplatform.gapic import PredictionServiceAsyncClient
+from pydantic import BaseModel
 
 __all__ = [
     "ModelAPICallError",
     "ModelMetadata",
+    "SafetyAttributes",
     "TextGenModelOutput",
     "TextGenBaseModel",
     "grpc_connect_vertex",
@@ -54,9 +56,15 @@ class ModelInput(ABC):
         return self.dict() == obj.dict()
 
 
+class SafetyAttributes(BaseModel):
+    categories: list[str] = []
+    blocked: bool = False
+
+
 class TextGenModelOutput(NamedTuple):
     text: str
     score: float
+    safety_attributes: Optional[SafetyAttributes] = None
 
 
 class TextGenBaseModel(ABC):

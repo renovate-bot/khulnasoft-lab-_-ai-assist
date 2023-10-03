@@ -17,6 +17,7 @@ from ai_gateway.experimentation import ExperimentRegistry
 from ai_gateway.models import (
     ModelMetadata,
     PalmCodeGenBaseModel,
+    SafetyAttributes,
     TextGenModelOutput,
     VertexModelInternalError,
     VertexModelInvalidArgument,
@@ -37,7 +38,11 @@ class MockInstrumentor:
 
 
 def _side_effect_few_shot_tpl(
-    content: str, _suffix: str, filename: str, model_output: str
+    content: str,
+    _suffix: str,
+    filename: str,
+    model_output: str,
+    safety_attributes: SafetyAttributes,
 ):
     lang_id = ops.lang_from_filename(filename)
 
@@ -45,33 +50,53 @@ def _side_effect_few_shot_tpl(
         assert lang_id.name.lower() in prompt
         assert content in prompt
 
-        return TextGenModelOutput(text=model_output, score=-1)
+        return TextGenModelOutput(
+            text=model_output, score=-1, safety_attributes=safety_attributes
+        )
 
     return _fn
 
 
-def _side_effect_unknown_tpl(content: str, _suffix: str, _: str, model_output: str):
+def _side_effect_unknown_tpl(
+    content: str,
+    _suffix: str,
+    _: str,
+    model_output: str,
+    safety_attributes: SafetyAttributes,
+):
     def _fn(prompt: str, _suffix: str):
         assert content == prompt
 
-        return TextGenModelOutput(text=model_output, score=-1)
+        return TextGenModelOutput(
+            text=model_output, score=-1, safety_attributes=safety_attributes
+        )
 
     return _fn
 
 
 def _side_effect_unknown_tpl_palm(
-    prefix: str, _suffix: str, filename: str, model_output: str
+    prefix: str,
+    _suffix: str,
+    filename: str,
+    model_output: str,
+    safety_attributes: SafetyAttributes,
 ):
     def _fn(prompt: str, _suffix: str):
         assert filename in prompt
 
-        return TextGenModelOutput(text=model_output, score=-1)
+        return TextGenModelOutput(
+            text=model_output, score=-1, safety_attributes=safety_attributes
+        )
 
     return _fn
 
 
 def _side_effect_lang_prepended(
-    content: str, _suffix: str, filename: str, model_output: str
+    content: str,
+    _suffix: str,
+    filename: str,
+    model_output: str,
+    safety_attributes: SafetyAttributes,
 ):
     lang_id = ops.lang_from_filename(filename)
 
@@ -79,13 +104,19 @@ def _side_effect_lang_prepended(
         assert prompt.startswith(f"<{lang_id.name.lower()}>")
         assert prompt.endswith(content)
 
-        return TextGenModelOutput(text=model_output, score=-1)
+        return TextGenModelOutput(
+            text=model_output, score=-1, safety_attributes=safety_attributes
+        )
 
     return _fn
 
 
 def _side_effect_with_suffix(
-    content: str, suffix: str, filename: str, model_output: str
+    content: str,
+    suffix: str,
+    filename: str,
+    model_output: str,
+    safety_attributes: SafetyAttributes,
 ):
     original_suffix = suffix
 
@@ -96,24 +127,36 @@ def _side_effect_with_suffix(
             <= PalmCodeGenBaseModel.MAX_MODEL_LEN
         )
 
-        return TextGenModelOutput(text=model_output, score=-1)
+        return TextGenModelOutput(
+            text=model_output, score=-1, safety_attributes=safety_attributes
+        )
 
     return _fn
 
 
 def _side_effect_with_imports(
-    content: str, suffix: str, filename: str, model_output: str
+    content: str,
+    suffix: str,
+    filename: str,
+    model_output: str,
+    safety_attributes: SafetyAttributes,
 ):
     def _fn(prompt: str, suffix: str):
         assert content.startswith("import os\nimport pytest")
 
-        return TextGenModelOutput(text=model_output, score=-1)
+        return TextGenModelOutput(
+            text=model_output, score=-1, safety_attributes=safety_attributes
+        )
 
     return _fn
 
 
 def _side_effect_with_internal_exception(
-    content: str, suffix: str, filename: str, model_output: str
+    content: str,
+    suffix: str,
+    filename: str,
+    model_output: str,
+    safety_attributes: SafetyAttributes,
 ):
     def _fn(prompt: str, suffix: str):
         raise VertexModelInternalError("internal error")
@@ -122,7 +165,11 @@ def _side_effect_with_internal_exception(
 
 
 def _side_effect_with_invalid_arg_exception(
-    content: str, suffix: str, filename: str, model_output: str
+    content: str,
+    suffix: str,
+    filename: str,
+    model_output: str,
+    safety_attributes: SafetyAttributes,
 ):
     def _fn(prompt: str, suffix: str):
         raise VertexModelInvalidArgument("invalid argument")
@@ -136,8 +183,8 @@ def token_length(s: str):
 
 @pytest.mark.asyncio
 @pytest.mark.parametrize(
-    "prefix,suffix,file_name,editor_language,model_gen_func,model_output,"
-    "language,prompt_builder_metadata,expected_completion,expected_prompt_symbol_counts",
+    "prefix,suffix,file_name,editor_language,model_gen_func,model_output,safety_attributes,"
+    "language,prompt_builder_metadata,expected_completion,expected_prompt_symbol_counts,expected_safety_attributes",
     [
         (
             "prompt",
@@ -146,6 +193,7 @@ def token_length(s: str):
             None,
             _side_effect_unknown_tpl_palm,
             "random completion",
+            SafetyAttributes(),
             None,
             MetadataPromptBuilder(
                 components={
@@ -165,6 +213,7 @@ def token_length(s: str):
             ),
             "random completion",
             None,
+            SafetyAttributes(),
         ),
         (
             "prompt",
@@ -173,6 +222,7 @@ def token_length(s: str):
             None,
             _side_effect_unknown_tpl_palm,
             "random completion",
+            SafetyAttributes(),
             None,
             MetadataPromptBuilder(
                 components={
@@ -192,6 +242,7 @@ def token_length(s: str):
             ),
             "random completion",
             None,
+            SafetyAttributes(),
         ),
         (
             "prompt",
@@ -200,6 +251,7 @@ def token_length(s: str):
             "typescript",
             _side_effect_unknown_tpl_palm,
             "random completion",
+            SafetyAttributes(),
             ops.LanguageId.TS,
             MetadataPromptBuilder(
                 components={
@@ -219,6 +271,7 @@ def token_length(s: str):
             ),
             "random completion",
             None,
+            SafetyAttributes(),
         ),
         (
             "prompt",
@@ -227,6 +280,7 @@ def token_length(s: str):
             None,
             _side_effect_unknown_tpl_palm,
             "random completion\nnew line",
+            SafetyAttributes(),
             None,
             MetadataPromptBuilder(
                 components={
@@ -246,6 +300,7 @@ def token_length(s: str):
             ),
             "random completion\nnew line",
             None,
+            SafetyAttributes(),
         ),
         (
             "prompt " * 2048,
@@ -254,6 +309,7 @@ def token_length(s: str):
             None,
             _side_effect_with_suffix,
             "random completion\nnew line",
+            SafetyAttributes(),
             ops.LanguageId.PYTHON,
             MetadataPromptBuilder(
                 components={
@@ -273,6 +329,7 @@ def token_length(s: str):
             ),
             "random completion\nnew line",
             {"comment": 1},
+            SafetyAttributes(),
         ),
         (
             "import os\nimport pytest\n" + "prompt" * 2048,
@@ -281,6 +338,7 @@ def token_length(s: str):
             None,
             _side_effect_with_imports,
             "random completion",
+            SafetyAttributes(),
             ops.LanguageId.PYTHON,
             MetadataPromptBuilder(
                 components={
@@ -300,6 +358,7 @@ def token_length(s: str):
             ),
             "random completion",
             {"comment": 1, "import_statement": 2},
+            SafetyAttributes(),
         ),
         (
             "random_prefix",
@@ -308,9 +367,11 @@ def token_length(s: str):
             "",
             _side_effect_with_internal_exception,
             "unreturned completion due to an exception",
+            SafetyAttributes(),
             None,
             None,
             "",
+            None,
             None,
         ),
         (
@@ -320,9 +381,11 @@ def token_length(s: str):
             "",
             _side_effect_with_invalid_arg_exception,
             "unreturned completion due to an exception",
+            SafetyAttributes(),
             None,
             None,
             "",
+            None,
             None,
         ),
         (
@@ -332,10 +395,12 @@ def token_length(s: str):
             "",
             _side_effect_with_suffix,
             "",
+            SafetyAttributes(),
             ops.LanguageId.JS,
             None,
             "",
             None,
+            SafetyAttributes(),
         ),
     ],
 )
@@ -347,14 +412,18 @@ async def test_model_engine_palm(
     editor_language,
     model_gen_func,
     model_output,
+    safety_attributes,
     language,
     prompt_builder_metadata,
     expected_completion,
     expected_prompt_symbol_counts,
+    expected_safety_attributes,
 ):
     model_name = "palm-model"
     model_engine = "vertex-ai"
-    _side_effect = model_gen_func(prefix, suffix, file_name, model_output)
+    _side_effect = model_gen_func(
+        prefix, suffix, file_name, model_output, safety_attributes
+    )
     _model_metadata = ModelMetadata(name=model_name, engine=model_engine)
 
     text_gen_base_model.generate = AsyncMock(side_effect=_side_effect)
@@ -397,21 +466,30 @@ async def test_model_engine_palm(
         assert 0 == completion.metadata.components["prefix"].length
         assert 0 == completion.metadata.components["suffix"].length
 
+    watcher = engine.instrumentator.watcher
     if expected_completion:
-        engine.instrumentator.watcher.register_model_output_length.assert_called_with(
-            model_output
+        watcher.register_model_output_length.assert_called_with(model_output)
+        watcher.register_model_score.assert_called_with(-1)
+        watcher.register_safety_attributes.assert_called_with(
+            expected_safety_attributes
         )
-        engine.instrumentator.watcher.register_model_score.assert_called_with(-1)
     else:
-        engine.instrumentator.watcher.register_model_output_length.assert_not_called
-        engine.instrumentator.watcher.register_model_score.assert_not_called
+        watcher.register_model_output_length.assert_not_called
+        watcher.register_model_score.assert_not_called
 
     if expected_prompt_symbol_counts:
-        engine.instrumentator.watcher.register_prompt_symbols.assert_called_with(
+        watcher.register_prompt_symbols.assert_called_with(
             expected_prompt_symbol_counts
         )
     else:
-        engine.instrumentator.watcher.register_prompt_symbols.assert_not_called
+        watcher.register_prompt_symbols.assert_not_called
+
+    if expected_safety_attributes:
+        watcher.register_safety_attributes.assert_called_with(
+            expected_safety_attributes
+        )
+    else:
+        watcher.register_safety_attributes.assert_not_called()
 
 
 JAVASCRIPT_SOURCE_SAMPLE = """

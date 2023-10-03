@@ -5,11 +5,11 @@ from typing import Optional, Sequence
 
 import structlog
 from google.api_core.exceptions import InternalServerError, InvalidArgument
-from google.cloud.aiplatform.gapic import PredictionServiceAsyncClient
+from google.cloud.aiplatform.gapic import PredictionServiceAsyncClient, PredictResponse
 from google.protobuf import json_format, struct_pb2
 
 from ai_gateway.models import ModelMetadata, TextGenBaseModel, TextGenModelOutput
-from ai_gateway.models.base import ModelAPICallError, ModelInput
+from ai_gateway.models.base import ModelAPICallError, ModelInput, SafetyAttributes
 
 __all__ = [
     "VertexModelAPICallError",
@@ -153,8 +153,9 @@ class PalmCodeGenBaseModel(TextGenBaseModel):
                 parameters=parameters,
                 timeout=self.timeout,
             )
+            response = PredictResponse.to_dict(response)
 
-            predictions = response.predictions
+            predictions = response.get("predictions", [])
         except InvalidArgument as ex:
             raise VertexModelInvalidArgument(ex.message, errors=(ex,))
         except InternalServerError as ex:
@@ -162,7 +163,11 @@ class PalmCodeGenBaseModel(TextGenBaseModel):
 
         for prediction in predictions:
             return TextGenModelOutput(
-                text=prediction.get("content"), score=prediction.get("score")
+                text=prediction.get("content"),
+                score=prediction.get("score"),
+                safety_attributes=SafetyAttributes(
+                    **prediction.get("safetyAttributes", {})
+                ),
             )
 
     @property
