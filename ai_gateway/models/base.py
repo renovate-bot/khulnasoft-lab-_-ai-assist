@@ -1,29 +1,31 @@
 from abc import ABC, abstractmethod
-from typing import Any, NamedTuple, Optional
+from typing import Any, NamedTuple
 
+from anthropic import AsyncAnthropic
 from google.cloud.aiplatform.gapic import PredictionServiceAsyncClient
 from pydantic import BaseModel
 
 __all__ = [
+    "ModelAPIError",
     "ModelAPICallError",
     "ModelMetadata",
     "SafetyAttributes",
     "TextGenModelOutput",
     "TextGenBaseModel",
     "grpc_connect_vertex",
+    "connect_anthropic",
 ]
 
 
-class ModelAPICallError(Exception):
-    code: Optional[int] = None
-
+class ModelAPIError(Exception):
     def __init__(self, message: str, errors: tuple = (), details: tuple = ()):
         self.message = message
         self._errors = errors
         self._details = details
 
     def __str__(self):
-        message = f"{self.code} {self.message}"
+        message = self.message
+
         if self.details:
             message = f"{message} {', '.join(self.details)}"
 
@@ -36,6 +38,13 @@ class ModelAPICallError(Exception):
     @property
     def details(self) -> list[Any]:
         return list(self._details)
+
+
+class ModelAPICallError(ModelAPIError):
+    code: int
+
+    def __init__(self, message: str, errors: tuple = (), details: tuple = ()):
+        super().__init__(f"{self.code} {message}", errors=errors, details=details)
 
 
 class ModelMetadata(NamedTuple):
@@ -90,3 +99,7 @@ class TextGenBaseModel(ABC):
 
 def grpc_connect_vertex(client_options: dict) -> PredictionServiceAsyncClient:
     return PredictionServiceAsyncClient(client_options=client_options)
+
+
+def connect_anthropic(**kwargs: Any) -> AsyncAnthropic:
+    return AsyncAnthropic(**kwargs)

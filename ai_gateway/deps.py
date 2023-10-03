@@ -12,8 +12,10 @@ from ai_gateway.code_suggestions.processing.post.completions import (
 from ai_gateway.code_suggestions.processing.pre import TokenizerTokenStrategy
 from ai_gateway.experimentation import experiment_registry_provider
 from ai_gateway.models import (
+    AnthropicModel,
     FakePalmTextGenModel,
     PalmCodeGenModel,
+    connect_anthropic,
     grpc_connect_vertex,
 )
 from ai_gateway.tokenizer import init_tokenizer
@@ -35,6 +37,12 @@ _VERTEX_MODELS_VERSIONS = {
     ModelRollout.GOOGLE_TEXT_BISON: f"{ModelRollout.GOOGLE_TEXT_BISON}@001",
     ModelRollout.GOOGLE_CODE_BISON: f"{ModelRollout.GOOGLE_CODE_BISON}@latest",
     ModelRollout.GOOGLE_CODE_GECKO: f"{ModelRollout.GOOGLE_CODE_GECKO}@latest",
+}
+
+
+_ANTHROPIC_MODELS_VERSIONS = {
+    AnthropicModel.CLAUDE: "claude-2",
+    AnthropicModel.CLAUDE_INSTANT: "claude-instant-1",
 }
 
 
@@ -73,6 +81,19 @@ def _create_vertex_model(name, grpc_client_vertex, project, location, real_or_fa
     )
 
 
+def _create_anthropic_model(name, client_anthropic, real_or_fake):
+    return providers.Selector(
+        real_or_fake,
+        real=providers.Singleton(
+            AnthropicModel.from_model_name,
+            client=client_anthropic,
+            name=name,
+        ),
+        # TODO: We need to update our fake models to be generic
+        fake=providers.Singleton(FakePalmTextGenModel),
+    )
+
+
 def _create_engine_code_completions(model_provider, tokenizer, experiment_registry):
     return providers.Factory(
         ModelEngineCompletions,
@@ -94,6 +115,17 @@ def _all_vertex_models(
             location,
             real_or_fake,
         )
+        for model_key, model_name in models_key_name.items()
+    }
+
+
+def _all_anthropic_models(
+    models_key_name,
+    client_anthropic,
+    real_or_fake,
+):
+    return {
+        model_key: _create_anthropic_model(model_name, client_anthropic, real_or_fake)
         for model_key, model_name in models_key_name.items()
     }
 
@@ -167,9 +199,11 @@ class CodeSuggestionsContainer(containers.DeclarativeContainer):
         real_or_fake=config.palm_text_model.real_or_fake,
     )
 
+    client_anthropic = providers.Resource(connect_anthropic)
+
     tokenizer = providers.Resource(init_tokenizer)
 
-    models = _all_vertex_models(
+    models_vertex = _all_vertex_models(
         _VERTEX_MODELS_VERSIONS,
         grpc_client_vertex,
         config.palm_text_model.project,
@@ -177,7 +211,14 @@ class CodeSuggestionsContainer(containers.DeclarativeContainer):
         config.palm_text_model.real_or_fake,
     )
 
-    engines = _all_engines(models, tokenizer)
+    models_anthropic = _all_anthropic_models(
+        _ANTHROPIC_MODELS_VERSIONS,
+        client_anthropic,
+        # TODO: We need to update our fake model settings to be generic
+        config.palm_text_model.real_or_fake,
+    )
+
+    engines = _all_engines(models_vertex, tokenizer)
 
     # TODO: We keep engine factory to support experimental API endpoints.
     # TODO: Would be great to move such dependencies to a separate experimental container
@@ -187,9 +228,17 @@ class CodeSuggestionsContainer(containers.DeclarativeContainer):
         CodeCompletions, engine=engines[ModelRollout.GOOGLE_CODE_GECKO]
     )
 
-    code_generations = providers.Factory(
+    code_generations_vertex = providers.Factory(
         CodeGenerations,
-        model=models[ModelRollout.GOOGLE_CODE_BISON],
+        model=models_vertex[ModelRollout.GOOGLE_CODE_BISON],
+        tokenization_strategy=providers.Factory(
+            TokenizerTokenStrategy, tokenizer=tokenizer
+        ),
+    )
+
+    code_generations_anthropic = providers.Factory(
+        CodeGenerations,
+        model=models_anthropic[AnthropicModel.CLAUDE],
         tokenization_strategy=providers.Factory(
             TokenizerTokenStrategy, tokenizer=tokenizer
         ),
