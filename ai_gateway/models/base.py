@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import Any, NamedTuple
+from typing import Any, NamedTuple, Optional
 
 from anthropic import AsyncAnthropic
 from google.cloud.aiplatform.gapic import PredictionServiceAsyncClient
