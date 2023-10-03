@@ -22,7 +22,7 @@ from ai_gateway.models.palm import (
     VertexModelInvalidArgument,
 )
 
-TEST_PREFIX = "random propmt"
+TEST_PREFIX = "random prompt"
 TEST_SUFFIX = "some suffix"
 
 
@@ -37,7 +37,13 @@ TEST_SUFFIX = "some suffix"
             "some output",
             [TextBisonModelInput(TEST_PREFIX), 0.2, 32, 0.95, 40, None],
         ),
-        (PalmTextBisonModel, "", TEST_SUFFIX, "", None),
+        (
+            PalmTextBisonModel,
+            "",
+            TEST_SUFFIX,
+            "",
+            [TextBisonModelInput(""), 0.2, 32, 0.95, 40, None],
+        ),
         (
             PalmCodeBisonModel,
             TEST_PREFIX,
@@ -45,7 +51,13 @@ TEST_SUFFIX = "some suffix"
             "some output",
             [CodeBisonModelInput(TEST_PREFIX), 0.2, 2048, 0.95, 40, None],
         ),
-        (PalmCodeBisonModel, "", TEST_SUFFIX, "", None),
+        (
+            PalmCodeBisonModel,
+            "",
+            TEST_SUFFIX,
+            "",
+            [CodeBisonModelInput(""), 0.2, 2048, 0.95, 40, None],
+        ),
         (
             PalmCodeGeckoModel,
             TEST_PREFIX,
@@ -60,7 +72,20 @@ TEST_SUFFIX = "some suffix"
                 ["\n\n"],
             ],
         ),
-        (PalmCodeGeckoModel, "", TEST_SUFFIX, "", None),
+        (
+            PalmCodeGeckoModel,
+            "",
+            TEST_SUFFIX,
+            "",
+            [
+                CodeGeckoModelInput("", TEST_SUFFIX),
+                0.2,
+                64,
+                0.95,
+                40,
+                ["\n\n"],
+            ],
+        ),
     ],
 )
 async def test_palm_model_generate(
@@ -70,21 +95,20 @@ async def test_palm_model_generate(
     expected_output,
     expected_generate_args,
 ):
-    client = Mock()
-    palm_model = model(client=client, project="test", location="some location")
+    palm_model = model(client=Mock(), project="test", location="some location")
     palm_model._generate = AsyncMock(
-        side_effect=lambda *_: TextGenModelOutput(text=expected_output, score=0)
+        side_effect=lambda *_: TextGenModelOutput(
+            text=expected_output, score=0, safety_attributes=SafetyAttributes()
+        )
     )
 
     result = await palm_model.generate(prefix, suffix)
 
-    assert result == TextGenModelOutput(text=expected_output, score=0)
+    assert result == TextGenModelOutput(
+        text=expected_output, score=0, safety_attributes=SafetyAttributes()
+    )
 
-    if expected_generate_args:
-        palm_model._generate.assert_called_with(*expected_generate_args)
-        assert client.assert_called_once
-    else:
-        assert not client.called
+    palm_model._generate.assert_called_with(*expected_generate_args)
 
 
 @pytest.mark.parametrize(
