@@ -98,6 +98,8 @@ class CodeGenerations:
 
         with self.instrumentator.watch(prompt) as watch_container:
             try:
+                watch_container.register_lang(lang_id, editor_lang)
+
                 if res := await self.model.generate(prompt.prefix, "", **kwargs):
                     watch_container.register_model_output_length(res.text)
                     watch_container.register_model_score(res.score)

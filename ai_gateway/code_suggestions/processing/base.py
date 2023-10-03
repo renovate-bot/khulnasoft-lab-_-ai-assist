@@ -76,7 +76,9 @@ class ModelEngineBase(ABC):
         if lang_id is None and editor_lang_id:
             lang_id = lang_from_editor_lang(editor_lang_id)
 
-        return await self._generate(prefix, suffix, file_name, lang_id, **kwargs)
+        return await self._generate(
+            prefix, suffix, file_name, lang_id, editor_lang_id, **kwargs
+        )
 
     def increment_lang_counter(
         self,
@@ -103,6 +105,7 @@ class ModelEngineBase(ABC):
         suffix: str,
         file_name: str,
         lang_id: LanguageId,
+        editor_lang: Optional[str] = None,
         **kwargs: Any
     ) -> ModelEngineOutput:
         pass
