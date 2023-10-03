@@ -184,7 +184,7 @@ def token_length(s: str):
 
 @pytest.mark.asyncio
 @pytest.mark.parametrize(
-    "prefix,suffix,file_name,editor_language,model_gen_func,model_output,safety_attributes,"
+    "prefix,suffix,file_name,editor_language,model_gen_func,successful_predict,model_output,safety_attributes,"
     "language,prompt_builder_metadata,expected_completion,expected_prompt_symbol_counts,expected_safety_attributes",
     [
         (
@@ -193,6 +193,7 @@ def token_length(s: str):
             "f.unk",
             None,
             _side_effect_unknown_tpl_palm,
+            True,
             "random completion",
             SafetyAttributes(),
             None,
@@ -222,6 +223,7 @@ def token_length(s: str):
             "f.unk",
             None,
             _side_effect_unknown_tpl_palm,
+            True,
             "random completion",
             SafetyAttributes(),
             None,
@@ -251,6 +253,7 @@ def token_length(s: str):
             "f.unk",
             "typescript",
             _side_effect_unknown_tpl_palm,
+            True,
             "random completion",
             SafetyAttributes(),
             ops.LanguageId.TS,
@@ -271,7 +274,7 @@ def token_length(s: str):
                 ),
             ),
             "random completion",
-            None,
+            {"comment": 1},
             SafetyAttributes(),
         ),
         (
@@ -280,6 +283,7 @@ def token_length(s: str):
             "f.unk",
             None,
             _side_effect_unknown_tpl_palm,
+            True,
             "random completion\nnew line",
             SafetyAttributes(),
             None,
@@ -309,6 +313,7 @@ def token_length(s: str):
             "f.py",
             None,
             _side_effect_with_suffix,
+            True,
             "random completion\nnew line",
             SafetyAttributes(),
             ops.LanguageId.PYTHON,
@@ -338,6 +343,7 @@ def token_length(s: str):
             "f.py",
             None,
             _side_effect_with_imports,
+            True,
             "random completion",
             SafetyAttributes(),
             ops.LanguageId.PYTHON,
@@ -367,6 +373,7 @@ def token_length(s: str):
             "f.unk",
             "",
             _side_effect_with_internal_exception,
+            False,
             "unreturned completion due to an exception",
             SafetyAttributes(),
             None,
@@ -381,6 +388,7 @@ def token_length(s: str):
             "f.unk",
             "",
             _side_effect_with_invalid_arg_exception,
+            False,
             "unreturned completion due to an exception",
             SafetyAttributes(),
             None,
@@ -395,12 +403,13 @@ def token_length(s: str):
             "app.js",
             "",
             _side_effect_with_suffix,
+            True,
             "",
             SafetyAttributes(),
             ops.LanguageId.JS,
             None,
             "",
-            None,
+            {"comment": 1},
             SafetyAttributes(),
         ),
     ],
@@ -412,6 +421,7 @@ async def test_model_engine_palm(
     file_name,
     editor_language,
     model_gen_func,
+    successful_predict,
     model_output,
     safety_attributes,
     language,
@@ -470,22 +480,19 @@ async def test_model_engine_palm(
     watcher = engine.instrumentator.watcher
     watcher.register_lang.assert_called_with(language, editor_language)
 
-    if expected_completion:
+    if successful_predict:
         watcher.register_model_output_length.assert_called_with(model_output)
         watcher.register_model_score.assert_called_with(-1)
-        watcher.register_safety_attributes.assert_called_with(
-            expected_safety_attributes
-        )
     else:
-        watcher.register_model_output_length.assert_not_called
-        watcher.register_model_score.assert_not_called
+        watcher.register_model_output_length.assert_not_called()
+        watcher.register_model_score.assert_not_called()
 
     if expected_prompt_symbol_counts:
         watcher.register_prompt_symbols.assert_called_with(
             expected_prompt_symbol_counts
         )
     else:
-        watcher.register_prompt_symbols.assert_not_called
+        watcher.register_prompt_symbols.assert_not_called()
 
     if expected_safety_attributes:
         watcher.register_safety_attributes.assert_called_with(
