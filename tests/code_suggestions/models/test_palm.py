@@ -3,9 +3,10 @@ from unittest.mock import AsyncMock, Mock
 
 import pytest
 from google.api_core.exceptions import InternalServerError, InvalidArgument
-from google.cloud.aiplatform.gapic import PredictionServiceAsyncClient
+from google.cloud.aiplatform.gapic import PredictionServiceAsyncClient, PredictResponse
 from google.protobuf import json_format
 
+from ai_gateway.models.base import SafetyAttributes
 from ai_gateway.models.palm import (
     CodeBisonModelInput,
     CodeGeckoModelInput,
@@ -203,7 +204,7 @@ async def test_palm_model_stop_sequences(
     expected_stop_sequences: Sequence[str],
 ):
     client = Mock()
-    client.predict = AsyncMock()
+    client.predict = AsyncMock(return_value=PredictResponse())
     palm_model = model(client=client, project="test", location="some location")
 
     await palm_model.generate("foo", "", stop_sequences=stop_sequences)
@@ -213,3 +214,80 @@ async def test_palm_model_stop_sequences(
     parameters = client.predict.call_args[1]["parameters"]
     params_dict = json_format.MessageToDict(parameters)
     assert params_dict.get("stopSequences", None) == expected_stop_sequences
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    ("model", "prediction", "expected_safety_attributes"),
+    [
+        (
+            PalmTextBisonModel,
+            {
+                "safetyAttributes": {
+                    "categories": ["Violent"],
+                    "blocked": True,
+                    "scores": [1.0],
+                },
+                "content": "",
+            },
+            SafetyAttributes(categories=["Violent"], blocked=True),
+        ),
+        (
+            PalmCodeBisonModel,
+            {
+                "safetyAttributes": {
+                    "categories": ["Violent"],
+                    "blocked": True,
+                    "scores": [1.0],
+                },
+                "content": "",
+            },
+            SafetyAttributes(categories=["Violent"], blocked=True),
+        ),
+        (
+            PalmCodeGeckoModel,
+            {
+                "safetyAttributes": {
+                    "categories": ["Violent"],
+                    "blocked": True,
+                    "scores": [1.0],
+                },
+                "content": "",
+            },
+            SafetyAttributes(categories=["Violent"], blocked=True),
+        ),
+        (
+            PalmCodeGeckoModel,
+            {
+                "safetyAttributes": {
+                    "categories": [],
+                    "blocked": False,
+                    "scores": [],
+                },
+                "content": "def awesome_func",
+            },
+            SafetyAttributes(categories=[], blocked=False),
+        ),
+        (
+            PalmCodeGeckoModel,
+            {
+                "content": "def awesome_func",
+            },
+            SafetyAttributes(categories=[], blocked=False),
+        ),
+    ],
+)
+async def test_palm_model_safety_attributes(
+    model: PalmCodeGenBaseModel,
+    prediction: dict,
+    expected_safety_attributes: SafetyAttributes,
+):
+    client = Mock()
+    predict_response = PredictResponse()
+    predict_response.predictions.append(prediction)
+    client.predict = AsyncMock(return_value=predict_response)
+    palm_model = model(client=client, project="test", location="some location")
+
+    model_output = await palm_model.generate("# bomberman", "")
+
+    assert model_output.safety_attributes == expected_safety_attributes
