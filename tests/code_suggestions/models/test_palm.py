@@ -163,7 +163,10 @@ async def test_palm_model_api_error(model, client_exception, expected_exception)
     model.client.predict = AsyncMock(side_effect=_client_predict)
 
     with pytest.raises(expected_exception):
-        _ = await model.generate("random_prefix", "random_suffix")
+        result = await model.generate("random_prefix", "random_suffix")
+        assert result == TextGenModelOutput(
+            text="", score=0, safety_attributes=SafetyAttributes()
+        )
 
 
 @pytest.mark.parametrize(

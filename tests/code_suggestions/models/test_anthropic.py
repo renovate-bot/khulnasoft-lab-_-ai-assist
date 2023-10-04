@@ -16,6 +16,7 @@ from ai_gateway.models import (
     AnthropicAPIConnectionError,
     AnthropicAPIStatusError,
     AnthropicModel,
+    SafetyAttributes,
     TextGenModelOutput,
 )
 
@@ -151,8 +152,7 @@ async def test_anthropic_model_error(
             {},
             AnthropicModel.OPTS_MODEL,
             TextGenModelOutput(
-                text="random_text",
-                score=10_000,
+                text="random_text", score=10_000, safety_attributes=SafetyAttributes()
             ),
         ),
         (
@@ -163,8 +163,7 @@ async def test_anthropic_model_error(
             {},
             {**AnthropicModel.OPTS_MODEL, **{"top_k": 10}},
             TextGenModelOutput(
-                text="random_text",
-                score=10_000,
+                text="random_text", score=10_000, safety_attributes=SafetyAttributes()
             ),
         ),
         (
@@ -175,8 +174,7 @@ async def test_anthropic_model_error(
             {},
             {**AnthropicModel.OPTS_MODEL, **{"temperature": 1}},
             TextGenModelOutput(
-                text="random_text",
-                score=10_000,
+                text="random_text", score=10_000, safety_attributes=SafetyAttributes()
             ),
         ),
         (
@@ -187,8 +185,7 @@ async def test_anthropic_model_error(
             {"temperature": 0.1},  # Override the temperature when calling the model
             {**AnthropicModel.OPTS_MODEL, **{"temperature": 0.1}},
             TextGenModelOutput(
-                text="random_text",
-                score=10_000,
+                text="random_text", score=10_000, safety_attributes=SafetyAttributes()
             ),
         ),
         (
@@ -202,8 +199,7 @@ async def test_anthropic_model_error(
             },  # Override the temperature when calling the model
             {**AnthropicModel.OPTS_MODEL, **{"temperature": 0.1, "top_p": 0.95}},
             TextGenModelOutput(
-                text="random_text",
-                score=10_000,
+                text="random_text", score=10_000, safety_attributes=SafetyAttributes()
             ),
         ),
     ],
