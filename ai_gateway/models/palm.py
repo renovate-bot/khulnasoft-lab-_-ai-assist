@@ -127,7 +127,9 @@ class PalmCodeGenBaseModel(TextGenBaseModel):
         stop_sequences: Optional[Sequence[str]] = None,
     ) -> Optional[TextGenModelOutput]:
         if not input.is_valid():
-            return TextGenModelOutput(text="", score=0)
+            return TextGenModelOutput(
+                text="", score=0, safety_attributes=SafetyAttributes()
+            )
 
         input_data = input.dict()
 

@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import Any, NamedTuple, Optional
+from typing import Any, NamedTuple
 
 from anthropic import AsyncAnthropic
 from google.cloud.aiplatform.gapic import PredictionServiceAsyncClient
@@ -73,7 +73,7 @@ class SafetyAttributes(BaseModel):
 class TextGenModelOutput(NamedTuple):
     text: str
     score: float
-    safety_attributes: Optional[SafetyAttributes] = None
+    safety_attributes: SafetyAttributes
 
 
 class TextGenBaseModel(ABC):

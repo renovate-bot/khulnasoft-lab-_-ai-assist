@@ -8,6 +8,7 @@ from ai_gateway.models.base import (
     ModelAPICallError,
     ModelAPIError,
     ModelMetadata,
+    SafetyAttributes,
     TextGenBaseModel,
     TextGenModelOutput,
 )
@@ -118,6 +119,7 @@ class AnthropicModel(TextGenBaseModel):
             text=suggestion.completion,
             # Give a high value, the model doesn't return scores.
             score=10**5,
+            safety_attributes=SafetyAttributes(),
         )
 
     @classmethod
