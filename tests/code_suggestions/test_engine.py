@@ -338,6 +338,26 @@ def token_length(s: str):
             SafetyAttributes(),
         ),
         (
+            "prompt " * 2048,
+            "abc " * 4096,
+            "f.vue",
+            None,
+            _side_effect_with_suffix,
+            True,
+            "random completion\nnew line",
+            SafetyAttributes(),
+            None,
+            MetadataPromptBuilder(
+                components={
+                    "prefix": MetadataCodeContent(length=3494, length_tokens=500),
+                    "suffix": MetadataCodeContent(length=1002, length_tokens=500),
+                },
+            ),
+            "random completion\nnew line",
+            None,
+            SafetyAttributes(),
+        ),
+        (
             "import os\nimport pytest\n" + "prompt" * 2048,
             "",
             "f.py",
