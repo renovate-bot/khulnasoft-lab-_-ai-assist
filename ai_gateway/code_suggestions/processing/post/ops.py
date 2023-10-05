@@ -56,9 +56,11 @@ def clean_model_reflection(context: str, completion: str, **kwargs: Any) -> str:
         min_diversity_chars: float = 0.35,
     ):
         counter = Counter("".join(line.strip() for line in lines))
+        total_count = sum(counter.values())
 
         return (
             len(group) >= min_block_size
+            and total_count > 0
             and not _with_special_characters(counter, min_special_chars)
             and not _with_low_diversity(counter, min_diversity_chars)
         )

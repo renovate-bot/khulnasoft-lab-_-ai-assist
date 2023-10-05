@@ -187,6 +187,7 @@ end
         (PREFIX_RUBY_1, COMPLETION_RUBY_1_1, 5, COMPLETION_RUBY_1_1),
         ("   ", "", 3, ""),
         ("def hello_world():", "\n\n  ", 3, "\n\n  "),
+        ("def hello \n\n\n ", "\n\n\n", 3, "\n\n\n"),
     ],
 )
 def test_clean_model_reflection(
