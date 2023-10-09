@@ -51,7 +51,7 @@ _ANTHROPIC_MODELS_VERSIONS = {
 
 _ANTHROPIC_MODELS_OPTS = {
     AnthropicModel.CLAUDE: {},
-    AnthropicModel.CLAUDE_INSTANT: {"max_tokens_to_sample": 64},
+    AnthropicModel.CLAUDE_INSTANT: {"max_tokens_to_sample": 128},
 }
 
 
