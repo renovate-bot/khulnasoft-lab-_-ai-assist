@@ -227,3 +227,77 @@ class TestPromptBuilderPrefixBased:
         else:
             with pytest.raises(ValueError):
                 builder.wrap(prompt)
+
+    @pytest.mark.parametrize(
+        ("prefix", "suffix", "suffix_dist", "total_max_len", "expected_prompt"),
+        [
+            (
+                "random_text",
+                "random_text",
+                0.5,
+                2048,
+                Prompt(
+                    prefix="random_text",
+                    suffix="random_text",
+                    metadata=MetadataPromptBuilder(
+                        components={
+                            "prefix": MetadataCodeContent(length=11, length_tokens=3),
+                            "suffix": MetadataCodeContent(length=11, length_tokens=3),
+                        }
+                    ),
+                ),
+            ),
+            (
+                "random_text",
+                "random_text",
+                0.25,
+                4,
+                Prompt(
+                    prefix="random_text",
+                    suffix="random",
+                    metadata=MetadataPromptBuilder(
+                        components={
+                            "prefix": MetadataCodeContent(length=11, length_tokens=3),
+                            "suffix": MetadataCodeContent(length=6, length_tokens=1),
+                        }
+                    ),
+                ),
+            ),
+            (
+                ["random_text", "random_another_text"],
+                "random_text",
+                0.25,
+                4,
+                Prompt(
+                    prefix="random_text",
+                    suffix="random",
+                    metadata=MetadataPromptBuilder(
+                        components={
+                            "prefix": MetadataCodeContent(length=11, length_tokens=3),
+                            "suffix": MetadataCodeContent(length=6, length_tokens=1),
+                        }
+                    ),
+                ),
+            ),
+        ],
+    )
+    def test_with_suffix(
+        self,
+        prefix: Union[str, list[str]],
+        suffix: str,
+        suffix_dist: float,
+        total_max_len: int,
+        expected_prompt: Prompt,
+    ):
+        builder = PromptBuilderPrefixBased(
+            total_max_len, TokenizerTokenStrategy(self.tokenizer)
+        )
+
+        if isinstance(prefix, str):
+            builder.add_content(prefix, suffix=suffix, suffix_dist=suffix_dist)
+        else:
+            builder.add_content(*prefix, suffix=suffix, suffix_dist=suffix_dist)
+
+        actual = builder.build()
+
+        assert actual == expected_prompt

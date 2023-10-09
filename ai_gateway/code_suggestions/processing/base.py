@@ -50,6 +50,7 @@ class ModelEngineOutput(NamedTuple):
     metadata: MetadataPromptBuilder
     lang_id: Optional[LanguageId] = None
 
+    @property
     def lang(self) -> str:
         return self.lang_id.name.lower() if self.lang_id else ""
 

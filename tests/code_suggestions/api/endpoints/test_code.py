@@ -11,7 +11,12 @@ from ai_gateway.api.v2.endpoints.code import (
     SuggestionsRequest,
     track_snowplow_event,
 )
-from ai_gateway.code_suggestions import CodeGenerations, CodeGenerationsOutput
+from ai_gateway.code_suggestions import (
+    CodeCompletions,
+    CodeCompletionsLegacy,
+    CodeGenerations,
+    CodeSuggestionsOutput,
+)
 from ai_gateway.code_suggestions.processing.base import ModelEngineOutput
 from ai_gateway.code_suggestions.processing.typing import (
     LanguageId,
@@ -104,11 +109,17 @@ class TestCodeCompletions:
             ),
         ],
     )
-    def test_successful_response(self, client, model_output, expected_response):
-        code_completions_mock = mock.AsyncMock(return_value=model_output)
+    def test_legacy_successful_response(
+        self,
+        client: TestClient,
+        model_output: ModelEngineOutput,
+        expected_response: dict,
+    ):
+        code_completions_mock = mock.Mock(spec=CodeCompletionsLegacy)
+        code_completions_mock.execute = mock.AsyncMock(return_value=model_output)
         container = CodeSuggestionsContainer()
 
-        with container.code_completions.override(code_completions_mock):
+        with container.code_completions_legacy.override(code_completions_mock):
             response = client.post(
                 "/v2/completions",
                 json={
@@ -130,6 +141,147 @@ class TestCodeCompletions:
         assert body["choices"] == expected_response["choices"]
         assert body["experiments"] == expected_response["experiments"]
         assert body["model"] == expected_response["model"]
+
+    @pytest.mark.parametrize(
+        ("prompt_version", "model_output", "expected_response"),
+        [
+            # non-empty suggestions from model
+            (
+                1,
+                CodeSuggestionsOutput(
+                    text="def search",
+                    score=0,
+                    model=ModelMetadata(name="claude-instant-1", engine="anthropic"),
+                    lang_id=LanguageId.PYTHON,
+                    metadata=CodeSuggestionsOutput.Metadata(
+                        experiments=[],
+                    ),
+                ),
+                {
+                    "id": "id",
+                    "model": {
+                        "engine": "anthropic",
+                        "name": "claude-instant-1",
+                        "lang": "python",
+                    },
+                    "object": "text_completion",
+                    "created": 1695182638,
+                    "choices": [
+                        {
+                            "text": "def search",
+                            "index": 0,
+                            "finish_reason": "length",
+                        }
+                    ],
+                },
+            ),
+            # prompt version 2
+            (
+                2,
+                CodeSuggestionsOutput(
+                    text="def search",
+                    score=0,
+                    model=ModelMetadata(name="claude-instant-1", engine="anthropic"),
+                    lang_id=LanguageId.PYTHON,
+                    metadata=CodeSuggestionsOutput.Metadata(
+                        experiments=[],
+                    ),
+                ),
+                {
+                    "id": "id",
+                    "model": {
+                        "engine": "anthropic",
+                        "name": "claude-instant-1",
+                        "lang": "python",
+                    },
+                    "object": "text_completion",
+                    "created": 1695182638,
+                    "choices": [
+                        {
+                            "text": "def search",
+                            "index": 0,
+                            "finish_reason": "length",
+                        }
+                    ],
+                },
+            ),
+            # empty suggestions from model
+            (
+                1,
+                CodeSuggestionsOutput(
+                    text="",
+                    score=0,
+                    model=ModelMetadata(name="claude-instant-1", engine="anthropic"),
+                    lang_id=LanguageId.PYTHON,
+                    metadata=CodeSuggestionsOutput.Metadata(
+                        experiments=[],
+                    ),
+                ),
+                {
+                    "id": "id",
+                    "model": {
+                        "engine": "anthropic",
+                        "name": "claude-instant-1",
+                        "lang": "python",
+                    },
+                    "object": "text_completion",
+                    "created": 1695182638,
+                    "choices": [],
+                },
+            ),
+        ],
+    )
+    def test_successful_response(
+        self,
+        prompt_version: int,
+        client: TestClient,
+        model_output: CodeSuggestionsOutput,
+        expected_response: dict,
+    ):
+        code_completions_mock = mock.Mock(spec=CodeCompletions)
+        code_completions_mock.execute = mock.AsyncMock(return_value=model_output)
+        container = CodeSuggestionsContainer()
+
+        current_file = {
+            "file_name": "main.py",
+            "content_above_cursor": "# Create a fast binary search\n",
+            "content_below_cursor": "\n",
+        }
+        data = {
+            "prompt_version": prompt_version,
+            "project_path": "gitlab-org/gitlab",
+            "project_id": 278964,
+            "model_provider": "anthropic",
+            "current_file": current_file,
+        }
+
+        if prompt_version == 2:
+            data["prompt"] = current_file["content_above_cursor"]
+
+        with container.code_completions_anthropic.override(code_completions_mock):
+            response = client.post(
+                "/v2/completions",
+                json=data,
+            )
+
+        assert response.status_code == 200
+
+        body = response.json()
+
+        assert body["choices"] == expected_response["choices"]
+        assert body["model"] == expected_response["model"]
+
+        code_completions_mock.execute.assert_called_with(
+            current_file["content_above_cursor"],
+            current_file["content_below_cursor"],
+            current_file["file_name"],
+            None,
+        )
+
+        if prompt_version == 2:
+            code_completions_mock.with_prompt_prepared.assert_called_with(
+                data["prompt"]
+            )
 
 
 class TestSnowplowInstrumentator:
@@ -350,7 +502,7 @@ class TestCodeGenerations:
         want_prompt,
         want_choices,
     ):
-        model_output = CodeGenerationsOutput(
+        model_output = CodeSuggestionsOutput(
             text=model_output_text,
             score=0,
             model=ModelMetadata(name="some-model", engine="some-engine"),
