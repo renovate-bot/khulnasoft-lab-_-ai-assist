@@ -1,8 +1,7 @@
 from unittest import mock
 
 import pytest
-from fastapi import FastAPI, Request
-from fastapi.testclient import TestClient
+from fastapi import Request
 from snowplow_tracker import Snowplow
 
 from ai_gateway.api.v2.api import api_router
@@ -11,6 +10,7 @@ from ai_gateway.api.v2.endpoints.code import (
     SuggestionsRequest,
     track_snowplow_event,
 )
+from ai_gateway.auth import User, UserClaims
 from ai_gateway.code_suggestions import (
     CodeCompletions,
     CodeCompletionsLegacy,
@@ -28,16 +28,15 @@ from ai_gateway.experimentation.base import ExperimentTelemetry
 from ai_gateway.instrumentators.base import Telemetry
 from ai_gateway.models import ModelMetadata
 from ai_gateway.tracking.instrumentator import SnowplowInstrumentator
+from tests.fixtures.fast_api import *
+
+
+@pytest.fixture(scope="class")
+def fast_api_router():
+    return api_router
 
 
 class TestCodeCompletions:
-    @pytest.fixture(scope="class")
-    def client(self):
-        app = FastAPI()
-        app.include_router(api_router)
-        client = TestClient(app)
-        yield client
-
     @pytest.mark.parametrize(
         ("model_output", "expected_response"),
         [
@@ -111,7 +110,7 @@ class TestCodeCompletions:
     )
     def test_legacy_successful_response(
         self,
-        client: TestClient,
+        mock_client: TestClient,
         model_output: ModelEngineOutput,
         expected_response: dict,
     ):
@@ -120,8 +119,12 @@ class TestCodeCompletions:
         container = CodeSuggestionsContainer()
 
         with container.code_completions_legacy.override(code_completions_mock):
-            response = client.post(
+            response = mock_client.post(
                 "/v2/completions",
+                headers={
+                    "Authorization": "Bearer 12345",
+                    "X-Gitlab-Authentication-Type": "oidc",
+                },
                 json={
                     "prompt_version": 1,
                     "project_path": "gitlab-org/gitlab",
@@ -234,7 +237,7 @@ class TestCodeCompletions:
     def test_successful_response(
         self,
         prompt_version: int,
-        client: TestClient,
+        mock_client: TestClient,
         model_output: CodeSuggestionsOutput,
         expected_response: dict,
     ):
@@ -267,8 +270,12 @@ class TestCodeCompletions:
             )
 
         with container.code_completions_anthropic.override(code_completions_mock):
-            response = client.post(
+            response = mock_client.post(
                 "/v2/completions",
+                headers={
+                    "Authorization": "Bearer 12345",
+                    "X-Gitlab-Authentication-Type": "oidc",
+                },
                 json=data,
             )
 
@@ -413,13 +420,6 @@ class TestSnowplowInstrumentator:
 
 
 class TestCodeGenerations:
-    @pytest.fixture(scope="class")
-    def client(self):
-        app = FastAPI()
-        app.include_router(api_router)
-        client = TestClient(app)
-        yield client
-
     @pytest.mark.parametrize(
         (
             "prompt_version",
@@ -496,7 +496,7 @@ class TestCodeGenerations:
     )
     def test_request_versioning(
         self,
-        client,
+        mock_client,
         prompt_version,
         prefix,
         prompt,
@@ -518,8 +518,12 @@ class TestCodeGenerations:
         container = CodeSuggestionsContainer()
 
         with container.code_generations_vertex.override(code_generations_mock):
-            response = client.post(
+            response = mock_client.post(
                 "/v2/code/generations",
+                headers={
+                    "Authorization": "Bearer 12345",
+                    "X-Gitlab-Authentication-Type": "oidc",
+                },
                 json={
                     "prompt_version": prompt_version,
                     "project_path": "gitlab-org/gitlab",
@@ -542,3 +546,37 @@ class TestCodeGenerations:
         if want_status == 200:
             body = response.json()
             assert body["choices"] == want_choices
+
+
+class TestUnauthorizedScopes:
+    @pytest.fixture
+    def auth_user(self):
+        return User(
+            authenticated=True,
+            claims=UserClaims(
+                is_third_party_ai_default=False, scopes=["unauthorized_scope"]
+            ),
+        )
+
+    @pytest.mark.parametrize("path", ["/v2/completions", "/v2/code/generations"])
+    def test_failed_authorization_scope(self, mock_client, path):
+        response = mock_client.post(
+            path,
+            headers={
+                "Authorization": "Bearer 12345",
+                "X-Gitlab-Authentication-Type": "oidc",
+            },
+            json={
+                "prompt_version": 1,
+                "project_path": "gitlab-org/gitlab",
+                "project_id": 278964,
+                "current_file": {
+                    "file_name": "main.py",
+                    "content_above_cursor": "# Create a fast binary search\n",
+                    "content_below_cursor": "\n",
+                },
+            },
+        )
+
+        assert response.status_code == 403
+        assert response.json() == {"detail": "Forbidden"}

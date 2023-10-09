@@ -1,43 +1,33 @@
 import json
 
 import pytest
-from starlette.applications import Starlette
+from dependency_injector.wiring import inject
+from fastapi import APIRouter, Request
 from starlette.authentication import requires
-from starlette.middleware import Middleware
 from starlette.responses import JSONResponse
 from starlette.routing import Route
-from starlette.testclient import TestClient
-from starlette_context.middleware import RawContextMiddleware
 from structlog.testing import capture_logs
 
-from ai_gateway.api.middleware import MiddlewareAuthentication, MiddlewareLogRequest
 from ai_gateway.auth import User, UserClaims
+from tests.fixtures.fast_api import *
 
-
-@requires("authenticated")
-def homepage(request):
-    return JSONResponse()
-
-
-class StubKeyAuthProvider:
-    def authenticate(self, token):
-        return User(
-            authenticated=False,
-            claims=UserClaims(
-                is_third_party_ai_default=False,
-            ),
-        )
-
-
-app = Starlette(
-    middleware=[
-        Middleware(RawContextMiddleware),
-        MiddlewareLogRequest(),
-        MiddlewareAuthentication(None, False, None),
-    ],
-    routes=[Route("/", endpoint=homepage, methods=["POST"])],
+router = APIRouter(
+    prefix="",
+    tags=["something"],
 )
-client = TestClient(app)
+
+
+@router.post("/")
+@requires("code_suggestions")
+def homepage(request: Request):
+    return JSONResponse(status_code=200, content={"scopes": request.auth.scopes})
+
+
+@pytest.fixture(scope="class")
+def fast_api_router():
+    return router
+
+
 expected_log_keys = [
     "url",
     "path",
@@ -56,59 +46,123 @@ expected_log_keys = [
     "gitlab_instance_id",
     "gitlab_global_user_id",
 ]
-forbidden_error = {
+
+invalid_authentication_token_type_error = {
     "error": "Invalid authentication token type - only OIDC is supported"
 }
 
 
 @pytest.mark.parametrize(
-    ("headers", "data", "expected_response", "log_keys"),
+    (
+        "headers",
+        "data",
+        "expected_status_code",
+        "auth_user",
+        "expected_response",
+        "log_keys",
+    ),
     [
-        (None, None, {"error": "No authorization header presented"}, []),
+        (
+            None,
+            None,
+            401,
+            User(
+                authenticated=True,
+                claims=UserClaims(
+                    is_third_party_ai_default=False, scopes=["code_suggestions"]
+                ),
+            ),
+            {"error": "No authorization header presented"},
+            [],
+        ),
         (
             {"Authorization": "invalid"},
             None,
+            401,
+            User(
+                authenticated=True,
+                claims=UserClaims(
+                    is_third_party_ai_default=False, scopes=["code_suggestions"]
+                ),
+            ),
             {"error": "Invalid authorization header"},
             [],
         ),
         (
             {"Authorization": "Bearer 12345"},
             None,
-            forbidden_error,
+            401,
+            User(
+                authenticated=True,
+                claims=UserClaims(
+                    is_third_party_ai_default=False, scopes=["code_suggestions"]
+                ),
+            ),
+            invalid_authentication_token_type_error,
             ["auth_duration_s"],
         ),
-        # With project_id
         (
             {
                 "Authorization": "Bearer 12345",
-                "X-Gitlab-Authentication-Type": "1",
-                "Content-Type": "application/json",
+                "X-Gitlab-Authentication-Type": "oidc",
             },
-            json.dumps({"project_id": 12345, "project_path": "a/b/c"}),
-            forbidden_error,
+            None,
+            200,
+            User(
+                authenticated=True,
+                claims=UserClaims(
+                    is_third_party_ai_default=False, scopes=["code_suggestions"]
+                ),
+            ),
+            {"scopes": ["code_suggestions"]},
             ["auth_duration_s"],
         ),
-        # Invalid JSON payload
         (
+            # Invalid scope
             {
                 "Authorization": "Bearer 12345",
-                "X-Gitlab-Authentication-Type": "1",
-                "Content-Type": "application/json",
+                "X-Gitlab-Authentication-Type": "oidc",
             },
-            "this is not JSON{",
-            forbidden_error,
+            None,
+            403,
+            User(
+                authenticated=True,
+                claims=UserClaims(
+                    is_third_party_ai_default=False, scopes=["unsupported_scope"]
+                ),
+            ),
+            {"detail": "Forbidden"},
+            ["auth_duration_s"],
+        ),
+        (
+            # Unauthorized user
+            {
+                "Authorization": "Bearer 12345",
+                "X-Gitlab-Authentication-Type": "oidc",
+            },
+            None,
+            401,
+            User(
+                authenticated=False,
+                claims=UserClaims(
+                    is_third_party_ai_default=False, scopes=["code_suggestions"]
+                ),
+            ),
+            {"error": "Forbidden by auth provider"},
             ["auth_duration_s"],
         ),
     ],
 )
-def test_failed_authorization_logging(headers, data, expected_response, log_keys):
+def test_failed_authorization_logging(
+    mock_client, headers, data, expected_status_code, expected_response, log_keys
+):
     with capture_logs() as cap_logs:
-        response = client.post("/", headers=headers, data=data)
+        response = mock_client.post("/", headers=headers, data=data)
 
-        assert response.status_code == 401
+        assert response.status_code == expected_status_code
         assert response.json() == expected_response
 
         assert len(cap_logs) == 1
-        assert cap_logs[0]["status_code"] == 401
+        assert cap_logs[0]["status_code"] == expected_status_code
         assert cap_logs[0]["method"] == "POST"
         assert set(cap_logs[0].keys()) == set(expected_log_keys + log_keys)

@@ -187,7 +187,8 @@ UGw3kIW+604fnnXLDm4TaLA=
             ),
             (
                 private_key_test,
-                {"is_life_beautiful": True} | ai_gateway_audience,
+                {"is_life_beautiful": True, "scopes": ["code_suggestions"]}
+                | ai_gateway_audience,
                 False,
                 "saas",
                 True,

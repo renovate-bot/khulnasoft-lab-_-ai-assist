@@ -5,10 +5,11 @@ from uuid import uuid4
 import structlog
 from dependency_injector.providers import FactoryAggregate
 from dependency_injector.wiring import Provide, inject
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Request
 from pydantic import BaseModel, constr
 from pydantic.fields import Field
 from pydantic.types import confloat, conint, conlist
+from starlette.authentication import requires
 
 from ai_gateway.api.rollout import ModelRollout
 from ai_gateway.code_suggestions.experimental import CodeCompletionsInternalUseCase
@@ -97,8 +98,10 @@ class CodeCompletionsResponse(BaseModel):
 
 
 @router.post("/completions", response_model=CodeCompletionsResponse)
+@requires("code_suggestions")
 @inject
 async def completions(
+    request: Request,
     payload: CodeCompletionsRequest,
     engine_factory: FactoryAggregate = Depends(
         Provide[CodeSuggestionsContainer.engine_factory.provider]

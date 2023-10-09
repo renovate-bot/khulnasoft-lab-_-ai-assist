@@ -7,6 +7,7 @@ from dependency_injector.providers import Factory
 from dependency_injector.wiring import Provide, inject
 from fastapi import APIRouter, Depends, Request
 from pydantic import BaseModel, Field, conlist, constr
+from starlette.authentication import requires
 
 from ai_gateway.api.middleware import (
     X_GITLAB_GLOBAL_USER_ID_HEADER,
@@ -94,9 +95,10 @@ class SuggestionsResponse(BaseModel):
 
 @router.post("/completions", response_model=SuggestionsResponse)
 @router.post("/code/completions", response_model=SuggestionsResponse)
+@requires("code_suggestions")
 @inject
 async def completions(
-    req: Request,
+    request: Request,
     payload: SuggestionRequestWithVersion,
     code_completions_legacy: Factory[CodeCompletionsLegacy] = Depends(
         Provide[CodeSuggestionsContainer.code_completions_legacy.provider]
@@ -109,7 +111,7 @@ async def completions(
     ),
 ):
     try:
-        track_snowplow_event(req, payload, snowplow_instrumentator)
+        track_snowplow_event(request, payload, snowplow_instrumentator)
     except Exception as e:
         log.error(f"failed to track Snowplow event: {e}")
 
@@ -161,9 +163,10 @@ async def completions(
 
 
 @router.post("/code/generations", response_model=SuggestionsResponse)
+@requires("code_suggestions")
 @inject
 async def generations(
-    req: Request,
+    request: Request,
     payload: SuggestionRequestWithVersion,
     code_generations_vertex: Factory[CodeGenerations] = Depends(
         Provide[CodeSuggestionsContainer.code_generations_vertex.provider]
@@ -176,7 +179,7 @@ async def generations(
     ),
 ):
     try:
-        track_snowplow_event(req, payload, snowplow_instrumentator)
+        track_snowplow_event(request, payload, snowplow_instrumentator)
     except Exception as e:
         log.error(f"failed to track Snowplow event: {e}")
 
