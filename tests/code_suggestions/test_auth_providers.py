@@ -101,15 +101,44 @@ Piz6UxMdEyvOKmcujB6dYNem3LONaaaxDEYcPwApNSH1ZCKHnM8zBBI6EolIkNhZ
     claims = {
         "third_party_ai_features_enabled": True,
         "gitlab_realm": "self-managed",
+        "scopes": ["code_suggestions"],
     }
+
+    code_suggestions_audience = {"aud": "gitlab-code-suggestions"}
+
+    ai_gateway_audience = {"aud": "gitlab-ai-gateway"}
 
     @responses.activate
     @pytest.mark.parametrize(
         "private_key,claims,third_party,gitlab_realm",
         [
-            (private_key_test, claims, True, "self-managed"),
-            (private_key_customers, claims, True, "self-managed"),
-            (private_key_test, {"is_life_beautiful": True}, False, "saas"),
+            (
+                private_key_test,
+                claims | code_suggestions_audience,
+                True,
+                "self-managed",
+            ),
+            (
+                private_key_customers,
+                claims | code_suggestions_audience,
+                True,
+                "self-managed",
+            ),
+            (private_key_test, claims | ai_gateway_audience, True, "self-managed"),
+            (private_key_customers, claims | ai_gateway_audience, True, "self-managed"),
+            (
+                private_key_test,
+                {"is_life_beautiful": True} | code_suggestions_audience,
+                False,
+                "saas",
+            ),
+            (
+                private_key_test,
+                {"is_life_beautiful": True, "scopes": ["code_suggestions"]}
+                | ai_gateway_audience,
+                False,
+                "saas",
+            ),
         ],
     )
     def test_gitlab_oidc_provider(self, private_key, claims, third_party, gitlab_realm):
@@ -155,6 +184,7 @@ Piz6UxMdEyvOKmcujB6dYNem3LONaaaxDEYcPwApNSH1ZCKHnM8zBBI6EolIkNhZ
         assert user.authenticated is True
         assert user.claims.is_third_party_ai_default is third_party
         assert user.claims.gitlab_realm == gitlab_realm
+        assert user.claims.scopes == ["code_suggestions"]
 
         assert well_known_test_response.call_count == 1
         assert well_known_customers_response.call_count == 1
