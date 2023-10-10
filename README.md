@@ -1,9 +1,7 @@
 # GitLab AI Gateway
 
-This project is based on the open source project
-[FauxPilot](https://github.com/moyix/fauxpilot/blob/main/docker-compose.yaml) as an initial iteration in an effort to
-create a GitLab owned AI Assistant to help developers write secure code by the
-[AI Assist SEG](https://about.gitlab.com/handbook/engineering/incubation/ai-assist/).
+GitLab AI Gateway is a standalone-service that will give access to AI features to all users of
+GitLab, no matter which instance they are using: self-managed, dedicated or GitLab.com.
 
 ## API
 
@@ -119,20 +117,13 @@ You'll need:
 
 - Docker
 - `docker compose` >= 1.28
-- An NVIDIA GPU with Compute Capability >= 6.0 and enough VRAM to run the model you want.
-- [`nvidia-docker`](https://github.com/NVIDIA/nvidia-docker)
-- `curl` and `zstd` for downloading and unpacking the models.
 - [`gcloud` CLI](https://cloud.google.com/docs/authentication/provide-credentials-adc#how-to)
 
 If you're working locally, you'll also need other tools to build a
 [`tree-sitter`](https://tree-sitter.github.io/tree-sitter/) library:
 
-- gcc
-- nodejs (needed for TypeScript grammar)
-
-Note that the VRAM requirements listed by `setup.sh` are _total_ -- if you have multiple GPUs, you can split the model
-across them. So, if you have two NVIDIA RTX 3080 GPUs, you _should_ be able to run the 6B model by putting half on each
-GPU.
+- `gcc`
+- `nodejs` (needed for TypeScript grammar)
 
 ### Google Cloud SDK
 
@@ -167,19 +158,13 @@ which define layers present in the system as well as their relations with each o
 
 ### Project structure
 
-This project was from [FauxPilot](https://github.com/moyix/fauxpilot/blob/main/docker-compose.yaml) as a base, however, due to the business
-direction change GitLab for a time being decided to not train models on its own. With that significant part of this repository became
-deprecated and is no longer in active use, including:
-
-1. All code in `/models` directory
-1. All code in `/converter` directory
-
-For the Code Suggestion feature most of the code is hosted at `/ai_gateway`. In that directory following artifacts can be of interest:
+For the Code Suggestions feature, most of the code is hosted at `/ai_gateway`.
+In that directory, the following artifacts can be of interest:
 
 1. `app.py` - main entry point for web application
-1. `ai_gateway/code_suggestions/processing/base.py` - that contains base classes for ModelEngine.
-1. `ai_gateway/code_suggestions/processing/completions.py` and `suggestions/processing/generations.py` - contains `ModelEngineCompletions` and `ModelEngineGenerations` classes respectively.
-1. `api/v2/endpoints/code.py` - that houses implementation of main production Code Suggestion API
+1. `code_suggestions/processing/base.py` - that contains base classes for ModelEngine.
+1. `code_suggestions/processing/completions.py` and `suggestions/processing/generations.py` - contains `ModelEngineCompletions` and `ModelEngineGenerations` classes respectively.
+1. `api/v2/endpoints/code.py` - that houses implementation of main production Code Suggestions API
 1. `api/v2/experimental/code.py` - implements experimental endpoints that route requests to fixed external models for experimentation and testing
 
 This project utilizes middleware to provide additional mechanisms that are not strictly feature-related including authorization and logging.
@@ -195,7 +180,7 @@ All parameters for the API are available from `api/config/config.py` which heavi
 overview of all environment variables used and their default value, if you want to deviate you should make them
 available in a `.env`:
 
-```dotenv
+```shell
 API_EXTERNAL_PORT=5001  # External port for the API used in docker-compose
 METRICS_EXTERNAL_PORT=8082  # External port for the /metrics endpoint used in docker-compose
 F_IS_THIRD_PARTY_AI_DEFAULT=true
@@ -227,7 +212,7 @@ value `'None'`.
 1. Copy the `example.env` file to `.env`: `cp example.env .env`
 1. Update the `.env` file in the root folder with the following variables:
 
-   ```
+   ```shell
    AUTH_BYPASS_EXTERNAL=true
    F_IS_THIRD_PARTY_AI_DEFAULT=true
    F_THIRD_PARTY_ROLLOUT_PERCENTAGE=100
@@ -237,9 +222,10 @@ value `'None'`.
    FASTAPI_OPENAPI_URL=/openapi.json
    FASTAPI_API_PORT=5052
    ```
+
 1. Ensure you're authenticated with the `gcloud` CLI by running `gcloud auth application-default login`
 1. Start the model-gateway server locally: `poetry run ai_gateway`
-1. Open `http://0.0.0.0:5052/docs` in your browser and run any requests to the codegen model
+1. Open `http://0.0.0.0:5052/docs` in your browser and run any requests to the model
 
 ### Faking out AI models
 
@@ -256,7 +242,7 @@ AI Gateway workflow includes additional pre- and post-processing steps.
 If you want to log data between different steps for development purposes,
 please update the `.env` file by setting the following variables:
 
-```
+```shell
 LOG_LEVEL=debug
 LOG_TO_FILE=../modelgateway_debug.log
 ```
@@ -264,12 +250,12 @@ LOG_TO_FILE=../modelgateway_debug.log
 ## Local development using GDK
 
 You can either run `make develop-local` or `docker-compose -f docker-compose.dev.yaml up --build --remove-orphans` this
-will run the API. If you need to change configuration for a Docker Compose service, add it to `docker-compose.override.yaml`.
+will run the API. If you need to change configuration for a Docker Compose service and add it to `docker-compose.override.yaml`.
 Any changes made to services in this file will be merged into the default settings.
 
-Next open the VS Code extension project, and run the development version of the GitLab Workflow extension locally.
+Next open the VS Code extension project, and run the development version of the GitLab Workflow extension locally. See [Configuring Development Environment](https://gitlab.com/gitlab-org/gitlab-vscode-extension/-/blob/main/CONTRIBUTING.md#configuring-development-environment) for more information.
 
-In VS Code code need to set the const `AI_ASSISTED_CODE_SUGGESTIONS_API_URL` constant to `http://localhost:5000/completions`.
+In VS Code code, we need to set the `MODEL_GATEWAY_AI_ASSISTED_CODE_SUGGESTIONS_API_URL` constant to `http://localhost:5000/completions`.
 
 Since the feature is only for SaaS, you need to run GDK in SaaS mode:
 
