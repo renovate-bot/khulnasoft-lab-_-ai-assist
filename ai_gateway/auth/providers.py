@@ -30,6 +30,7 @@ class GitLabOidcProvider(AuthProvider):
     DEFAULT_REALM = "saas"
     AUDIENCE = "gitlab-ai-gateway"
     LEGACY_AUDIENCE = "gitlab-code-suggestions"
+    LEGACY_SCOPES = ["code_suggestions"]
     SUPPORTED_AUDIENCES = [AUDIENCE, LEGACY_AUDIENCE]
 
     def __init__(self, oidc_providers: dict[str, str], expiry_seconds: int = 86400):
@@ -70,7 +71,7 @@ class GitLabOidcProvider(AuthProvider):
 
     def _get_scopes(self, jwt_claims, audience) -> list:
         if audience == self.LEGACY_AUDIENCE:
-            scopes = ["code_suggestions"]
+            scopes = self.LEGACY_SCOPES
         else:
             scopes = jwt_claims.get("scopes", [])
 

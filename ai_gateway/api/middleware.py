@@ -209,7 +209,7 @@ class MiddlewareAuthentication(Middleware):
             authenticated, claims = self.authenticate_with_token(conn.headers, token)
 
             return AuthCredentials(claims.scopes), GitLabUser(
-                authenticated=True, claims=claims
+                authenticated, claims=claims
             )
 
         @timing("auth_duration_s")
