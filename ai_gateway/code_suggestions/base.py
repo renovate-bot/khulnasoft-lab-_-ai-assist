@@ -30,7 +30,9 @@ class CodeSuggestionsOutput(NamedTuple):
         return self.lang_id.name.lower() if self.lang_id else ""
 
 
-def resolve_lang_id(file_name: str, editor_lang: str) -> Optional[LanguageId]:
+def resolve_lang_id(
+    file_name: str, editor_lang: Optional[str] = None
+) -> Optional[LanguageId]:
     lang_id = lang_from_filename(file_name)
 
     if lang_id is None and editor_lang:
