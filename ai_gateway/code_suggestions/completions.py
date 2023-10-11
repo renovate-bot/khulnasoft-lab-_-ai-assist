@@ -37,7 +37,7 @@ class CodeCompletionsLegacy:
 
 
 class CodeCompletions:
-    MAX_TOKENS_SUFFIX = 0.07
+    SUFFIX_RESERVED_PERCENT = 0.07
 
     def __init__(
         self, model: TextGenBaseModel, tokenization_strategy: TokenStrategyBase
@@ -62,7 +62,7 @@ class CodeCompletions:
             return self.prompt_builder.wrap(raw_prompt)
 
         self.prompt_builder.add_content(
-            prefix, suffix=suffix, suffix_dist=self.MAX_TOKENS_SUFFIX
+            prefix, suffix=suffix, suffix_reserved_percent=self.SUFFIX_RESERVED_PERCENT
         )
         prompt = self.prompt_builder.build()
 

@@ -20,16 +20,19 @@ __all__ = [
 class PromptBuilderPrefixBased(PromptBuilderBase):
     KEY_PREFIX = "prefix"
     KEY_SUFFIX = "suffix"
-    KEY_SUFFIX_DIST = "suffix_dist"
 
-    DEFAULT_SUFFIX_DIST = 0
+    # Percentage of tokens reserved for suffix (0 <= value <= 1).
+    KEY_SUFFIX_RESERVED_PERCENT = "suffix_reserved_percent"
+    DEFAULT_SUFFIX_RESERVED_PERCENT = 0
 
     def __init__(self, total_max_len: int, tkn_strategy: TokenStrategyBase):
         super().__init__(total_max_len, tkn_strategy)
 
         self.snippets: list[str] = []
         self.suffix: Optional[str] = None
-        self.opts: dict = {self.KEY_SUFFIX_DIST: self.DEFAULT_SUFFIX_DIST}
+        self.opts: dict = {
+            self.KEY_SUFFIX_RESERVED_PERCENT: self.DEFAULT_SUFFIX_RESERVED_PERCENT
+        }
 
         # This prompt builder requires a `prefix` placeholder to be present in the template
         self.tpl_args[self.KEY_PREFIX] = ""
@@ -43,15 +46,15 @@ class PromptBuilderPrefixBased(PromptBuilderBase):
         self.suffix = kwargs.pop(self.KEY_SUFFIX, None) or self.suffix
 
         opts: dict = {}
-        if dist := kwargs.pop(self.KEY_SUFFIX_DIST, None):
-            opts[self.KEY_SUFFIX_DIST] = max(0, min(dist, 1))
+        if dist := kwargs.pop(self.KEY_SUFFIX_RESERVED_PERCENT, None):
+            opts[self.KEY_SUFFIX_RESERVED_PERCENT] = max(0, min(dist, 1))
 
         self.opts.update(opts)
 
     def build(self) -> Prompt:
-        suffix_dist = self.opts[self.KEY_SUFFIX_DIST]
+        suffix_reserved_percent = self.opts[self.KEY_SUFFIX_RESERVED_PERCENT]
         max_length = self.total_max_len - self.always_len
-        max_length_prefix = math.ceil((1 - suffix_dist) * max_length)
+        max_length_prefix = math.ceil((1 - suffix_reserved_percent) * max_length)
         max_length_suffix = max_length - max_length_prefix
 
         prefix = self._build_prefix(max_length_prefix)

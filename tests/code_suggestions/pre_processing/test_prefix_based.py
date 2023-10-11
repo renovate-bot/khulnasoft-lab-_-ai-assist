@@ -229,7 +229,13 @@ class TestPromptBuilderPrefixBased:
                 builder.wrap(prompt)
 
     @pytest.mark.parametrize(
-        ("prefix", "suffix", "suffix_dist", "total_max_len", "expected_prompt"),
+        (
+            "prefix",
+            "suffix",
+            "suffix_reserved_percent",
+            "total_max_len",
+            "expected_prompt",
+        ),
         [
             (
                 "random_text",
@@ -285,7 +291,7 @@ class TestPromptBuilderPrefixBased:
         self,
         prefix: Union[str, list[str]],
         suffix: str,
-        suffix_dist: float,
+        suffix_reserved_percent: float,
         total_max_len: int,
         expected_prompt: Prompt,
     ):
@@ -294,9 +300,13 @@ class TestPromptBuilderPrefixBased:
         )
 
         if isinstance(prefix, str):
-            builder.add_content(prefix, suffix=suffix, suffix_dist=suffix_dist)
+            builder.add_content(
+                prefix, suffix=suffix, suffix_reserved_percent=suffix_reserved_percent
+            )
         else:
-            builder.add_content(*prefix, suffix=suffix, suffix_dist=suffix_dist)
+            builder.add_content(
+                *prefix, suffix=suffix, suffix_reserved_percent=suffix_reserved_percent
+            )
 
         actual = builder.build()
 
