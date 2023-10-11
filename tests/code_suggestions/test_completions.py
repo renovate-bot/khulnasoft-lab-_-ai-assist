@@ -146,8 +146,9 @@ class TestCodeCompletions:
             )
         )
 
-        use_case.with_prompt_prepared(prompt)
-        actual = await use_case.execute(prefix, suffix, file_name, editor_lang)
+        actual = await use_case.execute(
+            prefix, suffix, file_name, editor_lang=editor_lang, raw_prompt=prompt
+        )
 
         assert expected_output == actual.text
         assert expected_language_id == actual.lang_id

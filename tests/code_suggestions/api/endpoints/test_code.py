@@ -255,8 +255,16 @@ class TestCodeCompletions:
             "current_file": current_file,
         }
 
+        code_completions_kwargs = {}
         if prompt_version == 2:
-            data["prompt"] = current_file["content_above_cursor"]
+            data.update(
+                {
+                    "prompt": current_file["content_above_cursor"],
+                }
+            )
+            code_completions_kwargs.update(
+                {"raw_prompt": current_file["content_above_cursor"]}
+            )
 
         with container.code_completions_anthropic.override(code_completions_mock):
             response = client.post(
@@ -275,13 +283,9 @@ class TestCodeCompletions:
             current_file["content_above_cursor"],
             current_file["content_below_cursor"],
             current_file["file_name"],
-            None,
+            current_file.get("language_identifier", None),
+            **code_completions_kwargs,
         )
-
-        if prompt_version == 2:
-            code_completions_mock.with_prompt_prepared.assert_called_with(
-                data["prompt"]
-            )
 
 
 class TestSnowplowInstrumentator:

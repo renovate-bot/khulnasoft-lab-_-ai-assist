@@ -121,12 +121,13 @@ async def completions(
         current_file_name=payload.current_file.file_name,
     )
 
+    kwargs = {}
     if payload.model_provider == ModelProvider.ANTHROPIC:
         code_completions = code_completions_anthropic()
 
         # We support the prompt version 2 only with the Anthropic models
         if payload.prompt_version == 2:
-            code_completions.with_prompt_prepared(payload.prompt)
+            kwargs.update({"raw_prompt": payload.prompt})
     else:
         code_completions = code_completions_legacy()
 
@@ -136,6 +137,7 @@ async def completions(
             payload.current_file.content_below_cursor,
             payload.current_file.file_name,
             payload.current_file.language_identifier,
+            **kwargs,
         )
 
     log.debug(

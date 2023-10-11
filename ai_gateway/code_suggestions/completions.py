@@ -27,6 +27,7 @@ class CodeCompletionsLegacy:
         suffix: str,
         file_name: str,
         language_identifier: str,
+        **_kwargs: Any,
     ) -> ModelEngineOutput:
         suggestion = await self.engine.generate(
             prefix, suffix, file_name, language_identifier
@@ -43,7 +44,6 @@ class CodeCompletions:
     ):
         self.model = model
 
-        self.prompt: Optional[Prompt] = None
         self.instrumentator = TextGenModelInstrumentator(
             model.metadata.engine, model.metadata.name
         )
@@ -55,9 +55,11 @@ class CodeCompletions:
             model.MAX_MODEL_LEN, tokenization_strategy
         )
 
-    def _get_prompt(self, prefix: str, suffix: str) -> Prompt:
-        if self.prompt:
-            return self.prompt
+    def _get_prompt(
+        self, prefix: str, suffix: str, raw_prompt: Optional[str] = None
+    ) -> Prompt:
+        if raw_prompt:
+            return self.prompt_builder.wrap(raw_prompt)
 
         self.prompt_builder.add_content(
             prefix, suffix=suffix, suffix_dist=self.MAX_TOKENS_SUFFIX
@@ -66,21 +68,19 @@ class CodeCompletions:
 
         return prompt
 
-    def with_prompt_prepared(self, prompt: str):
-        self.prompt = self.prompt_builder.wrap(prompt)
-
     async def execute(
         self,
         prefix: str,
         suffix: str,
         file_name: str,
         editor_lang: Optional[str] = None,
+        raw_prompt: Optional[str] = None,
         **kwargs: Any,
     ) -> CodeSuggestionsOutput:
         lang_id = resolve_lang_id(file_name, editor_lang)
         increment_lang_counter(file_name, lang_id, editor_lang)
 
-        prompt = self._get_prompt(prefix, suffix)
+        prompt = self._get_prompt(prefix, suffix, raw_prompt=raw_prompt)
 
         with self.instrumentator.watch(prompt) as watch_container:
             try:
