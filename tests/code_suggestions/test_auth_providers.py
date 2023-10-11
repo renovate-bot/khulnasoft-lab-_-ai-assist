@@ -73,6 +73,37 @@ Piz6UxMdEyvOKmcujB6dYNem3LONaaaxDEYcPwApNSH1ZCKHnM8zBBI6EolIkNhZ
 -----END PRIVATE KEY-----
     """
 
+    forged_private_key = """
+-----BEGIN PRIVATE KEY-----
+MIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQCB19bRw7ut/Rt6
+LGxtPhGJ4/t8QS31mem4djNYteDKLTAc6YykJos8Gv+KzTioO2LBwHXF7QZPLcJW
+FrRewARjwWQrVnJm6OCFaGs4n9/RE+o2JCB2C/DBR+mLKoGCSPH+ts8i87zwviRw
+LD3G4XkPU2cyCAyIIhqz/9rJ7MLCbtAZYWeWzhyX/BZt/nHVT/HGEkZx7HMoDeir
+DjIlJANoNLMYSfdyWNyeRZocZpDjGTR/k39Ycvlvwif8KE6hGfPjFAytdLqw/tP2
+wDpNoFPja7RmI6OB/9C2NReLtiCiY9U/dxqZdbxgmxDSRs8xG20OL87TmbNFiAkO
+GhkK8znfAgMBAAECggEAFPCDA1cmiDueV8icP83XtD4hC3vTdp04tPfS9gZ21wQM
+k00S0lIo+Ct+dJr9/Rt+pLJuC9pavyApDAsjUXhz/MZuahLJ5lC+DKW3TO1zgdtN
+VSfkWEU6sWDwh/H16tXquOIwa3mVSdnQNIrd95nbFR6lMMtdggLF/atQVGorSoGr
+ldDf3aA76zcTC4k6NxZwxUXZuYn76iconSSlEoqYoE15/yT/j1Or4SCXhAvixzox
+n8DPE6w7wbp43fTbghCkd4mU19A06dNHXD1x92eOXEhGk8GuWGhm4yypOryZRb7y
+94bytD3qceZ1c8Dr/3F54W9LFgCJC9+3OCwMjgOsiQKBgQC8TwdfR8pQIK62yOqQ
+j7xuYm5TQpeGSXUSZ7j8WaUVhb3K7sDBlOcp/NZ7wVT+HxEK7rgFcg+4f+mwfQpG
+hVvMZZKBkLtv2JZA0AoJqxqS33y8T1o6Qf0c+ig9O8HlUzjjr0XeGYEPasIQiE50
+12Yyw/9WEX7dt+WFJzhAl6HjBQKBgQCwhI6/K8UNFC/XSSALmpQrsGiO5bRfUGnU
+AMoTM6Iekqa2o0yKwSXB618qQeR6AiMf83pZ18ZDC4y8LdwjHhayOm9LkaQhD98o
+/7HyOA4ao85Yg+Aavr66huTzIUhm8tQ2XaS+kPHGzzdcU5nxRHpozDtb4PLFK19x
+X/wPYkjGkwKBgGyTtNB/eGvTLGpAVt+bwS50muBvGSdY26QNImB+3+0U/GYyW/pC
+fTd8jb81rmgISa9gDcM2DVJ4jqowrugSpOep+VuztB+9ZoVgbyk7+0qMikOaDZBh
+1CwNIX6NIjO0VK0TttllI0FccSFPNs2wFUFYObXKyLfW/QRVpN25kKJxAoGBAJ1G
+rs2E2UELAIlonUXZiDXZK4BPCMR4KKL9xQ8QzV1CO4q1u2hSKis7ZYKITWOsbdF1
+JknQqNVqAA5XKjKcB4rr5+hELyJKOwMTuGBiM6bm1t8lOVN7KwOVV3+N4y3fJNf/
+3d7x1IrYbLI1xw8ifZLMjgMSTh0BxTuGU1b9smxDAoGAMLwdvGy8OuE6OjaKSwFh
+DuAGV7NRJlhf1Ga2b1dORFMdhuEUlGkxuH5+Tw+uLylgBE91gJMR+fgSQ+d3aKOq
+2rSHdIXOeCpVoIrSW6xY7a1HnzNBI9o/afaGcYTpuEhlgCdGxDr9sdqP495pUNsI
+UGw3kIW+604fnnXLDm4TaLA=
+-----END PRIVATE KEY-----
+    """
+
     public_key_test = {
         "kty": "RSA",
         "e": "AQAB",
@@ -110,27 +141,49 @@ Piz6UxMdEyvOKmcujB6dYNem3LONaaaxDEYcPwApNSH1ZCKHnM8zBBI6EolIkNhZ
 
     @responses.activate
     @pytest.mark.parametrize(
-        "private_key,claims,third_party,gitlab_realm",
+        "private_key,claims,third_party,gitlab_realm,authenticated",
         [
             (
                 private_key_test,
                 claims | code_suggestions_audience,
                 True,
                 "self-managed",
+                True,
             ),
             (
                 private_key_customers,
                 claims | code_suggestions_audience,
                 True,
                 "self-managed",
+                True,
             ),
-            (private_key_test, claims | ai_gateway_audience, True, "self-managed"),
-            (private_key_customers, claims | ai_gateway_audience, True, "self-managed"),
+            (
+                private_key_test,
+                claims | ai_gateway_audience,
+                True,
+                "self-managed",
+                True,
+            ),
+            (
+                forged_private_key,
+                claims | code_suggestions_audience,
+                False,
+                "saas",
+                False,
+            ),
+            (
+                private_key_customers,
+                claims | ai_gateway_audience,
+                True,
+                "self-managed",
+                True,
+            ),
             (
                 private_key_test,
                 {"is_life_beautiful": True} | code_suggestions_audience,
                 False,
                 "saas",
+                True,
             ),
             (
                 private_key_test,
@@ -138,10 +191,13 @@ Piz6UxMdEyvOKmcujB6dYNem3LONaaaxDEYcPwApNSH1ZCKHnM8zBBI6EolIkNhZ
                 | ai_gateway_audience,
                 False,
                 "saas",
+                True,
             ),
         ],
     )
-    def test_gitlab_oidc_provider(self, private_key, claims, third_party, gitlab_realm):
+    def test_gitlab_oidc_provider(
+        self, private_key, claims, third_party, gitlab_realm, authenticated
+    ):
         well_known_test_response = responses.get(
             "http://test.com/.well-known/openid-configuration",
             body='{"jwks_uri": "http://test.com/oauth/discovery/keys"}',
@@ -181,10 +237,11 @@ Piz6UxMdEyvOKmcujB6dYNem3LONaaaxDEYcPwApNSH1ZCKHnM8zBBI6EolIkNhZ
         user = auth_provider.authenticate(token)
 
         assert user is not None
-        assert user.authenticated is True
-        assert user.claims.is_third_party_ai_default is third_party
-        assert user.claims.gitlab_realm == gitlab_realm
-        assert user.claims.scopes == ["code_suggestions"]
+        assert user.authenticated is authenticated
+        if authenticated:
+            assert user.claims.is_third_party_ai_default is third_party
+            assert user.claims.gitlab_realm == gitlab_realm
+            assert user.claims.scopes == ["code_suggestions"]
 
         assert well_known_test_response.call_count == 1
         assert well_known_customers_response.call_count == 1

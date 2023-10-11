@@ -45,6 +45,7 @@ class GitLabOidcProvider(AuthProvider):
         third_party_ai_features_enabled = False
         gitlab_realm = self.DEFAULT_REALM
         scopes = []
+        errors = []
         for audience in self.SUPPORTED_AUDIENCES:
             try:
                 jwt_claims = jwt.decode(
@@ -58,7 +59,11 @@ class GitLabOidcProvider(AuthProvider):
                 is_allowed = True
                 break
             except JWTError as err:
-                logging.error(f"Failed to decode JWT token with {audience}: {err}")
+                errors.append(str(err))
+                logging.warning(f"Failed to decode JWT token with {audience}: {err}")
+
+        if not is_allowed:
+            logging.error(f"Failed to decode JWT token: {', '.join(errors)}")
 
         return User(
             authenticated=is_allowed,
