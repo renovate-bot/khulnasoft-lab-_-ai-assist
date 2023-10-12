@@ -4,7 +4,11 @@ from py_grpc_prometheus.prometheus_client_interceptor import PromClientIntercept
 from ai_gateway.api import middleware
 from ai_gateway.api.rollout.model import ModelRollout
 from ai_gateway.auth import GitLabOidcProvider
-from ai_gateway.code_suggestions import CodeCompletions, CodeGenerations
+from ai_gateway.code_suggestions import (
+    CodeCompletions,
+    CodeCompletionsLegacy,
+    CodeGenerations,
+)
 from ai_gateway.code_suggestions.processing import ModelEngineCompletions
 from ai_gateway.code_suggestions.processing.post.completions import (
     PostProcessor as PostProcessorCompletions,
@@ -45,6 +49,11 @@ _ANTHROPIC_MODELS_VERSIONS = {
     AnthropicModel.CLAUDE_INSTANT: "claude-instant-1",
 }
 
+_ANTHROPIC_MODELS_OPTS = {
+    AnthropicModel.CLAUDE: {},
+    AnthropicModel.CLAUDE_INSTANT: {"max_tokens_to_sample": 128},
+}
+
 
 def _init_vertex_grpc_client(api_endpoint: str, real_or_fake):
     if real_or_fake == "fake":
@@ -81,13 +90,14 @@ def _create_vertex_model(name, grpc_client_vertex, project, location, real_or_fa
     )
 
 
-def _create_anthropic_model(name, client_anthropic, real_or_fake):
+def _create_anthropic_model(name, client_anthropic, real_or_fake, **kwargs):
     return providers.Selector(
         real_or_fake,
         real=providers.Singleton(
             AnthropicModel.from_model_name,
             client=client_anthropic,
             name=name,
+            **kwargs,
         ),
         # TODO: We need to update our fake models to be generic
         fake=providers.Singleton(FakePalmTextGenModel),
@@ -121,12 +131,17 @@ def _all_vertex_models(
 
 def _all_anthropic_models(
     models_key_name,
+    models_opts,
     client_anthropic,
     real_or_fake,
 ):
     return {
-        model_key: _create_anthropic_model(model_name, client_anthropic, real_or_fake)
-        for model_key, model_name in models_key_name.items()
+        model_key: _create_anthropic_model(
+            model_name, client_anthropic, real_or_fake, **model_opts
+        )
+        for (model_key, model_name), model_opts, in zip(
+            models_key_name.items(), models_opts.values()
+        )
     }
 
 
@@ -213,6 +228,7 @@ class CodeSuggestionsContainer(containers.DeclarativeContainer):
 
     models_anthropic = _all_anthropic_models(
         _ANTHROPIC_MODELS_VERSIONS,
+        _ANTHROPIC_MODELS_OPTS,
         client_anthropic,
         # TODO: We need to update our fake model settings to be generic
         config.palm_text_model.real_or_fake,
@@ -224,8 +240,16 @@ class CodeSuggestionsContainer(containers.DeclarativeContainer):
     # TODO: Would be great to move such dependencies to a separate experimental container
     engine_factory = providers.FactoryAggregate(**engines)
 
-    code_completions = providers.Factory(
-        CodeCompletions, engine=engines[ModelRollout.GOOGLE_CODE_GECKO]
+    code_completions_legacy = providers.Factory(
+        CodeCompletionsLegacy, engine=engines[ModelRollout.GOOGLE_CODE_GECKO]
+    )
+
+    code_completions_anthropic = providers.Factory(
+        CodeCompletions,
+        model=models_anthropic[AnthropicModel.CLAUDE_INSTANT],
+        tokenization_strategy=providers.Factory(
+            TokenizerTokenStrategy, tokenizer=tokenizer
+        ),
     )
 
     code_generations_vertex = providers.Factory(

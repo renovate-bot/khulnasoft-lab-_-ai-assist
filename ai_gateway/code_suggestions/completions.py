@@ -1,101 +1,106 @@
-from pathlib import Path
 from typing import Any, Optional
 
-from ai_gateway.code_suggestions.base import (
-    CodeSuggestionsOutput,
-    increment_lang_counter,
-    resolve_lang_id,
+from ai_gateway.code_suggestions import CodeSuggestionsOutput
+from ai_gateway.code_suggestions.base import increment_lang_counter, resolve_lang_id
+from ai_gateway.code_suggestions.processing import (
+    ModelEngineCompletions,
+    ModelEngineOutput,
+    Prompt,
 )
-from ai_gateway.code_suggestions.processing import LanguageId, Prompt
-from ai_gateway.code_suggestions.processing.post.generations import PostProcessor
 from ai_gateway.code_suggestions.processing.pre import (
     PromptBuilderPrefixBased,
     TokenStrategyBase,
 )
 from ai_gateway.instrumentators import TextGenModelInstrumentator
 from ai_gateway.models import ModelAPICallError, ModelAPIError, TextGenBaseModel
-from ai_gateway.prompts import PromptTemplate
 
-__all__ = ["CodeGenerations"]
-
-
-TPL_GENERATION_BASE = """
-```{lang}
-{prefix}
-```
-""".strip(
-    "\n"
-)
+__all__ = ["CodeCompletionsLegacy", "CodeCompletions"]
 
 
-class CodeGenerations:
-    def __init__(
+class CodeCompletionsLegacy:
+    def __init__(self, engine: ModelEngineCompletions):
+        self.engine = engine
+
+    async def execute(
         self,
-        model: TextGenBaseModel,
-        tokenization_strategy: TokenStrategyBase,
+        prefix: str,
+        suffix: str,
+        file_name: str,
+        language_identifier: str,
+        **_kwargs: Any,
+    ) -> ModelEngineOutput:
+        suggestion = await self.engine.generate(
+            prefix, suffix, file_name, language_identifier
+        )
+
+        return suggestion
+
+
+class CodeCompletions:
+    SUFFIX_RESERVED_PERCENT = 0.07
+
+    def __init__(
+        self, model: TextGenBaseModel, tokenization_strategy: TokenStrategyBase
     ):
         self.model = model
 
-        self.prompt: Optional[Prompt] = None
         self.instrumentator = TextGenModelInstrumentator(
             model.metadata.engine, model.metadata.name
         )
+
+        # If you need the previous logic for building prompts using tree-sitter, refer to CodeCompletionsLegacy.
+        # In the future, we plan to completely drop CodeCompletionsLegacy and move its logic to CodeCompletions
+        # Ref: https://gitlab.com/gitlab-org/modelops/applied-ml/code-suggestions/ai-assist/-/issues/296
         self.prompt_builder = PromptBuilderPrefixBased(
             model.MAX_MODEL_LEN, tokenization_strategy
         )
 
     def _get_prompt(
-        self, prefix: str, file_name: str, lang_id: Optional[LanguageId] = None
+        self, prefix: str, suffix: str, raw_prompt: Optional[str] = None
     ) -> Prompt:
-        if self.prompt:
-            return self.prompt
+        if raw_prompt:
+            return self.prompt_builder.wrap(raw_prompt)
 
-        # We use either the language name or the file extension
-        # if we couldn't determine the language before
-        lang_repl = (
-            lang_id.name.lower() if lang_id else Path(file_name).suffix.replace(".", "")
+        self.prompt_builder.add_content(
+            prefix, suffix=suffix, suffix_reserved_percent=self.SUFFIX_RESERVED_PERCENT
         )
-
-        self.prompt_builder.add_template(
-            PromptTemplate(TPL_GENERATION_BASE),
-            lang=lang_repl,
-        )
-        self.prompt_builder.add_content(prefix)
         prompt = self.prompt_builder.build()
 
         return prompt
 
-    def with_prompt_prepared(self, prompt: str):
-        self.prompt = self.prompt_builder.wrap(prompt)
-
     async def execute(
         self,
         prefix: str,
+        suffix: str,
         file_name: str,
         editor_lang: Optional[str] = None,
+        raw_prompt: Optional[str] = None,
         **kwargs: Any,
     ) -> CodeSuggestionsOutput:
         lang_id = resolve_lang_id(file_name, editor_lang)
         increment_lang_counter(file_name, lang_id, editor_lang)
 
-        prompt = self._get_prompt(prefix, file_name, lang_id)
+        prompt = self._get_prompt(prefix, suffix, raw_prompt=raw_prompt)
 
         with self.instrumentator.watch(prompt) as watch_container:
             try:
                 watch_container.register_lang(lang_id, editor_lang)
 
-                if res := await self.model.generate(prompt.prefix, "", **kwargs):
+                if res := await self.model.generate(
+                    prompt.prefix, prompt.suffix, **kwargs
+                ):
                     watch_container.register_model_output_length(res.text)
                     watch_container.register_model_score(res.score)
                     watch_container.register_safety_attributes(res.safety_attributes)
 
-                    generation = PostProcessor(prefix).process(res.text)
-
                     return CodeSuggestionsOutput(
-                        text=generation,
+                        text=res.text,
                         score=res.score,
                         model=self.model.metadata,
                         lang_id=lang_id,
+                        metadata=CodeSuggestionsOutput.Metadata(
+                            experiments=[],
+                        ),
                     )
 
             except ModelAPICallError as ex:
@@ -109,4 +114,7 @@ class CodeGenerations:
             score=0,
             model=self.model.metadata,
             lang_id=lang_id,
+            metadata=CodeSuggestionsOutput.Metadata(
+                experiments=[],
+            ),
         )

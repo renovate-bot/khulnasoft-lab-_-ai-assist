@@ -13,7 +13,11 @@ from ai_gateway.api.middleware import (
     X_GITLAB_INSTANCE_ID_HEADER,
     X_GITLAB_REALM_HEADER,
 )
-from ai_gateway.code_suggestions import CodeCompletions, CodeGenerations
+from ai_gateway.code_suggestions import (
+    CodeCompletions,
+    CodeCompletionsLegacy,
+    CodeGenerations,
+)
 from ai_gateway.code_suggestions.processing.ops import lang_from_filename
 from ai_gateway.deps import CodeSuggestionsContainer
 from ai_gateway.experimentation.base import ExperimentTelemetry
@@ -93,9 +97,12 @@ class SuggestionsResponse(BaseModel):
 @inject
 async def completions(
     req: Request,
-    payload: SuggestionsRequestV1,
-    code_completions: CodeCompletions = Depends(
-        Provide[CodeSuggestionsContainer.code_completions]
+    payload: SuggestionRequestWithVersion,
+    code_completions_legacy: Factory[CodeCompletionsLegacy] = Depends(
+        Provide[CodeSuggestionsContainer.code_completions_legacy.provider]
+    ),
+    code_completions_anthropic: Factory[CodeCompletions] = Depends(
+        Provide[CodeSuggestionsContainer.code_completions_anthropic.provider]
     ),
     snowplow_instrumentator: SnowplowInstrumentator = Depends(
         Provide[CodeSuggestionsContainer.snowplow_instrumentator]
@@ -108,24 +115,36 @@ async def completions(
 
     log.debug(
         "code completion input:",
+        prompt=payload.prompt if hasattr(payload, "prompt") else None,
         prefix=payload.current_file.content_above_cursor,
         suffix=payload.current_file.content_below_cursor,
         current_file_name=payload.current_file.file_name,
     )
 
+    kwargs = {}
+    if payload.model_provider == ModelProvider.ANTHROPIC:
+        code_completions = code_completions_anthropic()
+
+        # We support the prompt version 2 only with the Anthropic models
+        if payload.prompt_version == 2:
+            kwargs.update({"raw_prompt": payload.prompt})
+    else:
+        code_completions = code_completions_legacy()
+
     with TelemetryInstrumentator().watch(payload.telemetry):
-        suggestion = await code_completions(
+        suggestion = await code_completions.execute(
             payload.current_file.content_above_cursor,
             payload.current_file.content_below_cursor,
             payload.current_file.file_name,
             payload.current_file.language_identifier,
+            **kwargs,
         )
 
     log.debug(
         "code completion suggestion:",
         suggestion=suggestion.text,
         score=suggestion.score,
-        language=suggestion.lang(),
+        language=suggestion.lang,
     )
 
     return SuggestionsResponse(
@@ -134,7 +153,7 @@ async def completions(
         model=SuggestionsResponse.Model(
             engine=suggestion.model.engine,
             name=suggestion.model.name,
-            lang=suggestion.lang(),
+            lang=suggestion.lang,
         ),
         experiments=suggestion.metadata.experiments,
         choices=_suggestion_choices(suggestion.text),

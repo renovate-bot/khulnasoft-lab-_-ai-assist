@@ -43,6 +43,6 @@ class CodeCompletionsInternalUseCase:
                 # TODO: return props from the target engine instead of using glob var
                 engine=context.get("model_engine", ""),
                 name=context.get("model_name", ""),
-                lang=completion.lang(),
+                lang=completion.lang,
             ),
         )
