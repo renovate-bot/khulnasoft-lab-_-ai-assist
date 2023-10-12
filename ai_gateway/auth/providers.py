@@ -59,8 +59,7 @@ class GitLabOidcProvider(AuthProvider):
                 is_allowed = True
                 break
             except JWTError as err:
-                errors.append(str(err))
-                logging.warning(f"Failed to decode JWT token with {audience}: {err}")
+                errors.append(f"{audience}: {str(err)}")
 
         if not is_allowed:
             logging.error(f"Failed to decode JWT token: {', '.join(errors)}")
@@ -74,13 +73,12 @@ class GitLabOidcProvider(AuthProvider):
             ),
         )
 
-    def _get_scopes(self, jwt_claims, audience) -> list:
-        if audience == self.LEGACY_AUDIENCE:
-            scopes = self.LEGACY_SCOPES
-        else:
-            scopes = jwt_claims.get("scopes", [])
-
-        return scopes
+    def _get_scopes(self, jwt_claims: dict, audience: str) -> list:
+        return (
+            self.LEGACY_SCOPES
+            if audience == self.LEGACY_AUDIENCE
+            else jwt_claims.get("scopes", [])
+        )
 
     def _jwks(self) -> dict:
         jwks_record = self.cache.get(self.CACHE_KEY)
