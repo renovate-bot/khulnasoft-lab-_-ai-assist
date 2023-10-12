@@ -1,6 +1,7 @@
 from typing import Any
 
 import httpx
+import structlog
 from anthropic import APIConnectionError, APIError, APIStatusError, AsyncAnthropic
 from anthropic._types import NOT_GIVEN
 
@@ -18,6 +19,8 @@ __all__ = [
     "AnthropicAPIStatusError",
     "AnthropicModel",
 ]
+
+log = structlog.stdlib.get_logger("codesuggestions")
 
 
 class AnthropicAPIConnectionError(ModelAPIError):
@@ -103,6 +106,7 @@ class AnthropicModel(TextGenBaseModel):
         **kwargs: Any,
     ) -> TextGenModelOutput:
         opts = _obtain_opts(self.model_opts, **kwargs)
+        log.debug("codegen anthropic call:", **opts)
 
         try:
             suggestion = await self.client.completions.create(

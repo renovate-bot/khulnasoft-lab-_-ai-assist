@@ -228,7 +228,10 @@ class CodeSuggestionsContainer(containers.DeclarativeContainer):
 
     models_anthropic = _all_anthropic_models(
         _ANTHROPIC_MODELS_VERSIONS,
-        _ANTHROPIC_MODELS_OPTS,
+        {
+            model_key: {**model_opts, "stop_sequences": ["</new_code>"]}
+            for model_key, model_opts, in _ANTHROPIC_MODELS_OPTS.items()
+        },
         client_anthropic,
         # TODO: We need to update our fake model settings to be generic
         config.palm_text_model.real_or_fake,
