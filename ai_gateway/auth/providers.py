@@ -26,9 +26,12 @@ class AuthProvider(ABC):
 
 class GitLabOidcProvider(AuthProvider):
     CACHE_KEY = "jwks"
-    AUDIENCE = "gitlab-code-suggestions"
     ALGORITHM = "RS256"
     DEFAULT_REALM = "saas"
+    AUDIENCE = "gitlab-ai-gateway"
+    LEGACY_AUDIENCE = "gitlab-code-suggestions"
+    LEGACY_SCOPES = ["code_suggestions"]
+    SUPPORTED_AUDIENCES = [AUDIENCE, LEGACY_AUDIENCE]
 
     def __init__(self, oidc_providers: dict[str, str], expiry_seconds: int = 86400):
         self.oidc_providers = oidc_providers
@@ -38,27 +41,43 @@ class GitLabOidcProvider(AuthProvider):
     def authenticate(self, token: str) -> User:
         jwks = self._jwks()
 
-        is_allowed = True
+        is_allowed = False
         third_party_ai_features_enabled = False
         gitlab_realm = self.DEFAULT_REALM
-        try:
-            jwt_claims = jwt.decode(
-                token, jwks, audience=self.AUDIENCE, algorithms=[self.ALGORITHM]
-            )
-            third_party_ai_features_enabled = jwt_claims.get(
-                "third_party_ai_features_enabled", False
-            )
-            gitlab_realm = jwt_claims.get("gitlab_realm", self.DEFAULT_REALM)
-        except JWTError as err:
-            logging.error(f"Failed to decode JWT token: {err}")
-            is_allowed = False
+        scopes = []
+        errors = []
+        for audience in self.SUPPORTED_AUDIENCES:
+            try:
+                jwt_claims = jwt.decode(
+                    token, jwks, audience=audience, algorithms=[self.ALGORITHM]
+                )
+                third_party_ai_features_enabled = jwt_claims.get(
+                    "third_party_ai_features_enabled", False
+                )
+                gitlab_realm = jwt_claims.get("gitlab_realm", self.DEFAULT_REALM)
+                scopes = self._get_scopes(jwt_claims, audience)
+                is_allowed = True
+                break
+            except JWTError as err:
+                errors.append(f"{audience}: {str(err)}")
+
+        if not is_allowed:
+            logging.error(f"Failed to decode JWT token: {', '.join(errors)}")
 
         return User(
             authenticated=is_allowed,
             claims=UserClaims(
                 is_third_party_ai_default=third_party_ai_features_enabled,
                 gitlab_realm=gitlab_realm,
+                scopes=scopes,
             ),
+        )
+
+    def _get_scopes(self, jwt_claims: dict, audience: str) -> list:
+        return (
+            self.LEGACY_SCOPES
+            if audience == self.LEGACY_AUDIENCE
+            else jwt_claims.get("scopes", [])
         )
 
     def _jwks(self) -> dict:
