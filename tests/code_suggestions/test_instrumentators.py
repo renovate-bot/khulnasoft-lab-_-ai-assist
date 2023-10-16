@@ -72,7 +72,7 @@ class TestTextGenModelInstrumentator:
         )
 
     @pytest.mark.parametrize(
-        ("safety_attributes", "blocked", "safety_categories", "errors"),
+        ("safety_attributes", "blocked", "safety_categories", "error_codes"),
         [
             (
                 SafetyAttributes(categories=["Violent"], blocked=True),
@@ -95,7 +95,7 @@ class TestTextGenModelInstrumentator:
         ],
     )
     def test_safety_attribtes(
-        self, safety_attributes, blocked, safety_categories, errors
+        self, safety_attributes, blocked, safety_categories, error_codes
     ):
         prefix = "abc"
         metadata = MetadataPromptBuilder(
@@ -118,4 +118,4 @@ class TestTextGenModelInstrumentator:
 
             assert context.get("blocked") == blocked
             assert context.get("safety_categories") == safety_categories
-            assert context.get("errors") == errors
+            assert context.get("error_codes") == error_codes

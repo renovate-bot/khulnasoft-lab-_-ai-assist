@@ -126,7 +126,7 @@ class TextGenModelInstrumentator:
             self.__dict__.update({"blocked": safety_attributes.blocked})
 
             if safety_attributes.errors:
-                self.__dict__.update({"errors": safety_attributes.errors})
+                self.__dict__.update({"error_codes": safety_attributes.errors})
 
             if safety_attributes.categories:
                 self.__dict__.update(
