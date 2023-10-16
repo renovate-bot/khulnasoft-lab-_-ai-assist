@@ -1,7 +1,7 @@
 from unittest import mock
 
 import pytest
-from starlette_context import request_cycle_context
+from starlette_context import context, request_cycle_context
 
 from ai_gateway.code_suggestions.processing import (
     MetadataCodeContent,
@@ -10,6 +10,7 @@ from ai_gateway.code_suggestions.processing import (
 )
 from ai_gateway.code_suggestions.processing.completions import Prompt
 from ai_gateway.instrumentators.base import TextGenModelInstrumentator
+from ai_gateway.models.base import SafetyAttributes
 
 
 class TestTextGenModelInstrumentator:
@@ -34,13 +35,11 @@ class TestTextGenModelInstrumentator:
         feature_category = "code_suggestions"
         completion = "e f g"  # expected len: 3
 
-        context = {}
-
         instrumentator = TextGenModelInstrumentator(
             model_engine=model_engine, model_name=model_name
         )
 
-        with request_cycle_context(context):
+        with request_cycle_context({}):
             with instrumentator.watch(
                 prompt, suffix_length=len(suffix)
             ) as watch_container:
@@ -71,3 +70,52 @@ class TestTextGenModelInstrumentator:
                 mock.call().inc(3),
             ]
         )
+
+    @pytest.mark.parametrize(
+        ("safety_attributes", "blocked", "safety_categories", "error_codes"),
+        [
+            (
+                SafetyAttributes(categories=["Violent"], blocked=True),
+                True,
+                ["Violent"],
+                None,
+            ),
+            (
+                SafetyAttributes(categories=["Profanity"], blocked=False),
+                False,
+                ["Profanity"],
+                None,
+            ),
+            (
+                SafetyAttributes(errors=[230], blocked=True),
+                True,
+                None,
+                [230],
+            ),
+        ],
+    )
+    def test_safety_attribtes(
+        self, safety_attributes, blocked, safety_categories, error_codes
+    ):
+        prefix = "abc"
+        metadata = MetadataPromptBuilder(
+            components={
+                "prefix": MetadataCodeContent(length=10, length_tokens=2),
+            },
+        )
+        prompt = Prompt(prefix=prefix, metadata=metadata)
+        model_engine = "vertex-ai"
+        model_name = "code-gecko"
+        feature_category = "code_suggestions"
+
+        instrumentator = TextGenModelInstrumentator(
+            model_engine=model_engine, model_name=model_name
+        )
+
+        with request_cycle_context({}):
+            with instrumentator.watch(prompt) as watch_container:
+                watch_container.register_safety_attributes(safety_attributes)
+
+            assert context.get("blocked") == blocked
+            assert context.get("safety_categories") == safety_categories
+            assert context.get("error_codes") == error_codes

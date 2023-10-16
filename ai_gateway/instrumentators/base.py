@@ -123,12 +123,15 @@ class TextGenModelInstrumentator:
             self.__dict__.update({"discarded": True})
 
         def register_safety_attributes(self, safety_attributes: SafetyAttributes):
-            self.__dict__.update(
-                {
-                    "safety_categories": safety_attributes.categories,
-                    "blocked": safety_attributes.blocked,
-                }
-            )
+            self.__dict__.update({"blocked": safety_attributes.blocked})
+
+            if safety_attributes.errors:
+                self.__dict__.update({"error_codes": safety_attributes.errors})
+
+            if safety_attributes.categories:
+                self.__dict__.update(
+                    {"safety_categories": safety_attributes.categories}
+                )
 
         def dict(self) -> dict:
             return self.__dict__
