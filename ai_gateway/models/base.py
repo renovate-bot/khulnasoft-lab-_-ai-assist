@@ -66,8 +66,9 @@ class ModelInput(ABC):
 
 
 class SafetyAttributes(BaseModel):
-    categories: list[str] = []
     blocked: bool = False
+    categories: list[str] = []
+    errors: list[int] = []
 
 
 class TextGenModelOutput(NamedTuple):

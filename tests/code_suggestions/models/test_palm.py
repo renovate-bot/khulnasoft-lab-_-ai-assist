@@ -287,6 +287,17 @@ async def test_palm_model_stop_sequences(
             PalmCodeGeckoModel,
             {
                 "safetyAttributes": {
+                    "errors": [234],
+                    "blocked": True,
+                },
+                "content": "",
+            },
+            SafetyAttributes(errors=[234], blocked=True),
+        ),
+        (
+            PalmCodeGeckoModel,
+            {
+                "safetyAttributes": {
                     "categories": [],
                     "blocked": False,
                     "scores": [],
