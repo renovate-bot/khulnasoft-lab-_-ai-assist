@@ -1,44 +1,49 @@
 from abc import abstractmethod
 from enum import Enum
-from http.client import BAD_REQUEST, INTERNAL_SERVER_ERROR
 from typing import Optional, Sequence
 
 import structlog
-from google.api_core.exceptions import InternalServerError, InvalidArgument
+from google.api_core.exceptions import GoogleAPICallError, GoogleAPIError
 from google.cloud.aiplatform.gapic import PredictionServiceAsyncClient, PredictResponse
 from google.protobuf import json_format, struct_pb2
 
 from ai_gateway.models import ModelMetadata, TextGenBaseModel, TextGenModelOutput
-from ai_gateway.models.base import ModelAPICallError, ModelInput, SafetyAttributes
+from ai_gateway.models.base import (
+    ModelAPICallError,
+    ModelAPIError,
+    ModelInput,
+    SafetyAttributes,
+)
 
 __all__ = [
-    "VertexModelAPICallError",
-    "VertexModelInvalidArgument",
-    "VertexModelInternalError",
-    "PalmModel",
-    "PalmCodeGenBaseModel",
     "PalmCodeBisonModel",
     "PalmCodeGeckoModel",
+    "PalmCodeGenBaseModel",
     "PalmCodeGenModel",
+    "PalmModel",
+    "VertexAPIConnectionError",
+    "VertexAPIStatusError",
 ]
 
 log = structlog.stdlib.get_logger("codesuggestions")
 
 
-class VertexModelAPICallError(
-    ModelAPICallError,
-):
-    def __init__(self, message: str, errors: tuple = (), details: tuple = ()):
-        message = f"Vertex model API error: {message.lower().strip('.')}"
-        super().__init__(message, errors, details)
+class VertexAPIConnectionError(ModelAPIError):
+    @classmethod
+    def from_exception(cls, ex: GoogleAPIError):
+        cls.code = -1
+        message = f"Vertex Model API error: {ex.message.lower().strip('.')}"
+
+        return cls(message, errors=(ex,))
 
 
-class VertexModelInvalidArgument(VertexModelAPICallError):
-    code = BAD_REQUEST
+class VertexAPIStatusError(ModelAPICallError):
+    @classmethod
+    def from_exception(cls, ex: GoogleAPICallError):
+        cls.code = ex.code
+        message = f"Vertex Model API error: {ex.message.lower().strip('.')}"
 
-
-class VertexModelInternalError(VertexModelAPICallError):
-    code = INTERNAL_SERVER_ERROR
+        return cls(message, errors=(ex,), details=ex.details)
 
 
 class CodeBisonModelInput(ModelInput):
@@ -158,10 +163,10 @@ class PalmCodeGenBaseModel(TextGenBaseModel):
             response = PredictResponse.to_dict(response)
 
             predictions = response.get("predictions", [])
-        except InvalidArgument as ex:
-            raise VertexModelInvalidArgument(ex.message, errors=(ex,))
-        except InternalServerError as ex:
-            raise VertexModelInternalError(ex.message, errors=(ex,))
+        except GoogleAPICallError as ex:
+            raise VertexAPIStatusError.from_exception(ex)
+        except GoogleAPIError as ex:
+            raise VertexAPIConnectionError.from_exception(ex)
 
         for prediction in predictions:
             return TextGenModelOutput(

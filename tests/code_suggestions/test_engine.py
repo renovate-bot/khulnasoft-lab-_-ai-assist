@@ -3,6 +3,7 @@ from typing import Any
 from unittest.mock import AsyncMock, Mock, PropertyMock
 
 import pytest
+from google.api_core.exceptions import GoogleAPICallError, GoogleAPIError
 from transformers import AutoTokenizer
 
 from ai_gateway.code_suggestions.processing import (
@@ -19,8 +20,8 @@ from ai_gateway.models import (
     PalmCodeGenBaseModel,
     SafetyAttributes,
     TextGenModelOutput,
-    VertexModelInternalError,
-    VertexModelInvalidArgument,
+    VertexAPIConnectionError,
+    VertexAPIStatusError,
 )
 
 tokenizer = AutoTokenizer.from_pretrained("Salesforce/codegen2-16B")
@@ -152,7 +153,7 @@ def _side_effect_with_imports(
     return _fn
 
 
-def _side_effect_with_internal_exception(
+def _side_effect_with_connection_exception(
     content: str,
     suffix: str,
     filename: str,
@@ -160,12 +161,13 @@ def _side_effect_with_internal_exception(
     safety_attributes: SafetyAttributes,
 ):
     def _fn(prompt: str, suffix: str):
-        raise VertexModelInternalError("internal error")
+        VertexAPIConnectionError.code = -1
+        raise VertexAPIConnectionError("connection exception")
 
     return _fn
 
 
-def _side_effect_with_invalid_arg_exception(
+def _side_effect_with_status_exception(
     content: str,
     suffix: str,
     filename: str,
@@ -173,7 +175,8 @@ def _side_effect_with_invalid_arg_exception(
     safety_attributes: SafetyAttributes,
 ):
     def _fn(prompt: str, suffix: str):
-        raise VertexModelInvalidArgument("invalid argument")
+        VertexAPIStatusError.code = 404
+        raise VertexAPIStatusError("status exception")
 
     return _fn
 
@@ -392,7 +395,7 @@ def token_length(s: str):
             "random_suffix",
             "f.unk",
             "",
-            _side_effect_with_internal_exception,
+            _side_effect_with_connection_exception,
             False,
             "unreturned completion due to an exception",
             SafetyAttributes(),
@@ -407,7 +410,7 @@ def token_length(s: str):
             "random_suffix",
             "f.unk",
             "",
-            _side_effect_with_invalid_arg_exception,
+            _side_effect_with_status_exception,
             False,
             "unreturned completion due to an exception",
             SafetyAttributes(),
