@@ -24,8 +24,8 @@ from ai_gateway.experimentation import ExperimentRegistry, ExperimentTelemetry
 from ai_gateway.instrumentators import TextGenModelInstrumentator
 from ai_gateway.models import (
     PalmCodeGenBaseModel,
-    VertexModelInternalError,
-    VertexModelInvalidArgument,
+    VertexAPIConnectionError,
+    VertexAPIStatusError,
 )
 from ai_gateway.prompts.parsers import CodeParser
 
@@ -236,7 +236,7 @@ class ModelEngineCompletions(ModelEngineBase):
                         lang_id=lang_id,
                         metadata=prompt.metadata,
                     )
-            except (VertexModelInvalidArgument, VertexModelInternalError) as ex:
+            except (VertexAPIConnectionError, VertexAPIStatusError) as ex:
                 watch_container.register_model_exception(str(ex), ex.code)
 
         return empty_output

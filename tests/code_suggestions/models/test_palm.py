@@ -2,7 +2,7 @@ from typing import Sequence
 from unittest.mock import AsyncMock, Mock
 
 import pytest
-from google.api_core.exceptions import InternalServerError, InvalidArgument
+from google.api_core.exceptions import InvalidArgument, RetryError
 from google.cloud.aiplatform.gapic import PredictionServiceAsyncClient, PredictResponse
 from google.protobuf import json_format
 
@@ -18,8 +18,8 @@ from ai_gateway.models.palm import (
     PalmTextBisonModel,
     TextBisonModelInput,
     TextGenModelOutput,
-    VertexModelInternalError,
-    VertexModelInvalidArgument,
+    VertexAPIConnectionError,
+    VertexAPIStatusError,
 )
 
 TEST_PREFIX = "random prompt"
@@ -142,8 +142,8 @@ def test_palm_model_inputs(model_input, is_valid, output_dict):
                 "random_project",
                 "random_location",
             ),
-            InvalidArgument("Bad argument."),
-            VertexModelInvalidArgument,
+            RetryError("Retry.", "Lost connection."),
+            VertexAPIConnectionError,
         ),
         (
             PalmCodeGeckoModel(
@@ -151,8 +151,8 @@ def test_palm_model_inputs(model_input, is_valid, output_dict):
                 "random_project",
                 "random_location",
             ),
-            InternalServerError("Internal server error."),
-            VertexModelInternalError,
+            InvalidArgument("Bad argument."),
+            VertexAPIStatusError,
         ),
     ],
 )
