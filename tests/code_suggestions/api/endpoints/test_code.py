@@ -2,6 +2,7 @@ from unittest import mock
 
 import pytest
 from fastapi import Request
+from fastapi.testclient import TestClient
 from snowplow_tracker import Snowplow
 
 from ai_gateway.api.v2.api import api_router
@@ -28,7 +29,6 @@ from ai_gateway.experimentation.base import ExperimentTelemetry
 from ai_gateway.instrumentators.base import Telemetry
 from ai_gateway.models import ModelMetadata
 from ai_gateway.tracking.instrumentator import SnowplowInstrumentator
-from tests.fixtures.fast_api import *
 
 
 @pytest.fixture(scope="class")

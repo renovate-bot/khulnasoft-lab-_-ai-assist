@@ -3,13 +3,13 @@ import json
 import pytest
 from dependency_injector.wiring import inject
 from fastapi import APIRouter, Request
+from fastapi.testclient import TestClient
 from starlette.authentication import requires
 from starlette.responses import JSONResponse
 from starlette.routing import Route
 from structlog.testing import capture_logs
 
 from ai_gateway.auth import User, UserClaims
-from tests.fixtures.fast_api import *
 
 router = APIRouter(
     prefix="",
