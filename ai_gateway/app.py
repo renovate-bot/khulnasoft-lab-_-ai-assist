@@ -42,27 +42,28 @@ def main():
 
     setup_profiling(config.profiling, log)
 
+    instrumentator = Instrumentator(
+        should_group_status_codes=True,
+        should_ignore_untemplated=True,
+        should_respect_env_var=False,
+        should_instrument_requests_inprogress=False,
+        excluded_handlers=_PROBS_ENDPOINTS,
+    )
+    instrumentator.add(
+        metrics.latency(
+            should_include_handler=True,
+            should_include_method=True,
+            should_include_status=True,
+            buckets=(0.5, 1, 2.5, 5, 10, 30, 60),
+        )
+    )
+    instrumentator.instrument(app)
+
     @app.on_event("startup")
     def on_server_startup():
         fast_api_container.init_resources()
         code_suggestions_container.init_resources()
 
-        instrumentator = Instrumentator(
-            should_group_status_codes=True,
-            should_ignore_untemplated=True,
-            should_respect_env_var=False,
-            should_instrument_requests_inprogress=False,
-            excluded_handlers=_PROBS_ENDPOINTS,
-        )
-        instrumentator.add(
-            metrics.latency(
-                should_include_handler=True,
-                should_include_method=True,
-                should_include_status=True,
-                buckets=(0.5, 1, 2.5, 5, 10, 30, 60),
-            )
-        )
-        instrumentator.instrument(app)
         # https://github.com/trallnag/prometheus-fastapi-instrumentator/issues/10
         log.info(
             "Metrics HTTP server running on http://%s:%d",
