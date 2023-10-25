@@ -199,16 +199,7 @@ class MiddlewareAuthentication(Middleware):
             if self.bypass_auth:
                 log.critical("Auth is disabled, all users allowed")
 
-                return AuthCredentials(
-                    scopes=["code_suggestions"],
-                ), GitLabUser(
-                    authenticated=True,
-                    is_debug=True,
-                    claims=UserClaims(
-                        is_third_party_ai_default=True,
-                        scopes=["code_suggestions"],
-                    ),
-                )
+                return AuthCredentials(), GitLabUser(authenticated=True, is_debug=True)
 
             if self.AUTH_HEADER not in conn.headers:
                 raise AuthenticationError("No authorization header presented")

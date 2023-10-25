@@ -9,9 +9,9 @@ from fastapi import APIRouter, Depends, Request
 from pydantic import BaseModel, constr
 from pydantic.fields import Field
 from pydantic.types import confloat, conint, conlist
-from starlette.authentication import requires
 
 from ai_gateway.api.rollout import ModelRollout
+from ai_gateway.auth.authentication import requires
 from ai_gateway.code_suggestions.experimental import CodeCompletionsInternalUseCase
 from ai_gateway.deps import CodeSuggestionsContainer
 from ai_gateway.instrumentators.base import Telemetry, TelemetryInstrumentator

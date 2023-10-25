@@ -4,7 +4,6 @@ import pytest
 from dependency_injector.wiring import inject
 from fastapi import APIRouter, FastAPI, Request
 from fastapi.testclient import TestClient
-from starlette.authentication import requires
 from starlette.middleware import Middleware
 from starlette.responses import JSONResponse
 from starlette.routing import Route
@@ -12,6 +11,7 @@ from structlog.testing import capture_logs
 
 from ai_gateway.api.middleware import MiddlewareAuthentication
 from ai_gateway.auth import User, UserClaims
+from ai_gateway.auth.authentication import requires
 
 router = APIRouter(
     prefix="",
@@ -20,7 +20,7 @@ router = APIRouter(
 
 
 @router.post("/")
-@requires("code_suggestions")
+@requires(["feature1|feature2", "feature3"])
 def homepage(request: Request):
     return JSONResponse(
         status_code=200,
@@ -78,7 +78,7 @@ invalid_authentication_token_type_error = {
             User(
                 authenticated=True,
                 claims=UserClaims(
-                    is_third_party_ai_default=False, scopes=["code_suggestions"]
+                    is_third_party_ai_default=False, scopes=["feature1", "feature3"]
                 ),
             ),
             {"error": "No authorization header presented"},
@@ -91,7 +91,7 @@ invalid_authentication_token_type_error = {
             User(
                 authenticated=True,
                 claims=UserClaims(
-                    is_third_party_ai_default=False, scopes=["code_suggestions"]
+                    is_third_party_ai_default=False, scopes=["feature1", "feature3"]
                 ),
             ),
             {"error": "Invalid authorization header"},
@@ -104,7 +104,7 @@ invalid_authentication_token_type_error = {
             User(
                 authenticated=True,
                 claims=UserClaims(
-                    is_third_party_ai_default=False, scopes=["code_suggestions"]
+                    is_third_party_ai_default=False, scopes=["feature1", "feature3"]
                 ),
             ),
             invalid_authentication_token_type_error,
@@ -120,10 +120,100 @@ invalid_authentication_token_type_error = {
             User(
                 authenticated=True,
                 claims=UserClaims(
-                    is_third_party_ai_default=False, scopes=["code_suggestions"]
+                    is_third_party_ai_default=False, scopes=["feature1", "feature3"]
                 ),
             ),
-            {"authenticated": True, "is_debug": False, "scopes": ["code_suggestions"]},
+            {
+                "authenticated": True,
+                "is_debug": False,
+                "scopes": ["feature1", "feature3"],
+            },
+            ["auth_duration_s"],
+        ),
+        (
+            {
+                "Authorization": "Bearer 12345",
+                "X-Gitlab-Authentication-Type": "oidc",
+            },
+            None,
+            200,
+            User(
+                authenticated=True,
+                claims=UserClaims(
+                    is_third_party_ai_default=False, scopes=["feature2", "feature3"]
+                ),
+            ),
+            {
+                "authenticated": True,
+                "is_debug": False,
+                "scopes": ["feature2", "feature3"],
+            },
+            ["auth_duration_s"],
+        ),
+        (
+            {
+                "Authorization": "Bearer 12345",
+                "X-Gitlab-Authentication-Type": "oidc",
+            },
+            None,
+            200,
+            User(
+                authenticated=True,
+                claims=UserClaims(
+                    is_third_party_ai_default=False,
+                    scopes=["feature1", "feature2", "feature3"],
+                ),
+            ),
+            {
+                "authenticated": True,
+                "is_debug": False,
+                "scopes": ["feature1", "feature2", "feature3"],
+            },
+            ["auth_duration_s"],
+        ),
+        (
+            #  No scopes in the token
+            {
+                "Authorization": "Bearer 12345",
+                "X-Gitlab-Authentication-Type": "oidc",
+            },
+            None,
+            403,
+            User(
+                authenticated=True,
+                claims=UserClaims(is_third_party_ai_default=False),
+            ),
+            {"detail": "Forbidden"},
+            ["auth_duration_s"],
+        ),
+        (
+            #  Missing feature3 scope
+            {
+                "Authorization": "Bearer 12345",
+                "X-Gitlab-Authentication-Type": "oidc",
+            },
+            None,
+            403,
+            User(
+                authenticated=True,
+                claims=UserClaims(is_third_party_ai_default=False, scopes=["feature1"]),
+            ),
+            {"detail": "Forbidden"},
+            ["auth_duration_s"],
+        ),
+        (
+            # Missing feature1 or feature2 scopes
+            {
+                "Authorization": "Bearer 12345",
+                "X-Gitlab-Authentication-Type": "oidc",
+            },
+            None,
+            403,
+            User(
+                authenticated=True,
+                claims=UserClaims(is_third_party_ai_default=False, scopes=["feature3"]),
+            ),
+            {"detail": "Forbidden"},
             ["auth_duration_s"],
         ),
         (
@@ -154,7 +244,7 @@ invalid_authentication_token_type_error = {
             User(
                 authenticated=False,
                 claims=UserClaims(
-                    is_third_party_ai_default=False, scopes=["code_suggestions"]
+                    is_third_party_ai_default=False, scopes=["feature1", "feature3"]
                 ),
             ),
             {"error": "Forbidden by auth provider"},
@@ -190,5 +280,5 @@ def test_bypass_auth(fast_api_router, stub_auth_provider):
     assert response.json() == {
         "authenticated": True,
         "is_debug": True,
-        "scopes": ["code_suggestions"],
+        "scopes": [],
     }

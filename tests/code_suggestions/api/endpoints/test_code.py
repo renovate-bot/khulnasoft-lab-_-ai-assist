@@ -36,6 +36,14 @@ def fast_api_router():
     return api_router
 
 
+@pytest.fixture
+def auth_user():
+    return User(
+        authenticated=True,
+        claims=UserClaims(is_third_party_ai_default=False, scopes=["code_suggestions"]),
+    )
+
+
 class TestCodeCompletions:
     @pytest.mark.parametrize(
         ("model_output", "expected_response"),
