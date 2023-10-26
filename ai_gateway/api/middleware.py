@@ -186,7 +186,9 @@ class MiddlewareAuthentication(Middleware):
             self.bypass_auth = bypass_auth
             self.path_resolver = path_resolver
 
-        async def authenticate(self, conn: HTTPConnection):
+        async def authenticate(
+            self, conn: HTTPConnection
+        ) -> Optional[Tuple[AuthCredentials, GitLabUser]]:
             """
             Ref: https://www.starlette.io/authentication/
             """
@@ -196,7 +198,17 @@ class MiddlewareAuthentication(Middleware):
 
             if self.bypass_auth:
                 log.critical("Auth is disabled, all users allowed")
-                return AuthCredentials(), GitLabUser(authenticated=True, is_debug=True)
+
+                return AuthCredentials(
+                    scopes=["code_suggestions"],
+                ), GitLabUser(
+                    authenticated=True,
+                    is_debug=True,
+                    claims=UserClaims(
+                        is_third_party_ai_default=True,
+                        scopes=["code_suggestions"],
+                    ),
+                )
 
             if self.AUTH_HEADER not in conn.headers:
                 raise AuthenticationError("No authorization header presented")
