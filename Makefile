@@ -1,12 +1,16 @@
 ROOT_DIR := $(shell pwd)
-TESTS_DIR := ${ROOT_DIR}/tests
-LINTS_DIR := ${ROOT_DIR}/lints
 AI_GATEWAY_DIR := ${ROOT_DIR}/ai_gateway
+LINTS_DIR := ${ROOT_DIR}/lints
+SCRIPTS_DIR := ${ROOT_DIR}/scripts
+TESTS_DIR := ${ROOT_DIR}/tests
 
 LINT_WORKING_DIR ?= ${AI_GATEWAY_DIR} \
-	${ROOT_DIR}/scripts \
-	${TESTS_DIR} \
 	${LINTS_DIR} \
+	${SCRIPTS_DIR} \
+	${TESTS_DIR}
+
+MYPY_LINT_WORKING_DIR ?= ${LINTS_DIR} \
+	${SCRIPTS_DIR}
 
 COMPOSE_FILES := -f docker-compose.dev.yaml
 ifneq (,$(wildcard docker-compose.override.yaml))
@@ -50,7 +54,7 @@ isort: install-lint-deps
 format: black isort
 
 .PHONY: lint
-lint: flake8 check-black check-isort check-pylint
+lint: flake8 check-black check-isort check-pylint check-mypy
 
 .PHONY: flake8
 flake8: install-lint-deps
@@ -71,6 +75,16 @@ check-isort: install-lint-deps
 check-pylint: install-lint-deps
 	@echo "Running pylint check..."
 	@poetry run pylint ${LINT_WORKING_DIR}
+
+.PHONY: check-mypy
+check-mypy: install-lint-deps
+ifeq ($(TODO),true)
+	@echo "Running mypy check todo..."
+	@poetry run mypy ${LINT_WORKING_DIR}
+else
+	@echo "Running mypy check..."
+	@poetry run mypy ${MYPY_LINT_WORKING_DIR}
+endif
 
 .PHONY: install-test-deps
 install-test-deps:
