@@ -11,7 +11,7 @@ from ai_gateway.code_suggestions.processing.ops import (
 from ai_gateway.experimentation import ExperimentTelemetry
 from ai_gateway.models import ModelMetadata
 
-__all__ = ["CodeSuggestionsOutput", "ModelProvider"]
+__all__ = ["CodeSuggestionsOutput", "CodeSuggestionsChunk", "ModelProvider"]
 
 
 class ModelProvider(str, Enum):
@@ -32,6 +32,10 @@ class CodeSuggestionsOutput(NamedTuple):
     @property
     def lang(self) -> str:
         return self.lang_id.name.lower() if self.lang_id else ""
+
+
+class CodeSuggestionsChunk(NamedTuple):
+    text: str
 
 
 def resolve_lang_id(

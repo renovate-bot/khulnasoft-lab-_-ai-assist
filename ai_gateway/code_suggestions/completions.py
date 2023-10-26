@@ -1,6 +1,6 @@
-from typing import Any, Optional
+from typing import Any, AsyncIterator, Optional, Union
 
-from ai_gateway.code_suggestions import CodeSuggestionsOutput
+from ai_gateway.code_suggestions import CodeSuggestionsChunk, CodeSuggestionsOutput
 from ai_gateway.code_suggestions.base import increment_lang_counter, resolve_lang_id
 from ai_gateway.code_suggestions.processing import (
     ModelEngineCompletions,
@@ -75,8 +75,9 @@ class CodeCompletions:
         file_name: str,
         editor_lang: Optional[str] = None,
         raw_prompt: Optional[str] = None,
+        stream: bool = False,
         **kwargs: Any,
-    ) -> CodeSuggestionsOutput:
+    ) -> Union[CodeSuggestionsOutput, AsyncIterator[CodeSuggestionsChunk]]:
         lang_id = resolve_lang_id(file_name, editor_lang)
         increment_lang_counter(file_name, lang_id, editor_lang)
 
@@ -87,8 +88,11 @@ class CodeCompletions:
                 watch_container.register_lang(lang_id, editor_lang)
 
                 if res := await self.model.generate(
-                    prompt.prefix, prompt.suffix, **kwargs
+                    prompt.prefix, prompt.suffix, stream, **kwargs
                 ):
+                    if stream:
+                        return self._handle_stream(res)
+
                     watch_container.register_model_output_length(res.text)
                     watch_container.register_model_score(res.score)
                     watch_container.register_safety_attributes(res.safety_attributes)
@@ -118,3 +122,8 @@ class CodeCompletions:
                 experiments=[],
             ),
         )
+
+    async def _handle_stream(self, response) -> AsyncIterator[CodeSuggestionsChunk]:
+        async for chunk in response:
+            chunk_content = CodeSuggestionsChunk(text=chunk.text)
+            yield chunk_content

@@ -1,10 +1,11 @@
 from time import time
-from typing import Annotated, Literal, Optional, Union
+from typing import Annotated, Any, Literal, Optional, Union
 
 import structlog
 from dependency_injector.providers import Factory
 from dependency_injector.wiring import Provide, inject
 from fastapi import APIRouter, Depends, Request
+from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field, conlist, constr
 
 from ai_gateway.api.middleware import (
@@ -61,6 +62,7 @@ class SuggestionsRequestV1(SuggestionsRequest):
 class SuggestionsRequestV2(SuggestionsRequest):
     prompt_version: Literal[2]
     prompt: str
+    stream: Optional[bool] = False
 
 
 SuggestionRequestWithVersion = Annotated[
@@ -88,8 +90,17 @@ class SuggestionsResponse(BaseModel):
     choices: list[Choice]
 
 
-@router.post("/completions", response_model=SuggestionsResponse)
-@router.post("/code/completions", response_model=SuggestionsResponse)
+class StreamSuggestionsResponse(BaseModel):
+    output: str
+
+
+@router.post(
+    "/completions", response_model=Union[SuggestionsResponse, StreamSuggestionsResponse]
+)
+@router.post(
+    "/code/completions",
+    response_model=Union[SuggestionsResponse, StreamSuggestionsResponse],
+)
 @requires("code_suggestions")
 @inject
 async def completions(
@@ -127,6 +138,9 @@ async def completions(
             kwargs.update({"raw_prompt": payload.prompt})
     else:
         code_completions = code_completions_legacy()
+
+    if payload.stream:
+        return await _handle_stream(code_completions, payload, **kwargs)
 
     with TelemetryInstrumentator().watch(payload.telemetry):
         suggestion = await code_completions.execute(
@@ -250,3 +264,22 @@ def track_snowplow_event(
         gitlab_instance_id=req.headers.get(X_GITLAB_INSTANCE_ID_HEADER, ""),
         gitlab_global_user_id=req.headers.get(X_GITLAB_GLOBAL_USER_ID_HEADER, ""),
     )
+
+
+async def _handle_stream(
+    code_completions: CodeCompletions,
+    payload: SuggestionRequestWithVersion,
+    **kwargs: Any,
+) -> StreamingResponse:
+    async def _streamer():
+        async for result in await code_completions.execute(
+            payload.current_file.content_above_cursor,
+            payload.current_file.content_below_cursor,
+            payload.current_file.file_name,
+            payload.current_file.language_identifier,
+            stream=True,
+            **kwargs,
+        ):
+            yield result.text
+
+    return StreamingResponse(_streamer(), media_type="text/event-stream")
