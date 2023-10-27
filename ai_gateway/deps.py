@@ -1,3 +1,4 @@
+import anthropic
 from dependency_injector import containers, providers
 from py_grpc_prometheus.prometheus_client_interceptor import PromClientInterceptor
 
@@ -229,7 +230,10 @@ class CodeSuggestionsContainer(containers.DeclarativeContainer):
     models_anthropic = _all_anthropic_models(
         _ANTHROPIC_MODELS_VERSIONS,
         {
-            model_key: {**model_opts, "stop_sequences": ["</new_code>", "\n\nHuman:"]}
+            model_key: {
+                **model_opts,
+                "stop_sequences": ["</new_code>", anthropic.HUMAN_PROMPT],
+            }
             for model_key, model_opts, in _ANTHROPIC_MODELS_OPTS.items()
         },
         client_anthropic,
