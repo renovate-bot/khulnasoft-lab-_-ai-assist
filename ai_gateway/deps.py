@@ -47,7 +47,7 @@ _VERTEX_MODELS_VERSIONS = {
 
 _ANTHROPIC_MODELS_VERSIONS = {
     AnthropicModel.CLAUDE: "claude-2",
-    AnthropicModel.CLAUDE_INSTANT: "claude-instant-1",
+    AnthropicModel.CLAUDE_INSTANT: "claude-instant-1.2",
 }
 
 _ANTHROPIC_MODELS_OPTS = {
