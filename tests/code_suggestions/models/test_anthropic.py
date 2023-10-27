@@ -23,7 +23,7 @@ from ai_gateway.models import (
 
 @pytest.mark.parametrize(
     "model_name_version",
-    ["claude-instant-1", "claude-instant-1.2", "claude-2", "claude-2.0"],
+    ["claude-instant-1.2", "claude-2", "claude-2.0"],
 )
 def test_anthropic_model_from_name(model_name_version: str):
     model = AnthropicModel.from_model_name(model_name_version, Mock())
@@ -36,19 +36,19 @@ def test_anthropic_model_from_name(model_name_version: str):
     ("model_name_version", "opts", "opts_client", "opts_model"),
     [
         (
-            "claude-instant-1",
+            "claude-instant-1.2",
             {},
             AnthropicModel.OPTS_CLIENT,
             AnthropicModel.OPTS_MODEL,
         ),
         (
-            "claude-instant-1",
+            "claude-instant-1.2",
             {"version": "2020-10-10"},
             AnthropicModel.OPTS_CLIENT,
             AnthropicModel.OPTS_MODEL,
         ),
         (
-            "claude-instant-1",
+            "claude-instant-1.2",
             {
                 "timeout": 6,
                 "max_tokens_to_sample": 5,
@@ -104,10 +104,10 @@ def test_anthropic_provider_opts(
 @pytest.mark.parametrize(
     ("model_name_version", "exception", "expected_exception"),
     [
-        ("claude-instant-1", BadRequestError, AnthropicAPIStatusError),
-        ("claude-instant-1", UnprocessableEntityError, AnthropicAPIStatusError),
-        ("claude-instant-1", APIConnectionError, AnthropicAPIConnectionError),
-        ("claude-instant-1", APITimeoutError, AnthropicAPIConnectionError),
+        ("claude-instant-1.2", BadRequestError, AnthropicAPIStatusError),
+        ("claude-instant-1.2", UnprocessableEntityError, AnthropicAPIStatusError),
+        ("claude-instant-1.2", APIConnectionError, AnthropicAPIConnectionError),
+        ("claude-instant-1.2", APITimeoutError, AnthropicAPIConnectionError),
     ],
 )
 async def test_anthropic_model_error(
@@ -145,7 +145,7 @@ async def test_anthropic_model_error(
     ),
     [
         (
-            "claude-instant-1",
+            "claude-instant-1.2",
             "random_prompt",
             "random_text",
             {},
@@ -156,7 +156,7 @@ async def test_anthropic_model_error(
             ),
         ),
         (
-            "claude-instant-1",
+            "claude-instant-1.2",
             "random_prompt",
             "random_text",
             {"top_k": 10},
@@ -167,7 +167,7 @@ async def test_anthropic_model_error(
             ),
         ),
         (
-            "claude-instant-1",
+            "claude-instant-1.2",
             "random_prompt",
             "random_text",
             {"temperature": 1},
@@ -178,7 +178,7 @@ async def test_anthropic_model_error(
             ),
         ),
         (
-            "claude-instant-1",
+            "claude-instant-1.2",
             "random_prompt",
             "random_text",
             {"temperature": 1},
@@ -189,7 +189,7 @@ async def test_anthropic_model_error(
             ),
         ),
         (
-            "claude-instant-1",
+            "claude-instant-1.2",
             "random_prompt",
             "random_text",
             {},
