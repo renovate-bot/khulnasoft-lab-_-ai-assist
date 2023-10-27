@@ -229,7 +229,7 @@ class CodeSuggestionsContainer(containers.DeclarativeContainer):
     models_anthropic = _all_anthropic_models(
         _ANTHROPIC_MODELS_VERSIONS,
         {
-            model_key: {**model_opts, "stop_sequences": ["</new_code>", "Human:"]}
+            model_key: {**model_opts, "stop_sequences": ["</new_code>", "\n\nHuman:"]}
             for model_key, model_opts, in _ANTHROPIC_MODELS_OPTS.items()
         },
         client_anthropic,
