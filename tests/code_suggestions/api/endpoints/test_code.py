@@ -154,7 +154,7 @@ class TestCodeCompletions:
                 CodeSuggestionsOutput(
                     text="def search",
                     score=0,
-                    model=ModelMetadata(name="claude-instant-1", engine="anthropic"),
+                    model=ModelMetadata(name="claude-instant-1.2", engine="anthropic"),
                     lang_id=LanguageId.PYTHON,
                     metadata=CodeSuggestionsOutput.Metadata(
                         experiments=[],
@@ -164,7 +164,7 @@ class TestCodeCompletions:
                     "id": "id",
                     "model": {
                         "engine": "anthropic",
-                        "name": "claude-instant-1",
+                        "name": "claude-instant-1.2",
                         "lang": "python",
                     },
                     "object": "text_completion",
@@ -184,7 +184,7 @@ class TestCodeCompletions:
                 CodeSuggestionsOutput(
                     text="def search",
                     score=0,
-                    model=ModelMetadata(name="claude-instant-1", engine="anthropic"),
+                    model=ModelMetadata(name="claude-instant-1.2", engine="anthropic"),
                     lang_id=LanguageId.PYTHON,
                     metadata=CodeSuggestionsOutput.Metadata(
                         experiments=[],
@@ -194,7 +194,7 @@ class TestCodeCompletions:
                     "id": "id",
                     "model": {
                         "engine": "anthropic",
-                        "name": "claude-instant-1",
+                        "name": "claude-instant-1.2",
                         "lang": "python",
                     },
                     "object": "text_completion",
@@ -214,7 +214,7 @@ class TestCodeCompletions:
                 CodeSuggestionsOutput(
                     text="",
                     score=0,
-                    model=ModelMetadata(name="claude-instant-1", engine="anthropic"),
+                    model=ModelMetadata(name="claude-instant-1.2", engine="anthropic"),
                     lang_id=LanguageId.PYTHON,
                     metadata=CodeSuggestionsOutput.Metadata(
                         experiments=[],
@@ -224,7 +224,7 @@ class TestCodeCompletions:
                     "id": "id",
                     "model": {
                         "engine": "anthropic",
-                        "name": "claude-instant-1",
+                        "name": "claude-instant-1.2",
                         "lang": "python",
                     },
                     "object": "text_completion",
