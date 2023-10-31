@@ -11,7 +11,10 @@ from ai_gateway.code_suggestions.processing.base import (
     Prompt,
     PromptBuilderBase,
 )
-from ai_gateway.code_suggestions.processing.ops import truncate_content
+from ai_gateway.code_suggestions.processing.ops import (
+    remove_incomplete_block,
+    truncate_content,
+)
 from ai_gateway.code_suggestions.processing.post.completions import PostProcessor
 from ai_gateway.code_suggestions.processing.typing import (
     CodeContent,
@@ -365,7 +368,12 @@ class ModelEngineCompletions(ModelEngineBase):
             truncation_side="left",
         )
 
-        return _CodeBody(prefix=prefix_truncated, suffix=suffix_truncated)
+        prefix_trimmed = CodeContent(
+            text=remove_incomplete_block(prefix_truncated.text),
+            length_tokens=prefix_truncated.length_tokens,
+        )
+
+        return _CodeBody(prefix=prefix_trimmed, suffix=suffix_truncated)
 
     def _count_symbols(
         self,

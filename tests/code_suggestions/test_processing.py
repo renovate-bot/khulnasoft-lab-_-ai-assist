@@ -254,3 +254,54 @@ def test_strip_whitespaces(completion, expected_output):
     actual = ops.strip_whitespaces(completion)
 
     assert actual == expected_output
+
+
+@pytest.mark.parametrize(
+    "completion,max_trim,expected_completion",
+    [
+        ("def hello_world():\n\tfoo=1", 0.5, "def hello_world():\n\tfoo=1"),
+        (
+            "Path)\n\n\treturn dirPath\n}\n\nfunc (p *PsWriter) RmDir(path string) {",
+            0.8,
+            "func (p *PsWriter) RmDir(path string) {",
+        ),
+        (
+            "Path)\n\n\treturn dirPath\n}\n\nfunc (p *PsWriter) RmDir(path string) {",
+            0.2,
+            "Path)\n\n\treturn dirPath\n}\n\nfunc (p *PsWriter) RmDir(path string) {",
+        ),
+        (
+            "Path)\n\n\treturn dirPath\n}\n\n// some comment\n\nfunc (p *PsWriter) RmDir(path string) {",
+            0.8,
+            "// some comment\n\nfunc (p *PsWriter) RmDir(path string) {",
+        ),
+        (
+            "Path)\n\n\treturn dirPath\n}\n\n/* some\nlong\ncomment */\n\nfunc (p *PsWriter) RmDir(path string) {",
+            0.8,
+            "/* some\nlong\ncomment */\n\nfunc (p *PsWriter) RmDir(path string) {",
+        ),
+        (
+            "Path)\n\n\treturn dirPath\n}\n\n// some comment\n\nfunc (p *PsWriter) RmDir(path string) {",
+            0.8,
+            "// some comment\n\nfunc (p *PsWriter) RmDir(path string) {",
+        ),
+        (
+            "Path)\n\n\treturn dirPath\n}\n\n# some comment\n\nfunc (p *PsWriter) RmDir(path string) {",
+            0.8,
+            "# some comment\n\nfunc (p *PsWriter) RmDir(path string) {",
+        ),
+        (
+            "Path)\n\n\treturn dirPath\n}\n\n# multiple\n\n// comments\n\n/* foo\nbar\n*/\n\nfunc (p *PsWriter) RmDir(path string) {",
+            0.8,
+            "# multiple\n\n// comments\n\n/* foo\nbar\n*/\n\nfunc (p *PsWriter) RmDir(path string) {",
+        ),
+    ],
+)
+def test_remove_incomplete_block(
+    completion: str, max_trim: float, expected_completion: str
+):
+    actual_completion = ops.remove_incomplete_block(
+        s=completion, max_trim_percent=max_trim
+    )
+
+    assert actual_completion == expected_completion
