@@ -10,6 +10,7 @@ __all__ = [
     "PROMPT_TEMPLATE",
     "PROMPT_TEMPLATE_CONTEXT",
     "QAChainDataInput",
+    "ContextQAChainDataInput",
     "QAChainDataOutput",
     "qa_eval_chain",
     "qa_context_eval_chain",
