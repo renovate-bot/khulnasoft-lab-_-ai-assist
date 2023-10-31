@@ -29,14 +29,6 @@ def text_gen_base_model():
     return model
 
 
-@pytest.fixture
-def auth_user():
-    return User(
-        authenticated=True,
-        claims=UserClaims(is_third_party_ai_default=False, scopes=["code_suggestions"]),
-    )
-
-
 @pytest.fixture(scope="class")
 def stub_auth_provider():
     class StubKeyAuthProvider:

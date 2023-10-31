@@ -7,13 +7,13 @@ from dependency_injector.providers import Factory
 from dependency_injector.wiring import Provide, inject
 from fastapi import APIRouter, Depends, Request
 from pydantic import BaseModel, Field, conlist, constr
-from starlette.authentication import requires
 
 from ai_gateway.api.middleware import (
     X_GITLAB_GLOBAL_USER_ID_HEADER,
     X_GITLAB_INSTANCE_ID_HEADER,
     X_GITLAB_REALM_HEADER,
 )
+from ai_gateway.auth.authentication import requires
 from ai_gateway.code_suggestions import (
     CodeCompletions,
     CodeCompletionsLegacy,
