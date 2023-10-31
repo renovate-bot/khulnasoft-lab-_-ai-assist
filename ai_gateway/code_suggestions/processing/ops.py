@@ -1,3 +1,4 @@
+import re
 from pathlib import Path
 from typing import NamedTuple, Optional, Union
 
@@ -10,6 +11,7 @@ from ai_gateway.code_suggestions.processing.typing import CodeContent, LanguageI
 __all__ = [
     "prepend_lang_id",
     "remove_incomplete_lines",
+    "remove_incomplete_block",
     "trim_by_max_len",
     "trim_by_sep",
     "find_non_whitespace_point",
@@ -101,6 +103,12 @@ _EDITOR_LANG_TO_LANG_ID = {
     name: language.lang_id for language in _ALL_LANGS for name in language.editor_names
 }
 
+# A new line with a non-indented letter or comment (/*, #, //)
+_END_OF_CODE_BLOCK_REGEX = re.compile(r"\n([a-zA-Z]|(\/\*)|(#)|(\/\/))")
+
+# The maximum percentage of the text that can be trimmed to remove an incomplete code block
+_MAX_CODE_BLOCK_TRIM_PERCENT = 0.1
+
 
 class ProgramLanguage:
     def __init__(self, lang_id: LanguageId):
@@ -126,6 +134,19 @@ def prepend_lang_id(s: str, lang_id: Optional[LanguageId]):
 def remove_incomplete_lines(s: str, sep: str = "\n") -> str:
     if (index := s.rfind(sep)) > 0:
         return s[:index]
+
+    return s
+
+
+def remove_incomplete_block(
+    s: str, max_trim_percent: float = _MAX_CODE_BLOCK_TRIM_PERCENT
+) -> str:
+    end_of_block = _END_OF_CODE_BLOCK_REGEX.search(
+        s, endpos=int(len(s) * max_trim_percent)
+    )
+    if end_of_block:
+        index = end_of_block.start()
+        return s[index + 1 :]
 
     return s
 
