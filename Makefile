@@ -25,15 +25,16 @@ test-local:
 
 .PHONY: lint-local
 lint-local:
-	$(COMPOSE) run -v "$(ROOT_DIR):/app" api bash -c 'poetry install --with lint && poetry run flake8 ai_gateway'
+	$(COMPOSE) run -v "$(ROOT_DIR):/app" api bash -c 'poetry install --only lint && poetry run flake8 ai_gateway'
 
+.PHONY: clean
 clean:
 	$(COMPOSE) rm -s -v -f
 
 .PHONY: install-lint-deps
 install-lint-deps:
 	@echo "Installing lint dependencies..."
-	@poetry install --with lint
+	@poetry install --only lint
 
 .PHONY: black
 black: install-lint-deps
@@ -103,5 +104,3 @@ monitoring-deploy:
 .PHONY: monitoring-teardown
 monitoring-teardown:
 	@helm uninstall -n ${MONITORING_NAMESPACE} prometheus
-
-.PHONY: all test test clean
