@@ -23,23 +23,17 @@ FROM base-image AS install-image
 
 ENV DEBIAN_FRONTEND=noninteractive
 
-RUN apt-get update \
-  && apt-get install -y \
-    build-essential \
-    git \
-    curl
+COPY scripts /app/scripts
 
-RUN curl -sL https://deb.nodesource.com/setup_18.x | bash - \
-  && apt-get install -y nodejs
+# Install tree-sitter build dependencies
+RUN /app/scripts/install-tree-sitter-deps
 
 RUN poetry install --no-interaction --no-ansi --no-cache --no-root --only main
-
-# Build tree-sitter library for the grammars supported
-COPY scripts /app/scripts
 
 # Workaround to resolve https://github.com/orgs/community/discussions/55820
 RUN git config --global http.version HTTP/1.1
 
+# Build tree-sitter library for the grammars supported
 RUN poetry run python /app/scripts/build-tree-sitter-lib.py
 
 ##

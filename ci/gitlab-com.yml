@@ -110,9 +110,7 @@ tests:
     - install
   script:
     - poetry install --with test
-    - curl -sLO https://deb.nodesource.com/nsolid_setup_deb.sh
-    - /bin/sh nsolid_setup_deb.sh 18
-    - apt-get update && apt install -y nodejs build-essential git
+    - ./scripts/install-tree-sitter-deps
     - poetry run python scripts/build-tree-sitter-lib.py
     - mv scripts/lib/tree-sitter-languages.so /usr/lib
     - poetry run pytest --junitxml=".test-reports/tests.xml" --cov --cov-report term --cov-report xml:.test-reports/coverage.xml

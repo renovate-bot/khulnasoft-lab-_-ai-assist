@@ -1,0 +1,14 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+NODE_VERSION=18
+
+apt-get update
+apt-get install -y build-essential curl git
+
+curl -SLO https://deb.nodesource.com/nsolid_setup_deb.sh
+chmod 500 nsolid_setup_deb.sh
+
+./nsolid_setup_deb.sh "$NODE_VERSION"
+apt-get install -y nodejs
