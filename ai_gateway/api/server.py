@@ -10,7 +10,8 @@ from ai_gateway.api.middleware import (
     MiddlewareModelTelemetry,
 )
 from ai_gateway.api.monitoring import router as http_monitoring_router
-from ai_gateway.api.v2.api import api_router as http_api_router_v2
+from ai_gateway.api.v1 import api_router as http_api_router_v1
+from ai_gateway.api.v2 import api_router as http_api_router_v2
 from ai_gateway.deps import FastApiContainer
 
 __all__ = [
@@ -53,6 +54,7 @@ def create_fast_api_server(
         ],
     )
 
+    fastapi_app.include_router(http_api_router_v1)
     fastapi_app.include_router(http_api_router_v2)
     fastapi_app.include_router(http_monitoring_router)
 
