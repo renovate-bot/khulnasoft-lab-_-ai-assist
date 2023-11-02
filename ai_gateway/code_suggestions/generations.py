@@ -89,7 +89,7 @@ class CodeGenerations:
                     watch_container.register_model_score(res.score)
                     watch_container.register_safety_attributes(res.safety_attributes)
 
-                    generation = PostProcessor(prefix).process(res.text)
+                    generation = res.text if kwargs.get('prompt_version') == 2 else PostProcessor(prefix).process(res.text)
 
                     return CodeSuggestionsOutput(
                         text=generation,
