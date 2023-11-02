@@ -204,7 +204,7 @@ async def generations(
             payload.current_file.content_above_cursor,
             payload.current_file.file_name,
             payload.current_file.language_identifier,
-            prompt_version = payload.prompt_version
+            prompt_version=payload.prompt_version,
         )
 
     log.debug(
