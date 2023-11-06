@@ -39,9 +39,11 @@ class TestCodeGeneration:
 
         yield use_case
 
-    @pytest.mark.parametrize("prompt_version", [(1), (2)])
+    @pytest.mark.parametrize(
+        ("prompt_version", "expected_post_process"), [(1, True), (2, False)]
+    )
     async def test_execute_with_prompt_version(
-        self, use_case: CodeGenerations, prompt_version
+        self, use_case: CodeGenerations, prompt_version, expected_post_process
     ):
         use_case.model.generate = AsyncMock(
             return_value=TextGenModelOutput(
@@ -49,11 +51,12 @@ class TestCodeGeneration:
             )
         )
         with patch.object(PostProcessor, "process") as mock:
-            actual = await use_case.execute(
+            _ = await use_case.execute(
                 "prefix",
                 "test.py",
                 editor_lang=LanguageId.PYTHON,
                 raw_prompt="test prompt",
                 prompt_version=prompt_version,
             )
-            mock.assert_not_called if prompt_version == 2 else mock.assert_called
+
+            mock.assert_called() if expected_post_process else mock.assert_not_called()
