@@ -3,6 +3,7 @@ from typing import Any, Optional
 
 from ai_gateway.code_suggestions.base import (
     CodeSuggestionsOutput,
+    ModelProvider,
     increment_lang_counter,
     resolve_lang_id,
 )
@@ -73,6 +74,7 @@ class CodeGenerations:
         prefix: str,
         file_name: str,
         editor_lang: Optional[str] = None,
+        model_provider: Optional[str] = None,
         **kwargs: Any,
     ) -> CodeSuggestionsOutput:
         lang_id = resolve_lang_id(file_name, editor_lang)
@@ -91,7 +93,7 @@ class CodeGenerations:
 
                     generation = (
                         res.text
-                        if kwargs.get("prompt_version") == 2
+                        if model_provider == ModelProvider.ANTHROPIC
                         else PostProcessor(prefix).process(res.text)
                     )
 

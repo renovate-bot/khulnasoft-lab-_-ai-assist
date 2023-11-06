@@ -1,4 +1,3 @@
-from enum import Enum
 from time import time
 from typing import Annotated, Literal, Optional, Union
 
@@ -18,6 +17,7 @@ from ai_gateway.code_suggestions import (
     CodeCompletions,
     CodeCompletionsLegacy,
     CodeGenerations,
+    ModelProvider,
 )
 from ai_gateway.code_suggestions.processing.ops import lang_from_filename
 from ai_gateway.deps import CodeSuggestionsContainer
@@ -35,11 +35,6 @@ router = APIRouter(
     prefix="",
     tags=["completions"],
 )
-
-
-class ModelProvider(str, Enum):
-    VERTEX_AI = "vertex-ai"
-    ANTHROPIC = "anthropic"
 
 
 class CurrentFile(BaseModel):
@@ -204,7 +199,7 @@ async def generations(
             payload.current_file.content_above_cursor,
             payload.current_file.file_name,
             payload.current_file.language_identifier,
-            prompt_version=payload.prompt_version,
+            model_provider=payload.model_provider,
         )
 
     log.debug(

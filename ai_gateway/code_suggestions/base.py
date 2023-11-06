@@ -1,3 +1,4 @@
+from enum import Enum
 from pathlib import Path
 from typing import NamedTuple, Optional
 
@@ -10,9 +11,12 @@ from ai_gateway.code_suggestions.processing.ops import (
 from ai_gateway.experimentation import ExperimentTelemetry
 from ai_gateway.models import ModelMetadata
 
-__all__ = [
-    "CodeSuggestionsOutput",
-]
+__all__ = ["CodeSuggestionsOutput", "ModelProvider"]
+
+
+class ModelProvider(str, Enum):
+    VERTEX_AI = "vertex-ai"
+    ANTHROPIC = "anthropic"
 
 
 class CodeSuggestionsOutput(NamedTuple):
