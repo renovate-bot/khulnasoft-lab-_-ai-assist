@@ -4,7 +4,7 @@ from unittest.mock import AsyncMock, Mock, patch
 
 import pytest
 
-from ai_gateway.code_suggestions import CodeGenerations
+from ai_gateway.code_suggestions import CodeGenerations, ModelProvider
 from ai_gateway.code_suggestions.processing import LanguageId
 from ai_gateway.code_suggestions.processing.post.generations import PostProcessor
 from ai_gateway.code_suggestions.processing.pre import (
@@ -40,10 +40,11 @@ class TestCodeGeneration:
         yield use_case
 
     @pytest.mark.parametrize(
-        ("prompt_version", "expected_post_process"), [(1, True), (2, False)]
+        ("model_provider", "expected_post_process"),
+        [(ModelProvider.VERTEX_AI, True), (ModelProvider.ANTHROPIC, False)],
     )
     async def test_execute_with_prompt_version(
-        self, use_case: CodeGenerations, prompt_version, expected_post_process
+        self, use_case: CodeGenerations, model_provider, expected_post_process
     ):
         use_case.model.generate = AsyncMock(
             return_value=TextGenModelOutput(
@@ -56,7 +57,7 @@ class TestCodeGeneration:
                 "test.py",
                 editor_lang=LanguageId.PYTHON,
                 raw_prompt="test prompt",
-                prompt_version=prompt_version,
+                model_provider=model_provider,
             )
 
             mock.assert_called() if expected_post_process else mock.assert_not_called()
