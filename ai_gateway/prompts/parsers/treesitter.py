@@ -16,6 +16,7 @@ from ai_gateway.prompts.parsers.base import (
     Point,
 )
 from ai_gateway.prompts.parsers.blocks import MinAllowedBlockVisitor
+from ai_gateway.prompts.parsers.comments import CommentVisitorFactory
 from ai_gateway.prompts.parsers.context_extractors import ContextVisitorFactory
 from ai_gateway.prompts.parsers.counters import CounterVisitorFactory
 from ai_gateway.prompts.parsers.function_signatures import (
@@ -99,6 +100,15 @@ class CodeParser(BaseCodeParser):
 
     def _visit_nodes(self, visitor: BaseVisitor):
         tree_dfs(self.tree, visitor)
+
+    def comments_only(self) -> bool:
+        visitor = CommentVisitorFactory.from_language_id(self.lang_id)
+        if visitor is None:
+            return False
+
+        self._visit_nodes(visitor)
+
+        return visitor.comments_only
 
     @classmethod
     def from_language_id(

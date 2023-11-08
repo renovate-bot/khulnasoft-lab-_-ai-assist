@@ -1,6 +1,10 @@
 import pytest
 
 from ai_gateway.code_suggestions.processing.post import ops
+from ai_gateway.code_suggestions.processing.post.ops import (
+    remove_comment_only_completion,
+)
+from ai_gateway.code_suggestions.processing.typing import LanguageId
 
 
 @pytest.mark.parametrize(
@@ -37,3 +41,36 @@ def test_prepend_new_line(code_context: str, completion: str, expected_value: st
     actual_value = ops.prepend_new_line(code_context, completion)
 
     assert actual_value == expected_value
+
+
+@pytest.mark.parametrize(
+    ("completion", "lang_id", "expected"),
+    [
+        (
+            'if __name__=="__main__":\n\tprint(f"Hello world!")',
+            LanguageId.PYTHON,
+            'if __name__=="__main__":\n\tprint(f"Hello world!")',
+        ),
+        (
+            "# This function prints 'hello'\ndef hello():\n\tprint('hello')\n",
+            LanguageId.PYTHON,
+            "# This function prints 'hello'\ndef hello():\n\tprint('hello')\n",
+        ),
+        (
+            "# This is just a comment\n# followed by another comment",
+            LanguageId.PYTHON,
+            "",
+        ),
+        (
+            "this is a line being completed')\n\n",
+            LanguageId.PYTHON,
+            "this is a line being completed')\n\n",
+        ),
+    ],
+)
+def test_remove_comment_only_completion(
+    completion: str, lang_id: LanguageId, expected: str
+):
+    actual = remove_comment_only_completion(completion, lang_id)
+
+    assert actual == expected

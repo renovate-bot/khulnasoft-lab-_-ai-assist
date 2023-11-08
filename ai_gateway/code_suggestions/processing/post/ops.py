@@ -169,3 +169,25 @@ def _split_code_lines(s: str) -> list[str]:
         lines_processed.append("\n")
 
     return lines_processed
+
+
+# If the completion contains only comments, we should not return anything
+def remove_comment_only_completion(
+    completion: str,
+    lang_id: Optional[LanguageId] = None,
+) -> str:
+    try:
+        parser = CodeParser.from_language_id(
+            completion,
+            lang_id,
+        )
+        if parser.comments_only():
+            log.info(
+                "removing comments-only completion",
+                completion=completion,
+            )
+            return ""
+    except ValueError as e:
+        log.warning(f"Failed to parse code: {e}")
+
+    return completion
