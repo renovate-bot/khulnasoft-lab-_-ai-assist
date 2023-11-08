@@ -40,7 +40,7 @@ def fast_api_router():
 def auth_user():
     return User(
         authenticated=True,
-        claims=UserClaims(is_third_party_ai_default=False, scopes=["code_suggestions"]),
+        claims=UserClaims(scopes=["code_suggestions"]),
     )
 
 
@@ -561,9 +561,7 @@ class TestUnauthorizedScopes:
     def auth_user(self):
         return User(
             authenticated=True,
-            claims=UserClaims(
-                is_third_party_ai_default=False, scopes=["unauthorized_scope"]
-            ),
+            claims=UserClaims(scopes=["unauthorized_scope"]),
         )
 
     @pytest.mark.parametrize("path", ["/v2/completions", "/v2/code/generations"])

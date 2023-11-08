@@ -130,7 +130,6 @@ UGw3kIW+604fnnXLDm4TaLA=
     }
 
     claims = {
-        "third_party_ai_features_enabled": True,
         "gitlab_realm": "self-managed",
         "scopes": ["code_suggestions"],
     }
@@ -141,47 +140,35 @@ UGw3kIW+604fnnXLDm4TaLA=
 
     @responses.activate
     @pytest.mark.parametrize(
-        "private_key,claims,third_party,gitlab_realm,authenticated",
+        "private_key,claims,gitlab_realm,authenticated",
         [
             (
                 private_key_test,
                 claims | code_suggestions_audience,
-                True,
                 "self-managed",
                 True,
             ),
             (
                 private_key_customers,
                 claims | code_suggestions_audience,
-                True,
-                "self-managed",
-                True,
-            ),
-            (
-                private_key_test,
-                claims | ai_gateway_audience,
-                True,
                 "self-managed",
                 True,
             ),
             (
                 forged_private_key,
                 claims | code_suggestions_audience,
-                False,
                 "saas",
                 False,
             ),
             (
                 private_key_customers,
                 claims | ai_gateway_audience,
-                True,
                 "self-managed",
                 True,
             ),
             (
                 private_key_test,
                 {"is_life_beautiful": True} | code_suggestions_audience,
-                False,
                 "saas",
                 True,
             ),
@@ -189,14 +176,13 @@ UGw3kIW+604fnnXLDm4TaLA=
                 private_key_test,
                 {"is_life_beautiful": True, "scopes": ["code_suggestions"]}
                 | ai_gateway_audience,
-                False,
                 "saas",
                 True,
             ),
         ],
     )
     def test_gitlab_oidc_provider(
-        self, private_key, claims, third_party, gitlab_realm, authenticated
+        self, private_key, claims, gitlab_realm, authenticated
     ):
         well_known_test_response = responses.get(
             "http://test.com/.well-known/openid-configuration",
@@ -239,7 +225,6 @@ UGw3kIW+604fnnXLDm4TaLA=
         assert user is not None
         assert user.authenticated is authenticated
         if authenticated:
-            assert user.claims.is_third_party_ai_default is third_party
             assert user.claims.gitlab_realm == gitlab_realm
             assert user.claims.scopes == ["code_suggestions"]
 

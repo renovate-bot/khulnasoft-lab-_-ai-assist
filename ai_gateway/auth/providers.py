@@ -42,7 +42,6 @@ class GitLabOidcProvider(AuthProvider):
         jwks = self._jwks()
 
         is_allowed = False
-        third_party_ai_features_enabled = False
         gitlab_realm = self.DEFAULT_REALM
         scopes = []
         errors = []
@@ -50,9 +49,6 @@ class GitLabOidcProvider(AuthProvider):
             try:
                 jwt_claims = jwt.decode(
                     token, jwks, audience=audience, algorithms=[self.ALGORITHM]
-                )
-                third_party_ai_features_enabled = jwt_claims.get(
-                    "third_party_ai_features_enabled", False
                 )
                 gitlab_realm = jwt_claims.get("gitlab_realm", self.DEFAULT_REALM)
                 scopes = self._get_scopes(jwt_claims, audience)
@@ -67,7 +63,6 @@ class GitLabOidcProvider(AuthProvider):
         return User(
             authenticated=is_allowed,
             claims=UserClaims(
-                is_third_party_ai_default=third_party_ai_features_enabled,
                 gitlab_realm=gitlab_realm,
                 scopes=scopes,
             ),

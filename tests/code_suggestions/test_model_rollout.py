@@ -61,9 +61,7 @@ from ai_gateway.api.rollout.model import ModelRollout, ModelRolloutWithFallbackP
 def test_model_rollout_with_fallback(
     rollout_percentage, project_id, primary_model, fallback_model, model
 ):
-    user = GitLabUser(
-        authenticated=True, claims=UserClaims(is_third_party_ai_default=False)
-    )
+    user = GitLabUser(authenticated=True, claims=UserClaims())
 
     rollout = ModelRolloutWithFallbackPlan(
         rollout_percentage=rollout_percentage,

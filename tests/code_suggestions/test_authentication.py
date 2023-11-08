@@ -77,9 +77,7 @@ invalid_authentication_token_type_error = {
             401,
             User(
                 authenticated=True,
-                claims=UserClaims(
-                    is_third_party_ai_default=False, scopes=["feature1", "feature3"]
-                ),
+                claims=UserClaims(scopes=["feature1", "feature3"]),
             ),
             {"error": "No authorization header presented"},
             [],
@@ -90,9 +88,7 @@ invalid_authentication_token_type_error = {
             401,
             User(
                 authenticated=True,
-                claims=UserClaims(
-                    is_third_party_ai_default=False, scopes=["feature1", "feature3"]
-                ),
+                claims=UserClaims(scopes=["feature1", "feature3"]),
             ),
             {"error": "Invalid authorization header"},
             [],
@@ -103,9 +99,7 @@ invalid_authentication_token_type_error = {
             401,
             User(
                 authenticated=True,
-                claims=UserClaims(
-                    is_third_party_ai_default=False, scopes=["feature1", "feature3"]
-                ),
+                claims=UserClaims(scopes=["feature1", "feature3"]),
             ),
             invalid_authentication_token_type_error,
             ["auth_duration_s"],
@@ -119,9 +113,7 @@ invalid_authentication_token_type_error = {
             200,
             User(
                 authenticated=True,
-                claims=UserClaims(
-                    is_third_party_ai_default=False, scopes=["feature1", "feature3"]
-                ),
+                claims=UserClaims(scopes=["feature1", "feature3"]),
             ),
             {
                 "authenticated": True,
@@ -139,9 +131,7 @@ invalid_authentication_token_type_error = {
             200,
             User(
                 authenticated=True,
-                claims=UserClaims(
-                    is_third_party_ai_default=False, scopes=["feature2", "feature3"]
-                ),
+                claims=UserClaims(scopes=["feature2", "feature3"]),
             ),
             {
                 "authenticated": True,
@@ -160,7 +150,6 @@ invalid_authentication_token_type_error = {
             User(
                 authenticated=True,
                 claims=UserClaims(
-                    is_third_party_ai_default=False,
                     scopes=["feature1", "feature2", "feature3"],
                 ),
             ),
@@ -181,7 +170,7 @@ invalid_authentication_token_type_error = {
             403,
             User(
                 authenticated=True,
-                claims=UserClaims(is_third_party_ai_default=False),
+                claims=UserClaims(),
             ),
             {"detail": "Forbidden"},
             ["auth_duration_s"],
@@ -196,7 +185,7 @@ invalid_authentication_token_type_error = {
             403,
             User(
                 authenticated=True,
-                claims=UserClaims(is_third_party_ai_default=False, scopes=["feature1"]),
+                claims=UserClaims(scopes=["feature1"]),
             ),
             {"detail": "Forbidden"},
             ["auth_duration_s"],
@@ -211,7 +200,7 @@ invalid_authentication_token_type_error = {
             403,
             User(
                 authenticated=True,
-                claims=UserClaims(is_third_party_ai_default=False, scopes=["feature3"]),
+                claims=UserClaims(scopes=["feature3"]),
             ),
             {"detail": "Forbidden"},
             ["auth_duration_s"],
@@ -226,9 +215,7 @@ invalid_authentication_token_type_error = {
             403,
             User(
                 authenticated=True,
-                claims=UserClaims(
-                    is_third_party_ai_default=False, scopes=["unsupported_scope"]
-                ),
+                claims=UserClaims(scopes=["unsupported_scope"]),
             ),
             {"detail": "Forbidden"},
             ["auth_duration_s"],
@@ -243,9 +230,7 @@ invalid_authentication_token_type_error = {
             401,
             User(
                 authenticated=False,
-                claims=UserClaims(
-                    is_third_party_ai_default=False, scopes=["feature1", "feature3"]
-                ),
+                claims=UserClaims(scopes=["feature1", "feature3"]),
             ),
             {"error": "Forbidden by auth provider"},
             ["auth_duration_s"],
