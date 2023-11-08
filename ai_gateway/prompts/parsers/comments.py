@@ -163,4 +163,4 @@ class CommentVisitorFactory:
         if klass := CommentVisitorFactory._LANG_ID_VISITORS.get(lang_id, None):
             return klass()
 
-        return BaseCommentVisitor
+        return None
