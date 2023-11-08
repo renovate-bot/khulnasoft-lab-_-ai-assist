@@ -183,6 +183,22 @@ fun main() {
 """
 
 
+PHP_SOURCE_SAMPLE_COMMENTS = """
+// This is a one-line c++ style comment
+/*
+This is a multi line comment
+yet another line of comment
+*/
+"""
+
+
+PHP_SOURCE_SAMPLE_MIXED = """
+<?php
+echo "Hello World!";
+?>
+"""
+
+
 @pytest.mark.parametrize(
     ("lang_id", "source_code", "expected"),
     [
@@ -210,6 +226,8 @@ fun main() {
         (LanguageId.TS, TS_SOURCE_SAMPLE_MIXED, False),
         (LanguageId.KOTLIN, KOTLIN_SOURCE_SAMPLE_COMMENTS, True),
         (LanguageId.KOTLIN, KOTLIN_SOURCE_SAMPLE_MIXED, False),
+        (LanguageId.PHP, PHP_SOURCE_SAMPLE_COMMENTS, False),
+        (LanguageId.PHP, PHP_SOURCE_SAMPLE_MIXED, False),
     ],
 )
 def test_comments_only(lang_id: LanguageId, source_code: str, expected: bool):

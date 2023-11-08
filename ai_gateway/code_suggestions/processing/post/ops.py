@@ -176,16 +176,15 @@ def remove_comment_only_completion(
     completion: str,
     lang_id: Optional[LanguageId] = None,
 ) -> str:
+    if not completion:
+        return completion
     try:
         parser = CodeParser.from_language_id(
             completion,
             lang_id,
         )
         if parser.comments_only():
-            log.info(
-                "removing comments-only completion",
-                completion=completion,
-            )
+            log.info("removing comments-only completion")
             return ""
     except ValueError as e:
         log.warning(f"Failed to parse code: {e}")
