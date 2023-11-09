@@ -8,9 +8,7 @@ from ai_gateway.code_suggestions.processing.post.ops import (
     strip_code_block_markdown,
 )
 
-__all__ = [
-    "PostProcessor",
-]
+__all__ = ["PostProcessor", "PostProcessorAnthropic"]
 
 
 class PostProcessor(PostProcessorBase):
@@ -24,6 +22,14 @@ class PostProcessor(PostProcessorBase):
         # Note: `clean_model_reflection` joins code context and completion
         # we need to call the function right after prepending a new line
         completion = clean_model_reflection(self.code_context, completion)
+        completion = strip_whitespaces(completion)
+
+        return completion
+
+
+class PostProcessorAnthropic(PostProcessor):
+    def process(self, completion: str, **kwargs: Any) -> str:
+        completion = prepend_new_line(self.code_context, completion)
         completion = strip_whitespaces(completion)
 
         return completion
