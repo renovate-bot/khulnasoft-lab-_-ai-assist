@@ -1,5 +1,5 @@
 from time import time
-from typing import Annotated, Any, Literal, Optional, Union
+from typing import Annotated, AsyncIterator, Literal, Optional, Union
 
 import structlog
 from dependency_injector.providers import Factory
@@ -18,6 +18,7 @@ from ai_gateway.code_suggestions import (
     CodeCompletions,
     CodeCompletionsLegacy,
     CodeGenerations,
+    CodeSuggestionsChunk,
     ModelProvider,
 )
 from ai_gateway.code_suggestions.processing.ops import lang_from_filename
@@ -53,6 +54,7 @@ class SuggestionsRequest(BaseModel):
     current_file: CurrentFile
     model_provider: Optional[Literal[ModelProvider.VERTEX_AI, ModelProvider.ANTHROPIC]]
     telemetry: conlist(Telemetry, max_items=10) = []
+    stream: Optional[bool] = False
 
 
 class SuggestionsRequestV1(SuggestionsRequest):
@@ -62,7 +64,6 @@ class SuggestionsRequestV1(SuggestionsRequest):
 class SuggestionsRequestV2(SuggestionsRequest):
     prompt_version: Literal[2]
     prompt: str
-    stream: Optional[bool] = False
 
 
 SuggestionRequestWithVersion = Annotated[
@@ -90,17 +91,12 @@ class SuggestionsResponse(BaseModel):
     choices: list[Choice]
 
 
-class StreamSuggestionsResponse(BaseModel):
-    output: str
+class StreamSuggestionsResponse(StreamingResponse):
+    pass
 
 
-@router.post(
-    "/completions", response_model=Union[SuggestionsResponse, StreamSuggestionsResponse]
-)
-@router.post(
-    "/code/completions",
-    response_model=Union[SuggestionsResponse, StreamSuggestionsResponse],
-)
+@router.post("/completions")
+@router.post("/code/completions")
 @requires("code_suggestions")
 @inject
 async def completions(
@@ -139,17 +135,18 @@ async def completions(
     else:
         code_completions = code_completions_legacy()
 
-    if payload.stream:
-        return await _handle_stream(code_completions, payload, **kwargs)
-
     with TelemetryInstrumentator().watch(payload.telemetry):
         suggestion = await code_completions.execute(
-            payload.current_file.content_above_cursor,
-            payload.current_file.content_below_cursor,
-            payload.current_file.file_name,
-            payload.current_file.language_identifier,
+            prefix=payload.current_file.content_above_cursor,
+            suffix=payload.current_file.content_below_cursor,
+            file_name=payload.current_file.file_name,
+            editor_lang=payload.current_file.language_identifier,
+            stream=payload.stream,
             **kwargs,
         )
+
+    if isinstance(suggestion, AsyncIterator):
+        return await _handle_stream(suggestion)
 
     log.debug(
         "code completion suggestion:",
@@ -267,19 +264,15 @@ def track_snowplow_event(
 
 
 async def _handle_stream(
-    code_completions: CodeCompletions,
-    payload: SuggestionRequestWithVersion,
-    **kwargs: Any,
-) -> StreamingResponse:
-    async def _streamer():
-        async for result in await code_completions.execute(
-            payload.current_file.content_above_cursor,
-            payload.current_file.content_below_cursor,
-            payload.current_file.file_name,
-            payload.current_file.language_identifier,
-            stream=True,
-            **kwargs,
-        ):
+    response: AsyncIterator[CodeSuggestionsChunk],
+) -> StreamSuggestionsResponse:
+    async def _stream_generator():
+        async for result in response:
             yield result.text
 
-    return StreamingResponse(_streamer(), media_type="text/event-stream")
+        # Mark end of the stream
+        yield "[AI_DONE]"
+
+    return StreamSuggestionsResponse(
+        _stream_generator(), media_type="text/event-stream"
+    )

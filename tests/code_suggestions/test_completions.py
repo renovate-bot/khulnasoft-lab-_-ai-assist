@@ -1,10 +1,10 @@
 from contextlib import contextmanager
 from typing import Any, Type
-from unittest.mock import AsyncMock, Mock
+from unittest.mock import AsyncMock, MagicMock, Mock
 
 import pytest
 
-from ai_gateway.code_suggestions import CodeCompletions
+from ai_gateway.code_suggestions import CodeCompletions, CodeSuggestionsChunk
 from ai_gateway.code_suggestions.processing import LanguageId
 from ai_gateway.code_suggestions.processing.pre import (
     PromptBuilderPrefixBased,
@@ -17,6 +17,7 @@ from ai_gateway.models import (
     ModelAPIError,
     SafetyAttributes,
     TextGenBaseModel,
+    TextGenModelChunk,
     TextGenModelOutput,
 )
 
@@ -51,6 +52,7 @@ class TestCodeCompletions:
             "suffix",
             "file_name",
             "editor_lang",
+            "stream",
             "expected_language_id",
             "expected_output",
         ),
@@ -60,6 +62,7 @@ class TestCodeCompletions:
                 "random_suffix",
                 "file_name",
                 "python",
+                False,
                 LanguageId.PYTHON,
                 "random_suggestion",
             ),
@@ -68,6 +71,7 @@ class TestCodeCompletions:
                 "random_suffix",
                 "file_name",
                 None,
+                False,
                 None,
                 "random_suggestion",
             ),
@@ -76,6 +80,7 @@ class TestCodeCompletions:
                 "random_suffix",
                 "file_name.py",
                 None,
+                False,
                 LanguageId.PYTHON,
                 "random_suggestion",
             ),
@@ -88,6 +93,7 @@ class TestCodeCompletions:
         suffix: str,
         file_name: str,
         editor_lang: str,
+        stream: bool,
         expected_language_id: LanguageId,
         expected_output: str,
     ):
@@ -97,7 +103,13 @@ class TestCodeCompletions:
             )
         )
 
-        actual = await use_case.execute(prefix, suffix, file_name, editor_lang)
+        actual = await use_case.execute(
+            prefix=prefix,
+            suffix=suffix,
+            file_name=file_name,
+            editor_lang=editor_lang,
+            stream=stream,
+        )
 
         assert expected_output == actual.text
         assert expected_language_id == actual.lang_id
@@ -105,6 +117,57 @@ class TestCodeCompletions:
         use_case.model.generate.assert_called_with(
             use_case.prompt_builder.build().prefix,
             use_case.prompt_builder.build().suffix,
+            stream,
+        )
+
+    @pytest.mark.parametrize(
+        (
+            "model_chunks",
+            "expected_chunks",
+        ),
+        [
+            (
+                [
+                    TextGenModelChunk(text="hello "),
+                    TextGenModelChunk(text="world!"),
+                ],
+                [
+                    "hello ",
+                    "world!",
+                ],
+            ),
+        ],
+    )
+    async def test_execute_stream(
+        self,
+        use_case: CodeCompletions,
+        model_chunks: list[TextGenModelChunk],
+        expected_chunks: list[str],
+    ):
+        async def _stream_generator(_prefix, _suffix, _stream):
+            for chunk in model_chunks:
+                yield chunk
+
+        use_case.model.generate = AsyncMock(side_effect=_stream_generator)
+
+        actual = await use_case.execute(
+            prefix="any",
+            suffix="how",
+            file_name="bar.py",
+            editor_lang=LanguageId.PYTHON,
+            stream=True,
+        )
+
+        chunks = []
+        async for content in actual:
+            chunks += content
+
+        assert chunks == expected_chunks
+
+        use_case.model.generate.assert_called_with(
+            use_case.prompt_builder.build().prefix,
+            use_case.prompt_builder.build().suffix,
+            True,
         )
 
     @pytest.mark.parametrize(
@@ -114,6 +177,7 @@ class TestCodeCompletions:
             "suffix",
             "file_name",
             "editor_lang",
+            "stream",
             "expected_language_id",
             "expected_output",
         ),
@@ -124,6 +188,7 @@ class TestCodeCompletions:
                 "random_suffix",
                 "file_name",
                 "python",
+                False,
                 LanguageId.PYTHON,
                 "random_suggestion",
             ),
@@ -137,6 +202,7 @@ class TestCodeCompletions:
         suffix: str,
         file_name: str,
         editor_lang: str,
+        stream: bool,
         expected_language_id: LanguageId,
         expected_output: str,
     ):
@@ -156,6 +222,7 @@ class TestCodeCompletions:
         use_case.model.generate.assert_called_with(
             use_case.prompt_builder.wrap().prefix,
             use_case.prompt_builder.wrap().suffix,
+            stream,
         )
 
     @pytest.mark.parametrize(

@@ -1,7 +1,11 @@
 from typing import Any, AsyncIterator, Optional, Union
 
 from ai_gateway.code_suggestions import CodeSuggestionsChunk, CodeSuggestionsOutput
-from ai_gateway.code_suggestions.base import increment_lang_counter, resolve_lang_id
+from ai_gateway.code_suggestions.base import (
+    LanguageId,
+    increment_lang_counter,
+    resolve_lang_id,
+)
 from ai_gateway.code_suggestions.processing import (
     ModelEngineCompletions,
     ModelEngineOutput,
@@ -12,7 +16,13 @@ from ai_gateway.code_suggestions.processing.pre import (
     TokenStrategyBase,
 )
 from ai_gateway.instrumentators import TextGenModelInstrumentator
-from ai_gateway.models import ModelAPICallError, ModelAPIError, TextGenBaseModel
+from ai_gateway.models import (
+    ModelAPICallError,
+    ModelAPIError,
+    TextGenBaseModel,
+    TextGenModelChunk,
+    TextGenModelOutput,
+)
 
 __all__ = ["CodeCompletionsLegacy", "CodeCompletions"]
 
@@ -26,12 +36,10 @@ class CodeCompletionsLegacy:
         prefix: str,
         suffix: str,
         file_name: str,
-        language_identifier: str,
+        editor_lang: str,
         **_kwargs: Any,
     ) -> ModelEngineOutput:
-        suggestion = await self.engine.generate(
-            prefix, suffix, file_name, language_identifier
-        )
+        suggestion = await self.engine.generate(prefix, suffix, file_name, editor_lang)
 
         return suggestion
 
@@ -90,23 +98,10 @@ class CodeCompletions:
                 if res := await self.model.generate(
                     prompt.prefix, prompt.suffix, stream, **kwargs
                 ):
-                    if stream:
+                    if isinstance(res, AsyncIterator):
                         return self._handle_stream(res)
 
-                    watch_container.register_model_output_length(res.text)
-                    watch_container.register_model_score(res.score)
-                    watch_container.register_safety_attributes(res.safety_attributes)
-
-                    return CodeSuggestionsOutput(
-                        text=res.text,
-                        score=res.score,
-                        model=self.model.metadata,
-                        lang_id=lang_id,
-                        metadata=CodeSuggestionsOutput.Metadata(
-                            experiments=[],
-                        ),
-                    )
-
+                    return self._handle_sync(res, lang_id, watch_container)
             except ModelAPICallError as ex:
                 watch_container.register_model_exception(str(ex), ex.code)
             except ModelAPIError as ex:
@@ -123,7 +118,29 @@ class CodeCompletions:
             ),
         )
 
-    async def _handle_stream(self, response) -> AsyncIterator[CodeSuggestionsChunk]:
+    async def _handle_stream(
+        self, response: AsyncIterator[TextGenModelChunk]
+    ) -> AsyncIterator[CodeSuggestionsChunk]:
         async for chunk in response:
             chunk_content = CodeSuggestionsChunk(text=chunk.text)
             yield chunk_content
+
+    def _handle_sync(
+        self,
+        response: TextGenModelOutput,
+        lang_id: Optional[LanguageId],
+        watch_container: TextGenModelInstrumentator.WatchContainer,
+    ) -> CodeSuggestionsOutput:
+        watch_container.register_model_output_length(response.text)
+        watch_container.register_model_score(response.score)
+        watch_container.register_safety_attributes(response.safety_attributes)
+
+        return CodeSuggestionsOutput(
+            text=response.text,
+            score=response.score,
+            model=self.model.metadata,
+            lang_id=lang_id,
+            metadata=CodeSuggestionsOutput.Metadata(
+                experiments=[],
+            ),
+        )

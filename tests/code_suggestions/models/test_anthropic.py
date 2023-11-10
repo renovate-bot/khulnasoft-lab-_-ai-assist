@@ -150,7 +150,7 @@ async def test_anthropic_model_error(
             "random_text",
             {},
             {},
-            AnthropicModel.OPTS_MODEL,
+            {**AnthropicModel.OPTS_MODEL, **{"stream": False}},
             TextGenModelOutput(
                 text="random_text", score=10_000, safety_attributes=SafetyAttributes()
             ),
@@ -161,7 +161,7 @@ async def test_anthropic_model_error(
             "random_text",
             {"top_k": 10},
             {},
-            {**AnthropicModel.OPTS_MODEL, **{"top_k": 10}},
+            {**AnthropicModel.OPTS_MODEL, **{"top_k": 10, "stream": False}},
             TextGenModelOutput(
                 text="random_text", score=10_000, safety_attributes=SafetyAttributes()
             ),
@@ -172,7 +172,7 @@ async def test_anthropic_model_error(
             "random_text",
             {"temperature": 1},
             {},
-            {**AnthropicModel.OPTS_MODEL, **{"temperature": 1}},
+            {**AnthropicModel.OPTS_MODEL, **{"temperature": 1, "stream": False}},
             TextGenModelOutput(
                 text="random_text", score=10_000, safety_attributes=SafetyAttributes()
             ),
@@ -183,7 +183,7 @@ async def test_anthropic_model_error(
             "random_text",
             {"temperature": 1},
             {"temperature": 0.1},  # Override the temperature when calling the model
-            {**AnthropicModel.OPTS_MODEL, **{"temperature": 0.1}},
+            {**AnthropicModel.OPTS_MODEL, **{"temperature": 0.1, "stream": False}},
             TextGenModelOutput(
                 text="random_text", score=10_000, safety_attributes=SafetyAttributes()
             ),
@@ -197,7 +197,10 @@ async def test_anthropic_model_error(
                 "temperature": 0.1,
                 "top_p": 0.95,
             },  # Override the temperature when calling the model
-            {**AnthropicModel.OPTS_MODEL, **{"temperature": 0.1, "top_p": 0.95}},
+            {
+                **AnthropicModel.OPTS_MODEL,
+                **{"temperature": 0.1, "top_p": 0.95, "stream": False},
+            },
             TextGenModelOutput(
                 text="random_text", score=10_000, safety_attributes=SafetyAttributes()
             ),
