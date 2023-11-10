@@ -627,6 +627,67 @@ class TestCodeGenerations:
             body = response.json()
             assert body["choices"] == want_choices
 
+    @pytest.mark.parametrize(
+        ("model_chunks", "expected_response"),
+        [
+            (
+                [
+                    CodeSuggestionsChunk(
+                        text="def search",
+                    ),
+                    CodeSuggestionsChunk(
+                        text=" (query)",
+                    ),
+                ],
+                "def search (query)[AI_DONE]",
+            ),
+        ],
+    )
+    def test_successful_stream_response(
+        self,
+        mock_client: TestClient,
+        model_chunks: list[CodeSuggestionsChunk],
+        expected_response: str,
+    ):
+        async def _stream_generator(
+            prefix: str,
+            file_name: str,
+            editor_lang: str,
+            model_provider: str,
+            stream: bool,
+        ) -> AsyncIterator[CodeSuggestionsChunk]:
+            for chunk in model_chunks:
+                yield chunk
+
+        code_generations_mock = mock.Mock(spec=CodeGenerations)
+        code_generations_mock.execute = mock.AsyncMock(side_effect=_stream_generator)
+        container = CodeSuggestionsContainer()
+
+        with container.code_generations_anthropic.override(code_generations_mock):
+            response = mock_client.post(
+                "/v2/code/generations",
+                headers={
+                    "Authorization": "Bearer 12345",
+                    "X-Gitlab-Authentication-Type": "oidc",
+                },
+                json={
+                    "prompt_version": 2,
+                    "project_path": "gitlab-org/gitlab",
+                    "project_id": 278964,
+                    "current_file": {
+                        "file_name": "main.py",
+                        "content_above_cursor": "# create function",
+                        "content_below_cursor": "\n",
+                    },
+                    "prompt": "# create a function",
+                    "model_provider": "anthropic",
+                },
+            )
+
+        assert response.status_code == 200
+        assert response.text == expected_response
+        assert response.headers["content-type"] == "text/event-stream; charset=utf-8"
+
 
 class TestUnauthorizedScopes:
     @pytest.fixture

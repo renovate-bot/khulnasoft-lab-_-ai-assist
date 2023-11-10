@@ -1,7 +1,8 @@
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any, AsyncIterator, Optional, Union
 
 from ai_gateway.code_suggestions.base import (
+    CodeSuggestionsChunk,
     CodeSuggestionsOutput,
     ModelProvider,
     increment_lang_counter,
@@ -17,7 +18,13 @@ from ai_gateway.code_suggestions.processing.pre import (
     TokenStrategyBase,
 )
 from ai_gateway.instrumentators import TextGenModelInstrumentator
-from ai_gateway.models import ModelAPICallError, ModelAPIError, TextGenBaseModel
+from ai_gateway.models import (
+    ModelAPICallError,
+    ModelAPIError,
+    TextGenBaseModel,
+    TextGenModelChunk,
+    TextGenModelOutput,
+)
 from ai_gateway.prompts import PromptTemplate
 
 __all__ = ["CodeGenerations"]
@@ -78,8 +85,9 @@ class CodeGenerations:
         file_name: str,
         editor_lang: Optional[str] = None,
         model_provider: Optional[str] = None,
+        stream: bool = False,
         **kwargs: Any,
-    ) -> CodeSuggestionsOutput:
+    ) -> Union[CodeSuggestionsOutput, AsyncIterator[CodeSuggestionsChunk]]:
         lang_id = resolve_lang_id(file_name, editor_lang)
         increment_lang_counter(file_name, lang_id, editor_lang)
 
@@ -90,24 +98,17 @@ class CodeGenerations:
                 watch_container.register_lang(lang_id, editor_lang)
 
                 if res := await self.model.generate(
-                    prefix=prompt.prefix, suffix="", **kwargs
+                    prefix=prompt.prefix, suffix="", stream=stream, **kwargs
                 ):
-                    watch_container.register_model_output_length(res.text)
-                    watch_container.register_model_score(res.score)
-                    watch_container.register_safety_attributes(res.safety_attributes)
+                    if isinstance(res, AsyncIterator):
+                        return self._handle_stream(res)
 
-                    processor = (
-                        PostProcessorAnthropic
-                        if model_provider == ModelProvider.ANTHROPIC
-                        else PostProcessor
-                    )
-                    generation = processor(prefix).process(res.text)
-
-                    return CodeSuggestionsOutput(
-                        text=generation,
-                        score=res.score,
-                        model=self.model.metadata,
+                    return self._handle_sync(
+                        response=res,
                         lang_id=lang_id,
+                        model_provider=model_provider,
+                        prefix=prefix,
+                        watch_container=watch_container,
                     )
 
             except ModelAPICallError as ex:
@@ -119,6 +120,39 @@ class CodeGenerations:
         return CodeSuggestionsOutput(
             text="",
             score=0,
+            model=self.model.metadata,
+            lang_id=lang_id,
+        )
+
+    async def _handle_stream(
+        self, response: AsyncIterator[TextGenModelChunk]
+    ) -> AsyncIterator[CodeSuggestionsChunk]:
+        async for chunk in response:
+            chunk_content = CodeSuggestionsChunk(text=chunk.text)
+            yield chunk_content
+
+    def _handle_sync(
+        self,
+        response: TextGenModelOutput,
+        lang_id: Optional[LanguageId],
+        prefix: str,
+        watch_container: TextGenModelInstrumentator.WatchContainer,
+        model_provider: Optional[str] = None,
+    ) -> CodeSuggestionsOutput:
+        watch_container.register_model_output_length(response.text)
+        watch_container.register_model_score(response.score)
+        watch_container.register_safety_attributes(response.safety_attributes)
+
+        processor = (
+            PostProcessorAnthropic
+            if model_provider == ModelProvider.ANTHROPIC
+            else PostProcessor
+        )
+        generation = processor(prefix).process(response.text)
+
+        return CodeSuggestionsOutput(
+            text=generation,
+            score=response.score,
             model=self.model.metadata,
             lang_id=lang_id,
         )

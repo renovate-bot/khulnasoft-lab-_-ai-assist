@@ -123,6 +123,7 @@ async def completions(
         prefix=payload.current_file.content_above_cursor,
         suffix=payload.current_file.content_below_cursor,
         current_file_name=payload.current_file.file_name,
+        stream=payload.stream,
     )
 
     kwargs = {}
@@ -168,7 +169,7 @@ async def completions(
     )
 
 
-@router.post("/code/generations", response_model=SuggestionsResponse)
+@router.post("/code/generations")
 @requires("code_suggestions")
 @inject
 async def generations(
@@ -195,6 +196,7 @@ async def generations(
         prefix=payload.current_file.content_above_cursor,
         suffix=payload.current_file.content_below_cursor,
         current_file_name=payload.current_file.file_name,
+        stream=payload.stream,
     )
 
     if payload.model_provider == ModelProvider.ANTHROPIC:
@@ -207,11 +209,15 @@ async def generations(
 
     with TelemetryInstrumentator().watch(payload.telemetry):
         suggestion = await code_generations.execute(
-            payload.current_file.content_above_cursor,
-            payload.current_file.file_name,
-            payload.current_file.language_identifier,
+            prefix=payload.current_file.content_above_cursor,
+            file_name=payload.current_file.file_name,
+            editor_lang=payload.current_file.language_identifier,
             model_provider=payload.model_provider,
+            stream=payload.stream,
         )
+
+    if isinstance(suggestion, AsyncIterator):
+        return await _handle_stream(suggestion)
 
     log.debug(
         "code creation suggestion:",

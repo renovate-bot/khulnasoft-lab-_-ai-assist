@@ -1,5 +1,5 @@
 from contextlib import contextmanager
-from typing import Any
+from typing import Any, AsyncIterator
 from unittest.mock import AsyncMock, Mock, patch
 
 import pytest
@@ -15,7 +15,12 @@ from ai_gateway.code_suggestions.processing.pre import (
     TokenStrategyBase,
 )
 from ai_gateway.instrumentators import TextGenModelInstrumentator
-from ai_gateway.models import SafetyAttributes, TextGenBaseModel, TextGenModelOutput
+from ai_gateway.models import (
+    SafetyAttributes,
+    TextGenBaseModel,
+    TextGenModelChunk,
+    TextGenModelOutput,
+)
 
 
 class InstrumentorMock(Mock):
@@ -67,3 +72,55 @@ class TestCodeGeneration:
             )
 
             mock.assert_called()
+
+    @pytest.mark.parametrize(
+        (
+            "model_chunks",
+            "expected_chunks",
+        ),
+        [
+            (
+                [
+                    TextGenModelChunk(text="hello "),
+                    TextGenModelChunk(text="world!"),
+                ],
+                [
+                    "hello ",
+                    "world!",
+                ],
+            ),
+        ],
+    )
+    async def test_execute_stream(
+        self,
+        use_case: CodeGenerations,
+        model_chunks: list[TextGenModelChunk],
+        expected_chunks: list[str],
+    ):
+        async def _stream_generator(
+            prefix: str, suffix: str, stream: bool
+        ) -> AsyncIterator[TextGenModelChunk]:
+            for chunk in model_chunks:
+                yield chunk
+
+        use_case.model.generate = AsyncMock(side_effect=_stream_generator)
+
+        actual = await use_case.execute(
+            prefix="any",
+            file_name="bar.py",
+            editor_lang=LanguageId.PYTHON,
+            model_provider=ModelProvider.ANTHROPIC,
+            stream=True,
+        )
+
+        chunks = []
+        async for content in actual:
+            chunks += content
+
+        assert chunks == expected_chunks
+
+        use_case.model.generate.assert_called_with(
+            prefix=use_case.prompt_builder.build().prefix,
+            suffix="",
+            stream=True,
+        )
