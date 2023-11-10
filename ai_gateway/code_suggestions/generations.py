@@ -78,7 +78,6 @@ class CodeGenerations:
         file_name: str,
         editor_lang: Optional[str] = None,
         model_provider: Optional[str] = None,
-        stream: bool = False,
         **kwargs: Any,
     ) -> CodeSuggestionsOutput:
         lang_id = resolve_lang_id(file_name, editor_lang)
@@ -86,15 +85,12 @@ class CodeGenerations:
 
         prompt = self._get_prompt(prefix, file_name, lang_id)
 
-        # if stream:
-        #     return await self._handle_stream(prefix=prefix, suffix="", **kwargs)
-
         with self.instrumentator.watch(prompt) as watch_container:
             try:
                 watch_container.register_lang(lang_id, editor_lang)
 
                 if res := await self.model.generate(
-                    prefix=prompt.prefix, suffix="", stream=stream, **kwargs
+                    prefix=prompt.prefix, suffix="", **kwargs
                 ):
                     watch_container.register_model_output_length(res.text)
                     watch_container.register_model_score(res.score)
@@ -126,8 +122,3 @@ class CodeGenerations:
             model=self.model.metadata,
             lang_id=lang_id,
         )
-
-    # async def _handle_stream(
-    #     self, prefix: str, suffix: str, **kwargs: Any
-    # ) -> Iterator[str]:
-    #     return await self.model.generate_stream(prefix=prefix, suffix=suffix, **kwargs)
