@@ -105,7 +105,10 @@ def main() -> int:
             if (vendor_dir / name).exists():
                 print(f"Updating {name}")
 
-                subprocess.check_call(["git", "checkout", commit], cwd=name)
+                subprocess.check_call(
+                    ["git", "fetch", "--depth=1", "origin", commit], cwd=name
+                )
+                subprocess.check_call(["git", "reset", "--hard", commit], cwd=name)
             else:
                 print(f"Initializing {name}")
 
@@ -115,7 +118,7 @@ def main() -> int:
                 subprocess.check_call(
                     ["git", "fetch", "--depth=1", "origin", commit], cwd=name
                 )
-                subprocess.check_call(["git", "checkout", commit], cwd=name)
+                subprocess.check_call(["git", "reset", "--hard", commit], cwd=name)
 
     language_directories = [
         str(vendor_dir / name)
