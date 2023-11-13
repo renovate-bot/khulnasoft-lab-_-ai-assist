@@ -29,9 +29,6 @@ class GitLabOidcProvider(AuthProvider):
     ALGORITHM = "RS256"
     DEFAULT_REALM = "saas"
     AUDIENCE = "gitlab-ai-gateway"
-    LEGACY_AUDIENCE = "gitlab-code-suggestions"
-    LEGACY_SCOPES = ["code_suggestions"]
-    SUPPORTED_AUDIENCES = [AUDIENCE, LEGACY_AUDIENCE]
 
     def __init__(self, oidc_providers: dict[str, str], expiry_seconds: int = 86400):
         self.oidc_providers = oidc_providers
@@ -44,21 +41,16 @@ class GitLabOidcProvider(AuthProvider):
         is_allowed = False
         gitlab_realm = self.DEFAULT_REALM
         scopes = []
-        errors = []
-        for audience in self.SUPPORTED_AUDIENCES:
-            try:
-                jwt_claims = jwt.decode(
-                    token, jwks, audience=audience, algorithms=[self.ALGORITHM]
-                )
-                gitlab_realm = jwt_claims.get("gitlab_realm", self.DEFAULT_REALM)
-                scopes = self._get_scopes(jwt_claims, audience)
-                is_allowed = True
-                break
-            except JWTError as err:
-                errors.append(f"{audience}: {str(err)}")
 
-        if not is_allowed:
-            logging.error(f"Failed to decode JWT token: {', '.join(errors)}")
+        try:
+            jwt_claims = jwt.decode(
+                token, jwks, audience=self.AUDIENCE, algorithms=[self.ALGORITHM]
+            )
+            gitlab_realm = jwt_claims.get("gitlab_realm", self.DEFAULT_REALM)
+            scopes = jwt_claims.get("scopes", [])
+            is_allowed = True
+        except JWTError as err:
+            logging.error(f"Failed to decode JWT token: {str(err)}")
 
         return User(
             authenticated=is_allowed,
@@ -66,13 +58,6 @@ class GitLabOidcProvider(AuthProvider):
                 gitlab_realm=gitlab_realm,
                 scopes=scopes,
             ),
-        )
-
-    def _get_scopes(self, jwt_claims: dict, audience: str) -> list:
-        return (
-            self.LEGACY_SCOPES
-            if audience == self.LEGACY_AUDIENCE
-            else jwt_claims.get("scopes", [])
         )
 
     def _jwks(self) -> dict:

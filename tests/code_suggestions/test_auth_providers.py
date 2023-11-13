@@ -134,8 +134,6 @@ UGw3kIW+604fnnXLDm4TaLA=
         "scopes": ["code_suggestions"],
     }
 
-    code_suggestions_audience = {"aud": "gitlab-code-suggestions"}
-
     ai_gateway_audience = {"aud": "gitlab-ai-gateway"}
 
     @responses.activate
@@ -144,19 +142,13 @@ UGw3kIW+604fnnXLDm4TaLA=
         [
             (
                 private_key_test,
-                claims | code_suggestions_audience,
-                "self-managed",
-                True,
-            ),
-            (
-                private_key_customers,
-                claims | code_suggestions_audience,
+                claims | ai_gateway_audience,
                 "self-managed",
                 True,
             ),
             (
                 forged_private_key,
-                claims | code_suggestions_audience,
+                claims | ai_gateway_audience,
                 "saas",
                 False,
             ),
@@ -164,12 +156,6 @@ UGw3kIW+604fnnXLDm4TaLA=
                 private_key_customers,
                 claims | ai_gateway_audience,
                 "self-managed",
-                True,
-            ),
-            (
-                private_key_test,
-                {"is_life_beautiful": True} | code_suggestions_audience,
-                "saas",
                 True,
             ),
             (
