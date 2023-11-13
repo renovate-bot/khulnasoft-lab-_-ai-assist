@@ -8,7 +8,10 @@ from ai_gateway.code_suggestions.base import (
     resolve_lang_id,
 )
 from ai_gateway.code_suggestions.processing import LanguageId, Prompt
-from ai_gateway.code_suggestions.processing.post.generations import PostProcessor
+from ai_gateway.code_suggestions.processing.post.generations import (
+    PostProcessor,
+    PostProcessorAnthropic,
+)
 from ai_gateway.code_suggestions.processing.pre import (
     PromptBuilderPrefixBased,
     TokenStrategyBase,
@@ -91,11 +94,12 @@ class CodeGenerations:
                     watch_container.register_model_score(res.score)
                     watch_container.register_safety_attributes(res.safety_attributes)
 
-                    generation = (
-                        res.text
+                    processor = (
+                        PostProcessorAnthropic
                         if model_provider == ModelProvider.ANTHROPIC
-                        else PostProcessor(prefix).process(res.text)
+                        else PostProcessor
                     )
+                    generation = processor(prefix).process(res.text)
 
                     return CodeSuggestionsOutput(
                         text=generation,
