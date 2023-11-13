@@ -120,7 +120,7 @@ class TestCodeGeneration:
         assert chunks == expected_chunks
 
         use_case.model.generate.assert_called_with(
-            prefix=use_case.prompt_builder.build().prefix,
-            suffix="",
+            use_case.prompt_builder.build().prefix,
+            "",
             stream=True,
         )

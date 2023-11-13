@@ -98,7 +98,7 @@ class CodeGenerations:
                 watch_container.register_lang(lang_id, editor_lang)
 
                 if res := await self.model.generate(
-                    prefix=prompt.prefix, suffix="", stream=stream, **kwargs
+                    prompt.prefix, "", stream=stream, **kwargs
                 ):
                     if isinstance(res, AsyncIterator):
                         return self._handle_stream(res)
