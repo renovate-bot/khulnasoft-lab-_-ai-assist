@@ -305,3 +305,86 @@ def test_remove_incomplete_block(
     )
 
     assert actual_completion == expected_completion
+
+
+@pytest.mark.parametrize(
+    ("source", "target", "expected"),
+    [
+        ("", "", True),
+        ("abc", "abc", True),
+        ("abc", "abcd", False),
+        ("abc", "Abc", False),
+    ],
+)
+def test_compare_exact(source: str, target: str, expected: bool):
+    actual = ops.compare_exact(a=source, b=target)
+
+    assert actual == expected
+
+
+@pytest.mark.parametrize(
+    ("source", "target", "min_similarity", "expected"),
+    [
+        ("", "", 1, True),
+        ("apple", "apple", 1, True),
+        ("apple", "apples", 1, False),
+        ("apple", "apples", 0.9, True),
+        (
+            "def hello_world():\n\tprint(Hello, World!)",
+            "def hello_world_1():\n\tprint(hello world)",
+            0.9,
+            True,
+        ),
+        (
+            "def hello_world():\n\tprint(Hello, World!)",
+            "def hello_world_1():\n\tprint(hello world)",
+            0.95,
+            False,
+        ),
+    ],
+)
+def test_compare_levenshtein(
+    source: str, target: str, min_similarity: float, expected: bool
+):
+    actual = ops.compare_levenshtein(a=source, b=target, min_similarity=min_similarity)
+
+    assert actual == expected
+
+
+@pytest.mark.parametrize(
+    ("source", "target", "expected"),
+    [
+        ([], [], []),
+        ([], ["abc"], []),
+        (["abc"], [], []),
+        (["abc"], ["def"], []),
+        (["abc", "def"], ["abc", "def"], [(0, 1)]),
+        (["abc", "abc", "a", "abc", "def"], ["abc", "def", "a"], [(0, 1), (2,)]),
+        (
+            ["b", "abc", "def", "a", "abc", "def"],
+            ["abc", "def", "c", "abc", "def", "k"],
+            [(0, 1), (3, 4)],
+        ),
+        (["abc"], ["abc"], [(0,)]),
+        (["apple"], ["apples"], [(0,)]),
+        (["apple"], ["apples-123"], []),
+        (
+            ["apples-001", "apples-002", "a", "apples-003", "def"],
+            ["apples-002", "def", "a"],
+            [(0, 1), (2,)],
+        ),
+        (
+            ["apples-1", "apples-2", "a", "apples-3", "def"],
+            ["apples-2", "def", "a"],
+            [(0,), (1,), (2,)],
+        ),
+    ],
+)
+def test_find_common_lines_with_compare_levenshtein(
+    source: list, target: list, expected: list
+):
+    actual = ops.find_common_lines(
+        source, target, comparison_func=ops.compare_levenshtein
+    )
+
+    assert actual == expected

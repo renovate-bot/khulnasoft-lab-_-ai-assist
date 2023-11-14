@@ -1,8 +1,9 @@
 import re
 from pathlib import Path
-from typing import NamedTuple, Optional, Union
+from typing import Callable, NamedTuple, Optional, Union
 
 import numpy as np
+from Levenshtein import ratio as levenshtein_ratio
 from transformers import PreTrainedTokenizer
 from tree_sitter import Node
 
@@ -18,6 +19,8 @@ __all__ = [
     "find_cursor_position",
     "truncate_content",
     "find_newline_position",
+    "compare_exact",
+    "compare_levenshtein",
     "find_common_lines",
     "strip_whitespaces",
 ]
@@ -108,6 +111,8 @@ _END_OF_CODE_BLOCK_REGEX = re.compile(r"\n([a-zA-Z]|(\/\*)|(#)|(\/\/))")
 
 # The maximum percentage of the text that can be trimmed to remove an incomplete code block
 _MAX_CODE_BLOCK_TRIM_PERCENT = 0.1
+
+_MIN_LEVENSHTEIN_SIMILARITY = 0.9
 
 
 class ProgramLanguage:
@@ -214,7 +219,41 @@ def find_newline_position(value: str, start_index: int = 0) -> int:
     return -1
 
 
-def find_common_lines(source: list[str], target: list[str]) -> list[tuple]:
+def compare_exact(a: str, b: str) -> bool:
+    return a == b
+
+
+def compare_levenshtein(
+    a: str, b: str, min_similarity: float = _MIN_LEVENSHTEIN_SIMILARITY
+) -> bool:
+    """
+    Calculates the similarity between two strings and returns whether
+    the value is greater than or equal to `min_similarity`.
+    The ratio is a normalized levenshtein similarity in the range [1, 0]
+    calculated as 1 - normalized_distance.
+
+    Example:
+    ----------
+    >>> a = "The name of this file is test.js"
+    >>> b = "The name of this file is test-1.js"
+    >>> compare_levenshtein(a, b, min_similarity=0.95)
+        True
+    >>> compare_levenshtein(a, b, min_similarity=0.85)
+        False
+
+    :param a: A string
+    :param b: A string
+    :param min_similarity: The value to be compared to the similarity ratio
+    :return: Whether the similarity ratio between the two strings is greater than `min_similarity`
+    """
+    return levenshtein_ratio(a, b) >= min_similarity
+
+
+def find_common_lines(
+    source: list[str],
+    target: list[str],
+    comparison_func: Callable[[str, str], bool] = compare_exact,
+) -> list[tuple]:
     """
     Finds the common strings between two lists, keeping track of repeated ranges.
     Example:
@@ -224,8 +263,26 @@ def find_common_lines(source: list[str], target: list[str]) -> list[tuple]:
     >>> find_common_lines(source, target)
         [(0,1), (3,)]
 
+    The return indicates that target[0] and target[1] match some lines in source and are
+    consecutive, target[3] matches but is not consecutive.
+
+    Method:
+    ----------
+    1. Construct a matrix of size len(source) x len(target) to store the longest common
+       subsequence (LCS) lengths.
+    2. Fill this matrix by iterating through source and target and checking if the strings at each
+       index match using the `comparison_func`.
+    3. If they match, update the LCS length by taking the diagonal value and adding 1.
+    4. After the matrix is filled, take the max value along each column to find the matching
+       indices in target.
+    5. Filter out 0s and collect the actual indices in target that match source.
+    6. To group consecutive matches, computes the diff between indices and splits them into groups
+       wherever the diff is not 1 (i.e. not consecutive).
+
     :param source: A list of strings to which we compare the target
     :param target: A list of strings we compare against the source
+    :param comparison_func: The function used to compare two strings. Defaults to an exact match.
+
     :return: A list of indices of common strings grouped if they are consecutive lines
     """
 
@@ -243,7 +300,7 @@ def find_common_lines(source: list[str], target: list[str]) -> list[tuple]:
         for j in range(len_target + 1):
             if i == 0 or j == 0:
                 L[i, j] = 0
-            elif source[i - 1] == target[j - 1]:
+            elif comparison_func(source[i - 1], target[j - 1]):
                 # Optimization: start groups of size larger than `1` with `2`, otherwise start with `1`
                 # Goal: when getting the maximum over the rows, we need to take larger groups into account first
                 prev_match = L[i - 1, j - 1]
