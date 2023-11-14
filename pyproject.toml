@@ -36,6 +36,7 @@ snowplow-tracker = "^1.0.1"
 anthropic = "^0.3.11"
 langchain = "^0.0.315"
 langserve = "^0.0.9"
+levenshtein = "^0.23.0"
 
 [tool.poetry.group.test]
 optional = true
