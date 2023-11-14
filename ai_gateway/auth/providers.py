@@ -99,7 +99,9 @@ class GitLabOidcProvider(AuthProvider):
         return well_known
 
     def _fetch_jwks(self, oidc_provider, well_known) -> dict:
-        url = well_known["jwks_uri"]
+        url = well_known.get("jwks_uri")
+        if not url:
+            return {}
 
         jwks = {}
 
