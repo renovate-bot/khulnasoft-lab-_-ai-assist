@@ -43,6 +43,7 @@ access_logger = structlog.stdlib.get_logger("api.access")
 X_GITLAB_REALM_HEADER = "X-Gitlab-Realm"
 X_GITLAB_INSTANCE_ID_HEADER = "X-Gitlab-Instance-Id"
 X_GITLAB_GLOBAL_USER_ID_HEADER = "X-Gitlab-Global-User-Id"
+X_GITLAB_HOST_NAME_HEADER = "X-Gitlab-Host-Name"
 
 
 class _PathResolver:
@@ -149,6 +150,7 @@ class MiddlewareLogRequest(Middleware):
                     gitlab_global_user_id=request.headers.get(
                         X_GITLAB_GLOBAL_USER_ID_HEADER
                     ),
+                    gitlab_host_name=request.headers.get(X_GITLAB_HOST_NAME_HEADER),
                     gitlab_realm=request.headers.get(X_GITLAB_REALM_HEADER),
                 )
                 fields.update(context.data)

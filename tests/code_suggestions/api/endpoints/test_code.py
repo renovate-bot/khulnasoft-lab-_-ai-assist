@@ -316,6 +316,7 @@ class TestSnowplowInstrumentator:
             "jwt_realm_claim",
             "expected_instance_id",
             "expected_user_id",
+            "expected_gitlab_host_name",
             "expected_realm",
         ),
         [
@@ -324,11 +325,13 @@ class TestSnowplowInstrumentator:
                     "User-Agent": "vs-code",
                     "X-Gitlab-Instance-Id": "9ebada7a-f5e2-477a-8609-17797fa95cb9",
                     "X-Gitlab-Global-User-Id": "XTuMnZ6XTWkP3yh0ZwXualmOZvm2Gg/bk9jyfkL7Y6k=",
+                    "X-Gitlab-Host-Name": "gitlab.com",
                     "X-Gitlab-Realm": "saas",
                 },
                 None,
                 "9ebada7a-f5e2-477a-8609-17797fa95cb9",
                 "XTuMnZ6XTWkP3yh0ZwXualmOZvm2Gg/bk9jyfkL7Y6k=",
+                "gitlab.com",
                 "saas",
             ),
             (
@@ -336,11 +339,13 @@ class TestSnowplowInstrumentator:
                     "User-Agent": "vs-code",
                     "X-Gitlab-Instance-Id": "9ebada7a-f5e2-477a-8609-17797fa95cb9",
                     "X-Gitlab-Global-User-Id": "XTuMnZ6XTWkP3yh0ZwXualmOZvm2Gg/bk9jyfkL7Y6k=",
+                    "X-Gitlab-Host-Name": "awesome-org.com",
                     "X-Gitlab-Realm": "self-managed",
                 },
                 "saas",
                 "9ebada7a-f5e2-477a-8609-17797fa95cb9",
                 "XTuMnZ6XTWkP3yh0ZwXualmOZvm2Gg/bk9jyfkL7Y6k=",
+                "awesome-org.com",
                 "self-managed",
             ),
             (
@@ -348,10 +353,12 @@ class TestSnowplowInstrumentator:
                     "User-Agent": "vs-code",
                     "X-Gitlab-Instance-Id": "9ebada7a-f5e2-477a-8609-17797fa95cb9",
                     "X-Gitlab-Global-User-Id": "XTuMnZ6XTWkP3yh0ZwXualmOZvm2Gg/bk9jyfkL7Y6k=",
+                    "X-Gitlab-Host-Name": "gitlab.com",
                 },
                 "saas",
                 "9ebada7a-f5e2-477a-8609-17797fa95cb9",
                 "XTuMnZ6XTWkP3yh0ZwXualmOZvm2Gg/bk9jyfkL7Y6k=",
+                "gitlab.com",
                 "saas",
             ),
             (
@@ -359,6 +366,7 @@ class TestSnowplowInstrumentator:
                     "User-Agent": "vs-code",
                 },
                 None,
+                "",
                 "",
                 "",
                 "",
@@ -371,6 +379,7 @@ class TestSnowplowInstrumentator:
         jwt_realm_claim,
         expected_instance_id,
         expected_user_id,
+        expected_gitlab_host_name,
         expected_realm,
     ):
         mock_request = mock.Mock(spec=Request)
@@ -414,7 +423,7 @@ class TestSnowplowInstrumentator:
 
         mock_instrumentator.watch.assert_called_once()
         args = mock_instrumentator.watch.call_args[1]
-        assert len(args) == 8
+        assert len(args) == 9
         assert len(args["telemetry"]) == 2
         assert args["telemetry"][0].__dict__ == telemetry_1.__dict__
         assert args["telemetry"][1].__dict__ == telemetry_2.__dict__
@@ -425,6 +434,7 @@ class TestSnowplowInstrumentator:
         assert args["gitlab_realm"] == expected_realm
         assert args["gitlab_instance_id"] == expected_instance_id
         assert args["gitlab_global_user_id"] == expected_user_id
+        assert args["gitlab_host_name"] == expected_gitlab_host_name
 
 
 class TestCodeGenerations:

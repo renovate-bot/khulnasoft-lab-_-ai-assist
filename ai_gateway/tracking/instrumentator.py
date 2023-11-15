@@ -23,6 +23,7 @@ class SnowplowInstrumentator:
         gitlab_realm: str,
         gitlab_instance_id: str,
         gitlab_global_user_id: str,
+        gitlab_host_name: str,
     ) -> None:
         request_counts = []
         for stats in telemetry:
@@ -47,6 +48,7 @@ class SnowplowInstrumentator:
                 gitlab_realm=gitlab_realm,
                 gitlab_instance_id=gitlab_instance_id,
                 gitlab_global_user_id=gitlab_global_user_id,
+                gitlab_host_name=gitlab_host_name,
             )
         )
 

@@ -54,6 +54,7 @@ expected_log_keys = [
     "gitlab_realm",
     "gitlab_instance_id",
     "gitlab_global_user_id",
+    "gitlab_host_name",
 ]
 
 invalid_authentication_token_type_error = {
