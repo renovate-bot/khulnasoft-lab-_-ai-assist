@@ -123,7 +123,6 @@ If you're working locally, you'll also need other tools to build a
 [`tree-sitter`](https://tree-sitter.github.io/tree-sitter/) library:
 
 - `gcc`
-- `nodejs` (needed for TypeScript grammar)
 
 ### Google Cloud SDK
 
