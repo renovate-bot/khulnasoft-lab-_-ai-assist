@@ -78,7 +78,7 @@ class TextGenModelOutput(NamedTuple):
 
 
 class TextGenBaseModel(ABC):
-    MAX_MODEL_LEN = 1
+    MAX_MODEL_LEN = 2048
 
     @property
     @abstractmethod
