@@ -48,6 +48,7 @@ class SnowplowEventContext:
     gitlab_realm: str
     gitlab_instance_id: str
     gitlab_global_user_id: str
+    gitlab_host_name: str
 
 
 @dataclass

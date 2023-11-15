@@ -76,6 +76,7 @@ class TestSnowplowClient:
             gitlab_realm="saas",
             gitlab_instance_id="ABCDEF",
             gitlab_global_user_id="123XYZ",
+            gitlab_host_name="gitlab.com",
         )
         event = SnowplowEvent(
             context=context,
@@ -135,6 +136,7 @@ class TestSnowplowInstrumentator:
             gitlab_realm="saas",
             gitlab_instance_id="9ebada7a-f5e2-477a-8609-17797fa95cb9",
             gitlab_global_user_id="XTuMnZ6XTWkP3yh0ZwXualmOZvm2Gg/bk9jyfkL7Y6k=",
+            gitlab_host_name="gitlab.com",
         )
 
         mock_client.track.assert_called_once()
@@ -157,3 +159,4 @@ class TestSnowplowInstrumentator:
             event.gitlab_global_user_id
             == "XTuMnZ6XTWkP3yh0ZwXualmOZvm2Gg/bk9jyfkL7Y6k="
         )
+        assert event.gitlab_host_name == "gitlab.com"
