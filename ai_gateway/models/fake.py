@@ -21,6 +21,7 @@ class FakePalmTextGenModel(TextGenBaseModel):
         self,
         prompt: str,
         suffix: str,
+        stream: bool = False,
         temperature: float = 0.0,
         max_output_tokens: int = 0,
         top_p: float = 0.0,
