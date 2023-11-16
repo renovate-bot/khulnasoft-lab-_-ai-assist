@@ -5,7 +5,7 @@ from time import sleep
 import pytest
 import requests
 import responses
-from jose import jwt
+from jose import exceptions, jwt
 
 from ai_gateway.auth import GitLabOidcProvider
 
@@ -232,7 +232,7 @@ UGw3kIW+604fnnXLDm4TaLA=
             (
                 '{"jwks_uri": ""}',
                 "",
-                '{"keys": {}}',
+                '{"keys": []}',
                 [],
             ),
             (
@@ -252,7 +252,7 @@ UGw3kIW+604fnnXLDm4TaLA=
             (
                 '{"jwks_uri": "http://test.com/oauth/discovery/keys"}',
                 "http://test.com/oauth/discovery/keys",
-                '{"keys": {}}',
+                '{"keys": []}',
                 [],
             ),
             (
@@ -329,3 +329,46 @@ UGw3kIW+604fnnXLDm4TaLA=
             assert jwks_customers_response.call_count == 0
         else:
             assert jwks_customers_response.call_count == 1
+
+    @responses.activate
+    @pytest.mark.parametrize(
+        "jwks_response_body",
+        [
+            "{}",
+            '{"keys": []}',
+        ],
+    )
+    def test_no_jwks_available_raises_error(
+        self,
+        jwks_response_body,
+    ):
+        well_known_test_response = responses.get(
+            "http://test.com/.well-known/openid-configuration",
+            body='{"jwks_uri": "http://test.com/oauth/discovery/keys"}',
+            status=200,
+        )
+        jwks_test_response = responses.get(
+            "http://test.com/oauth/discovery/keys",
+            body=jwks_response_body,
+            status=200,
+        )
+
+        auth_provider = GitLabOidcProvider(
+            oidc_providers={
+                "Gitlab": "http://test.com",
+            }
+        )
+        token = jwt.encode(
+            {},
+            self.private_key_test,
+            algorithm="RS256",
+        )
+
+        user = None
+        with pytest.raises(GitLabOidcProvider.CriticalAuthError):
+            user = auth_provider.authenticate(token)
+
+        assert user is None
+
+        assert well_known_test_response.call_count == 1
+        assert jwks_test_response.call_count == 1

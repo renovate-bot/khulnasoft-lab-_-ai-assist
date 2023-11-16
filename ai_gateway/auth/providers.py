@@ -30,6 +30,9 @@ class GitLabOidcProvider(AuthProvider):
     DEFAULT_REALM = "saas"
     AUDIENCE = "gitlab-ai-gateway"
 
+    class CriticalAuthError(Exception):
+        None
+
     def __init__(self, oidc_providers: dict[str, str], expiry_seconds: int = 86400):
         self.oidc_providers = oidc_providers
         self.expiry_seconds = expiry_seconds
@@ -37,6 +40,10 @@ class GitLabOidcProvider(AuthProvider):
 
     def authenticate(self, token: str) -> User:
         jwks = self._jwks()
+        if len(jwks.get("keys", [])) == 0:
+            raise self.CriticalAuthError(
+                "No keys founds in JWKS; are OIDC providers up?"
+            )
 
         is_allowed = False
         gitlab_realm = self.DEFAULT_REALM
