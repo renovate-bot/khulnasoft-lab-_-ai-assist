@@ -30,7 +30,7 @@ class TestFakeModels:
     # Verify fake models with most used routes
 
     def test_fake_completions(self, mock_client: TestClient):
-        """Completions: v1 with Vertext AI models."""
+        """Completions: v1 with Vertex AI models."""
 
         container = CodeSuggestionsContainer()
         engine = ModelEngineCompletions(
