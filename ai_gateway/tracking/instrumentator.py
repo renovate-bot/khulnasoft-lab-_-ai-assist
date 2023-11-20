@@ -1,3 +1,5 @@
+import structlog
+
 from ai_gateway.instrumentators.base import Telemetry
 from ai_gateway.tracking import (
     Client,
@@ -8,8 +10,12 @@ from ai_gateway.tracking import (
 
 __all__ = ["SnowplowInstrumentator"]
 
+telemetry_logger = structlog.stdlib.get_logger("telemetry")
+
 
 class SnowplowInstrumentator:
+    SAFE_PARSE_ID_MAX_LENGTH = 12
+
     def __init__(self, client: Client) -> None:
         self.client = client
 
@@ -24,6 +30,7 @@ class SnowplowInstrumentator:
         gitlab_instance_id: str,
         gitlab_global_user_id: str,
         gitlab_host_name: str,
+        gitlab_saas_namespace_ids: str,
     ) -> None:
         request_counts = []
         for stats in telemetry:
@@ -49,7 +56,24 @@ class SnowplowInstrumentator:
                 gitlab_instance_id=gitlab_instance_id,
                 gitlab_global_user_id=gitlab_global_user_id,
                 gitlab_host_name=gitlab_host_name,
+                gitlab_saas_namespace_ids=self._safe_parse_ids(
+                    gitlab_saas_namespace_ids
+                ),
             )
         )
 
         self.client.track(snowplow_event)
+
+    def _safe_parse_ids(self, ids: str) -> list[int]:
+        parsed_ids = []
+
+        try:
+            for id in ids.split(","):
+                if len(id) > self.SAFE_PARSE_ID_MAX_LENGTH:
+                    raise ValueError("ID can't exceed 999,999,999,999")
+
+                parsed_ids.append(int(id))
+        except ValueError as e:
+            telemetry_logger.warning(f"Failed to parse IDs: {e}")
+
+        return parsed_ids

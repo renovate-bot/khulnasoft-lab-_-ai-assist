@@ -13,6 +13,7 @@ from ai_gateway.api.middleware import (
     X_GITLAB_HOST_NAME_HEADER,
     X_GITLAB_INSTANCE_ID_HEADER,
     X_GITLAB_REALM_HEADER,
+    X_GITLAB_SAAS_NAMESPACE_IDS_HEADER,
 )
 from ai_gateway.auth.authentication import requires
 from ai_gateway.code_suggestions import (
@@ -268,6 +269,9 @@ def track_snowplow_event(
         gitlab_instance_id=req.headers.get(X_GITLAB_INSTANCE_ID_HEADER, ""),
         gitlab_global_user_id=req.headers.get(X_GITLAB_GLOBAL_USER_ID_HEADER, ""),
         gitlab_host_name=req.headers.get(X_GITLAB_HOST_NAME_HEADER, ""),
+        gitlab_saas_namespace_ids=req.headers.get(
+            X_GITLAB_SAAS_NAMESPACE_IDS_HEADER, ""
+        ),
     )
 
 

@@ -77,6 +77,7 @@ class TestSnowplowClient:
             gitlab_instance_id="ABCDEF",
             gitlab_global_user_id="123XYZ",
             gitlab_host_name="gitlab.com",
+            gitlab_saas_namespace_ids=[12345],
         )
         event = SnowplowEvent(
             context=context,
@@ -104,7 +105,63 @@ class TestSnowplowInstrumentator:
         yield
         Snowplow.reset()
 
-    def test_watch(self):
+    @pytest.mark.parametrize(
+        (
+            "inputs",
+            "expectations",
+        ),
+        [
+            (
+                {
+                    "prefix_length": 11,
+                    "suffix_length": 22,
+                    "language": "ruby",
+                    "user_agent": "vs-code",
+                    "gitlab_realm": "saas",
+                    "gitlab_instance_id": "9ebada7a-f5e2-477a-8609-17797fa95cb9",
+                    "gitlab_global_user_id": "XTuMnZ6XTWkP3yh0ZwXualmOZvm2Gg/bk9jyfkL7Y6k=",
+                    "gitlab_host_name": "gitlab.com",
+                    "gitlab_saas_namespace_ids": "12345",
+                },
+                {
+                    "prefix_length": 11,
+                    "suffix_length": 22,
+                    "language": "ruby",
+                    "user_agent": "vs-code",
+                    "gitlab_realm": "saas",
+                    "gitlab_instance_id": "9ebada7a-f5e2-477a-8609-17797fa95cb9",
+                    "gitlab_global_user_id": "XTuMnZ6XTWkP3yh0ZwXualmOZvm2Gg/bk9jyfkL7Y6k=",
+                    "gitlab_host_name": "gitlab.com",
+                    "gitlab_saas_namespace_ids": [12345],
+                },
+            ),
+            (
+                {
+                    "prefix_length": 33,
+                    "suffix_length": 44,
+                    "language": "python",
+                    "user_agent": "web-ide",
+                    "gitlab_realm": "saas",
+                    "gitlab_instance_id": "test",
+                    "gitlab_global_user_id": "test",
+                    "gitlab_host_name": "gitlab.com",
+                    "gitlab_saas_namespace_ids": "12345" * 10,
+                },
+                {
+                    "prefix_length": 33,
+                    "suffix_length": 44,
+                    "language": "python",
+                    "user_agent": "web-ide",
+                    "gitlab_realm": "saas",
+                    "gitlab_instance_id": "test",
+                    "gitlab_global_user_id": "test",
+                    "gitlab_host_name": "gitlab.com",
+                    "gitlab_saas_namespace_ids": [],
+                },
+            ),
+        ],
+    )
+    def test_watch(self, inputs, expectations):
         mock_client = mock.Mock(spec=SnowplowClient)
         instrumentator = SnowplowInstrumentator(client=mock_client)
 
@@ -127,17 +184,7 @@ class TestSnowplowInstrumentator:
 
         test_telemetry = [telemetry_1, telemetry_2]
 
-        instrumentator.watch(
-            telemetry=test_telemetry,
-            prefix_length=11,
-            suffix_length=22,
-            language="ruby",
-            user_agent="vs-code",
-            gitlab_realm="saas",
-            gitlab_instance_id="9ebada7a-f5e2-477a-8609-17797fa95cb9",
-            gitlab_global_user_id="XTuMnZ6XTWkP3yh0ZwXualmOZvm2Gg/bk9jyfkL7Y6k=",
-            gitlab_host_name="gitlab.com",
-        )
+        instrumentator.watch(telemetry=test_telemetry, **inputs)
 
         mock_client.track.assert_called_once()
 
@@ -149,14 +196,6 @@ class TestSnowplowInstrumentator:
         del telemetry_2.__dict__["experiments"]
         assert event.request_counts[0].__dict__ == telemetry_1.__dict__
         assert event.request_counts[1].__dict__ == telemetry_2.__dict__
-        assert event.prefix_length == 11
-        assert event.suffix_length == 22
-        assert event.language == "ruby"
-        assert event.user_agent == "vs-code"
-        assert event.gitlab_realm == "saas"
-        assert event.gitlab_instance_id == "9ebada7a-f5e2-477a-8609-17797fa95cb9"
-        assert (
-            event.gitlab_global_user_id
-            == "XTuMnZ6XTWkP3yh0ZwXualmOZvm2Gg/bk9jyfkL7Y6k="
-        )
-        assert event.gitlab_host_name == "gitlab.com"
+
+        for k, v in expectations.items():
+            assert getattr(event, k) == v
