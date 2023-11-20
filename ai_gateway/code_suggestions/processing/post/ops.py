@@ -16,6 +16,7 @@ from ai_gateway.prompts.parsers import CodeParser
 __all__ = [
     "clean_model_reflection",
     "trim_by_min_allowed_context",
+    "fix_end_block_errors",
     "strip_code_block_markdown",
     "prepend_new_line",
 ]
@@ -134,6 +135,35 @@ def trim_by_min_allowed_context(
         out = completion
 
     return out
+
+
+def fix_end_block_errors(
+    prefix: str,
+    completion: str,
+    suffix: str,
+    attempts: int = 4,
+    lang_id: Optional[LanguageId] = None,
+) -> str:
+    total_errors = 0
+    completion_lookup = completion
+
+    try:
+        for i in range(1, min(attempts, len(completion)) + 2):
+            code_sample = f"{prefix}{completion_lookup}{suffix}"
+            parser = CodeParser.from_language_id(code_sample, lang_id)
+
+            num_errors = len(parser.errors())
+
+            if num_errors == 0 or num_errors < total_errors:
+                return completion_lookup
+
+            total_errors = num_errors
+            completion_lookup = completion[:-i]
+
+    except ValueError as e:
+        log.warning(f"Failed to parse code: {e}")
+
+    return completion
 
 
 def strip_code_block_markdown(text: str) -> str:
