@@ -29,7 +29,6 @@ class PostProcessor(PostProcessorBase):
 
 class PostProcessorAnthropic(PostProcessor):
     def process(self, completion: str, **kwargs: Any) -> str:
-        completion = prepend_new_line(self.code_context, completion)
         completion = strip_whitespaces(completion)
 
         return completion
