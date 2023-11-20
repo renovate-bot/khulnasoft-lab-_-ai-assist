@@ -15,7 +15,7 @@ from ai_gateway.prompts.parsers.base import (
     CodeContext,
     Point,
 )
-from ai_gateway.prompts.parsers.blocks import MinAllowedBlockVisitor
+from ai_gateway.prompts.parsers.blocks import ErrorBlocksVisitor, MinAllowedBlockVisitor
 from ai_gateway.prompts.parsers.comments import CommentVisitorFactory
 from ai_gateway.prompts.parsers.context_extractors import ContextVisitorFactory
 from ai_gateway.prompts.parsers.counters import CounterVisitorFactory
@@ -97,6 +97,12 @@ class CodeParser(BaseCodeParser):
             return CodeContext.from_node(block_node)
 
         return CodeContext.from_node(self.tree.root_node)
+
+    def errors(self) -> list[CodeContext]:
+        visitor = ErrorBlocksVisitor()
+        self._visit_nodes(visitor)
+
+        return list(map(CodeContext.from_node, visitor.errors))
 
     def _visit_nodes(self, visitor: BaseVisitor):
         tree_dfs(self.tree, visitor)
