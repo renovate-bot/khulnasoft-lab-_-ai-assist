@@ -34,6 +34,7 @@ from ai_gateway.tracking import (
 __all__ = [
     "FastApiContainer",
     "CodeSuggestionsContainer",
+    "ChatContainer",
 ]
 
 _PROBS_ENDPOINTS = ["/monitoring/healthz", "/metrics"]
@@ -289,4 +290,18 @@ class CodeSuggestionsContainer(containers.DeclarativeContainer):
     snowplow_instrumentator = providers.Resource(
         SnowplowInstrumentator,
         client=snowplow_client,
+    )
+
+
+class ChatContainer(containers.DeclarativeContainer):
+    wiring_config = containers.WiringConfiguration(
+        modules=[
+            "ai_gateway.api.v1.chat.agent",
+        ]
+    )
+
+    client_anthropic = providers.Resource(connect_anthropic)
+    anthropic_model = providers.Factory(
+        AnthropicModel,
+        client=client_anthropic,
     )
