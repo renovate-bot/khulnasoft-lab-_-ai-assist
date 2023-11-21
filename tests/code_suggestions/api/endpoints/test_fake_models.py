@@ -102,4 +102,4 @@ class TestFakeModels:
         assert response.status_code == 200
 
         body = response.json()
-        assert body["choices"][0]["text"] == "\nfake code suggestion from PaLM Text"
+        assert body["choices"][0]["text"] == "fake code suggestion from PaLM Text"
