@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import Any, NamedTuple
+from typing import Any, AsyncIterator, NamedTuple, Union
 
 from anthropic import AsyncAnthropic
 from google.cloud.aiplatform.gapic import PredictionServiceAsyncClient
@@ -11,6 +11,7 @@ __all__ = [
     "ModelMetadata",
     "SafetyAttributes",
     "TextGenModelOutput",
+    "TextGenModelChunk",
     "TextGenBaseModel",
     "grpc_connect_vertex",
     "connect_anthropic",
@@ -77,6 +78,10 @@ class TextGenModelOutput(NamedTuple):
     safety_attributes: SafetyAttributes
 
 
+class TextGenModelChunk(NamedTuple):
+    text: str
+
+
 class TextGenBaseModel(ABC):
     MAX_MODEL_LEN = 2048
 
@@ -86,15 +91,16 @@ class TextGenBaseModel(ABC):
         pass
 
     @abstractmethod
-    def generate(
+    async def generate(
         self,
         prefix: str,
         suffix: str,
+        stream: bool = False,
         temperature: float = 0.2,
         max_output_tokens: int = 16,
         top_p: float = 0.95,
         top_k: int = 40,
-    ) -> TextGenModelOutput:
+    ) -> Union[TextGenModelOutput, AsyncIterator[TextGenModelChunk]]:
         pass
 
 

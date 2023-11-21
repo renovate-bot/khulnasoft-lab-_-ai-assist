@@ -192,6 +192,7 @@ class ModelEngineCompletions(ModelEngineBase):
         file_name: str,
         lang_id: LanguageId,
         editor_lang: Optional[str] = None,
+        stream: bool = False,
         **kwargs: Any,
     ) -> ModelEngineOutput:
         prompt = self._build_prompt(prefix, file_name, suffix, lang_id)

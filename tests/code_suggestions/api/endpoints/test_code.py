@@ -1,8 +1,10 @@
+from typing import AsyncIterator
 from unittest import mock
 
 import pytest
 from fastapi import Request
 from fastapi.testclient import TestClient
+from httpx import AsyncClient
 from snowplow_tracker import Snowplow
 
 from ai_gateway.api.v2.api import api_router
@@ -16,6 +18,7 @@ from ai_gateway.code_suggestions import (
     CodeCompletions,
     CodeCompletionsLegacy,
     CodeGenerations,
+    CodeSuggestionsChunk,
     CodeSuggestionsOutput,
 )
 from ai_gateway.code_suggestions.processing.base import ModelEngineOutput
@@ -295,11 +298,80 @@ class TestCodeCompletions:
         assert body["model"] == expected_response["model"]
 
         code_completions_mock.execute.assert_called_with(
-            current_file["content_above_cursor"],
-            current_file["content_below_cursor"],
-            current_file["file_name"],
-            current_file.get("language_identifier", None),
+            prefix=current_file["content_above_cursor"],
+            suffix=current_file["content_below_cursor"],
+            file_name=current_file["file_name"],
+            editor_lang=current_file.get("language_identifier", None),
+            stream=False,
             **code_completions_kwargs,
+        )
+
+    @pytest.mark.parametrize(
+        ("model_chunks", "expected_response"),
+        [
+            (
+                [
+                    CodeSuggestionsChunk(
+                        text="def search",
+                    ),
+                    CodeSuggestionsChunk(
+                        text=" (query)",
+                    ),
+                ],
+                "def search (query)[AI_DONE]",
+            ),
+        ],
+    )
+    def test_successful_stream_response(
+        self,
+        mock_client: TestClient,
+        model_chunks: list[CodeSuggestionsChunk],
+        expected_response: str,
+    ):
+        async def _stream_generator(
+            prefix, suffix, file_name, editor_lang, stream
+        ) -> AsyncIterator[CodeSuggestionsChunk]:
+            for chunk in model_chunks:
+                yield chunk
+
+        code_completions_mock = mock.Mock(spec=CodeCompletions)
+        code_completions_mock.execute = mock.AsyncMock(side_effect=_stream_generator)
+        container = CodeSuggestionsContainer()
+
+        current_file = {
+            "file_name": "main.py",
+            "content_above_cursor": "# Create a fast binary search\n",
+            "content_below_cursor": "\n",
+        }
+        data = {
+            "prompt_version": 1,
+            "project_path": "gitlab-org/gitlab",
+            "project_id": 278964,
+            "model_provider": "anthropic",
+            "current_file": current_file,
+            "stream": True,
+        }
+
+        with container.code_completions_anthropic.override(code_completions_mock):
+            response = mock_client.post(
+                "/v2/completions",
+                headers={
+                    "Authorization": "Bearer 12345",
+                    "X-Gitlab-Authentication-Type": "oidc",
+                },
+                json=data,
+            )
+
+        assert response.status_code == 200
+        assert response.text == expected_response
+        assert response.headers["content-type"] == "text/event-stream; charset=utf-8"
+
+        code_completions_mock.execute.assert_called_with(
+            prefix=current_file["content_above_cursor"],
+            suffix=current_file["content_below_cursor"],
+            file_name=current_file["file_name"],
+            editor_lang=current_file.get("language_identifier", None),
+            stream=True,
         )
 
 
@@ -564,6 +636,67 @@ class TestCodeGenerations:
         if want_status == 200:
             body = response.json()
             assert body["choices"] == want_choices
+
+    @pytest.mark.parametrize(
+        ("model_chunks", "expected_response"),
+        [
+            (
+                [
+                    CodeSuggestionsChunk(
+                        text="def search",
+                    ),
+                    CodeSuggestionsChunk(
+                        text=" (query)",
+                    ),
+                ],
+                "def search (query)[AI_DONE]",
+            ),
+        ],
+    )
+    def test_successful_stream_response(
+        self,
+        mock_client: TestClient,
+        model_chunks: list[CodeSuggestionsChunk],
+        expected_response: str,
+    ):
+        async def _stream_generator(
+            prefix: str,
+            file_name: str,
+            editor_lang: str,
+            model_provider: str,
+            stream: bool,
+        ) -> AsyncIterator[CodeSuggestionsChunk]:
+            for chunk in model_chunks:
+                yield chunk
+
+        code_generations_mock = mock.Mock(spec=CodeGenerations)
+        code_generations_mock.execute = mock.AsyncMock(side_effect=_stream_generator)
+        container = CodeSuggestionsContainer()
+
+        with container.code_generations_anthropic.override(code_generations_mock):
+            response = mock_client.post(
+                "/v2/code/generations",
+                headers={
+                    "Authorization": "Bearer 12345",
+                    "X-Gitlab-Authentication-Type": "oidc",
+                },
+                json={
+                    "prompt_version": 2,
+                    "project_path": "gitlab-org/gitlab",
+                    "project_id": 278964,
+                    "current_file": {
+                        "file_name": "main.py",
+                        "content_above_cursor": "# create function",
+                        "content_below_cursor": "\n",
+                    },
+                    "prompt": "# create a function",
+                    "model_provider": "anthropic",
+                },
+            )
+
+        assert response.status_code == 200
+        assert response.text == expected_response
+        assert response.headers["content-type"] == "text/event-stream; charset=utf-8"
 
 
 class TestUnauthorizedScopes:

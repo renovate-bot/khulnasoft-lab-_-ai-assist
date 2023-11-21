@@ -17,6 +17,7 @@ from ai_gateway.models import (
     AnthropicAPIStatusError,
     AnthropicModel,
     SafetyAttributes,
+    TextGenModelChunk,
     TextGenModelOutput,
 )
 
@@ -150,7 +151,7 @@ async def test_anthropic_model_error(
             "random_text",
             {},
             {},
-            AnthropicModel.OPTS_MODEL,
+            {**AnthropicModel.OPTS_MODEL, **{"stream": False}},
             TextGenModelOutput(
                 text="random_text", score=10_000, safety_attributes=SafetyAttributes()
             ),
@@ -161,7 +162,7 @@ async def test_anthropic_model_error(
             "random_text",
             {"top_k": 10},
             {},
-            {**AnthropicModel.OPTS_MODEL, **{"top_k": 10}},
+            {**AnthropicModel.OPTS_MODEL, **{"top_k": 10, "stream": False}},
             TextGenModelOutput(
                 text="random_text", score=10_000, safety_attributes=SafetyAttributes()
             ),
@@ -172,7 +173,7 @@ async def test_anthropic_model_error(
             "random_text",
             {"temperature": 1},
             {},
-            {**AnthropicModel.OPTS_MODEL, **{"temperature": 1}},
+            {**AnthropicModel.OPTS_MODEL, **{"temperature": 1, "stream": False}},
             TextGenModelOutput(
                 text="random_text", score=10_000, safety_attributes=SafetyAttributes()
             ),
@@ -183,7 +184,7 @@ async def test_anthropic_model_error(
             "random_text",
             {"temperature": 1},
             {"temperature": 0.1},  # Override the temperature when calling the model
-            {**AnthropicModel.OPTS_MODEL, **{"temperature": 0.1}},
+            {**AnthropicModel.OPTS_MODEL, **{"temperature": 0.1, "stream": False}},
             TextGenModelOutput(
                 text="random_text", score=10_000, safety_attributes=SafetyAttributes()
             ),
@@ -197,7 +198,10 @@ async def test_anthropic_model_error(
                 "temperature": 0.1,
                 "top_p": 0.95,
             },  # Override the temperature when calling the model
-            {**AnthropicModel.OPTS_MODEL, **{"temperature": 0.1, "top_p": 0.95}},
+            {
+                **AnthropicModel.OPTS_MODEL,
+                **{"temperature": 0.1, "top_p": 0.95, "stream": False},
+            },
             TextGenModelOutput(
                 text="random_text", score=10_000, safety_attributes=SafetyAttributes()
             ),
@@ -240,3 +244,66 @@ async def test_anthropic_model_generate(
 
     model.client.completions.create.assert_called_with(**expected_opts_model)
     assert actual_output.text == expected_output.text
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    (
+        "model_name_version",
+        "prompt",
+        "completion_chunks",
+        "expected_chunks",
+    ),
+    [
+        (
+            "claude-instant-1.2",
+            "random_prompt",
+            [
+                Completion(
+                    completion="def hello_",
+                    stop_reason="",
+                    model="claude-instant-1.2",
+                ),
+                Completion(
+                    completion="world():",
+                    stop_reason="",
+                    model="claude-instant-1.2",
+                ),
+            ],
+            [
+                "def hello_",
+                "world():",
+            ],
+        ),
+    ],
+)
+async def test_anthropic_model_generate_stream(
+    model_name_version: str,
+    prompt: str,
+    completion_chunks: list[Completion],
+    expected_chunks: list[str],
+):
+    async def _stream_generator(*args, **kwargs):
+        for chunk in completion_chunks:
+            yield chunk
+
+    model = AnthropicModel.from_model_name(
+        model_name_version,
+        Mock(spec=AsyncAnthropic),
+    )
+
+    model.client.completions.create = AsyncMock(side_effect=_stream_generator)
+
+    actual_output = await model.generate(prompt, stream=True)
+    expected_opts_model = {
+        **AnthropicModel.OPTS_MODEL,
+        **{"model": model_name_version, "prompt": prompt, "stream": True},
+    }
+
+    chunks = []
+    async for content in actual_output:
+        chunks += content
+
+    assert chunks == expected_chunks
+
+    model.client.completions.create.assert_called_with(**expected_opts_model)

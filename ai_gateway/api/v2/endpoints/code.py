@@ -1,10 +1,11 @@
 from time import time
-from typing import Annotated, Literal, Optional, Union
+from typing import Annotated, AsyncIterator, Literal, Optional, Union
 
 import structlog
 from dependency_injector.providers import Factory
 from dependency_injector.wiring import Provide, inject
 from fastapi import APIRouter, Depends, Request
+from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field, conlist, constr
 
 from ai_gateway.api.middleware import (
@@ -18,6 +19,7 @@ from ai_gateway.code_suggestions import (
     CodeCompletions,
     CodeCompletionsLegacy,
     CodeGenerations,
+    CodeSuggestionsChunk,
     ModelProvider,
 )
 from ai_gateway.code_suggestions.processing.ops import lang_from_filename
@@ -53,6 +55,7 @@ class SuggestionsRequest(BaseModel):
     current_file: CurrentFile
     model_provider: Optional[Literal[ModelProvider.VERTEX_AI, ModelProvider.ANTHROPIC]]
     telemetry: conlist(Telemetry, max_items=10) = []
+    stream: Optional[bool] = False
 
 
 class SuggestionsRequestV1(SuggestionsRequest):
@@ -89,8 +92,12 @@ class SuggestionsResponse(BaseModel):
     choices: list[Choice]
 
 
-@router.post("/completions", response_model=SuggestionsResponse)
-@router.post("/code/completions", response_model=SuggestionsResponse)
+class StreamSuggestionsResponse(StreamingResponse):
+    pass
+
+
+@router.post("/completions")
+@router.post("/code/completions")
 @requires("code_suggestions")
 @inject
 async def completions(
@@ -117,6 +124,7 @@ async def completions(
         prefix=payload.current_file.content_above_cursor,
         suffix=payload.current_file.content_below_cursor,
         current_file_name=payload.current_file.file_name,
+        stream=payload.stream,
     )
 
     kwargs = {}
@@ -131,12 +139,16 @@ async def completions(
 
     with TelemetryInstrumentator().watch(payload.telemetry):
         suggestion = await code_completions.execute(
-            payload.current_file.content_above_cursor,
-            payload.current_file.content_below_cursor,
-            payload.current_file.file_name,
-            payload.current_file.language_identifier,
+            prefix=payload.current_file.content_above_cursor,
+            suffix=payload.current_file.content_below_cursor,
+            file_name=payload.current_file.file_name,
+            editor_lang=payload.current_file.language_identifier,
+            stream=payload.stream,
             **kwargs,
         )
+
+    if isinstance(suggestion, AsyncIterator):
+        return await _handle_stream(suggestion)
 
     log.debug(
         "code completion suggestion:",
@@ -158,7 +170,7 @@ async def completions(
     )
 
 
-@router.post("/code/generations", response_model=SuggestionsResponse)
+@router.post("/code/generations")
 @requires("code_suggestions")
 @inject
 async def generations(
@@ -185,6 +197,7 @@ async def generations(
         prefix=payload.current_file.content_above_cursor,
         suffix=payload.current_file.content_below_cursor,
         current_file_name=payload.current_file.file_name,
+        stream=payload.stream,
     )
 
     if payload.model_provider == ModelProvider.ANTHROPIC:
@@ -197,11 +210,15 @@ async def generations(
 
     with TelemetryInstrumentator().watch(payload.telemetry):
         suggestion = await code_generations.execute(
-            payload.current_file.content_above_cursor,
-            payload.current_file.file_name,
-            payload.current_file.language_identifier,
+            prefix=payload.current_file.content_above_cursor,
+            file_name=payload.current_file.file_name,
+            editor_lang=payload.current_file.language_identifier,
             model_provider=payload.model_provider,
+            stream=payload.stream,
         )
+
+    if isinstance(suggestion, AsyncIterator):
+        return await _handle_stream(suggestion)
 
     log.debug(
         "code creation suggestion:",
@@ -251,4 +268,19 @@ def track_snowplow_event(
         gitlab_instance_id=req.headers.get(X_GITLAB_INSTANCE_ID_HEADER, ""),
         gitlab_global_user_id=req.headers.get(X_GITLAB_GLOBAL_USER_ID_HEADER, ""),
         gitlab_host_name=req.headers.get(X_GITLAB_HOST_NAME_HEADER, ""),
+    )
+
+
+async def _handle_stream(
+    response: AsyncIterator[CodeSuggestionsChunk],
+) -> StreamSuggestionsResponse:
+    async def _stream_generator():
+        async for result in response:
+            yield result.text
+
+        # Mark end of the stream
+        yield "[AI_DONE]"
+
+    return StreamSuggestionsResponse(
+        _stream_generator(), media_type="text/event-stream"
     )

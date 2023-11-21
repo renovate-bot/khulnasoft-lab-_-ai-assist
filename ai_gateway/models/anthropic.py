@@ -1,8 +1,14 @@
-from typing import Any
+from typing import Any, AsyncIterator, Optional, Union
 
 import httpx
 import structlog
-from anthropic import APIConnectionError, APIError, APIStatusError, AsyncAnthropic
+from anthropic import (
+    APIConnectionError,
+    APIError,
+    APIStatusError,
+    AsyncAnthropic,
+    AsyncStream,
+)
 from anthropic._types import NOT_GIVEN
 
 from ai_gateway.models.base import (
@@ -11,6 +17,7 @@ from ai_gateway.models.base import (
     ModelMetadata,
     SafetyAttributes,
     TextGenBaseModel,
+    TextGenModelChunk,
     TextGenModelOutput,
 )
 
@@ -102,9 +109,10 @@ class AnthropicModel(TextGenBaseModel):
     async def generate(
         self,
         prefix: str,
-        _suffix: str,
+        _suffix: Optional[str] = "",
+        stream: bool = False,
         **kwargs: Any,
-    ) -> TextGenModelOutput:
+    ) -> Union[TextGenModelOutput, AsyncIterator[TextGenModelChunk]]:
         opts = _obtain_opts(self.model_opts, **kwargs)
         log.debug("codegen anthropic call:", **opts)
 
@@ -112,6 +120,7 @@ class AnthropicModel(TextGenBaseModel):
             suggestion = await self.client.completions.create(
                 model=self.metadata.name,
                 prompt=prefix,
+                stream=stream,
                 **opts,
             )
         except APIStatusError as ex:
@@ -119,12 +128,22 @@ class AnthropicModel(TextGenBaseModel):
         except APIConnectionError as ex:
             raise AnthropicAPIConnectionError.from_exception(ex)
 
+        if stream:
+            return self._handle_stream(suggestion)
+
         return TextGenModelOutput(
             text=suggestion.completion,
             # Give a high value, the model doesn't return scores.
             score=10**5,
             safety_attributes=SafetyAttributes(),
         )
+
+    async def _handle_stream(
+        self, response: AsyncStream
+    ) -> AsyncIterator[TextGenModelChunk]:
+        async for event in response:
+            chunk_content = TextGenModelChunk(text=event.completion)
+            yield chunk_content
 
     @classmethod
     def from_model_name(cls, name: str, client: AsyncAnthropic, **kwargs: Any):
