@@ -227,20 +227,10 @@ UGw3kIW+604fnnXLDm4TaLA=
 
     @responses.activate
     @pytest.mark.parametrize(
-        "config_response_body,jwks_url,jwks_response_body,logged_errors",
+        "config_response_body,jwks_url,jwks_response_body,logged_errors,expected_jwks_call_count",
         [
-            (
-                '{"jwks_uri": ""}',
-                "",
-                '{"keys": []}',
-                [],
-            ),
-            (
-                "{}",
-                "",
-                "{}",
-                [],
-            ),
+            ('{"jwks_uri": ""}', "", '{"keys": []}', [], 0),
+            ("{}", "", "{}", [], 0),
             (
                 requests.exceptions.RequestException("OIDC config request failed"),
                 "",
@@ -248,24 +238,28 @@ UGw3kIW+604fnnXLDm4TaLA=
                 [
                     "Unable to fetch OpenID configuration from CustomersDot: OIDC config request failed"
                 ],
+                0,
             ),
             (
                 '{"jwks_uri": "http://test.com/oauth/discovery/keys"}',
                 "http://test.com/oauth/discovery/keys",
                 '{"keys": []}',
                 [],
+                1,
             ),
             (
                 '{"jwks_uri": "http://test.com/oauth/discovery/keys"}',
                 "http://test.com/oauth/discovery/keys",
                 "{}",
                 [],
+                1,
             ),
             (
                 '{"jwks_uri": "http://test.com/oauth/discovery/keys"}',
                 "http://test.com/oauth/discovery/keys",
                 requests.exceptions.RequestException("JWKS request failed"),
                 ["Unable to fetch jwks from CustomersDot: JWKS request failed"],
+                1,
             ),
         ],
     )
@@ -276,6 +270,7 @@ UGw3kIW+604fnnXLDm4TaLA=
         jwks_url,
         jwks_response_body,
         logged_errors,
+        expected_jwks_call_count,
     ):
         # We only need one endpoint to simulate failures; this one will be successful.
         well_known_test_response = responses.get(
@@ -325,10 +320,7 @@ UGw3kIW+604fnnXLDm4TaLA=
 
         # The unsuccessful provider calls.
         assert well_known_customers_response.call_count == 1
-        if jwks_url == "":
-            assert jwks_customers_response.call_count == 0
-        else:
-            assert jwks_customers_response.call_count == 1
+        assert jwks_customers_response.call_count == expected_jwks_call_count
 
     @responses.activate
     @pytest.mark.parametrize(
