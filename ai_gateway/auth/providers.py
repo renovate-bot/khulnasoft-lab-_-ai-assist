@@ -31,7 +31,7 @@ class GitLabOidcProvider(AuthProvider):
     AUDIENCE = "gitlab-ai-gateway"
 
     class CriticalAuthError(Exception):
-        None
+        pass
 
     def __init__(self, oidc_providers: dict[str, str], expiry_seconds: int = 86400):
         self.oidc_providers = oidc_providers
