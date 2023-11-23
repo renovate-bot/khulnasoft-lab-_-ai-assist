@@ -4,9 +4,9 @@ from typing import Annotated, AsyncIterator, Literal, Optional, Union
 import structlog
 from dependency_injector.providers import Factory
 from dependency_injector.wiring import Provide, inject
-from fastapi import APIRouter, Depends, Request
+from fastapi import APIRouter, Body, Depends, Request
 from fastapi.responses import StreamingResponse
-from pydantic import BaseModel, Field, conlist, constr
+from pydantic import BaseModel, conlist, constr
 
 from ai_gateway.api.middleware import (
     X_GITLAB_GLOBAL_USER_ID_HEADER,
@@ -69,7 +69,7 @@ class SuggestionsRequestV2(SuggestionsRequest):
 
 SuggestionRequestWithVersion = Annotated[
     Union[SuggestionsRequestV1, SuggestionsRequestV2],
-    Field(discriminator="prompt_version"),
+    Body(discriminator="prompt_version"),
 ]
 
 
