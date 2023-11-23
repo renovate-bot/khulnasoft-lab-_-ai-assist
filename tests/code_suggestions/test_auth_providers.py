@@ -1,9 +1,11 @@
 import json
+import logging
 from time import sleep
 
 import pytest
+import requests
 import responses
-from jose import jwt
+from jose import exceptions, jwt
 
 from ai_gateway.auth import GitLabOidcProvider
 
@@ -222,3 +224,143 @@ UGw3kIW+604fnnXLDm4TaLA=
         cached_keys = auth_provider.cache.get(auth_provider.CACHE_KEY).value
 
         assert len(cached_keys["keys"]) == 2
+
+    @responses.activate
+    @pytest.mark.parametrize(
+        "config_response_body,jwks_url,jwks_response_body,logged_errors,expected_jwks_call_count",
+        [
+            ('{"jwks_uri": ""}', "", '{"keys": []}', [], 0),
+            ("{}", "", "{}", [], 0),
+            (
+                requests.exceptions.RequestException("OIDC config request failed"),
+                "",
+                "{}",
+                [
+                    "Unable to fetch OpenID configuration from CustomersDot: OIDC config request failed"
+                ],
+                0,
+            ),
+            (
+                '{"jwks_uri": "http://test.com/oauth/discovery/keys"}',
+                "http://test.com/oauth/discovery/keys",
+                '{"keys": []}',
+                [],
+                1,
+            ),
+            (
+                '{"jwks_uri": "http://test.com/oauth/discovery/keys"}',
+                "http://test.com/oauth/discovery/keys",
+                "{}",
+                [],
+                1,
+            ),
+            (
+                '{"jwks_uri": "http://test.com/oauth/discovery/keys"}',
+                "http://test.com/oauth/discovery/keys",
+                requests.exceptions.RequestException("JWKS request failed"),
+                ["Unable to fetch jwks from CustomersDot: JWKS request failed"],
+                1,
+            ),
+        ],
+    )
+    def test_broken_gitlab_oidc_provider_responses(
+        self,
+        caplog,
+        config_response_body,
+        jwks_url,
+        jwks_response_body,
+        logged_errors,
+        expected_jwks_call_count,
+    ):
+        # We only need one endpoint to simulate failures; this one will be successful.
+        well_known_test_response = responses.get(
+            "http://test.com/.well-known/openid-configuration",
+            body='{"jwks_uri": "http://test.com/oauth/discovery/keys"}',
+            status=200,
+        )
+        jwks_test_response = responses.get(
+            "http://test.com/oauth/discovery/keys",
+            body=f'{{"keys": [{json.dumps(self.public_key_test)}]}}',
+            status=200,
+        )
+
+        # This endpoint will contain various faulty responses.
+        well_known_customers_response = responses.get(
+            "http://customers.test.com/.well-known/openid-configuration",
+            body=config_response_body,
+            status=200,
+        )
+        jwks_customers_response = responses.get(
+            jwks_url,
+            body=jwks_response_body,
+            status=200,
+        )
+
+        auth_provider = GitLabOidcProvider(
+            oidc_providers={
+                "Gitlab": "http://test.com",
+                "CustomersDot": "http://customers.test.com",
+            }
+        )
+
+        token = jwt.encode(
+            {},
+            self.private_key_test,
+            algorithm="RS256",
+        )
+
+        user = auth_provider.authenticate(token)
+        assert user is not None
+
+        assert logged_errors == [rec.message for rec in caplog.records]
+
+        # The successful provider calls.
+        assert well_known_test_response.call_count == 1
+        assert jwks_test_response.call_count == 1
+
+        # The unsuccessful provider calls.
+        assert well_known_customers_response.call_count == 1
+        assert jwks_customers_response.call_count == expected_jwks_call_count
+
+    @responses.activate
+    @pytest.mark.parametrize(
+        "jwks_response_body",
+        [
+            "{}",
+            '{"keys": []}',
+        ],
+    )
+    def test_no_jwks_available_raises_error(
+        self,
+        jwks_response_body,
+    ):
+        well_known_test_response = responses.get(
+            "http://test.com/.well-known/openid-configuration",
+            body='{"jwks_uri": "http://test.com/oauth/discovery/keys"}',
+            status=200,
+        )
+        jwks_test_response = responses.get(
+            "http://test.com/oauth/discovery/keys",
+            body=jwks_response_body,
+            status=200,
+        )
+
+        auth_provider = GitLabOidcProvider(
+            oidc_providers={
+                "Gitlab": "http://test.com",
+            }
+        )
+        token = jwt.encode(
+            {},
+            self.private_key_test,
+            algorithm="RS256",
+        )
+
+        user = None
+        with pytest.raises(GitLabOidcProvider.CriticalAuthError):
+            user = auth_provider.authenticate(token)
+
+        assert user is None
+
+        assert well_known_test_response.call_count == 1
+        assert jwks_test_response.call_count == 1
