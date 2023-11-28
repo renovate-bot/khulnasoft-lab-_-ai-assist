@@ -24,7 +24,7 @@ from ai_gateway.models import (
 
 @pytest.mark.parametrize(
     "model_name_version",
-    ["claude-instant-1.2", "claude-2", "claude-2.0"],
+    ["claude-instant-1.2", "claude-2.0"],
 )
 def test_anthropic_model_from_name(model_name_version: str):
     model = AnthropicModel.from_model_name(model_name_version, Mock())

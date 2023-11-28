@@ -51,7 +51,7 @@ class AnthropicModel(TextGenBaseModel):
     # Ref: https://docs.anthropic.com/claude/reference/selecting-a-model
     MAX_MODEL_LEN = 100_000
     CLAUDE_INSTANT = "claude-instant-1.2"
-    CLAUDE = "claude-2"
+    CLAUDE = "claude-2.0"
 
     # Ref: https://docs.anthropic.com/claude/reference/versioning
     DEFAULT_VERSION = "2023-06-01"
