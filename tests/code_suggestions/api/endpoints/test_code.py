@@ -406,7 +406,7 @@ class TestSnowplowInstrumentator:
                 "9ebada7a-f5e2-477a-8609-17797fa95cb9",
                 "XTuMnZ6XTWkP3yh0ZwXualmOZvm2Gg/bk9jyfkL7Y6k=",
                 "gitlab.com",
-                "1,2,3",
+                ["1", "2", "3"],
                 "saas",
             ),
             (
@@ -421,7 +421,7 @@ class TestSnowplowInstrumentator:
                 "9ebada7a-f5e2-477a-8609-17797fa95cb9",
                 "XTuMnZ6XTWkP3yh0ZwXualmOZvm2Gg/bk9jyfkL7Y6k=",
                 "awesome-org.com",
-                "",
+                [],
                 "self-managed",
             ),
             (
@@ -436,7 +436,7 @@ class TestSnowplowInstrumentator:
                 "9ebada7a-f5e2-477a-8609-17797fa95cb9",
                 "XTuMnZ6XTWkP3yh0ZwXualmOZvm2Gg/bk9jyfkL7Y6k=",
                 "gitlab.com",
-                "1",
+                ["1"],
                 "saas",
             ),
             (
@@ -447,7 +447,7 @@ class TestSnowplowInstrumentator:
                 "",
                 "",
                 "",
-                "",
+                [],
                 "",
             ),
         ],

@@ -121,7 +121,7 @@ class TestSnowplowInstrumentator:
                     "gitlab_instance_id": "9ebada7a-f5e2-477a-8609-17797fa95cb9",
                     "gitlab_global_user_id": "XTuMnZ6XTWkP3yh0ZwXualmOZvm2Gg/bk9jyfkL7Y6k=",
                     "gitlab_host_name": "gitlab.com",
-                    "gitlab_saas_namespace_ids": "12345",
+                    "gitlab_saas_namespace_ids": ["12345"],
                 },
                 {
                     "prefix_length": 11,
@@ -145,7 +145,7 @@ class TestSnowplowInstrumentator:
                     "gitlab_instance_id": "test",
                     "gitlab_global_user_id": "test",
                     "gitlab_host_name": "gitlab.com",
-                    "gitlab_saas_namespace_ids": "12345" * 10,
+                    "gitlab_saas_namespace_ids": ["345"],
                 },
                 {
                     "prefix_length": 33,
@@ -156,7 +156,7 @@ class TestSnowplowInstrumentator:
                     "gitlab_instance_id": "test",
                     "gitlab_global_user_id": "test",
                     "gitlab_host_name": "gitlab.com",
-                    "gitlab_saas_namespace_ids": [],
+                    "gitlab_saas_namespace_ids": [345],
                 },
             ),
         ],
