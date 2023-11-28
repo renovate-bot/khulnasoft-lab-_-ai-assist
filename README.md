@@ -111,6 +111,64 @@ curl --request POST \
 - `422: Unprocessable Entity` if the required attributes are missing.
 - `401: Unauthorized` if the service fails to authenticate using the access token.
 
+### XRay: Libraries
+
+Given a prompt template, the service will return response received from an AI provider as is.
+
+```plaintext
+POST v1/x-ray/libraries
+```
+
+| Attribute                           | Type   | Required | Description                                                        | Example                   |
+| ----------------------------------- | ------ | -------- | ------------------------------------------------------------------ | ------------------------- |
+| `prompt_components`                 | array | yes      | The list of prompt components complicient with https://docs.gitlab.com/ee/architecture/blueprints/ai_gateway/index.html#protocol (min_len: **1**)                    |              |
+| `prompt_components.type`            | string | yes       | The type of the prompt component (max_len: **255**)                                                  | `x_ray_package_file_prompt`  |
+| `prompt_components.payload`         | hash   | yes      | The data of the current prompt component                                       |                           |
+| `prompt_components.metadata`        | hash(max lenght = 10)      | no      | The metadata of the current prompt component. Only string - string key value pairs are accepted.                                       |                           |
+
+
+XRay Libraries endpoint expects one `x_ray_package_file_prompt` prompt component with following structure.
+
+| Attribute                           | Type                        | Required | Description                                                        | Example                   |
+| ----------------------------------- | --------------------------- | -------- | ------------------------------------------------------------------- | ------------------------- |
+| `type`                              | `x_ray_package_file_prompt` | yes       | The type of the prompt component (max_len: **255**)                                                  | `x_ray_package_file_prompt`  |
+| `payload`                           | hash                        | yes      | The data of the curernt prompt component                                       |                           |
+| `payload.prompt`                  | string                      | yes      | The complete AI prompt                                       |   `"Human: Tell me fun fact about ducks"`                        |
+| `payload.provider`                  | string                      | yes      | The AI provider for which the prompt template is designed for.                                       |   `"Anthropic"`                        |
+| `payload.model`                     | string                      | yes      | The AI provider model for which the prompt template is designed for.                                       |   `"claude-2"`                        |
+| `metadata`                          | hash(max lenght = 10)                      | no      | The metadata of the curernt prompt component                                       |                           |
+
+```shell
+curl --request POST \
+  --url 'https://codesuggestions.gitlab.com/v1/x-ray/libraries' \
+  --header 'Authorization: Bearer <access_token>' \
+  --header 'X-Gitlab-Authentication-Type: oidc' \
+  --header 'Content-Type: application/json' \
+  --data-raw '{
+  "prompt_components": [
+    {
+      "type":"x_ray_package_file_prompt",
+      "payload":{
+        "prompt": "Human: Parse following content of Gemfile. Respond using only valid JSON with list of libraries available to use and their short description\n\nGemfile content:\n\n```\n gem kaminari\n```\n\n Assistant: {{\n\"libraries\":[{{\"name\": \"",
+        "provider": "anthropic",
+        "model": "claude-2.0"
+      },
+      "metadata": {
+        "scannerVersion": "0.0.1"
+      }
+    }
+ ]
+}'
+```
+
+It will respond with string as it was received from AI Provider
+
+#### Responses
+
+- `200: OK` if the service returns some completions.
+- `422: Unprocessable Entity` if the required attributes are missing.
+- `401: Unauthorized` if the service fails to authenticate using the access token.
+
 ## Prerequisites
 
 You'll need:

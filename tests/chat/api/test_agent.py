@@ -125,7 +125,7 @@ class TestAgentUnsupportedProvider:
             "detail": [
                 {
                     "loc": ["body", "prompt_components", 0, "payload", "provider"],
-                    "msg": "unexpected value; permitted: 'anthropic'",
+                    "msg": "unexpected value; permitted: <AnthropicNames.PROVIDER: 'anthropic'>",
                     "type": "value_error.const",
                     "ctx": {
                         "given": "UNSUPPORTED_PROVIDER",
@@ -170,7 +170,7 @@ class TestAgentUnsupportedModel:
             "detail": [
                 {
                     "loc": ["body", "prompt_components", 0, "payload", "model"],
-                    "msg": "unexpected value; permitted: 'claude-2.0', 'claude-instant-1.2'",
+                    "msg": "unexpected value; permitted: <AnthropicNames.MODEL_CLAUDE: 'claude-2.0'>, <AnthropicNames.MODEL_CLAUDE_INSTANT: 'claude-instant-1.2'>",
                     "type": "value_error.const",
                     "ctx": {
                         "given": "UNSUPPORTED_MODEL",

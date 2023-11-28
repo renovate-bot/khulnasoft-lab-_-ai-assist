@@ -20,8 +20,6 @@ __all__ = [
     "router",
 ]
 
-ANTHROPIC = "anthropic"
-
 log = structlog.stdlib.get_logger("chat")
 
 router = APIRouter(
@@ -38,7 +36,7 @@ class PromptMetadata(BaseModel):
 class PromptPayload(BaseModel):
     content: constr(max_length=400000)
     provider: Optional[
-        Literal[ANTHROPIC]
+        Literal[AnthropicModel.MODEL_ENGINE]
     ]  # We only support and expect Anthropic for now
     model: Optional[
         Literal[AnthropicModel.CLAUDE, AnthropicModel.CLAUDE_INSTANT]
@@ -88,7 +86,9 @@ async def chat(
             return ChatResponse(
                 response=completion.text,
                 metadata=ChatResponseMetadata(
-                    provider=ANTHROPIC, model=payload.model, timestamp=time()
+                    provider=AnthropicModel.MODEL_ENGINE,
+                    model=payload.model,
+                    timestamp=time(),
                 ),
             )
     except (AnthropicAPIConnectionError, AnthropicAPIStatusError) as ex:
@@ -96,6 +96,6 @@ async def chat(
     return ChatResponse(
         response="",
         metadata=ChatResponseMetadata(
-            provider=ANTHROPIC, model=payload.model, timestamp=time()
+            provider=AnthropicModel.MODEL_ENGINE, model=payload.model, timestamp=time()
         ),
     )

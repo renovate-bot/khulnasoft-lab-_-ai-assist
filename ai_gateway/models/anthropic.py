@@ -1,3 +1,4 @@
+from enum import Enum
 from typing import Any, AsyncIterator, Optional, Union
 
 import httpx
@@ -25,6 +26,7 @@ __all__ = [
     "AnthropicAPIConnectionError",
     "AnthropicAPIStatusError",
     "AnthropicModel",
+    "AnthropicNames",
 ]
 
 log = structlog.stdlib.get_logger("codesuggestions")
@@ -47,16 +49,22 @@ class AnthropicAPIStatusError(ModelAPICallError):
         return wrapper
 
 
+class AnthropicNames(str, Enum):
+    MODEL_CLAUDE = "claude-2.0"
+    MODEL_CLAUDE_INSTANT = "claude-instant-1.2"
+    PROVIDER = "anthropic"
+
+
 class AnthropicModel(TextGenBaseModel):
     # Ref: https://docs.anthropic.com/claude/reference/selecting-a-model
     MAX_MODEL_LEN = 100_000
-    CLAUDE_INSTANT = "claude-instant-1.2"
-    CLAUDE = "claude-2.0"
+    CLAUDE_INSTANT = AnthropicNames.MODEL_CLAUDE_INSTANT
+    CLAUDE = AnthropicNames.MODEL_CLAUDE
 
     # Ref: https://docs.anthropic.com/claude/reference/versioning
     DEFAULT_VERSION = "2023-06-01"
 
-    MODEL_ENGINE = "anthropic"
+    MODEL_ENGINE = AnthropicNames.PROVIDER
 
     OPTS_CLIENT = {
         "default_headers": {},

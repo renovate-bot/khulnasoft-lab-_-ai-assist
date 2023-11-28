@@ -14,6 +14,7 @@ ifneq (,$(wildcard docker-compose.override.yaml))
 COMPOSE_FILES += -f docker-compose.override.yaml
 endif
 COMPOSE := docker-compose $(COMPOSE_FILES)
+TEST_PATH_ARG ?= 
 
 .PHONY: develop-local
 develop-local:
@@ -21,7 +22,7 @@ develop-local:
 
 .PHONY: test-local
 test-local:
-	$(COMPOSE) run -v "$(ROOT_DIR):/app" api bash -c 'poetry install --with test && poetry run pytest'
+	$(COMPOSE) run -v "$(ROOT_DIR):/app" api bash -c 'poetry install --with test && poetry run pytest $(TEST_PATH_ARG)'
 
 .PHONY: lint-local
 lint-local:
