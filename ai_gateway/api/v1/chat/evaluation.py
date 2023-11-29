@@ -31,7 +31,7 @@ def create_router() -> APIRouter:
         )
         return router
 
-    model_anthropic_claude: ChatAnthropic = ChatAnthropic(model="claude-2")
+    model_anthropic_claude: ChatAnthropic = ChatAnthropic(model="claude-2.0")
 
     add_routes(
         router,

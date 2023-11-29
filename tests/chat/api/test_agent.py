@@ -38,7 +38,7 @@ class TestAgentSuccessfulRequest:
         self,
         mock_client: TestClient,
     ):
-        model_name = "claude-2"
+        model_name = "claude-2.0"
         mock_model = mock.Mock(spec=AnthropicModel)
         mock_model.generate = AsyncMock(
             return_value=TextGenModelOutput(
@@ -113,7 +113,7 @@ class TestAgentUnsupportedProvider:
                         "payload": {
                             "content": "\n\nHuman: hello, what is your name?\n\nAssistant:",
                             "provider": "UNSUPPORTED_PROVIDER",
-                            "model": "claude-2",
+                            "model": "claude-2.0",
                         },
                     },
                 ]
@@ -170,11 +170,11 @@ class TestAgentUnsupportedModel:
             "detail": [
                 {
                     "loc": ["body", "prompt_components", 0, "payload", "model"],
-                    "msg": "unexpected value; permitted: 'claude-2', 'claude-instant-1.2'",
+                    "msg": "unexpected value; permitted: 'claude-2.0', 'claude-instant-1.2'",
                     "type": "value_error.const",
                     "ctx": {
                         "given": "UNSUPPORTED_MODEL",
-                        "permitted": ["claude-2", "claude-instant-1.2"],
+                        "permitted": ["claude-2.0", "claude-instant-1.2"],
                     },
                 }
             ]
@@ -210,7 +210,7 @@ class TestAnthropicInvalidScope:
                         "payload": {
                             "content": "\n\nHuman: hello, what is your name?\n\nAssistant:",
                             "provider": "anthropic",
-                            "model": "claude-2",
+                            "model": "claude-2.0",
                         },
                     }
                 ]
@@ -239,7 +239,7 @@ class TestAgentInvalidRequestMissingFields:
                         "metadata": {"source": "gitlab-rails-sm"},
                         "payload": {
                             "provider": "anthropic",
-                            "model": "claude-2",
+                            "model": "claude-2.0",
                         },
                     },
                 ]
@@ -285,7 +285,7 @@ class TestAgentInvalidRequestManyPromptComponents:
                         "payload": {
                             "content": "\n\nHuman: hello, what is your name?\n\nAssistant:",
                             "provider": "anthropic",
-                            "model": "claude-2",
+                            "model": "claude-2.0",
                         },
                     },
                     {
@@ -297,7 +297,7 @@ class TestAgentInvalidRequestManyPromptComponents:
                         "payload": {
                             "content": "SECOND PROMPT COMPONENT (NOT EXPECTED)",
                             "provider": "anthropic",
-                            "model": "claude-2",
+                            "model": "claude-2.0",
                         },
                     },
                 ]
@@ -365,7 +365,7 @@ class TestAgentUnsuccessfulAnthropicRequest:
                                 "payload": {
                                     "content": "\n\nHuman: hello, what is your name?\n\nAssistant:",
                                     "provider": "anthropic",
-                                    "model": "claude-2",
+                                    "model": "claude-2.0",
                                 },
                             }
                         ]
