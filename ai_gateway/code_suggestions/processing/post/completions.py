@@ -39,7 +39,6 @@ class PostProcessor(PostProcessorBase):
             self.code_context,
             completion,
             self.suffix,
-            attempts=4,
             lang_id=self.lang_id,
         )
 
