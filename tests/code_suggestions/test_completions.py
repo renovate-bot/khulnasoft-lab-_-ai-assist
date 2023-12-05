@@ -153,7 +153,7 @@ class TestCodeCompletionsLegacy:
             ),
         ],
     )
-    async def test_excute_without_post_processing(
+    async def test_execute_without_post_processing(
         self,
         prefix: str,
         suffix: str,
