@@ -141,25 +141,33 @@ def fix_end_block_errors(
     prefix: str,
     completion: str,
     suffix: str,
-    attempts: int = 4,
     lang_id: Optional[LanguageId] = None,
 ) -> str:
-    total_errors = 0
-    completion_lookup = completion
+    # Hypothesis 1: the suffix contains only one line.
+    suffix_first_line = suffix.strip()
+    if len(suffix_first_line) == 0:
+        return completion
+
+    # Hypothesis 2: the suffix contains more than only one line.
+    idx_suffix_new_line = suffix_first_line.find("\n")
+    if idx_suffix_new_line != -1:
+        # Hypothesis confirmed: keep only the first line within the variable.
+        suffix_first_line = suffix_first_line[:idx_suffix_new_line]
+
+    completion_lookup = completion.rstrip()
+    if not completion_lookup.endswith(suffix_first_line):
+        # Return the original copy of the completion.
+        return completion
 
     try:
-        for i in range(1, min(attempts, len(completion)) + 2):
-            code_sample = f"{prefix}{completion_lookup}{suffix}"
-            parser = CodeParser.from_language_id(code_sample, lang_id)
-
-            num_errors = len(parser.errors())
-
-            if num_errors == 0 or num_errors < total_errors:
-                return completion_lookup
-
-            total_errors = num_errors
-            completion_lookup = completion[:-i]
-
+        # Remove the suffix from the completion.
+        completion_lookup = completion_lookup[: -len(suffix_first_line)]
+        # Check if any errors exists when joining the original suffix
+        # and the updated version of the completion.
+        code_sample = f"{prefix}{completion_lookup}{suffix}"
+        parser = CodeParser.from_language_id(code_sample, lang_id)
+        if len(parser.errors()) == 0:
+            completion = completion_lookup
     except ValueError as e:
         log.warning(f"Failed to parse code: {e}")
 
