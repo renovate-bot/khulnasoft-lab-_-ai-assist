@@ -64,7 +64,7 @@ class CodeCompletionsLegacy:
             },
         ):
             processed_completion = self.post_processor(
-                prefix, lang_id=response.lang_id
+                prefix, suffix=suffix, lang_id=response.lang_id
             ).process(response.text)
 
         return ModelEngineOutput(
