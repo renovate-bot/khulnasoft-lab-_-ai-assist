@@ -98,7 +98,7 @@ class PalmCodeGenBaseModel(TextGenBaseModel):
     # E.g.: code-bison@001
     SEP_MODEL_VERSION = "@"
 
-    _MODEL_ENGINE = "vertex-ai"
+    MODEL_ENGINE = "vertex-ai"
 
     def __init__(
         self,
@@ -118,7 +118,7 @@ class PalmCodeGenBaseModel(TextGenBaseModel):
         )
 
         self._metadata = ModelMetadata(
-            name=model_name, engine=PalmCodeGenBaseModel._MODEL_ENGINE
+            name=model_name, engine=PalmCodeGenBaseModel.MODEL_ENGINE
         )
         self.endpoint = f"projects/{project}/locations/{location}/publishers/google/models/{model_name}"
 

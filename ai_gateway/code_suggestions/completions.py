@@ -1,5 +1,7 @@
 from typing import Any, AsyncIterator, Optional, Union
 
+from dependency_injector.providers import Factory
+
 from ai_gateway.code_suggestions import CodeSuggestionsChunk, CodeSuggestionsOutput
 from ai_gateway.code_suggestions.base import (
     LanguageId,
@@ -11,11 +13,16 @@ from ai_gateway.code_suggestions.processing import (
     ModelEngineOutput,
     Prompt,
 )
+from ai_gateway.code_suggestions.processing.post.completions import PostProcessor
 from ai_gateway.code_suggestions.processing.pre import (
     PromptBuilderPrefixBased,
     TokenStrategyBase,
 )
-from ai_gateway.instrumentators import TextGenModelInstrumentator
+from ai_gateway.instrumentators import (
+    KnownMetrics,
+    TextGenModelInstrumentator,
+    benchmark,
+)
 from ai_gateway.models import (
     ModelAPICallError,
     ModelAPIError,
@@ -28,8 +35,13 @@ __all__ = ["CodeCompletionsLegacy", "CodeCompletions"]
 
 
 class CodeCompletionsLegacy:
-    def __init__(self, engine: ModelEngineCompletions):
+    def __init__(
+        self,
+        engine: ModelEngineCompletions,
+        post_processor: Factory[PostProcessor],
+    ):
         self.engine = engine
+        self.post_processor = post_processor
 
     async def execute(
         self,
@@ -39,9 +51,29 @@ class CodeCompletionsLegacy:
         editor_lang: str,
         **_kwargs: Any,
     ) -> ModelEngineOutput:
-        suggestion = await self.engine.generate(prefix, suffix, file_name, editor_lang)
+        response = await self.engine.generate(prefix, suffix, file_name, editor_lang)
 
-        return suggestion
+        if not response.text:
+            return response
+
+        with benchmark(
+            metric_key=KnownMetrics.POST_PROCESSING_DURATION,
+            labels={
+                "model_engine": self.engine.model.metadata.engine,
+                "model_name": self.engine.model.metadata.name,
+            },
+        ):
+            processed_completion = self.post_processor(
+                prefix, lang_id=response.lang_id
+            ).process(response.text)
+
+        return ModelEngineOutput(
+            text=processed_completion,
+            score=response.score,
+            model=response.model,
+            lang_id=response.lang_id,
+            metadata=response.metadata,
+        )
 
 
 class CodeCompletions:

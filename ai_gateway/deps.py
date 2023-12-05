@@ -111,7 +111,6 @@ def _create_engine_code_completions(model_provider, tokenizer, experiment_regist
         ModelEngineCompletions,
         model=model_provider,
         tokenizer=tokenizer,
-        post_processor=providers.Factory(PostProcessorCompletions).provider,
         experiment_registry=experiment_registry,
     )
 
@@ -249,7 +248,9 @@ class CodeSuggestionsContainer(containers.DeclarativeContainer):
     engine_factory = providers.FactoryAggregate(**engines)
 
     code_completions_legacy = providers.Factory(
-        CodeCompletionsLegacy, engine=engines[ModelRollout.GOOGLE_CODE_GECKO]
+        CodeCompletionsLegacy,
+        engine=engines[ModelRollout.GOOGLE_CODE_GECKO],
+        post_processor=providers.Factory(PostProcessorCompletions).provider,
     )
 
     code_completions_anthropic = providers.Factory(

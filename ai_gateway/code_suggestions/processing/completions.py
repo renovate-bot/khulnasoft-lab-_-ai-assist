@@ -1,7 +1,6 @@
 from typing import Any, Callable, NamedTuple, Optional
 
 import structlog
-from dependency_injector.providers import Factory
 from transformers import PreTrainedTokenizer
 
 from ai_gateway.code_suggestions.processing.base import (
@@ -15,7 +14,6 @@ from ai_gateway.code_suggestions.processing.ops import (
     remove_incomplete_block,
     truncate_content,
 )
-from ai_gateway.code_suggestions.processing.post.completions import PostProcessor
 from ai_gateway.code_suggestions.processing.typing import (
     CodeContent,
     LanguageId,
@@ -178,11 +176,9 @@ class ModelEngineCompletions(ModelEngineBase):
         self,
         model: PalmCodeGenBaseModel,
         tokenizer: PreTrainedTokenizer,
-        post_processor: Factory[PostProcessor],
         experiment_registry: ExperimentRegistry,
     ):
         super().__init__(model, tokenizer)
-        self.post_processor_factory = post_processor
         self.experiment_registry = experiment_registry
 
     async def _generate(
@@ -225,10 +221,7 @@ class ModelEngineCompletions(ModelEngineBase):
                     watch_container.register_safety_attributes(res.safety_attributes)
 
                     if res.score > MINIMIMUM_CONFIDENCE_SCORE:
-                        # TODO: Move the call to the use case class
-                        completion = self.post_processor_factory(
-                            prompt.prefix, lang_id=lang_id
-                        ).process(res.text)
+                        completion = res.text
                     else:
                         watch_container.register_is_discarded()
                         completion = ""

@@ -13,7 +13,6 @@ from ai_gateway.code_suggestions.processing import (
     ModelEngineCompletions,
     ops,
 )
-from ai_gateway.code_suggestions.processing.post.completions import PostProcessor
 from ai_gateway.experimentation import ExperimentRegistry
 from ai_gateway.models import (
     ModelMetadata,
@@ -466,7 +465,6 @@ async def test_model_engine_palm(
     engine = ModelEngineCompletions(
         model=text_gen_base_model,
         tokenizer=tokenizer,
-        post_processor=PostProcessor,
         experiment_registry=ExperimentRegistry(),
     )
     engine.instrumentator = MockInstrumentor()
@@ -631,7 +629,6 @@ def test_prompt_building_model_engine_palm(
     engine = ModelEngineCompletions(
         model=text_gen_base_model,
         tokenizer=tokenizer,
-        post_processor=PostProcessor,
         experiment_registry=ExperimentRegistry(),
     )
     prompt = engine._build_prompt(
