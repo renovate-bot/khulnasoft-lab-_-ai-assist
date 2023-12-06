@@ -128,7 +128,9 @@ class TestCodeCompletionsLegacy:
             metric_key=KnownMetrics.POST_PROCESSING_DURATION,
             labels={"model_engine": "vertex-ai", "model_name": "code-gecko@latest"},
         )
-        post_processor_factory.assert_called_with(prefix, lang_id=expected_language_id)
+        post_processor_factory.assert_called_with(
+            prefix, suffix=suffix, lang_id=expected_language_id
+        )
         post_processor.process.assert_called_with(engine_response_text)
 
     @pytest.mark.parametrize(
