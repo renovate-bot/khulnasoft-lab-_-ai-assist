@@ -43,7 +43,7 @@ def add_custom_keys(_, __, event_dict: EventDict) -> EventDict:
 
 
 def setup_logging(app: ASGIApp, logging_config: LoggingConfig):
-    app.add_middleware(CorrelationIdMiddleware)
+    app.add_middleware(CorrelationIdMiddleware, validator=None)
 
     timestamper = structlog.processors.TimeStamper(fmt="iso")
 
