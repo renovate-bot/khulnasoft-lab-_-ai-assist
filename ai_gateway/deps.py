@@ -35,6 +35,7 @@ __all__ = [
     "FastApiContainer",
     "CodeSuggestionsContainer",
     "ChatContainer",
+    "XRayContainer",
 ]
 
 _PROBS_ENDPOINTS = ["/monitoring/healthz", "/metrics"]
@@ -305,4 +306,21 @@ class ChatContainer(containers.DeclarativeContainer):
     anthropic_model = providers.Factory(
         AnthropicModel,
         client=client_anthropic,
+    )
+
+
+class XRayContainer(containers.DeclarativeContainer):
+    wiring_config = containers.WiringConfiguration(
+        modules=[
+            "ai_gateway.api.v1.x_ray.libraries",
+        ]
+    )
+
+    config = providers.Configuration()
+
+    client_anthropic = providers.Resource(connect_anthropic)
+    anthropic_model = _create_anthropic_model(
+        name=AnthropicModel.CLAUDE,
+        client_anthropic=client_anthropic,
+        real_or_fake=config.palm_text_model.real_or_fake,
     )
