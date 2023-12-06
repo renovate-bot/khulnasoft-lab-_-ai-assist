@@ -89,7 +89,7 @@ class TestXRayLibraries:
                 prefix=want_prompt, _suffix=""
             )
 
-        assert response.json() == model_output_text
+        assert response.json() == {"response": model_output_text}
 
 
 class TestUnauthorizedScopes:

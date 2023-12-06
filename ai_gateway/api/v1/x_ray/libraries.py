@@ -55,7 +55,11 @@ class XRayRequest(BaseModel):
     prompt_components: conlist(PackageFilePromptComponent, min_items=1, max_items=1)
 
 
-@router.post("/libraries")
+class XRayResponse(BaseModel):
+    response: str
+
+
+@router.post("/libraries", response_model=XRayResponse)
 @requires("code_suggestions")
 @inject
 async def libraries(
@@ -70,8 +74,8 @@ async def libraries(
             prefix=package_file_prompt.prompt,
             _suffix="",
         ):
-            return completion.text
+            return XRayResponse(response=completion.text)
 
     except (AnthropicAPIConnectionError, AnthropicAPIStatusError) as ex:
         log.error(f"failed to execute Anthropic request: {ex}")
-    return ""
+    return XRayResponse(response="")

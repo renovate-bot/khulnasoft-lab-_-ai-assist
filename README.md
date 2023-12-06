@@ -161,7 +161,13 @@ curl --request POST \
 }'
 ```
 
-It will respond with string as it was received from AI Provider
+It will respond with JSON object containing data as it was received from AI Provider in `response` field
+
+```
+{
+  "response": "Here is the response in valid JSON format with the list of libraries parsed from the Gemfile content:\n\n```json\n[\n  \"kaminari\"\n]\n```"
+}
+```
 
 #### Responses
 
