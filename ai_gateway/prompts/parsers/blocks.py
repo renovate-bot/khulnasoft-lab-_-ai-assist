@@ -44,8 +44,6 @@ class MinAllowedBlockVisitor(BaseVisitor):
 
 
 class ErrorBlocksVisitor(BaseVisitor):
-    _TARGET_SYMBOLS = ["ERROR"]
-
     def __init__(self):
         self.error_nodes = []
 
@@ -67,3 +65,9 @@ class ErrorBlocksVisitor(BaseVisitor):
     @property
     def errors(self) -> list[Node]:
         return self.error_nodes
+
+    def visit(self, node: Node):
+        # override the inherited method to rely on the error property
+        # instead of the node name
+        if node.has_error:
+            self._visit_node(node)
