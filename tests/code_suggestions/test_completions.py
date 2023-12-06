@@ -1,20 +1,37 @@
 from contextlib import contextmanager
 from typing import Any, Type
-from unittest.mock import AsyncMock, MagicMock, Mock
+from unittest.mock import AsyncMock, MagicMock, Mock, patch
 
 import pytest
+from dependency_injector.providers import Factory
 
-from ai_gateway.code_suggestions import CodeCompletions, CodeSuggestionsChunk
-from ai_gateway.code_suggestions.processing import LanguageId
+from ai_gateway.code_suggestions import (
+    CodeCompletions,
+    CodeCompletionsLegacy,
+    CodeSuggestionsChunk,
+)
+from ai_gateway.code_suggestions.processing import (
+    LanguageId,
+    ModelEngineCompletions,
+    ModelEngineOutput,
+)
+from ai_gateway.code_suggestions.processing.post.completions import PostProcessor
 from ai_gateway.code_suggestions.processing.pre import (
     PromptBuilderPrefixBased,
     TokenStrategyBase,
 )
-from ai_gateway.instrumentators import TextGenModelInstrumentator
+from ai_gateway.code_suggestions.processing.typing import (
+    LanguageId,
+    MetadataCodeContent,
+    MetadataPromptBuilder,
+)
+from ai_gateway.instrumentators import KnownMetrics, TextGenModelInstrumentator
 from ai_gateway.models import (
     AnthropicAPIConnectionError,
     AnthropicAPIStatusError,
     ModelAPIError,
+    ModelMetadata,
+    PalmCodeGeckoModel,
     SafetyAttributes,
     TextGenBaseModel,
     TextGenModelChunk,
@@ -31,6 +48,159 @@ class InstrumentorMock(Mock):
     @contextmanager
     def watch(self, _prompt: str, **_kwargs: Any):
         yield self.watcher
+
+
+@pytest.mark.asyncio
+class TestCodeCompletionsLegacy:
+    @pytest.mark.parametrize(
+        (
+            "prefix",
+            "suffix",
+            "file_name",
+            "editor_lang",
+            "engine_response_text",
+            "expected_language_id",
+            "expected_output",
+        ),
+        [
+            (
+                "random_prefix",
+                "random_suffix",
+                "file_name",
+                "python",
+                "a good suggestion",
+                LanguageId.PYTHON,
+                "a wonderful suggestion",
+            ),
+        ],
+    )
+    async def test_execute(
+        self,
+        prefix: str,
+        suffix: str,
+        file_name: str,
+        editor_lang: str,
+        engine_response_text: str,
+        expected_language_id: LanguageId,
+        expected_output: str,
+    ):
+        engine_response = ModelEngineOutput(
+            text=engine_response_text,
+            score=0,
+            model=ModelMetadata(name="code-gecko@latest", engine="vertex-ai"),
+            lang_id=expected_language_id,
+            metadata=MetadataPromptBuilder(
+                components={
+                    "prefix": MetadataCodeContent(length=10, length_tokens=2),
+                    "suffix": MetadataCodeContent(length=10, length_tokens=2),
+                },
+            ),
+        )
+        engine = Mock(spec=ModelEngineCompletions)
+        engine.generate = AsyncMock(return_value=engine_response)
+        engine.model = PalmCodeGeckoModel(
+            client=Mock(), project="gl", location="us-central-1"
+        )
+
+        post_processor = Mock(spec=PostProcessor)
+        post_processor.process.return_value = expected_output
+        post_processor_factory = Mock()
+        post_processor_factory.return_value = post_processor
+
+        with patch(
+            "ai_gateway.code_suggestions.completions.benchmark"
+        ) as mock_benchmark:
+            use_case = CodeCompletionsLegacy(
+                engine=engine, post_processor=post_processor_factory
+            )
+            actual = await use_case.execute(
+                prefix=prefix,
+                suffix=suffix,
+                file_name=file_name,
+                editor_lang=editor_lang,
+            )
+
+        assert expected_output == actual.text
+        assert expected_language_id == actual.lang_id
+
+        engine.generate.assert_called_with(prefix, suffix, file_name, editor_lang)
+        mock_benchmark.assert_called_with(
+            metric_key=KnownMetrics.POST_PROCESSING_DURATION,
+            labels={"model_engine": "vertex-ai", "model_name": "code-gecko@latest"},
+        )
+        post_processor_factory.assert_called_with(prefix, lang_id=expected_language_id)
+        post_processor.process.assert_called_with(engine_response_text)
+
+    @pytest.mark.parametrize(
+        (
+            "prefix",
+            "suffix",
+            "file_name",
+            "editor_lang",
+            "engine_response_text",
+            "expected_language_id",
+            "expected_output",
+        ),
+        [
+            (
+                "random_prefix",
+                "random_suffix",
+                "file_name",
+                "python",
+                "",
+                LanguageId.PYTHON,
+                "random_suggestion",
+            ),
+        ],
+    )
+    async def test_execute_without_post_processing(
+        self,
+        prefix: str,
+        suffix: str,
+        file_name: str,
+        editor_lang: str,
+        engine_response_text: str,
+        expected_language_id: LanguageId,
+        expected_output: str,
+    ):
+        engine_response = ModelEngineOutput(
+            text=engine_response_text,
+            score=0,
+            model=ModelMetadata(name="code-gecko@latest", engine="vertex-ai"),
+            lang_id=expected_language_id,
+            metadata=MetadataPromptBuilder(
+                components={
+                    "prefix": MetadataCodeContent(length=10, length_tokens=2),
+                    "suffix": MetadataCodeContent(length=10, length_tokens=2),
+                },
+            ),
+        )
+        engine = Mock(spec=ModelEngineCompletions)
+        engine.generate = AsyncMock(return_value=engine_response)
+        engine.model = PalmCodeGeckoModel(
+            client=Mock(), project="gl", location="us-central-1"
+        )
+
+        post_processor = Mock(spec=PostProcessor)
+        post_processor.process.return_value = expected_output
+        post_processor_factory = Mock()
+        post_processor_factory.return_value = post_processor
+
+        with patch(
+            "ai_gateway.code_suggestions.completions.benchmark"
+        ) as mock_benchmark:
+            use_case = CodeCompletionsLegacy(
+                engine=engine, post_processor=post_processor_factory
+            )
+            _ = await use_case.execute(
+                prefix=prefix,
+                suffix=suffix,
+                file_name=file_name,
+                editor_lang=editor_lang,
+            )
+
+        mock_benchmark.assert_not_called()
+        post_processor.process.assert_not_called()
 
 
 @pytest.mark.asyncio

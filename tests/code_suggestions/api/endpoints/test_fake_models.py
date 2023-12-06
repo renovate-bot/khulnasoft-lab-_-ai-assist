@@ -36,11 +36,13 @@ class TestFakeModels:
         engine = ModelEngineCompletions(
             model=FakePalmTextGenModel(),
             tokenizer=init_tokenizer(),
-            post_processor=PostProcessor,
             experiment_registry=ExperimentRegistry(),
         )
 
-        code_completions_mock = CodeCompletionsLegacy(engine=engine)
+        code_completions_mock = CodeCompletionsLegacy(
+            engine=engine,
+            post_processor=PostProcessor,
+        )
 
         container.code_completions_legacy.override(code_completions_mock)
 
