@@ -117,12 +117,11 @@ async def test_anthropic_model_error(
     def _client_predict(*_args, **_kwargs):
         if issubclass(exception, APITimeoutError):
             raise exception(request=Mock())
-        elif issubclass(exception, APIConnectionError):
+
+        if issubclass(exception, APIConnectionError):
             raise exception(message="exception", request=Mock())
-        else:
-            raise exception(
-                message="exception", request=Mock(), response=Mock(), body=Mock()
-            )
+
+        raise exception(message="exception", response=Mock(), body=Mock())
 
     model = AnthropicModel.from_model_name(
         model_name_version, Mock(spec=AsyncAnthropic)
