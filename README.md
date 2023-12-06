@@ -124,7 +124,7 @@ POST v1/x-ray/libraries
 | `prompt_components`                 | array | yes      | The list of prompt components complicient with https://docs.gitlab.com/ee/architecture/blueprints/ai_gateway/index.html#protocol (min_len: **1**)                    |              |
 | `prompt_components.type`            | string | yes       | The type of the prompt component (max_len: **255**)                                                  | `x_ray_package_file_prompt`  |
 | `prompt_components.payload`         | hash   | yes      | The data of the current prompt component                                       |                           |
-| `prompt_components.metadata`        | hash(max lenght = 10)      | no      | The metadata of the current prompt component. Only string - string key value pairs are accepted.                                       |                           |
+| `prompt_components.metadata`        | hash(max_len: **10**)      | no      | The metadata of the current prompt component. Only string - string key value pairs are accepted.                                       |                           |
 
 
 XRay Libraries endpoint expects one `x_ray_package_file_prompt` prompt component with following structure.
@@ -132,11 +132,11 @@ XRay Libraries endpoint expects one `x_ray_package_file_prompt` prompt component
 | Attribute                           | Type                        | Required | Description                                                        | Example                   |
 | ----------------------------------- | --------------------------- | -------- | ------------------------------------------------------------------- | ------------------------- |
 | `type`                              | `x_ray_package_file_prompt` | yes       | The type of the prompt component (max_len: **255**)                                                  | `x_ray_package_file_prompt`  |
-| `payload`                           | hash                        | yes      | The data of the curernt prompt component                                       |                           |
-| `payload.prompt`                  | string                      | yes      | The complete AI prompt                                       |   `"Human: Tell me fun fact about ducks"`                        |
-| `payload.provider`                  | string                      | yes      | The AI provider for which the prompt template is designed for.                                       |   `"Anthropic"`                        |
-| `payload.model`                     | string                      | yes      | The AI provider model for which the prompt template is designed for.                                       |   `"claude-2"`                        |
-| `metadata`                          | hash(max lenght = 10)                      | no      | The metadata of the curernt prompt component                                       |                           |
+| `payload`                           | hash                        | yes      | The data of the currernt prompt component                                       |                           |
+| `payload.prompt`                  | string(max_len: **400 000**)                         | yes      | The complete AI prompt                                       |   `"Human: Tell me fun fact about ducks"`                        |
+| `payload.provider`                  | string                      | yes      | The AI provider for which the prompt is designed for.                                       |   `"anthropic"`                        |
+| `payload.model`                     | string                      | yes      | The AI model for which the prompt is designed for.                                       |   `"claude-2.0"`                        |
+| `metadata`                          | hash(max_len: **10**)                      | no      | The metadata of the curernt prompt component                                       |                           |
 
 ```shell
 curl --request POST \

@@ -28,7 +28,7 @@ router = APIRouter(
 
 
 class PackageFilePromptPayload(BaseModel):
-    prompt: constr(max_length=100000)
+    prompt: constr(max_length=400000)
     provider: Literal[AnthropicModel.MODEL_ENGINE]
     model: Literal[AnthropicModel.CLAUDE_INSTANT, AnthropicModel.CLAUDE]
 

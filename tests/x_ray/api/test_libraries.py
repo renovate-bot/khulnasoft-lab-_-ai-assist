@@ -2,11 +2,9 @@ from typing import AsyncIterator
 from unittest import mock
 
 import pytest
-from fastapi import Request
-from fastapi.testclient import TestClient
-from httpx import AsyncClient
 
 from ai_gateway.api.v1.api import api_router
+from ai_gateway.api.v1.x_ray.libraries import AnyPromptComponent
 from ai_gateway.auth import User, UserClaims
 from ai_gateway.deps import XRayContainer
 from ai_gateway.models import AnthropicModel, SafetyAttributes, TextGenModelOutput
@@ -86,7 +84,7 @@ class TestXRayLibraries:
         assert response.status_code == want_status
         assert anthropic_model_mock.generate.called == want_called
 
-        if anthropic_model_mock.generate.called:
+        if want_called:
             anthropic_model_mock.generate.assert_called_with(
                 prefix=want_prompt, _suffix=""
             )
@@ -127,3 +125,17 @@ class TestUnauthorizedScopes:
 
         assert response.status_code == 403
         assert response.json() == {"detail": "Forbidden"}
+
+
+class TestAnyPromptComponent:
+    @pytest.mark.parametrize(
+        ("size", "want_error"), [(0, False), (10, False), (11, True)]
+    )
+    def test_metadata_length_validation(self, size, want_error):
+        metadata = {f"key{i}": f"value{i}" for i in range(size)}
+
+        if want_error:
+            with pytest.raises(ValueError):
+                AnyPromptComponent(type="type", payload="{}", metadata=metadata)
+        else:
+            AnyPromptComponent(type="type", payload="{}", metadata=metadata)
