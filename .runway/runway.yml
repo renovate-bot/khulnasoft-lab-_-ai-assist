@@ -9,7 +9,7 @@ spec:
     scrape_targets:
       - "localhost:8082"
   scalability:
-    min_instances: 3
+    min_instances: 9
   resources:
     startup_cpu_boost: true
     limits:
