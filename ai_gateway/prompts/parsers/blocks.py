@@ -4,7 +4,7 @@ from tree_sitter import Node
 
 from ai_gateway.prompts.parsers.base import BaseVisitor, Point
 
-__all__ = ["MinAllowedBlockVisitor"]
+__all__ = ["MinAllowedBlockVisitor", "ErrorBlocksVisitor"]
 
 
 class MinAllowedBlockVisitor(BaseVisitor):
@@ -41,3 +41,33 @@ class MinAllowedBlockVisitor(BaseVisitor):
     def visit(self, node: Node):
         # override the inherited method to visit all nodes
         self._visit_node(node)
+
+
+class ErrorBlocksVisitor(BaseVisitor):
+    def __init__(self):
+        self.error_nodes = []
+
+    def _visit_node(self, target_node: Node):
+        # Include only low-level errors that do not contain other error nodes.
+        # We assume that the visitor called with the DFS algorithm.
+        # Consider updating the logic by building a binary tree of visited nodes if the support of BFS is required.
+        nodes = [target_node]
+        for node in self.error_nodes:
+            if (
+                node.start_point <= target_node.start_point
+                and target_node.end_point <= node.end_point
+            ):
+                continue
+            nodes.append(node)
+
+        self.error_nodes = nodes
+
+    @property
+    def errors(self) -> list[Node]:
+        return self.error_nodes
+
+    def visit(self, node: Node):
+        # override the inherited method to rely on the error property
+        # instead of the node name
+        if node.has_error:
+            self._visit_node(node)

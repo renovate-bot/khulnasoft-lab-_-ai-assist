@@ -60,6 +60,7 @@ class FeatureFlags(NamedTuple):
     is_third_party_ai_default: bool
     limited_access_third_party_ai: dict[int, Project]
     third_party_rollout_percentage: int
+    code_suggestions_excl_post_proc: list
 
 
 class TrackingConfig(NamedTuple):
@@ -134,6 +135,10 @@ class Config:
             projects = _read_projects_from_file(Path(file_path))
             limited_access = {project.id: project for project in projects}
 
+        code_suggestions_excl_post_proc = []
+        if feature_value := Config._get_value("F_CODE_SUGGESTIONS_EXCL_POST_PROC", ""):
+            code_suggestions_excl_post_proc = feature_value.split(";")
+
         return FeatureFlags(
             is_third_party_ai_default=Config._str_to_bool(
                 Config._get_value("F_IS_THIRD_PARTY_AI_DEFAULT", "False")
@@ -142,6 +147,7 @@ class Config:
             third_party_rollout_percentage=int(
                 Config._get_value("F_THIRD_PARTY_ROLLOUT_PERCENTAGE", 0)
             ),
+            code_suggestions_excl_post_proc=code_suggestions_excl_post_proc,
         )
 
     @property

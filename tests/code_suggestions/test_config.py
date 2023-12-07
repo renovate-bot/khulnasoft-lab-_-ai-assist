@@ -131,3 +131,19 @@ def test_config_fake_models(use_fake_models, expected):
         config = Config()
 
         assert config.palm_text_model.real_or_fake == expected
+
+
+@pytest.mark.parametrize(
+    ("f_value", "expected"),
+    [
+        ("", []),
+        ("func1", ["func1"]),
+        ("func1;func2", ["func1", "func2"]),
+        ("func1;func2;func3", ["func1", "func2", "func3"]),
+    ],
+)
+def test_config_code_suggestions_excl_post_proc(f_value: str, expected: list):
+    with mock.patch.dict(os.environ, {"F_CODE_SUGGESTIONS_EXCL_POST_PROC": f_value}):
+        config = Config()
+
+        assert config.feature_flags.code_suggestions_excl_post_proc == expected

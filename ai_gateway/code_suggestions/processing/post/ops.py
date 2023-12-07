@@ -16,6 +16,7 @@ from ai_gateway.prompts.parsers import CodeParser
 __all__ = [
     "clean_model_reflection",
     "trim_by_min_allowed_context",
+    "fix_end_block_errors",
     "strip_code_block_markdown",
     "prepend_new_line",
 ]
@@ -134,6 +135,43 @@ def trim_by_min_allowed_context(
         out = completion
 
     return out
+
+
+def fix_end_block_errors(
+    prefix: str,
+    completion: str,
+    suffix: str,
+    lang_id: Optional[LanguageId] = None,
+) -> str:
+    # Hypothesis 1: the suffix contains only one line.
+    suffix_first_line = suffix.strip()
+    if len(suffix_first_line) == 0:
+        return completion
+
+    # Hypothesis 2: the suffix contains more than only one line.
+    idx_suffix_new_line = suffix_first_line.find("\n")
+    if idx_suffix_new_line != -1:
+        # Hypothesis confirmed: keep only the first line within the variable.
+        suffix_first_line = suffix_first_line[:idx_suffix_new_line]
+
+    completion_lookup = completion.rstrip()
+    if not completion_lookup.endswith(suffix_first_line):
+        # Return the original copy of the completion.
+        return completion
+
+    try:
+        # Remove the suffix from the completion.
+        completion_lookup = completion_lookup[: -len(suffix_first_line)]
+        # Check if any errors exists when joining the original suffix
+        # and the updated version of the completion.
+        code_sample = f"{prefix}{completion_lookup}{suffix}"
+        parser = CodeParser.from_language_id(code_sample, lang_id)
+        if len(parser.errors()) == 0:
+            completion = completion_lookup
+    except ValueError as e:
+        log.warning(f"Failed to parse code: {e}")
+
+    return completion
 
 
 def strip_code_block_markdown(text: str) -> str:

@@ -107,7 +107,11 @@ def _create_anthropic_model(name, client_anthropic, real_or_fake, **kwargs):
     )
 
 
-def _create_engine_code_completions(model_provider, tokenizer, experiment_registry):
+def _create_engine_code_completions(
+    model_provider,
+    tokenizer,
+    experiment_registry,
+):
     return providers.Factory(
         ModelEngineCompletions,
         model=model_provider,
@@ -251,7 +255,10 @@ class CodeSuggestionsContainer(containers.DeclarativeContainer):
     code_completions_legacy = providers.Factory(
         CodeCompletionsLegacy,
         engine=engines[ModelRollout.GOOGLE_CODE_GECKO],
-        post_processor=providers.Factory(PostProcessorCompletions).provider,
+        post_processor=providers.Factory(
+            PostProcessorCompletions,
+            exclude=config.feature_flags.code_suggestions_excl_post_proc,
+        ).provider,
     )
 
     code_completions_anthropic = providers.Factory(
