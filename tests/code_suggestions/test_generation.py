@@ -124,3 +124,29 @@ class TestCodeGeneration:
             "",
             stream=True,
         )
+
+    @pytest.mark.parametrize(
+        ("prefix",),
+        [
+            ("random_prefix",),
+        ],
+    )
+    async def test_instrumentation(
+        self,
+        use_case: CodeGenerations,
+        prefix: str,
+    ):
+        use_case.model.generate = AsyncMock(
+            return_value=TextGenModelOutput(
+                text="expected output", score=0, safety_attributes=SafetyAttributes()
+            )
+        )
+
+        await use_case.execute(
+            prefix=prefix,
+            file_name="some_file",
+        )
+
+        watcher = use_case.instrumentator.watcher
+        watcher.register_current_file.assert_called_with(content_above_cursor=prefix)
+        watcher.register_model_output.assert_called_with("expected output")

@@ -125,6 +125,9 @@ class CodeCompletions:
 
         with self.instrumentator.watch(prompt) as watch_container:
             try:
+                watch_container.register_current_file(
+                    content_above_cursor=prefix, content_below_cursor=suffix
+                )
                 watch_container.register_lang(lang_id, editor_lang)
 
                 if res := await self.model.generate(
@@ -163,7 +166,7 @@ class CodeCompletions:
         lang_id: Optional[LanguageId],
         watch_container: TextGenModelInstrumentator.WatchContainer,
     ) -> CodeSuggestionsOutput:
-        watch_container.register_model_output_length(response.text)
+        watch_container.register_model_output(response.text)
         watch_container.register_model_score(response.score)
         watch_container.register_safety_attributes(response.safety_attributes)
 

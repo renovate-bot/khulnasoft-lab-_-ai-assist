@@ -91,9 +91,10 @@ class TextGenModelInstrumentator:
 
         # Track model output length both in terms of unaltered character count as well as
         # with whitespace stripped out. The latter is used to calculate cloud provider cost.
-        def register_model_output_length(self, model_output: str):
+        def register_model_output(self, model_output: str):
             self.__dict__.update(
                 {
+                    "model_output": model_output,
                     "model_output_length": len(model_output),
                     "model_output_length_stripped": len(
                         remove_whitespace(model_output)
@@ -133,6 +134,18 @@ class TextGenModelInstrumentator:
                     {"safety_categories": safety_attributes.categories}
                 )
 
+        def register_current_file(
+            self,
+            content_above_cursor: str,
+            content_below_cursor: str = "",
+        ):
+            self.__dict__.update(
+                {
+                    "content_above_cursor": content_above_cursor,
+                    "content_below_cursor": content_below_cursor,
+                }
+            )
+
         def dict(self) -> dict:
             return self.__dict__
 
@@ -141,12 +154,17 @@ class TextGenModelInstrumentator:
 
     @contextmanager
     def watch(self, prompt, **kwargs: Any):
-        prompt_string = f"{prompt.prefix}{prompt.suffix if prompt.suffix else ''}"
+        prompt_prefix = prompt.prefix
+        prompt_suffix = prompt.suffix if prompt.suffix else ""
+
+        prompt_string = f"{prompt_prefix}{prompt_suffix}"
         prompt_length = len(prompt_string)
         prompt_length_stripped = len(remove_whitespace(prompt_string))
 
         context["model_engine"] = self.labels["model_engine"]
         context["model_name"] = self.labels["model_name"]
+        context["prompt_prefix"] = prompt_prefix
+        context["prompt_suffix"] = prompt_suffix
         context["prompt_length"] = prompt_length
         context["prompt_length_stripped"] = prompt_length_stripped
 

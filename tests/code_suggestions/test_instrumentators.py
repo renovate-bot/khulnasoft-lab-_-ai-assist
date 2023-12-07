@@ -43,7 +43,7 @@ class TestTextGenModelInstrumentator:
             with instrumentator.watch(
                 prompt, suffix_length=len(suffix)
             ) as watch_container:
-                watch_container.register_model_output_length(completion)
+                watch_container.register_model_output(completion)
 
         mock_labels.assert_has_calls(
             [
@@ -119,3 +119,71 @@ class TestTextGenModelInstrumentator:
             assert context.get("blocked") == blocked
             assert context.get("safety_categories") == safety_categories
             assert context.get("error_codes") == error_codes
+
+    @pytest.mark.parametrize(
+        (
+            "content_above_cursor",
+            "content_below_cursor",
+            "prompt_prefix",
+            "prompt_suffix",
+            "expected_suffix",
+            "expected_prompt_prefix",
+            "expected_prompt_suffix",
+        ),
+        [
+            (
+                "some_file_content",
+                "more_file_content",
+                "prefix",
+                "suffix",
+                "more_file_content",
+                "prefix",
+                "suffix",
+            ),
+            (
+                "some_file_content",
+                "more_file_content",
+                "prefix",
+                None,
+                "more_file_content",
+                "prefix",
+                "",
+            ),
+            ("some_file_content", "", "prefix", "suffix", "", "prefix", "suffix"),
+            ("some_file_content", "", "prefix", "suffix", "", "prefix", "suffix"),
+        ],
+    )
+    def test_prediction_metadata(
+        self,
+        content_above_cursor: str,
+        content_below_cursor: str,
+        prompt_prefix: str,
+        prompt_suffix: str,
+        expected_suffix: str,
+        expected_prompt_prefix: str,
+        expected_prompt_suffix: str,
+    ):
+        metadata = MetadataPromptBuilder(
+            components={
+                "prefix": MetadataCodeContent(length=10, length_tokens=2),
+            },
+        )
+        prompt = Prompt(prefix=prompt_prefix, suffix=prompt_suffix, metadata=metadata)
+        model_engine = "vertex-ai"
+        model_name = "code-gecko"
+
+        instrumentator = TextGenModelInstrumentator(
+            model_engine=model_engine, model_name=model_name
+        )
+
+        with request_cycle_context({}):
+            with instrumentator.watch(prompt) as watch_container:
+                watch_container.register_current_file(
+                    content_above_cursor=content_above_cursor,
+                    content_below_cursor=content_below_cursor,
+                )
+
+            assert context.get("content_above_cursor") == content_above_cursor
+            assert context.get("content_below_cursor") == expected_suffix
+            assert context.get("prompt_prefix") == expected_prompt_prefix
+            assert context.get("prompt_suffix") == expected_prompt_suffix
