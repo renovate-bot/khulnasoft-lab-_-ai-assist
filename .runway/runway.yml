@@ -10,6 +10,7 @@ spec:
       - "localhost:8082"
   scalability:
     min_instances: 9
+    max_instances: 200
   resources:
     startup_cpu_boost: true
     limits:
