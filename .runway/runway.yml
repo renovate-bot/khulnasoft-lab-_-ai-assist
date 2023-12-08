@@ -13,5 +13,5 @@ spec:
   resources:
     startup_cpu_boost: true
     limits:
-      cpu: 2
-      memory: 2G
+      cpu: 4
+      memory: 4G
