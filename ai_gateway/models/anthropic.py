@@ -114,12 +114,7 @@ class AnthropicModel(TextGenBaseModel):
         **kwargs: Any,
     ) -> Union[TextGenModelOutput, AsyncIterator[TextGenModelChunk]]:
         opts = _obtain_opts(self.model_opts, **kwargs)
-        log.info(
-            "codegen anthropic call",
-            **{
-                k: v for k, v in opts.items() if v is not NOT_GIVEN
-            },  # don't log "NOT_GIVEN"
-        )
+        log.debug("codegen anthropic call:", **opts)
 
         try:
             suggestion = await self.client.completions.create(

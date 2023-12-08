@@ -95,7 +95,6 @@ class CodeGenerations:
 
         with self.instrumentator.watch(prompt) as watch_container:
             try:
-                watch_container.register_current_file(content_above_cursor=prefix)
                 watch_container.register_lang(lang_id, editor_lang)
 
                 if res := await self.model.generate(
@@ -140,7 +139,7 @@ class CodeGenerations:
         watch_container: TextGenModelInstrumentator.WatchContainer,
         model_provider: Optional[str] = None,
     ) -> CodeSuggestionsOutput:
-        watch_container.register_model_output(response.text)
+        watch_container.register_model_output_length(response.text)
         watch_container.register_model_score(response.score)
         watch_container.register_safety_attributes(response.safety_attributes)
 

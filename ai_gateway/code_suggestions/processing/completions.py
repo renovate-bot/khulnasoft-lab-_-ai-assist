@@ -211,15 +211,12 @@ class ModelEngineCompletions(ModelEngineBase):
                 # log experiments included in this request
                 self._count_experiments(prompt.metadata.experiments, watch_container)
 
-                watch_container.register_current_file(
-                    content_above_cursor=prefix, content_below_cursor=suffix
-                )
                 watch_container.register_lang(lang_id, editor_lang)
 
                 if res := await self.model.generate(
                     prompt.prefix, prompt.suffix, **kwargs
                 ):
-                    watch_container.register_model_output(res.text)
+                    watch_container.register_model_output_length(res.text)
                     watch_container.register_model_score(res.score)
                     watch_container.register_safety_attributes(res.safety_attributes)
 

@@ -30,7 +30,7 @@ class MockInstrumentor:
     def __init__(self):
         self.watcher = Mock()
         self.watcher.register_prompt_symbols = Mock()
-        self.watcher.register_model_output = Mock()
+        self.watcher.register_model_output_length = Mock()
         self.watcher.register_lang = Mock()
 
     @contextmanager
@@ -502,10 +502,10 @@ async def test_model_engine_palm(
     watcher.register_lang.assert_called_with(language, editor_language)
 
     if successful_predict:
-        watcher.register_model_output.assert_called_with(model_output)
+        watcher.register_model_output_length.assert_called_with(model_output)
         watcher.register_model_score.assert_called_with(-1)
     else:
-        watcher.register_model_output.assert_not_called()
+        watcher.register_model_output_length.assert_not_called()
         watcher.register_model_score.assert_not_called()
 
     if expected_prompt_symbol_counts:
