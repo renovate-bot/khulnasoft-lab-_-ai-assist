@@ -285,9 +285,6 @@ async def _handle_stream(
         async for result in response:
             yield result.text
 
-        # Mark end of the stream
-        yield "[AI_DONE]"
-
     return StreamSuggestionsResponse(
         _stream_generator(), media_type="text/event-stream"
     )

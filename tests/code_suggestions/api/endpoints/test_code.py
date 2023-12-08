@@ -318,7 +318,7 @@ class TestCodeCompletions:
                         text=" (query)",
                     ),
                 ],
-                "def search (query)[AI_DONE]",
+                "def search (query)",
             ),
         ],
     )
@@ -658,7 +658,7 @@ class TestCodeGenerations:
                         text=" (query)",
                     ),
                 ],
-                "def search (query)[AI_DONE]",
+                "def search (query)",
             ),
         ],
     )
