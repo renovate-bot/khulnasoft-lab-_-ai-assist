@@ -1,9 +1,10 @@
 from time import time
-from typing import Optional
+from typing import AsyncIterator, Optional
 
 import structlog
 from dependency_injector.wiring import Provide, inject
 from fastapi import APIRouter, Depends, Request
+from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 from pydantic.types import conlist, constr
 from pydantic.typing import Literal
@@ -14,6 +15,7 @@ from ai_gateway.models import (
     AnthropicAPIConnectionError,
     AnthropicAPIStatusError,
     AnthropicModel,
+    TextGenModelChunk,
 )
 
 __all__ = [
@@ -53,6 +55,7 @@ class PromptComponent(BaseModel):
 # Details: https://gitlab.com/gitlab-org/gitlab/-/merge_requests/135837#note_1642865693
 class ChatRequest(BaseModel):
     prompt_components: conlist(PromptComponent, min_items=1, max_items=1)
+    stream: Optional[bool] = False
 
 
 class ChatResponseMetadata(BaseModel):
@@ -64,6 +67,10 @@ class ChatResponseMetadata(BaseModel):
 class ChatResponse(BaseModel):
     response: str
     metadata: ChatResponseMetadata
+
+
+class StreamChatResponse(StreamingResponse):
+    pass
 
 
 @router.post("/agent", response_model=ChatResponse)
@@ -82,7 +89,11 @@ async def chat(
         if completion := await model.generate(
             prefix=payload.content,
             _suffix="",
+            stream=chat_request.stream,
         ):
+            if isinstance(completion, AsyncIterator):
+                return await _handle_stream(completion)
+
             return ChatResponse(
                 response=completion.text,
                 metadata=ChatResponseMetadata(
@@ -99,3 +110,13 @@ async def chat(
             provider=AnthropicModel.MODEL_ENGINE, model=payload.model, timestamp=time()
         ),
     )
+
+
+async def _handle_stream(
+    response: AsyncIterator[TextGenModelChunk],
+) -> StreamChatResponse:
+    async def _stream_generator():
+        async for result in response:
+            yield result.text
+
+    return StreamChatResponse(_stream_generator(), media_type="text/event-stream")

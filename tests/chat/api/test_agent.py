@@ -1,4 +1,4 @@
-from typing import Type
+from typing import AsyncIterator, Type
 from unittest import mock
 from unittest.mock import AsyncMock
 
@@ -15,6 +15,7 @@ from ai_gateway.models import (
     AnthropicModel,
     ModelAPIError,
     SafetyAttributes,
+    TextGenModelChunk,
     TextGenModelOutput,
 )
 
@@ -87,7 +88,88 @@ class TestAgentSuccessfulRequest:
 
         mock_anthropic_model.provider.assert_called_with(model_name=model_name)
         mock_model.generate.assert_called_with(
-            prefix="\n\nHuman: hello, what is your name?\n\nAssistant:", _suffix=""
+            prefix="\n\nHuman: hello, what is your name?\n\nAssistant:",
+            _suffix="",
+            stream=False,
+        )
+
+
+class TestAgentSuccessfuStream:
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize(
+        ("model_chunks", "expected_response"),
+        [
+            (
+                [
+                    TextGenModelChunk(
+                        text="test",
+                    ),
+                    TextGenModelChunk(
+                        text=" ",
+                    ),
+                    TextGenModelChunk(
+                        text="completion",
+                    ),
+                ],
+                "test completion",
+            ),
+        ],
+    )
+    async def test_successful_stream(
+        self,
+        mock_client: TestClient,
+        model_chunks: list[TextGenModelChunk],
+        expected_response: str,
+    ):
+        async def _stream_generator(
+            prefix, _suffix, stream
+        ) -> AsyncIterator[TextGenModelChunk]:
+            for chunk in model_chunks:
+                yield chunk
+
+        model_name = "claude-2.0"
+        mock_model = mock.Mock(spec=AnthropicModel)
+        mock_model.generate = AsyncMock(side_effect=_stream_generator)
+        mock_anthropic_model = mock.Mock()
+        mock_anthropic_model.provider.return_value = mock_model
+
+        container = ChatContainer()
+
+        with container.anthropic_model.override(mock_anthropic_model):
+            response = mock_client.post(
+                "/v1/chat/agent",
+                headers={
+                    "Authorization": "Bearer 12345",
+                    "X-Gitlab-Authentication-Type": "oidc",
+                },
+                json={
+                    "prompt_components": [
+                        {
+                            "type": "prompt",
+                            "metadata": {
+                                "source": "gitlab-rails-sm",
+                                "version": "16.5.0-ee",
+                            },
+                            "payload": {
+                                "content": "\n\nHuman: hello, what is your name?\n\nAssistant:",
+                                "provider": "anthropic",
+                                "model": model_name,
+                            },
+                        },
+                    ],
+                    "stream": "True",
+                },
+            )
+
+        assert response.status_code == 200
+        assert response.text == expected_response
+        assert response.headers["content-type"] == "text/event-stream; charset=utf-8"
+
+        mock_anthropic_model.provider.assert_called_with(model_name=model_name)
+        mock_model.generate.assert_called_with(
+            prefix="\n\nHuman: hello, what is your name?\n\nAssistant:",
+            _suffix="",
+            stream=True,
         )
 
 
