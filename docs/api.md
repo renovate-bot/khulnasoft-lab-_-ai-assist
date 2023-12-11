@@ -1,5 +1,8 @@
 # API
 
+An interactive API documentation site is available at http://127.0.0.1:5001/docs.
+For more information, please see the official FastAPI [doc](https://fastapi.tiangolo.com/tutorial/first-steps/?h=interactive+api+docs#interactive-api-docs).
+
 ## Authentication
 
 The Code Suggestions API supports authentication via Code Suggestions access tokens.
