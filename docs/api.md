@@ -447,8 +447,8 @@ curl --request POST \
   "prompt_components": [
     {
       "type":"prompt",
-      "payload":{
-        "content": "Human: Tell me a fun fact about ducts\n\n\Assistant:,
+      "payload": {
+        "content": "Human: Tell me a fun fact about ducts\n\n\Assistant:",
         "provider": "anthropic",
         "model": "claude-2.0"
       },
