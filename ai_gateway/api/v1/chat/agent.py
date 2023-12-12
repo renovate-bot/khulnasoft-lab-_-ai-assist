@@ -35,6 +35,12 @@ class PromptMetadata(BaseModel):
     version: constr(max_length=100)
 
 
+class AnthropicParams(BaseModel):
+    stop_sequences: list[str] = ["\n\nHuman", "Observation:"]
+    temperature: float = 0.2
+    max_tokens_to_sample: int = 2048
+
+
 class PromptPayload(BaseModel):
     content: constr(max_length=400000)
     provider: Optional[
@@ -43,6 +49,7 @@ class PromptPayload(BaseModel):
     model: Optional[
         Literal[AnthropicModel.CLAUDE, AnthropicModel.CLAUDE_INSTANT]
     ] = AnthropicModel.CLAUDE
+    params: Optional[AnthropicParams] = None
 
 
 class PromptComponent(BaseModel):
@@ -83,7 +90,13 @@ async def chat(
 ):
     prompt_component = chat_request.prompt_components[0]
     payload = prompt_component.payload
-    model = anthropic_model.provider(model_name=payload.model)
+
+    anthropic_opts = {"model_name": payload.model}
+
+    if payload.params:
+        anthropic_opts.update(payload.params.dict())
+
+    model = anthropic_model.provider(**anthropic_opts)
 
     try:
         if completion := await model.generate(
