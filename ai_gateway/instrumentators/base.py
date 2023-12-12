@@ -1,11 +1,11 @@
 import re
 import time
 from contextlib import contextmanager
-from typing import Any, Optional
+from typing import Annotated, Any, Optional
 
 import structlog
 from prometheus_client import Counter, Histogram
-from pydantic import BaseModel, constr
+from pydantic import BaseModel, ConfigDict, StringConstraints
 from starlette_context import context
 
 from ai_gateway.experimentation import ExperimentTelemetry
@@ -188,11 +188,14 @@ class TextGenModelInstrumentator:
 
 
 class Telemetry(BaseModel):
+    # Opt out protected namespace "model_" (https://github.com/pydantic/pydantic/issues/6322).
+    model_config = ConfigDict(protected_namespaces=())
+
     # TODO: Once the header telemetry format is removed, we can unmark these as optional
-    model_engine: Optional[constr(max_length=50)]
-    model_name: Optional[constr(max_length=50)]
-    lang: Optional[constr(max_length=50)]
-    experiments: Optional[list[ExperimentTelemetry]]
+    model_engine: Optional[Annotated[str, StringConstraints(max_length=50)]] = None
+    model_name: Optional[Annotated[str, StringConstraints(max_length=50)]] = None
+    lang: Optional[Annotated[str, StringConstraints(max_length=50)]] = None
+    experiments: Optional[list[ExperimentTelemetry]] = None
     requests: int
     accepts: int
     errors: int

@@ -1,13 +1,11 @@
 from time import time
-from typing import AsyncIterator, Optional
+from typing import Annotated, AsyncIterator, List, Literal, Optional
 
 import structlog
 from dependency_injector.wiring import Provide, inject
 from fastapi import APIRouter, Depends, Request
 from fastapi.responses import StreamingResponse
-from pydantic import BaseModel
-from pydantic.types import confloat, conint, conlist, constr
-from pydantic.typing import Literal
+from pydantic import BaseModel, Field, StringConstraints
 from starlette.authentication import requires
 
 from ai_gateway.deps import ChatContainer
@@ -31,24 +29,27 @@ router = APIRouter(
 
 
 class PromptMetadata(BaseModel):
-    source: constr(max_length=100)
-    version: constr(max_length=100)
+    source: Annotated[str, StringConstraints(max_length=100)]
+    version: Annotated[str, StringConstraints(max_length=100)]
 
 
 class AnthropicParams(BaseModel):
-    stop_sequences: conlist(constr(max_length=225), min_items=1, max_items=10) = [
+    stop_sequences: Annotated[
+        List[Annotated[str, StringConstraints(max_length=225)]],
+        Field(min_length=1, max_length=10),
+    ] = [
         "\n\nHuman",
         "Observation:",
     ]
-    temperature: confloat(ge=0.0, le=1.0) = 0.2
-    max_tokens_to_sample: conint(ge=1, le=2_048) = 2_048
+    temperature: Annotated[float, Field(ge=0.0, le=1.0)] = 0.2
+    max_tokens_to_sample: Annotated[int, Field(ge=1, le=2_048)] = 2_048
 
 
 class PromptPayload(BaseModel):
-    content: constr(max_length=400000)
+    content: Annotated[str, StringConstraints(max_length=400000)]
     provider: Optional[
         Literal[AnthropicModel.MODEL_ENGINE]
-    ]  # We only support and expect Anthropic for now
+    ] = None  # We only support and expect Anthropic for now
     model: Optional[
         Literal[
             AnthropicModel.CLAUDE,
@@ -61,7 +62,7 @@ class PromptPayload(BaseModel):
 
 
 class PromptComponent(BaseModel):
-    type: constr(max_length=100)
+    type: Annotated[str, StringConstraints(max_length=100)]
     metadata: PromptMetadata
     payload: PromptPayload
 
@@ -69,7 +70,9 @@ class PromptComponent(BaseModel):
 # We expect only a single prompt component in the first iteration.
 # Details: https://gitlab.com/gitlab-org/gitlab/-/merge_requests/135837#note_1642865693
 class ChatRequest(BaseModel):
-    prompt_components: conlist(PromptComponent, min_items=1, max_items=1)
+    prompt_components: Annotated[
+        List[PromptComponent], Field(min_length=1, max_length=1)
+    ]
     stream: Optional[bool] = False
 
 
@@ -114,13 +117,12 @@ async def chat(
         ):
             if isinstance(completion, AsyncIterator):
                 return await _handle_stream(completion)
-
             return ChatResponse(
                 response=completion.text,
                 metadata=ChatResponseMetadata(
                     provider=AnthropicModel.MODEL_ENGINE,
                     model=payload.model,
-                    timestamp=time(),
+                    timestamp=int(time()),
                 ),
             )
     except (AnthropicAPIConnectionError, AnthropicAPIStatusError) as ex:
@@ -128,7 +130,9 @@ async def chat(
     return ChatResponse(
         response="",
         metadata=ChatResponseMetadata(
-            provider=AnthropicModel.MODEL_ENGINE, model=payload.model, timestamp=time()
+            provider=AnthropicModel.MODEL_ENGINE,
+            model=payload.model,
+            timestamp=int(time()),
         ),
     )
 

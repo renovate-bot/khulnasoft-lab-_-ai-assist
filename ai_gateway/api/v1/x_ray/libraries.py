@@ -1,11 +1,10 @@
-from typing import Optional
+from typing import Annotated, List, Literal, Optional
 
 import structlog
 from dependency_injector.wiring import Provide, inject
 from fastapi import APIRouter, Depends, Request
-from pydantic import BaseModel, validator
-from pydantic.types import Json, conlist, constr
-from pydantic.typing import Literal
+from pydantic import BaseModel, Field, StringConstraints, field_validator
+from pydantic.types import Json
 from starlette.authentication import requires
 
 from ai_gateway.deps import XRayContainer
@@ -28,17 +27,23 @@ router = APIRouter(
 
 
 class PackageFilePromptPayload(BaseModel):
-    prompt: constr(max_length=400000)
+    prompt: Annotated[str, StringConstraints(max_length=400000)]
     provider: Literal[AnthropicModel.MODEL_ENGINE]
     model: Literal[AnthropicModel.CLAUDE_INSTANT_V1_2, AnthropicModel.CLAUDE]
 
 
 class AnyPromptComponent(BaseModel):
-    type: constr(strip_whitespace=True, max_length=255)
+    type: Annotated[str, StringConstraints(strip_whitespace=True, max_length=255)]
     payload: Json
-    metadata: Optional[dict[constr(max_length=100), constr(max_length=255)]]
+    metadata: Optional[
+        dict[
+            Annotated[str, StringConstraints(max_length=100)],
+            Annotated[str, StringConstraints(max_length=255)],
+        ]
+    ] = None
 
-    @validator("metadata")
+    @field_validator("metadata")
+    @classmethod
     def validate_medatada(cls, dictionary):
         if dictionary is not None and len(dictionary) > 10:
             raise ValueError("metadata cannot has more than 10 elements")
@@ -52,7 +57,9 @@ class PackageFilePromptComponent(AnyPromptComponent):
 
 
 class XRayRequest(BaseModel):
-    prompt_components: conlist(PackageFilePromptComponent, min_items=1, max_items=1)
+    prompt_components: Annotated[
+        List[PackageFilePromptComponent], Field(min_length=1, max_length=1)
+    ]
 
 
 class XRayResponse(BaseModel):

@@ -1,14 +1,12 @@
 from time import time
-from typing import Literal, Optional, Union
+from typing import Annotated, List, Literal, Optional, Union
 from uuid import uuid4
 
 import structlog
 from dependency_injector.providers import FactoryAggregate
 from dependency_injector.wiring import Provide, inject
 from fastapi import APIRouter, Depends, Request
-from pydantic import BaseModel, constr
-from pydantic.fields import Field
-from pydantic.types import confloat, conint, conlist
+from pydantic import BaseModel, Field, StringConstraints
 
 from ai_gateway.api.rollout import ModelRollout
 from ai_gateway.auth.authentication import requires
@@ -29,36 +27,36 @@ router = APIRouter(
 class ModelVertexTextBison(BaseModel):
     # Ref: https://cloud.google.com/vertex-ai/docs/generative-ai/learn/models#text_model_parameters
     class Parameters(BaseModel):
-        temperature: confloat(ge=0.0, le=1.0) = 0.2
-        max_output_tokens: conint(ge=1, le=1_024) = 16
-        top_p: confloat(ge=0.0, le=1.0) = 0.95
-        top_k: conint(ge=1, le=40) = 40
+        temperature: Annotated[float, Field(ge=0.0, le=1.0)] = 0.2
+        max_output_tokens: Annotated[int, Field(ge=1, le=1_024)] = 16
+        top_p: Annotated[float, Field(ge=0.0, le=1.0)] = 0.95
+        top_k: Annotated[int, Field(ge=1, le=40)] = 40
 
     name: Literal[ModelRollout.GOOGLE_TEXT_BISON]
-    content: constr(max_length=100000)
+    content: Annotated[str, StringConstraints(max_length=100000)]
     parameters: Parameters
 
 
 class ModelVertexCodeBison(BaseModel):
     # Ref: https://cloud.google.com/vertex-ai/docs/generative-ai/learn/models#code-generation-prompt-parameters
     class Parameters(BaseModel):
-        temperature: confloat(ge=0.0, le=1.0) = 0.2
-        max_output_tokens: conint(ge=1, le=2_048) = 16
+        temperature: Annotated[float, Field(ge=0.0, le=1.0)] = 0.2
+        max_output_tokens: Annotated[int, Field(ge=1, le=2_048)] = 16
 
     name: Literal[ModelRollout.GOOGLE_CODE_BISON]
-    prefix: constr(max_length=100000)
+    prefix: Annotated[str, StringConstraints(max_length=100000)]
     parameters: Parameters
 
 
 class ModelVertexCodeGecko(BaseModel):
     # Ref: https://cloud.google.com/vertex-ai/docs/generative-ai/learn/models#code-completion-prompt-parameters
     class Parameters(BaseModel):
-        temperature: confloat(ge=0.0, le=1.0) = 0.2
-        max_output_tokens: conint(ge=1, le=64) = 16
+        temperature: Annotated[float, Field(ge=0.0, le=1.0)] = 0.2
+        max_output_tokens: Annotated[int, Field(ge=1, le=64)] = 16
 
     name: Literal[ModelRollout.GOOGLE_CODE_GECKO]
-    prefix: constr(max_length=100000)
-    suffix: constr(max_length=100000)
+    prefix: Annotated[str, StringConstraints(max_length=100000)]
+    suffix: Annotated[str, StringConstraints(max_length=100000)]
     parameters: Parameters
 
 
@@ -72,11 +70,15 @@ ModelAny = Union[
 class CodeCompletionsRequest(BaseModel):
     id: str = Field(default_factory=lambda: uuid4().hex)
     prompt_version: Literal[1] = 1
-    project_id: Optional[int]
-    project_path: Optional[constr(strip_whitespace=True, max_length=255)]
-    file_name: Optional[constr(strip_whitespace=True, max_length=255)]
+    project_id: Optional[int] = None
+    project_path: Optional[
+        Annotated[str, StringConstraints(strip_whitespace=True, max_length=255)]
+    ] = None
+    file_name: Optional[
+        Annotated[str, StringConstraints(strip_whitespace=True, max_length=255)]
+    ] = None
     model: ModelAny = Field(..., discriminator="name")
-    telemetry: conlist(Telemetry, max_items=10) = []
+    telemetry: Annotated[List[Telemetry], Field(max_length=10)] = []
 
 
 class CodeCompletionsResponse(BaseModel):

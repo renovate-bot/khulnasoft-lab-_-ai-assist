@@ -18,7 +18,10 @@ from ai_gateway.chat.evaluation.chains.qa import (
 
 @pytest.fixture
 def model() -> Mock:
-    return Mock(spec=ChatAnthropic)
+    _model = Mock(spec=ChatAnthropic)
+    _model.config_specs = []
+
+    return _model
 
 
 class TestQAEvalChain:
