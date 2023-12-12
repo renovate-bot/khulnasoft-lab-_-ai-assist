@@ -6,7 +6,7 @@ from dependency_injector.wiring import Provide, inject
 from fastapi import APIRouter, Depends, Request
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
-from pydantic.types import conlist, constr
+from pydantic.types import confloat, conint, conlist, constr
 from pydantic.typing import Literal
 from starlette.authentication import requires
 
@@ -35,6 +35,15 @@ class PromptMetadata(BaseModel):
     version: constr(max_length=100)
 
 
+class AnthropicParams(BaseModel):
+    stop_sequences: conlist(constr(max_length=225), min_items=1, max_items=10) = [
+        "\n\nHuman",
+        "Observation:",
+    ]
+    temperature: confloat(ge=0.0, le=1.0) = 0.2
+    max_tokens_to_sample: conint(ge=1, le=2_048) = 2_048
+
+
 class PromptPayload(BaseModel):
     content: constr(max_length=400000)
     provider: Optional[
@@ -43,6 +52,7 @@ class PromptPayload(BaseModel):
     model: Optional[
         Literal[AnthropicModel.CLAUDE, AnthropicModel.CLAUDE_INSTANT]
     ] = AnthropicModel.CLAUDE
+    params: Optional[AnthropicParams] = None
 
 
 class PromptComponent(BaseModel):
@@ -83,7 +93,13 @@ async def chat(
 ):
     prompt_component = chat_request.prompt_components[0]
     payload = prompt_component.payload
-    model = anthropic_model.provider(model_name=payload.model)
+
+    anthropic_opts = {"model_name": payload.model}
+
+    if payload.params:
+        anthropic_opts.update(payload.params.dict())
+
+    model = anthropic_model.provider(**anthropic_opts)
 
     try:
         if completion := await model.generate(

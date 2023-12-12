@@ -35,11 +35,64 @@ def auth_user():
 
 class TestAgentSuccessfulRequest:
     @pytest.mark.asyncio
+    @pytest.mark.parametrize(
+        ("request_body", "expected_provider_args"),
+        [
+            (
+                {
+                    "prompt_components": [
+                        {
+                            "type": "prompt",
+                            "metadata": {
+                                "source": "gitlab-rails-sm",
+                                "version": "16.5.0-ee",
+                            },
+                            "payload": {
+                                "content": "\n\nHuman: hello, what is your name?\n\nAssistant:",
+                                "provider": "anthropic",
+                                "model": "claude-2.0",
+                            },
+                        },
+                    ]
+                },
+                {
+                    "model_name": "claude-2.0",
+                },
+            ),
+            (
+                {
+                    "prompt_components": [
+                        {
+                            "type": "prompt",
+                            "metadata": {
+                                "source": "gitlab-rails-sm",
+                                "version": "16.5.0-ee",
+                            },
+                            "payload": {
+                                "content": "\n\nHuman: hello, what is your name?\n\nAssistant:",
+                                "provider": "anthropic",
+                                "model": "claude-2.0",
+                                "params": {
+                                    "temperature": 0.3,
+                                    "stop_sequences": ["\n\nHuman", "Observation:"],
+                                    "max_tokens_to_sample": 1024,
+                                },
+                            },
+                        },
+                    ]
+                },
+                {
+                    "model_name": "claude-2.0",
+                    "temperature": 0.3,
+                    "stop_sequences": ["\n\nHuman", "Observation:"],
+                    "max_tokens_to_sample": 1024,
+                },
+            ),
+        ],
+    )
     async def test_successful_response(
-        self,
-        mock_client: TestClient,
+        self, mock_client: TestClient, request_body: dict, expected_provider_args: dict
     ):
-        model_name = "claude-2.0"
         mock_model = mock.Mock(spec=AnthropicModel)
         mock_model.generate = AsyncMock(
             return_value=TextGenModelOutput(
@@ -60,22 +113,7 @@ class TestAgentSuccessfulRequest:
                     "Authorization": "Bearer 12345",
                     "X-Gitlab-Authentication-Type": "oidc",
                 },
-                json={
-                    "prompt_components": [
-                        {
-                            "type": "prompt",
-                            "metadata": {
-                                "source": "gitlab-rails-sm",
-                                "version": "16.5.0-ee",
-                            },
-                            "payload": {
-                                "content": "\n\nHuman: hello, what is your name?\n\nAssistant:",
-                                "provider": "anthropic",
-                                "model": model_name,
-                            },
-                        },
-                    ]
-                },
+                json=request_body,
             )
 
         assert response.status_code == 200
@@ -84,9 +122,12 @@ class TestAgentSuccessfulRequest:
 
         response_metadata = response.json()["metadata"]
         assert response_metadata["provider"] == "anthropic"
-        assert response_metadata["model"] == model_name
+        assert (
+            response_metadata["model"]
+            == request_body["prompt_components"][0]["payload"]["model"]
+        )
 
-        mock_anthropic_model.provider.assert_called_with(model_name=model_name)
+        mock_anthropic_model.provider.assert_called_with(**expected_provider_args)
         mock_model.generate.assert_called_with(
             prefix="\n\nHuman: hello, what is your name?\n\nAssistant:",
             _suffix="",
