@@ -6,7 +6,7 @@ from dependency_injector.wiring import Provide, inject
 from fastapi import APIRouter, Depends, Request
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
-from pydantic.types import conlist, constr
+from pydantic.types import confloat, conint, conlist, constr
 from pydantic.typing import Literal
 from starlette.authentication import requires
 
@@ -36,9 +36,12 @@ class PromptMetadata(BaseModel):
 
 
 class AnthropicParams(BaseModel):
-    stop_sequences: list[str] = ["\n\nHuman", "Observation:"]
-    temperature: float = 0.2
-    max_tokens_to_sample: int = 2048
+    stop_sequences: conlist(constr(max_length=225), min_items=1, max_items=10) = [
+        "\n\nHuman",
+        "Observation:",
+    ]
+    temperature: confloat(ge=0.0, le=1.0) = 0.2
+    max_tokens_to_sample: conint(ge=1, le=2_048) = 2_048
 
 
 class PromptPayload(BaseModel):
