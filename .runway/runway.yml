@@ -11,8 +11,9 @@ spec:
   scalability:
     min_instances: 9
     max_instances: 200
+    max_instance_request_concurrency: 40
   resources:
     startup_cpu_boost: true
     limits:
-      cpu: 4
+      cpu: 1
       memory: 8G
