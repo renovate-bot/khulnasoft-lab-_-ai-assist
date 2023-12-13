@@ -17,7 +17,141 @@ curl --header "Authorization: Bearer <access_token>" --header "X-Gitlab-Authenti
 
 ## Code Suggestions
 
-### Completions
+### V3 
+
+The v3 endpoint is aligned to the [architectural blueprint](https://docs.gitlab.com/ee/architecture/blueprints/ai_gateway/index.html#example-feature-code-suggestions).
+
+```plaintext
+POST /v3/completions
+POST /ai/v3/completions
+```
+
+#### Completion
+
+| Attribute                           | Type   | Required | Description                                                        | Example                   |
+| ----------------------------------- | ------ | -------- | ------------------------------------------------------------------ | ------------------------- |
+| `prompt_components.type`            | string | yes      | Identifies the prompt_payload type (for completions use `code_editor_completion`)                    | `code_editor_completion`               |
+| `prompt_components.payload.file_name`            | string | yes      | The name of the current file (max_len: **255**)                    | `README.md`               |
+| `prompt_components.payload.content_above_cursor` | string | yes      | The content above cursor (max_len: **100,000**)                    | `import numpy as np`      |
+| `prompt_components.payload.content_below_cursor` | string | yes      | The content below cursor (max_len: **100,000**)                    | `def __main__:\n`         |
+| `prompt_components.payload.language_identifier` | string | no      | [Language identifier](https://code.visualstudio.com/docs/languages/identifiers) (max_len: **255**)                    | `python`         |
+| `prompt_components.payload.model_provider`                         | string  | no       | The model engine that should be used for the completion |     `anthropic`                      |
+| `prompt_components.payload.stream`                         | boolean  | no       | Enables streaming response, if applicable (default: false) |     `true`                      |
+| `prompt_components.metadata.source`            | string | no      | Source of the completionrequest (max_len: **255**)                  | `GitLab EE`               |
+| `prompt_components.metadata.version` | string | no      | Version of the source (max_len: **255**)      | `16.3`      |
+
+
+```shell
+curl --request POST \
+  --url 'https://codesuggestions.gitlab.com/v3/completions' \
+  --header 'Authorization: Bearer <access_token>' \
+  --header 'X-Gitlab-Authentication-Type: oidc' \
+  --header 'Content-Type: application/json' \
+  --data-raw '{
+      "prompt_components": [
+        {
+          "type": "code_editor_completion",
+          "payload": {
+            "file_name": "test",
+            "content_above_cursor": "func hello_world(){\n\t",
+            "content_below_cursor": "\n}",
+            "model_provider": "vertex-ai",
+            "language_identifier": "go"
+          },
+          "metadata": {
+            "source": "Gitlab EE",
+            "version": "16.3"
+          }
+        }
+      ]
+    }'
+```
+
+Example response:
+
+```json
+{
+  "response": "fmt.Println(\"Hello World\")\n",
+  "metadata": {
+    "model": {
+      "engine": "vertex-ai",
+      "name": "code-gecko@latest",
+      "lang": "go"
+    },
+    "timestamp": 1702389046
+  }
+}
+```
+
+#### Generation
+
+| Attribute                           | Type   | Required | Description                                                        | Example                   |
+| ----------------------------------- | ------ | -------- | ------------------------------------------------------------------ | ------------------------- |
+| `prompt_components.type`            | string | yes      | Identifies the prompt_payload type (for generation use `code_editor_generation`)                    | `code_editor_generation`               |
+| `prompt_components.payload.file_name`            | string | yes      | The name of the current file (max_len: **255**)                    | `README.md`               |
+| `prompt_components.payload.content_above_cursor` | string | yes      | The content above cursor (max_len: **100,000**)                    | `import numpy as np`      |
+| `prompt_components.payload.content_below_cursor` | string | yes      | The content below cursor (max_len: **100,000**)                    | `def __main__:\n`         |
+| `prompt_components.payload.language_identifier` | string | no      | [Language identifier](https://code.visualstudio.com/docs/languages/identifiers) (max_len: **255**)                    | `python`         |
+| `prompt_components.payload.model_provider`                         | string  | no       | The model engine that should be used for the completion |     `anthropic`                      |
+| `prompt_components.payload.stream`                         | boolean  | no       | Enables streaming response, if applicable (default: false) |     `true`                      |
+| `prompt_components.payload.prompt`                         | string  | no       | An optional pre-built prompt to be passed directly to the model (max_len: **400,000**) |     `Human: You are a code assistant...`                      |
+| `prompt_components.metadata.source`            | string | no      | Source of the completionrequest (max_len: **255**)              | `GitLab EE`               |
+| `prompt_components.metadata.version` | string | no      | Version of the source (max_len: **255**)    | `16.3`      |
+
+
+```shell
+curl --request POST \
+  --url 'https://codesuggestions.gitlab.com/v3/completions' \
+  --header 'Authorization: Bearer <access_token>' \
+  --header 'X-Gitlab-Authentication-Type: oidc' \
+  --header 'Content-Type: application/json' \
+  --data-raw '{
+      "prompt_components": [
+        {
+          "type": "code_editor_generation",
+          "payload": {
+            "file_name": "test",
+            "content_above_cursor": "func hello_world(){\n\t",
+            "content_below_cursor": "\n}",
+            "model_provider": "anthropic",
+            "language_identifier": "go",
+            "prompt": "Human: Write a golang function that prints hello world."
+          },
+          "metadata": {
+            "source": "Gitlab EE",
+            "version": "16.3"
+          }
+        }
+      ]
+    }'
+```
+
+Example response:
+
+```json
+{
+  "response": "\n\nHere is a golang function that prints \"Hello World\":\n\n [...] printing \"Hello World\" to the console.",
+  "metadata": {
+    "model": {
+      "engine": "anthropic",
+      "name": "claude-2.0",
+      "lang": "go"
+    },
+    "timestamp": 1702389469
+  }
+}
+```
+
+#### Responses
+
+- `200: OK` if the service returns some completions.
+- `401: Unauthorized` if the service fails to authenticate using the access token.
+- `422: Unprocessable Entity` if the required attributes are missing or the number of `prompt_component` objects is not adequet.
+
+
+### V2
+
+#### Completions
 
 Given a prompt, the service will return one suggestion. This endpoint supports
 two versions of payloads.
@@ -32,7 +166,7 @@ POST /v2/code/completions
 POST /ai/v2/code/completions
 ```
 
-#### V1 Prompt
+##### V1 Prompt
 
 This performs some pre-processing of the content before forwarding it to the
 third-party model provider.
@@ -121,7 +255,7 @@ Example response:
 }
 ```
 
-#### V2 Prompt
+##### V2 Prompt
 
 This accepts prebuilt `prompt` and forwards it directly to third-party provider.
 This only supports `anthropic` model provider.
@@ -211,13 +345,14 @@ Example response:
 }
 ```
 
-#### Responses
+##### Responses
 
 - `200: OK` if the service returns some completions.
 - `422: Unprocessable Entity` if the required attributes are missing.
 - `401: Unauthorized` if the service fails to authenticate using the access token.
 
-### Generations
+
+#### Generations
 
 Given a prompt, the service will return one suggestion. This endpoint supports
 two versions of payloads.
@@ -230,7 +365,7 @@ POST /v2/code/generations
 POST /ai/v2/code/generations
 ```
 
-#### V1 Prompt
+##### V1 Prompt
 
 This performs some pre-processing of the content before forwarding it to the
 third-party model provider.
@@ -318,7 +453,7 @@ Example response:
 }
 ```
 
-#### V2 Prompt
+##### V2 Prompt
 
 This accepts prebuilt `prompt` and forwards it directly to third-party provider.
 
@@ -408,11 +543,13 @@ Example response:
 }
 ```
 
-#### Responses
+##### Responses
 
 - `200: OK` if the service returns some completions.
 - `422: Unprocessable Entity` if the required attributes are missing.
 - `401: Unauthorized` if the service fails to authenticate using the access token.
+
+
 
 ## Chat
 
