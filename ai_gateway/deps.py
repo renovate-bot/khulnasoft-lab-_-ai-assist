@@ -49,12 +49,12 @@ _VERTEX_MODELS_VERSIONS = {
 
 _ANTHROPIC_MODELS_VERSIONS = {
     AnthropicModel.CLAUDE: "claude-2.0",
-    AnthropicModel.CLAUDE_INSTANT: "claude-instant-1.2",
+    AnthropicModel.CLAUDE_INSTANT_V1_2: "claude-instant-1.2",
 }
 
 _ANTHROPIC_MODELS_OPTS = {
     AnthropicModel.CLAUDE: {},
-    AnthropicModel.CLAUDE_INSTANT: {"max_tokens_to_sample": 128},
+    AnthropicModel.CLAUDE_INSTANT_V1_2: {"max_tokens_to_sample": 128},
 }
 
 
@@ -263,7 +263,7 @@ class CodeSuggestionsContainer(containers.DeclarativeContainer):
 
     code_completions_anthropic = providers.Factory(
         CodeCompletions,
-        model=models_anthropic[AnthropicModel.CLAUDE_INSTANT],
+        model=models_anthropic[AnthropicModel.CLAUDE_INSTANT_V1_2],
         tokenization_strategy=providers.Factory(
             TokenizerTokenStrategy, tokenizer=tokenizer
         ),
