@@ -12,6 +12,7 @@ from ai_gateway.api.middleware import (
 from ai_gateway.api.monitoring import router as http_monitoring_router
 from ai_gateway.api.v1 import api_router as http_api_router_v1
 from ai_gateway.api.v2 import api_router as http_api_router_v2
+from ai_gateway.api.v3 import api_router as http_api_router_v3
 from ai_gateway.deps import FastApiContainer
 
 __all__ = [
@@ -57,6 +58,7 @@ def create_fast_api_server(
     sub_router = APIRouter()
     sub_router.include_router(http_api_router_v1)
     sub_router.include_router(http_api_router_v2)
+    sub_router.include_router(http_api_router_v3)
     sub_router.include_router(http_monitoring_router)
 
     fastapi_app.include_router(sub_router)

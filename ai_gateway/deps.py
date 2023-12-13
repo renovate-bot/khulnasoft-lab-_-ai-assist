@@ -202,6 +202,7 @@ class CodeSuggestionsContainer(containers.DeclarativeContainer):
             "ai_gateway.api.v2.endpoints.code",
             "ai_gateway.api.v2.experimental.code",
             "ai_gateway.api.monitoring",
+            "ai_gateway.api.v3.completions",
         ]
     )
 
