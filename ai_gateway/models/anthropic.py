@@ -50,7 +50,9 @@ class AnthropicAPIStatusError(ModelAPICallError):
 class AnthropicModel(TextGenBaseModel):
     # Ref: https://docs.anthropic.com/claude/reference/selecting-a-model
     MAX_MODEL_LEN = 100_000
-    CLAUDE_INSTANT = "claude-instant-1.2"
+    CLAUDE_INSTANT_V1 = "claude-instant-1"
+    CLAUDE_INSTANT_V1_1 = "claude-instant-1.1"
+    CLAUDE_INSTANT_V1_2 = "claude-instant-1.2"
     CLAUDE = "claude-2.0"
 
     # Ref: https://docs.anthropic.com/claude/reference/versioning
@@ -147,7 +149,14 @@ class AnthropicModel(TextGenBaseModel):
 
     @classmethod
     def from_model_name(cls, name: str, client: AsyncAnthropic, **kwargs: Any):
-        if not name.startswith((cls.CLAUDE_INSTANT, cls.CLAUDE)):
+        if not name.startswith(
+            (
+                cls.CLAUDE_INSTANT_V1_2,
+                cls.CLAUDE_INSTANT_V1_1,
+                cls.CLAUDE_INSTANT_V1,
+                cls.CLAUDE,
+            )
+        ):
             raise ValueError(f"no model found by the name '{name}'")
 
         return cls(name, client, **kwargs)
