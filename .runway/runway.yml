@@ -5,6 +5,7 @@ metadata:
   owner: ai_assisted
 spec:
   image: "$CI_REGISTRY_IMAGE/model-gateway:${CI_COMMIT_SHORT_SHA}"
+  request_timeout: 60
   observability:
     scrape_targets:
       - "localhost:8082"
