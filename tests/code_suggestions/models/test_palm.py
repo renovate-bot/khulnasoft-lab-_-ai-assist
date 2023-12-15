@@ -172,9 +172,9 @@ async def test_palm_model_api_error(model, client_exception, expected_exception)
 @pytest.mark.parametrize(
     ("model_name_version", "expected_metadata_name"),
     [
-        (PalmModel.TEXT_BISON.value, f"{PalmModel.TEXT_BISON.value}@latest"),
-        (PalmModel.CODE_BISON.value, f"{PalmModel.CODE_BISON.value}@latest"),
-        (PalmModel.CODE_GECKO.value, f"{PalmModel.CODE_GECKO.value}@latest"),
+        (PalmModel.TEXT_BISON.value, f"{PalmModel.TEXT_BISON.value}"),
+        (PalmModel.CODE_BISON.value, f"{PalmModel.CODE_BISON.value}"),
+        (PalmModel.CODE_GECKO.value, f"{PalmModel.CODE_GECKO.value}"),
         (f"{PalmModel.TEXT_BISON}@001", f"{PalmModel.TEXT_BISON}@001"),
         (f"{PalmModel.CODE_BISON}@001", f"{PalmModel.CODE_BISON}@001"),
         (f"{PalmModel.CODE_GECKO}@001", f"{PalmModel.CODE_GECKO}@001"),

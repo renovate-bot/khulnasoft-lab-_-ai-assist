@@ -87,7 +87,7 @@ class TestCodeCompletionsLegacy:
         engine_response = ModelEngineOutput(
             text=engine_response_text,
             score=0,
-            model=ModelMetadata(name="code-gecko@latest", engine="vertex-ai"),
+            model=ModelMetadata(name="code-gecko", engine="vertex-ai"),
             lang_id=expected_language_id,
             metadata=MetadataPromptBuilder(
                 components={
@@ -126,7 +126,7 @@ class TestCodeCompletionsLegacy:
         engine.generate.assert_called_with(prefix, suffix, file_name, editor_lang)
         mock_benchmark.assert_called_with(
             metric_key=KnownMetrics.POST_PROCESSING_DURATION,
-            labels={"model_engine": "vertex-ai", "model_name": "code-gecko@latest"},
+            labels={"model_engine": "vertex-ai", "model_name": "code-gecko"},
         )
         post_processor_factory.assert_called_with(
             prefix, suffix=suffix, lang_id=expected_language_id
@@ -168,7 +168,7 @@ class TestCodeCompletionsLegacy:
         engine_response = ModelEngineOutput(
             text=engine_response_text,
             score=0,
-            model=ModelMetadata(name="code-gecko@latest", engine="vertex-ai"),
+            model=ModelMetadata(name="code-gecko", engine="vertex-ai"),
             lang_id=expected_language_id,
             metadata=MetadataPromptBuilder(
                 components={

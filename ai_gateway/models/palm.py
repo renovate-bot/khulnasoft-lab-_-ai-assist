@@ -112,10 +112,10 @@ class PalmCodeGenBaseModel(TextGenBaseModel):
         self.client = client
         self.timeout = timeout
 
-        model_version = "latest" if model_version == "" else model_version
-        model_name = PalmCodeGenBaseModel.SEP_MODEL_VERSION.join(
-            [model_name, model_version]
-        )
+        if model_version:
+            model_name = PalmCodeGenBaseModel.SEP_MODEL_VERSION.join(
+                [model_name, model_version]
+            )
 
         self._metadata = ModelMetadata(
             name=model_name, engine=PalmCodeGenBaseModel.MODEL_ENGINE
@@ -204,7 +204,7 @@ class PalmTextBisonModel(PalmCodeGenBaseModel):
         client: PredictionServiceAsyncClient,
         project: str,
         location: str,
-        version: str = "latest",
+        version: str = "",
     ):
         super().__init__(PalmModel.TEXT_BISON, client, project, location, version)
 
@@ -240,7 +240,7 @@ class PalmCodeBisonModel(PalmCodeGenBaseModel):
         client: PredictionServiceAsyncClient,
         project: str,
         location: str,
-        version: str = "latest",
+        version: str = "",
     ):
         super().__init__(PalmModel.CODE_BISON, client, project, location, version)
 
@@ -277,7 +277,7 @@ class PalmCodeGeckoModel(PalmCodeGenBaseModel):
         client: PredictionServiceAsyncClient,
         project: str,
         location: str,
-        version: str = "latest",
+        version: str = "",
     ):
         super().__init__(PalmModel.CODE_GECKO, client, project, location, version)
 
