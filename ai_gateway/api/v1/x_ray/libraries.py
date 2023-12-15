@@ -7,6 +7,7 @@ from pydantic import BaseModel, Field, StringConstraints, field_validator
 from pydantic.types import Json
 from starlette.authentication import requires
 
+from ai_gateway.api.feature_category import feature_category
 from ai_gateway.deps import XRayContainer
 from ai_gateway.models import (
     AnthropicAPIConnectionError,
@@ -68,6 +69,7 @@ class XRayResponse(BaseModel):
 
 @router.post("/libraries", response_model=XRayResponse)
 @requires("code_suggestions")
+@feature_category("code_suggestions")
 @inject
 async def libraries(
     request: Request,

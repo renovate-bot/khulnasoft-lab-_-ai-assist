@@ -8,6 +8,7 @@ from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field, StringConstraints
 from starlette.authentication import requires
 
+from ai_gateway.api.feature_category import feature_category
 from ai_gateway.deps import ChatContainer
 from ai_gateway.models import (
     AnthropicAPIConnectionError,
@@ -94,6 +95,7 @@ class StreamChatResponse(StreamingResponse):
 
 @router.post("/agent", response_model=ChatResponse)
 @requires("duo_chat")
+@feature_category("duo_chat")
 @inject
 async def chat(
     request: Request,
