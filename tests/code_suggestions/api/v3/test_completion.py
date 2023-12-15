@@ -64,7 +64,7 @@ class TestEditorContentCompletion:
                 CodeSuggestionsOutput(
                     text="def search",
                     score=0,
-                    model=ModelMetadata(name="code-gecko@latest", engine="vertex-ai"),
+                    model=ModelMetadata(name="code-gecko", engine="vertex-ai"),
                     lang_id=LanguageId.PYTHON,
                     metadata=CodeSuggestionsOutput.Metadata(
                         experiments=[],
@@ -75,7 +75,7 @@ class TestEditorContentCompletion:
                     "metadata": {
                         "model": {
                             "engine": "vertex-ai",
-                            "name": "code-gecko@latest",
+                            "name": "code-gecko",
                             "lang": "python",
                         },
                     },
@@ -86,7 +86,7 @@ class TestEditorContentCompletion:
                 CodeSuggestionsOutput(
                     text="",
                     score=0,
-                    model=ModelMetadata(name="code-gecko@latest", engine="vertex-ai"),
+                    model=ModelMetadata(name="code-gecko", engine="vertex-ai"),
                     lang_id=LanguageId.PYTHON,
                     metadata=CodeSuggestionsOutput.Metadata(
                         experiments=[],
@@ -97,7 +97,7 @@ class TestEditorContentCompletion:
                     "metadata": {
                         "model": {
                             "engine": "vertex-ai",
-                            "name": "code-gecko@latest",
+                            "name": "code-gecko",
                             "lang": "python",
                         },
                     },
@@ -168,7 +168,7 @@ class TestEditorContentCompletion:
                 "vertex response",
                 {
                     "engine": "vertex-ai",
-                    "name": "code-gecko@latest",
+                    "name": "code-gecko",
                     "lang": "python",
                 },
             ),
@@ -189,7 +189,7 @@ class TestEditorContentCompletion:
                 "vertex response",
                 {
                     "engine": "vertex-ai",
-                    "name": "code-gecko@latest",
+                    "name": "code-gecko",
                     "lang": "python",
                 },
             ),
@@ -213,7 +213,7 @@ class TestEditorContentCompletion:
         vertex_output = CodeSuggestionsOutput(
             text="vertex response",
             score=0,
-            model=ModelMetadata(name="code-gecko@latest", engine="vertex-ai"),
+            model=ModelMetadata(name="code-gecko", engine="vertex-ai"),
             lang_id=LanguageId.PYTHON,
             metadata=CodeSuggestionsOutput.Metadata(
                 experiments=[],
@@ -359,7 +359,7 @@ class TestEditorContentGeneration:
                 CodeSuggestionsOutput(
                     text="def search",
                     score=0,
-                    model=ModelMetadata(name="code-gecko@latest", engine="vertex-ai"),
+                    model=ModelMetadata(name="code-gecko", engine="vertex-ai"),
                     lang_id=LanguageId.PYTHON,
                     metadata=CodeSuggestionsOutput.Metadata(
                         experiments=[],
@@ -370,7 +370,7 @@ class TestEditorContentGeneration:
                     "metadata": {
                         "model": {
                             "engine": "vertex-ai",
-                            "name": "code-gecko@latest",
+                            "name": "code-gecko",
                             "lang": "python",
                         },
                     },
@@ -381,7 +381,7 @@ class TestEditorContentGeneration:
                 CodeSuggestionsOutput(
                     text="",
                     score=0,
-                    model=ModelMetadata(name="code-gecko@latest", engine="vertex-ai"),
+                    model=ModelMetadata(name="code-gecko", engine="vertex-ai"),
                     lang_id=LanguageId.PYTHON,
                     metadata=CodeSuggestionsOutput.Metadata(
                         experiments=[],
@@ -392,7 +392,7 @@ class TestEditorContentGeneration:
                     "metadata": {
                         "model": {
                             "engine": "vertex-ai",
-                            "name": "code-gecko@latest",
+                            "name": "code-gecko",
                             "lang": "python",
                         },
                     },
@@ -482,7 +482,7 @@ class TestEditorContentGeneration:
         model_output = CodeSuggestionsOutput(
             text="def search",
             score=0,
-            model=ModelMetadata(name="code-gecko@latest", engine="vertex-ai"),
+            model=ModelMetadata(name="code-gecko", engine="vertex-ai"),
             lang_id=LanguageId.PYTHON,
             metadata=CodeSuggestionsOutput.Metadata(
                 experiments=[],
@@ -535,7 +535,7 @@ class TestEditorContentGeneration:
                 "vertex response",
                 {
                     "engine": "vertex-ai",
-                    "name": "code-gecko@latest",
+                    "name": "code-gecko",
                     "lang": "python",
                 },
             ),
@@ -556,7 +556,7 @@ class TestEditorContentGeneration:
                 "vertex response",
                 {
                     "engine": "vertex-ai",
-                    "name": "code-gecko@latest",
+                    "name": "code-gecko",
                     "lang": "python",
                 },
             ),
@@ -580,7 +580,7 @@ class TestEditorContentGeneration:
         vertex_output = CodeSuggestionsOutput(
             text="vertex response",
             score=0,
-            model=ModelMetadata(name="code-gecko@latest", engine="vertex-ai"),
+            model=ModelMetadata(name="code-gecko", engine="vertex-ai"),
             lang_id=LanguageId.PYTHON,
             metadata=CodeSuggestionsOutput.Metadata(
                 experiments=[],
@@ -833,7 +833,7 @@ class TestIncomingRequest:
         model_output = CodeSuggestionsOutput(
             text="vertex response",
             score=0,
-            model=ModelMetadata(name="code-gecko@latest", engine="vertex-ai"),
+            model=ModelMetadata(name="code-gecko", engine="vertex-ai"),
             lang_id=LanguageId.PYTHON,
             metadata=CodeSuggestionsOutput.Metadata(
                 experiments=[],

@@ -75,7 +75,7 @@ Example response:
   "metadata": {
     "model": {
       "engine": "vertex-ai",
-      "name": "code-gecko@latest",
+      "name": "code-gecko@002",
       "lang": "go"
     },
     "timestamp": 1702389046
@@ -156,7 +156,7 @@ Example response:
 Given a prompt, the service will return one suggestion. This endpoint supports
 two versions of payloads.
 
-- If `vertex-ai` model provider is selected, we uses `code-gecko@latest`.
+- If `vertex-ai` model provider is selected, we uses `code-gecko@002`.
 - If `anthropic` model provider is selected, we uses `claude-instant-1.2`.
 
 ```plaintext
@@ -357,7 +357,7 @@ Example response:
 Given a prompt, the service will return one suggestion. This endpoint supports
 two versions of payloads.
 
-- If `vertex-ai` model provider is selected, we uses `code-bison@latest`.
+- If `vertex-ai` model provider is selected, we uses `code-bison@002`.
 - If `anthropic` model provider is selected, we uses `claude-2.0`.
 
 ```plaintext
@@ -409,7 +409,7 @@ curl --request POST \
     "telemetry": [
       {
         "model_engine": "vertex-ai",
-        "model_name": "code-bison@latest",
+        "model_name": "code-bison@002",
         "lang": "python",
         "experiments": [
           {
