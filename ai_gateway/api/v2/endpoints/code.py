@@ -1,12 +1,12 @@
 from time import time
-from typing import Annotated, AsyncIterator, Literal, Optional, Union
+from typing import Annotated, AsyncIterator, List, Literal, Optional, Union
 
 import structlog
 from dependency_injector.providers import Factory
 from dependency_injector.wiring import Provide, inject
 from fastapi import APIRouter, Body, Depends, Request
 from fastapi.responses import StreamingResponse
-from pydantic import BaseModel, conlist, constr
+from pydantic import BaseModel, ConfigDict, Field, StringConstraints
 from starlette.datastructures import CommaSeparatedStrings
 
 from ai_gateway.api.middleware import (
@@ -43,20 +43,27 @@ router = APIRouter(
 
 
 class CurrentFile(BaseModel):
-    file_name: constr(strip_whitespace=True, max_length=255)
+    file_name: Annotated[str, StringConstraints(strip_whitespace=True, max_length=255)]
     language_identifier: Optional[
-        constr(max_length=255)
-    ]  # https://code.visualstudio.com/docs/languages/identifiers
-    content_above_cursor: constr(max_length=100000)
-    content_below_cursor: constr(max_length=100000)
+        Annotated[str, StringConstraints(max_length=255)]
+    ] = None  # https://code.visualstudio.com/docs/languages/identifiers
+    content_above_cursor: Annotated[str, StringConstraints(max_length=100000)]
+    content_below_cursor: Annotated[str, StringConstraints(max_length=100000)]
 
 
 class SuggestionsRequest(BaseModel):
-    project_path: Optional[constr(strip_whitespace=True, max_length=255)]
-    project_id: Optional[int]
+    # Opt out protected namespace "model_" (https://github.com/pydantic/pydantic/issues/6322).
+    model_config = ConfigDict(protected_namespaces=())
+
+    project_path: Optional[
+        Annotated[str, StringConstraints(strip_whitespace=True, max_length=255)]
+    ] = None
+    project_id: Optional[int] = None
     current_file: CurrentFile
-    model_provider: Optional[Literal[ModelProvider.VERTEX_AI, ModelProvider.ANTHROPIC]]
-    telemetry: conlist(Telemetry, max_items=10) = []
+    model_provider: Optional[
+        Literal[ModelProvider.VERTEX_AI, ModelProvider.ANTHROPIC]
+    ] = None
+    telemetry: Annotated[List[Telemetry], Field(max_length=10)] = []
     stream: Optional[bool] = False
 
 

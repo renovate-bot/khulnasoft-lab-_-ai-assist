@@ -88,7 +88,8 @@ Begin!
 
 class QAChainFormatOutput(BaseModel):
     explanation: Optional[str] = Field(
-        description="Step-by-step explanation on why a particular grade has been awarded"
+        None,
+        description="Step-by-step explanation on why a particular grade has been awarded",
     )
     grade: str = Field(description="grade, i.e., CORRECT or INCORRECT")
 
@@ -101,7 +102,7 @@ class QAChainDataInput(BaseModel):
 
 class QAChainDataOutput(BaseModel):
     is_correct: bool
-    explanation: Optional[str]
+    explanation: Optional[str] = None
 
     @classmethod
     def from_parser_output(cls, data: QAChainFormatOutput):

@@ -34,9 +34,10 @@ transformers = "^4.30.0"
 sentencepiece = "^0.1.99"
 snowplow-tracker = "^1.0.1"
 anthropic = "^0.7.7"
-langchain = "^0.0.315"
-langserve = "^0.0.9"
+langchain = "^0.0.350"
+langserve = "^0.0.35"
 levenshtein = "^0.23.0"
+pydantic = "^2.5.2"
 
 [tool.poetry.group.test]
 optional = true

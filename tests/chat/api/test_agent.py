@@ -247,13 +247,14 @@ class TestAgentUnsupportedProvider:
         assert response.json() == {
             "detail": [
                 {
+                    "type": "literal_error",
                     "loc": ["body", "prompt_components", 0, "payload", "provider"],
-                    "msg": "unexpected value; permitted: 'anthropic'",
-                    "type": "value_error.const",
+                    "msg": "Input should be 'anthropic'",
+                    "input": "UNSUPPORTED_PROVIDER",
                     "ctx": {
-                        "given": "UNSUPPORTED_PROVIDER",
-                        "permitted": ["anthropic"],
+                        "expected": "'anthropic'",
                     },
+                    "url": "https://errors.pydantic.dev/2.5/v/literal_error",
                 }
             ]
         }
@@ -292,18 +293,14 @@ class TestAgentUnsupportedModel:
         assert response.json() == {
             "detail": [
                 {
+                    "type": "literal_error",
                     "loc": ["body", "prompt_components", 0, "payload", "model"],
-                    "msg": "unexpected value; permitted: 'claude-2.0', 'claude-instant-1', 'claude-instant-1.1', 'claude-instant-1.2'",
-                    "type": "value_error.const",
+                    "msg": "Input should be 'claude-2.0', 'claude-instant-1', 'claude-instant-1.1' or 'claude-instant-1.2'",
+                    "input": "UNSUPPORTED_MODEL",
                     "ctx": {
-                        "given": "UNSUPPORTED_MODEL",
-                        "permitted": [
-                            "claude-2.0",
-                            "claude-instant-1",
-                            "claude-instant-1.1",
-                            "claude-instant-1.2",
-                        ],
+                        "expected": "'claude-2.0', 'claude-instant-1', 'claude-instant-1.1' or 'claude-instant-1.2'",
                     },
+                    "url": "https://errors.pydantic.dev/2.5/v/literal_error",
                 }
             ]
         }
@@ -378,14 +375,18 @@ class TestAgentInvalidRequestMissingFields:
         assert response.json() == {
             "detail": [
                 {
+                    "type": "missing",
                     "loc": ["body", "prompt_components", 0, "metadata", "version"],
-                    "msg": "field required",
-                    "type": "value_error.missing",
+                    "msg": "Field required",
+                    "input": {"source": "gitlab-rails-sm"},
+                    "url": "https://errors.pydantic.dev/2.5/v/missing",
                 },
                 {
+                    "type": "missing",
                     "loc": ["body", "prompt_components", 0, "payload", "content"],
-                    "msg": "field required",
-                    "type": "value_error.missing",
+                    "msg": "Field required",
+                    "input": {"provider": "anthropic", "model": "claude-2.0"},
+                    "url": "https://errors.pydantic.dev/2.5/v/missing",
                 },
             ]
         }
@@ -436,10 +437,34 @@ class TestAgentInvalidRequestManyPromptComponents:
         assert response.json() == {
             "detail": [
                 {
-                    "ctx": {"limit_value": 1},
+                    "type": "too_long",
                     "loc": ["body", "prompt_components"],
-                    "msg": "ensure this value has at most 1 items",
-                    "type": "value_error.list.max_items",
+                    "msg": "List should have at most 1 item after validation, not 2",
+                    "input": [
+                        {
+                            "type": "prompt",
+                            "metadata": {
+                                "source": "gitlab-rails-sm",
+                                "version": "16.5.0-ee",
+                            },
+                            "payload": {
+                                "content": "\n\nHuman: hello, what is your name?\n\nAssistant:",
+                                "provider": "anthropic",
+                                "model": "claude-2.0",
+                            },
+                        },
+                        {
+                            "type": "prompt",
+                            "metadata": {"source": "vscode", "version": "1.2.3"},
+                            "payload": {
+                                "content": "SECOND PROMPT COMPONENT (NOT EXPECTED)",
+                                "provider": "anthropic",
+                                "model": "claude-2.0",
+                            },
+                        },
+                    ],
+                    "ctx": {"field_type": "List", "max_length": 1, "actual_length": 2},
+                    "url": "https://errors.pydantic.dev/2.5/v/too_long",
                 }
             ]
         }
