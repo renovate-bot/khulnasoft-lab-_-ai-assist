@@ -1,4 +1,4 @@
-from typing import Any, AsyncIterator, Optional, Union
+from typing import Any, AsyncIterator, Callable, Optional, Union
 
 import httpx
 import structlog
@@ -118,20 +118,21 @@ class AnthropicModel(TextGenBaseModel):
         opts = _obtain_opts(self.model_opts, **kwargs)
         log.debug("codegen anthropic call:", **opts)
 
-        try:
-            suggestion = await self.client.completions.create(
-                model=self.metadata.name,
-                prompt=prefix,
-                stream=stream,
-                **opts,
-            )
-        except APIStatusError as ex:
-            raise AnthropicAPIStatusError.from_exception(ex)
-        except APIConnectionError as ex:
-            raise AnthropicAPIConnectionError.from_exception(ex)
+        with self.instrumentator.watch(stream=stream) as watcher:
+            try:
+                suggestion = await self.client.completions.create(
+                    model=self.metadata.name,
+                    prompt=prefix,
+                    stream=stream,
+                    **opts,
+                )
+            except APIStatusError as ex:
+                raise AnthropicAPIStatusError.from_exception(ex)
+            except APIConnectionError as ex:
+                raise AnthropicAPIConnectionError.from_exception(ex)
 
-        if stream:
-            return self._handle_stream(suggestion)
+            if stream:
+                return self._handle_stream(suggestion, lambda: watcher.finish())
 
         return TextGenModelOutput(
             text=suggestion.completion,
@@ -141,11 +142,14 @@ class AnthropicModel(TextGenBaseModel):
         )
 
     async def _handle_stream(
-        self, response: AsyncStream
+        self, response: AsyncStream, after_callback: Callable
     ) -> AsyncIterator[TextGenModelChunk]:
-        async for event in response:
-            chunk_content = TextGenModelChunk(text=event.completion)
-            yield chunk_content
+        try:
+            async for event in response:
+                chunk_content = TextGenModelChunk(text=event.completion)
+                yield chunk_content
+        finally:
+            after_callback()
 
     @classmethod
     def from_model_name(cls, name: str, client: AsyncAnthropic, **kwargs: Any):

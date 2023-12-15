@@ -153,20 +153,21 @@ class PalmCodeGenBaseModel(TextGenBaseModel):
 
         log.debug("codegen vertex call:", input=input_data, parameters=parameters_dict)
 
-        try:
-            response = await self.client.predict(
-                endpoint=self.endpoint,
-                instances=instances,
-                parameters=parameters,
-                timeout=self.timeout,
-            )
-            response = PredictResponse.to_dict(response)
+        with self.instrumentator.watch():
+            try:
+                response = await self.client.predict(
+                    endpoint=self.endpoint,
+                    instances=instances,
+                    parameters=parameters,
+                    timeout=self.timeout,
+                )
+                response = PredictResponse.to_dict(response)
 
-            predictions = response.get("predictions", [])
-        except GoogleAPICallError as ex:
-            raise VertexAPIStatusError.from_exception(ex)
-        except GoogleAPIError as ex:
-            raise VertexAPIConnectionError.from_exception(ex)
+                predictions = response.get("predictions", [])
+            except GoogleAPICallError as ex:
+                raise VertexAPIStatusError.from_exception(ex)
+            except GoogleAPIError as ex:
+                raise VertexAPIConnectionError.from_exception(ex)
 
         for prediction in predictions:
             return TextGenModelOutput(

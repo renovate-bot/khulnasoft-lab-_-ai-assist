@@ -1,5 +1,5 @@
 from typing import Type
-from unittest.mock import AsyncMock, Mock
+from unittest.mock import AsyncMock, Mock, patch
 
 import pytest
 from anthropic import (
@@ -243,6 +243,57 @@ async def test_anthropic_model_generate(
 
     model.client.completions.create.assert_called_with(**expected_opts_model)
     assert actual_output.text == expected_output.text
+
+
+@pytest.mark.asyncio
+async def test_anthropic_model_generate_instrumented():
+    model = AnthropicModel(
+        model_name=AnthropicModel.CLAUDE, client=Mock(spec=AsyncAnthropic)
+    )
+    model.client.completions.create = AsyncMock()
+
+    with patch(
+        "ai_gateway.instrumentators.model_requests.ModelRequestInstrumentator.watch"
+    ) as mock_watch:
+        await model.generate("Wolf, what time is it?")
+
+        mock_watch.assert_called_once_with(stream=False)
+
+
+@pytest.mark.asyncio
+async def test_anthropic_model_generate_stream_instrumented():
+    async def mock_stream(*args, **kwargs):
+        completions = [
+            Completion(completion="hello", model=AnthropicModel.CLAUDE, stop_reason=""),
+            Completion(completion="world", model=AnthropicModel.CLAUDE, stop_reason=""),
+            "break here",
+        ]
+        for item in completions:
+            if item == "break here":
+                raise ValueError("broken")
+            yield item
+
+    model = AnthropicModel(
+        model_name=AnthropicModel.CLAUDE, client=Mock(spec=AsyncAnthropic)
+    )
+    model.client.completions.create = AsyncMock(side_effect=mock_stream)
+
+    with patch(
+        "ai_gateway.instrumentators.model_requests.ModelRequestInstrumentator.watch"
+    ) as mock_watch:
+        watcher = Mock()
+        mock_watch.return_value.__enter__.return_value = watcher
+
+        r = await model.generate("Wolf, what time is it?", stream=True)
+
+        # Make sure we haven't called finish before completions are consumed
+        watcher.finish.assert_not_called()
+
+        with pytest.raises(ValueError):
+            all_completions = [item async for item in r]
+
+        mock_watch.assert_called_once_with(stream=True)
+        watcher.finish.assert_called_once()
 
 
 @pytest.mark.asyncio
