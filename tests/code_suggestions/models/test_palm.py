@@ -110,18 +110,19 @@ async def test_palm_model_generate(
 
     palm_model._generate.assert_called_with(*expected_generate_args)
 
+
 @pytest.mark.asyncio
-@pytest.mark.parametrize(
-    "model",
-    PalmCodeGenModel.models.values()
-)
+@pytest.mark.parametrize("model", PalmCodeGenModel.models.values())
 async def test_palm_model_generate_instrumented(model):
     mock_client = Mock()
     mock_client.predict = AsyncMock(return_value=PredictResponse())
     palm_model = model(client=mock_client, project="test", location="some location")
-    with patch("ai_gateway.instrumentators.model_requests.ModelRequestInstrumentator.watch") as mock_watch:
+    with patch(
+        "ai_gateway.instrumentators.model_requests.ModelRequestInstrumentator.watch"
+    ) as mock_watch:
         await palm_model.generate(TEST_PREFIX, TEST_SUFFIX)
         mock_watch.assert_called()
+
 
 @pytest.mark.parametrize(
     "model_input,is_valid,output_dict",

@@ -1,4 +1,4 @@
-from typing import Any, AsyncIterator, Optional, Union
+from typing import Any, AsyncIterator, Callable, Optional, Union
 
 import httpx
 import structlog
@@ -20,7 +20,6 @@ from ai_gateway.models.base import (
     TextGenModelChunk,
     TextGenModelOutput,
 )
-from ai_gateway.instrumentators.model_requests import ModelRequestInstrumentator
 
 __all__ = [
     "AnthropicAPIConnectionError",
@@ -117,7 +116,7 @@ class AnthropicModel(TextGenBaseModel):
         opts = _obtain_opts(self.model_opts, **kwargs)
         log.debug("codegen anthropic call:", **opts)
 
-        with self.instrumentator.watch(asyncOperation=stream) as watcher:
+        with self.instrumentator.watch(stream=stream) as watcher:
             try:
                 suggestion = await self.client.completions.create(
                     model=self.metadata.name,
@@ -131,7 +130,7 @@ class AnthropicModel(TextGenBaseModel):
                 raise AnthropicAPIConnectionError.from_exception(ex)
 
             if stream:
-                return self._handle_stream(suggestion, watcher)
+                return self._handle_stream(suggestion, lambda: watcher.finish())
 
         return TextGenModelOutput(
             text=suggestion.completion,
@@ -141,11 +140,14 @@ class AnthropicModel(TextGenBaseModel):
         )
 
     async def _handle_stream(
-            self, response: AsyncStream, watcher: ModelRequestInstrumentator.WatchContainer
+        self, response: AsyncStream, after_callback: Callable
     ) -> AsyncIterator[TextGenModelChunk]:
-        async for event in watcher.handle_and_finish_async(response):
-            chunk_content = TextGenModelChunk(text=event.completion)
-            yield chunk_content
+        try:
+            async for event in response:
+                chunk_content = TextGenModelChunk(text=event.completion)
+                yield chunk_content
+        finally:
+            after_callback()
 
     @classmethod
     def from_model_name(cls, name: str, client: AsyncAnthropic, **kwargs: Any):
