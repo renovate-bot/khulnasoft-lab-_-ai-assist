@@ -20,6 +20,7 @@ from ai_gateway.models.base import (
     TextGenModelChunk,
     TextGenModelOutput,
 )
+from ai_gateway.instrumentators.model_requests import ModelRequestInstrumentator
 
 __all__ = [
     "AnthropicAPIConnectionError",
@@ -116,20 +117,21 @@ class AnthropicModel(TextGenBaseModel):
         opts = _obtain_opts(self.model_opts, **kwargs)
         log.debug("codegen anthropic call:", **opts)
 
-        try:
-            suggestion = await self.client.completions.create(
-                model=self.metadata.name,
-                prompt=prefix,
-                stream=stream,
-                **opts,
-            )
-        except APIStatusError as ex:
-            raise AnthropicAPIStatusError.from_exception(ex)
-        except APIConnectionError as ex:
-            raise AnthropicAPIConnectionError.from_exception(ex)
+        with self.instrumentator.watch(asyncOperation=stream) as watcher:
+            try:
+                suggestion = await self.client.completions.create(
+                    model=self.metadata.name,
+                    prompt=prefix,
+                    stream=stream,
+                    **opts,
+                )
+            except APIStatusError as ex:
+                raise AnthropicAPIStatusError.from_exception(ex)
+            except APIConnectionError as ex:
+                raise AnthropicAPIConnectionError.from_exception(ex)
 
-        if stream:
-            return self._handle_stream(suggestion)
+            if stream:
+                return self._handle_stream(suggestion, watcher)
 
         return TextGenModelOutput(
             text=suggestion.completion,
@@ -139,9 +141,9 @@ class AnthropicModel(TextGenBaseModel):
         )
 
     async def _handle_stream(
-        self, response: AsyncStream
+            self, response: AsyncStream, watcher: ModelRequestInstrumentator.WatchContainer
     ) -> AsyncIterator[TextGenModelChunk]:
-        async for event in response:
+        async for event in watcher.handle_and_finish_async(response):
             chunk_content = TextGenModelChunk(text=event.completion)
             yield chunk_content
 

@@ -5,6 +5,8 @@ from anthropic import AsyncAnthropic
 from google.cloud.aiplatform.gapic import PredictionServiceAsyncClient
 from pydantic import BaseModel
 
+from ai_gateway.instrumentators.model_requests import ModelRequestInstrumentator
+
 __all__ = [
     "ModelAPIError",
     "ModelAPICallError",
@@ -84,6 +86,12 @@ class TextGenModelChunk(NamedTuple):
 
 class TextGenBaseModel(ABC):
     MAX_MODEL_LEN = 2048
+
+    @property
+    def instrumentator(self) -> ModelRequestInstrumentator:
+        return ModelRequestInstrumentator(
+            model_engine=self.metadata.engine, model_name=self.metadata.name
+        )
 
     @property
     @abstractmethod
