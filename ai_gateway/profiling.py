@@ -1,3 +1,5 @@
+import os
+
 import googlecloudprofiler
 
 from ai_gateway.config import ProfilingConfig
@@ -11,8 +13,10 @@ def setup_profiling(profiling_config: ProfilingConfig, logger):
     # collects and uploads profiles.
     try:
         googlecloudprofiler.start(
-            service="model-gateway",
-            service_version="1.0.0",  # TODO: fix this
+            service="ai-gateway",
+            service_version=os.environ.get(
+                "K_REVISION", "1.0.0"
+            ),  # https://cloud.google.com/run/docs/container-contract#services-env-vars
             verbose=profiling_config.verbose,
             period_ms=profiling_config.period_ms,
         )
