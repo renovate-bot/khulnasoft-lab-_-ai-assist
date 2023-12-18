@@ -50,5 +50,5 @@ def make_experiment() -> Experiment:
             variant_control,
             variant_1,
         ],
-        weights=[50, 50],
+        weights=[1, 0],
     )
