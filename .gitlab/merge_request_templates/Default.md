@@ -15,14 +15,14 @@ Example below:
 1. Ensure a local Docker image built successfully.
    ```shell
    docker buildx build --platform linux/amd64 \
-     -t code-suggestions-api:dev .
+     -t ai-gateway:dev .
    ```
 1. Run a local service on Docker.
    ```shell
    docker run --platform linux/amd64 --rm \
      -p 5052:5052 \
      -e AUTH_BYPASS_EXTERNAL=true \
-     -v $PWD:/app -it code-suggestions-api:dev
+     -v $PWD:/app -it ai-gateway:dev
    ```
 -->
 
