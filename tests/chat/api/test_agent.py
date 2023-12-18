@@ -1,6 +1,6 @@
 from typing import AsyncIterator, Type
 from unittest import mock
-from unittest.mock import AsyncMock
+from unittest.mock import AsyncMock, patch
 
 import pytest
 from fastapi.testclient import TestClient
@@ -12,6 +12,7 @@ from ai_gateway.deps import ChatContainer
 from ai_gateway.models import (
     AnthropicAPIConnectionError,
     AnthropicAPIStatusError,
+    AnthropicAPITimeoutError,
     AnthropicModel,
     ModelAPIError,
     SafetyAttributes,
@@ -445,7 +446,12 @@ class TestAgentInvalidRequestManyPromptComponents:
 class TestAgentUnsuccessfulAnthropicRequest:
     @pytest.mark.asyncio
     @pytest.mark.parametrize(
-        "model_exception_type", [AnthropicAPIStatusError, AnthropicAPIConnectionError]
+        "model_exception_type",
+        [
+            AnthropicAPIStatusError,
+            AnthropicAPITimeoutError,
+            AnthropicAPIConnectionError,
+        ],
     )
     async def test_fail_receiving_anthropic_response(
         self, mock_client: TestClient, model_exception_type: Type[ModelAPIError]
@@ -472,7 +478,9 @@ class TestAgentUnsuccessfulAnthropicRequest:
         container = ChatContainer()
 
         with container.anthropic_model.override(mock_anthropic_model):
-            with capture_logs() as cap_logs:
+            with patch(
+                "ai_gateway.api.v1.chat.agent.log_exception"
+            ) as mock_log_exception:
                 response = mock_client.post(
                     "/v1/chat/agent",
                     headers={
@@ -497,8 +505,14 @@ class TestAgentUnsuccessfulAnthropicRequest:
                     },
                 )
 
-        assert response.status_code == 200
-        assert response.json()["response"] == ""
+                mock_log_exception.assert_called_once()
 
-        assert cap_logs[0]["event"].startswith("failed to execute Anthropic request")
-        assert cap_logs[0]["log_level"] == "error"
+        if issubclass(model_exception_type, AnthropicAPIStatusError):
+            assert response.status_code == 502
+            assert response.json()["detail"] == "Anthropic API Status Error."
+        elif issubclass(model_exception_type, AnthropicAPITimeoutError):
+            assert response.status_code == 504
+            assert response.json()["detail"] == "Anthropic API Timeout Error."
+        else:
+            assert response.status_code == 502
+            assert response.json()["detail"] == "Anthropic API Connection Error."
