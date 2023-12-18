@@ -29,7 +29,7 @@ router = APIRouter(
 class PackageFilePromptPayload(BaseModel):
     prompt: Annotated[str, StringConstraints(max_length=400000)]
     provider: Literal[AnthropicModel.MODEL_ENGINE]
-    model: Literal[AnthropicModel.CLAUDE_INSTANT_V1_2, AnthropicModel.CLAUDE]
+    model: Literal[AnthropicModel.CLAUDE_INSTANT_V1_2, AnthropicModel.CLAUDE_V2_0]
 
 
 class AnyPromptComponent(BaseModel):
