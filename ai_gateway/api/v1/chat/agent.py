@@ -52,12 +52,13 @@ class PromptPayload(BaseModel):
     ] = None  # We only support and expect Anthropic for now
     model: Optional[
         Literal[
-            AnthropicModel.CLAUDE,
+            AnthropicModel.CLAUDE_V2_0,
+            AnthropicModel.CLAUDE_V2_1,
             AnthropicModel.CLAUDE_INSTANT_V1,
             AnthropicModel.CLAUDE_INSTANT_V1_1,
             AnthropicModel.CLAUDE_INSTANT_V1_2,
         ]
-    ] = AnthropicModel.CLAUDE
+    ] = AnthropicModel.CLAUDE_V2_1
     params: Optional[AnthropicParams] = None
 
 

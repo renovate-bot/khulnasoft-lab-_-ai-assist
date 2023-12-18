@@ -48,12 +48,12 @@ _VERTEX_MODELS_VERSIONS = {
 
 
 _ANTHROPIC_MODELS_VERSIONS = {
-    AnthropicModel.CLAUDE: "claude-2.0",
+    AnthropicModel.CLAUDE_V2_0: "claude-2.0",
     AnthropicModel.CLAUDE_INSTANT_V1_2: "claude-instant-1.2",
 }
 
 _ANTHROPIC_MODELS_OPTS = {
-    AnthropicModel.CLAUDE: {},
+    AnthropicModel.CLAUDE_V2_0: {},
     AnthropicModel.CLAUDE_INSTANT_V1_2: {"max_tokens_to_sample": 128},
 }
 
@@ -280,7 +280,7 @@ class CodeSuggestionsContainer(containers.DeclarativeContainer):
 
     code_generations_anthropic = providers.Factory(
         CodeGenerations,
-        model=models_anthropic[AnthropicModel.CLAUDE],
+        model=models_anthropic[AnthropicModel.CLAUDE_V2_0],
         tokenization_strategy=providers.Factory(
             TokenizerTokenStrategy, tokenizer=tokenizer
         ),
@@ -328,7 +328,7 @@ class XRayContainer(containers.DeclarativeContainer):
 
     client_anthropic = providers.Resource(connect_anthropic)
     anthropic_model = _create_anthropic_model(
-        name=AnthropicModel.CLAUDE,
+        name=AnthropicModel.CLAUDE_V2_0,
         client_anthropic=client_anthropic,
         real_or_fake=config.palm_text_model.real_or_fake,
     )

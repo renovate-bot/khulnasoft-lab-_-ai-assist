@@ -248,7 +248,7 @@ async def test_anthropic_model_generate(
 @pytest.mark.asyncio
 async def test_anthropic_model_generate_instrumented():
     model = AnthropicModel(
-        model_name=AnthropicModel.CLAUDE, client=Mock(spec=AsyncAnthropic)
+        model_name=AnthropicModel.CLAUDE_V2_0, client=Mock(spec=AsyncAnthropic)
     )
     model.client.completions.create = AsyncMock()
 
@@ -264,8 +264,12 @@ async def test_anthropic_model_generate_instrumented():
 async def test_anthropic_model_generate_stream_instrumented():
     async def mock_stream(*args, **kwargs):
         completions = [
-            Completion(completion="hello", model=AnthropicModel.CLAUDE, stop_reason=""),
-            Completion(completion="world", model=AnthropicModel.CLAUDE, stop_reason=""),
+            Completion(
+                completion="hello", model=AnthropicModel.CLAUDE_V2_0, stop_reason=""
+            ),
+            Completion(
+                completion="world", model=AnthropicModel.CLAUDE_V2_0, stop_reason=""
+            ),
             "break here",
         ]
         for item in completions:
@@ -274,7 +278,7 @@ async def test_anthropic_model_generate_stream_instrumented():
             yield item
 
     model = AnthropicModel(
-        model_name=AnthropicModel.CLAUDE, client=Mock(spec=AsyncAnthropic)
+        model_name=AnthropicModel.CLAUDE_V2_0, client=Mock(spec=AsyncAnthropic)
     )
     model.client.completions.create = AsyncMock(side_effect=mock_stream)
 

@@ -53,7 +53,8 @@ class AnthropicModel(TextGenBaseModel):
     CLAUDE_INSTANT_V1 = "claude-instant-1"
     CLAUDE_INSTANT_V1_1 = "claude-instant-1.1"
     CLAUDE_INSTANT_V1_2 = "claude-instant-1.2"
-    CLAUDE = "claude-2.0"
+    CLAUDE_V2_0 = "claude-2.0"
+    CLAUDE_V2_1 = "claude-2.1"
 
     # Ref: https://docs.anthropic.com/claude/reference/versioning
     DEFAULT_VERSION = "2023-06-01"
@@ -158,7 +159,8 @@ class AnthropicModel(TextGenBaseModel):
                 cls.CLAUDE_INSTANT_V1_2,
                 cls.CLAUDE_INSTANT_V1_1,
                 cls.CLAUDE_INSTANT_V1,
-                cls.CLAUDE,
+                cls.CLAUDE_V2_0,
+                cls.CLAUDE_V2_1,
             )
         ):
             raise ValueError(f"no model found by the name '{name}'")
