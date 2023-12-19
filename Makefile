@@ -1,11 +1,8 @@
-MONITORING_NAMESPACE ?= monitoring
-
 ROOT_DIR := $(shell pwd)
 TESTS_DIR := ${ROOT_DIR}/tests
 AI_GATEWAY_DIR := ${ROOT_DIR}/ai_gateway
 
 LINT_WORKING_DIR ?= ${AI_GATEWAY_DIR} \
-	${ROOT_DIR}/infrastructure \
 	${ROOT_DIR}/scripts \
 	${TESTS_DIR}
 
@@ -82,26 +79,3 @@ test: LIB_DIR ?= ${ROOT_DIR}/lib
 test: install-test-deps
 	@echo "Running test..."
 	@poetry run pytest
-
-.PHONY: nuke
-nuke: monitoring-teardown monitoring-nuke
-	@echo "Delete namespace ${NAMESPACE}"
-	@kubectl delete namespace ${NAMESPACE}
-
-.PHONY: monitoring-setup
-monitoring-setup:
-	@helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
-	@kubectl create namespace ${MONITORING_NAMESPACE}
-
-.PHONY: monitoring-nuke
-monitoring-nuke:
-	@helm repo remove prometheus-community
-	@kubectl delete namespace ${MONITORING_NAMESPACE}
-
-.PHONY: monitoring-deploy
-monitoring-deploy:
-	@helm install -n ${MONITORING_NAMESPACE} prometheus prometheus-community/kube-prometheus-stack
-
-.PHONY: monitoring-teardown
-monitoring-teardown:
-	@helm uninstall -n ${MONITORING_NAMESPACE} prometheus
