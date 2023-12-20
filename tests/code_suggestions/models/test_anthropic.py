@@ -218,9 +218,11 @@ async def test_anthropic_model_generate(
 ):
     def _client_predict(*_args, **_kwargs):
         return Completion(
+            id="compl_01CtvorJWMstkmATFkR7qVYM",
             completion=suggestion,
             model=model_name_version,
             stop_reason="max_tokens",
+            type="completion",
         )
 
     model = AnthropicModel.from_model_name(
@@ -265,10 +267,18 @@ async def test_anthropic_model_generate_stream_instrumented():
     async def mock_stream(*args, **kwargs):
         completions = [
             Completion(
-                completion="hello", model=AnthropicModel.CLAUDE_V2_0, stop_reason=""
+                id="compl_01CtvorJWMstkmATFkR7qVYM",
+                completion="hello",
+                model=AnthropicModel.CLAUDE_V2_0,
+                stop_reason="stop_sequence",
+                type="completion",
             ),
             Completion(
-                completion="world", model=AnthropicModel.CLAUDE_V2_0, stop_reason=""
+                id="compl_02CtvorJWMstkmATFkR7qVYM",
+                completion="world",
+                model=AnthropicModel.CLAUDE_V2_0,
+                stop_reason="stop_sequence",
+                type="completion",
             ),
             "break here",
         ]
@@ -294,7 +304,7 @@ async def test_anthropic_model_generate_stream_instrumented():
         watcher.finish.assert_not_called()
 
         with pytest.raises(ValueError):
-            all_completions = [item async for item in r]
+            _ = [item async for item in r]
 
         mock_watch.assert_called_once_with(stream=True)
         watcher.finish.assert_called_once()
@@ -314,14 +324,18 @@ async def test_anthropic_model_generate_stream_instrumented():
             "random_prompt",
             [
                 Completion(
+                    id="compl_01CtvorJWMstkmATFkR7qVYM",
                     completion="def hello_",
-                    stop_reason="",
+                    stop_reason="stop_sequence",
                     model="claude-instant-1.2",
+                    type="completion",
                 ),
                 Completion(
+                    id="compl_02CtvorJWMstkmATFkR7qVYM",
                     completion="world():",
-                    stop_reason="",
+                    stop_reason="stop_sequence",
                     model="claude-instant-1.2",
+                    type="completion",
                 ),
             ],
             [
