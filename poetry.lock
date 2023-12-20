@@ -135,17 +135,17 @@ files = [
 
 [[package]]
 name = "anthropic"
-version = "0.7.7"
+version = "0.8.0"
 description = "The official Python library for the anthropic API"
 optional = false
 python-versions = ">=3.7"
 files = [
-    {file = "anthropic-0.7.7-py3-none-any.whl", hash = "sha256:49a4b0194faa958ec156e4d242a3b6e029d91389bbed1fc267b5b903a4cfef0d"},
-    {file = "anthropic-0.7.7.tar.gz", hash = "sha256:781ce7bcf8d377e4077b71a0c9045c2f7947db6f6c9fe70352e2a7838e055e59"},
+    {file = "anthropic-0.8.0-py3-none-any.whl", hash = "sha256:4cd394b22d16013a8846bbea3ff6cbf83cfa6260af01b7142256204c6a8545da"},
+    {file = "anthropic-0.8.0.tar.gz", hash = "sha256:5a5d7fd9149f28d6df875685f66ec68072edd0a9acf919648c041c6fc2da6f11"},
 ]
 
 [package.dependencies]
-anyio = ">=3.5.0,<4"
+anyio = ">=3.5.0,<5"
 distro = ">=1.7.0,<2"
 httpx = ">=0.23.0,<1"
 pydantic = ">=1.9.0,<3"
@@ -3849,4 +3849,4 @@ multidict = ">=4.0"
 [metadata]
 lock-version = "2.0"
 python-versions = "~3.9"
-content-hash = "15215c7e9ae3cab5505f12897a13533fd50a8ebb6cd7d8a48e67f39b5df07c9f"
+content-hash = "3de222135390af1536ddf82f20a7b440b5833854842ca3aa2fcef5621ed7e5c2"
