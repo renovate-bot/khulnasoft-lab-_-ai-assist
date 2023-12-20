@@ -1,5 +1,6 @@
 import os
 from pathlib import Path
+from typing import Union
 from unittest import mock
 
 import pytest
@@ -147,3 +148,26 @@ def test_config_code_suggestions_excl_post_proc(f_value: str, expected: list):
         config = Config()
 
         assert config.feature_flags.code_suggestions_excl_post_proc == expected
+
+
+@pytest.mark.parametrize(
+    ("json_value", "model_engine", "model_name", "expected"),
+    [
+        ("{}", "anthropic", "claude-2.0", None),
+        ('{ "anthropic": { "claude-2.0": 7 } }', "anthropic", "claude-2.0", 7),
+        ('{ "anthropic": { "claude-2.0": 7 } }', "anthropic", "claude-1.0", None),
+        ('{ "vertex": { "code-gecko": 7 } }', "anthropic", "claude-1.0", None),
+    ],
+)
+def test_config_model_concurrency_config_for_model(
+    json_value: Union[str, None],
+    model_engine: str,
+    model_name: str,
+    expected: Union[int, None],
+):
+    with mock.patch.dict(os.environ, {"MODEL_ENGINE_CONCURRENCY_LIMITS": json_value}):
+        config = Config()
+        assert (
+            config.model_concurrency.for_model(engine=model_engine, name=model_name)
+            == expected
+        )

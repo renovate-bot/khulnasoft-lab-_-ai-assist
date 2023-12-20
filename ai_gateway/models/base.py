@@ -5,7 +5,14 @@ from anthropic import AsyncAnthropic
 from google.cloud.aiplatform.gapic import PredictionServiceAsyncClient
 from pydantic import BaseModel
 
+from ai_gateway.config import Config
 from ai_gateway.instrumentators.model_requests import ModelRequestInstrumentator
+
+# TODO: The instrumentator needs the config here to know what limit needs to be
+# reported for a model. This would be nicer if we dependency inject the instrumentator
+# into the model itself
+# https://gitlab.com/gitlab-org/modelops/applied-ml/code-suggestions/ai-assist/-/issues/384
+config = Config()
 
 __all__ = [
     "ModelAPIError",
@@ -90,7 +97,11 @@ class TextGenBaseModel(ABC):
     @property
     def instrumentator(self) -> ModelRequestInstrumentator:
         return ModelRequestInstrumentator(
-            model_engine=self.metadata.engine, model_name=self.metadata.name
+            model_engine=self.metadata.engine,
+            model_name=self.metadata.name,
+            concurrency_limit=config.model_concurrency.for_model(
+                engine=self.metadata.engine, name=self.metadata.name
+            ),
         )
 
     @property

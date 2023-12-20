@@ -11,7 +11,7 @@ class TestModelRequestInstrumentator:
     @mock.patch("prometheus_client.Gauge.labels")
     def test_watch_sync(self, mock_gauges):
         instrumentator = ModelRequestInstrumentator(
-            model_engine="anthropic", model_name="claude"
+            model_engine="anthropic", model_name="claude", concurrency_limit=None
         )
 
         with pytest.raises(ValueError):
@@ -31,9 +31,23 @@ class TestModelRequestInstrumentator:
         ]
 
     @mock.patch("prometheus_client.Gauge.labels")
+    def test_watch_with_limit(self, mock_gauges):
+        instrumentator = ModelRequestInstrumentator(
+            model_engine="anthropic", model_name="claude", concurrency_limit=5
+        )
+
+        with instrumentator.watch():
+            mock_gauges.assert_has_calls(
+                [
+                    mock.call(model_engine="anthropic", model_name="claude"),
+                    mock.call().set(5),
+                ]
+            )
+
+    @mock.patch("prometheus_client.Gauge.labels")
     def test_watch_async(self, mock_gauges):
         instrumentator = ModelRequestInstrumentator(
-            model_engine="anthropic", model_name="claude"
+            model_engine="anthropic", model_name="claude", concurrency_limit=None
         )
 
         with instrumentator.watch(stream=True) as watcher:
