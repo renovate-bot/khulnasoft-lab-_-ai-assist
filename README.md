@@ -245,11 +245,11 @@ The endpoint `/.well-known/openid-configuration` is to get the JWKS URI. We then
 call this URI to fetch the JWKS. We cache the JWKS for 24 hours and use it to validate
 the authenticity of the suggestion requests.
 
-## Deployment to Runway
+## Deployment
 
 Code suggestions is continuously deployed to [Runway](https://about.gitlab.com/handbook/engineering/infrastructure/platforms/tools/runway/).
 
-This deployment is serving 30% of production traffic from `codesuggestions.gitlab.com`. 100% of production traffic wil be served as part of ([&1064](https://gitlab.com/groups/gitlab-com/gl-infra/-/epics/1064)). Once this is complete and we are confident in the stability, we can deprecate the legacy Kubernetes-based deployment.
+This deployment is serving 100% of production traffic from `codesuggestions.gitlab.com`.
 
 When an MR gets merged, CI will build a new Docker image, and trigger a Runway downstream pipeline that will deploy this image to staging, and then production. Downstream pipelines run against the [deployment project](https://gitlab.com/gitlab-com/gl-infra/platform/runway/deployments/ai-gateway).
 
@@ -267,4 +267,3 @@ For more information and assistance, please check out:
 - [Runway - Docs](https://gitlab.com/gitlab-com/gl-infra/platform/runway/docs)
 - [Runway - Issue Tracker](https://gitlab.com/groups/gitlab-com/gl-infra/platform/runway/-/issues)
 - `#f_runway` in Slack.
-
