@@ -1,12 +1,20 @@
 from time import time
 from typing import Annotated, AsyncIterator, List, Literal, Optional, Union
 
+import anthropic
 import structlog
 from dependency_injector.providers import Factory
 from dependency_injector.wiring import Provide, inject
 from fastapi import APIRouter, Body, Depends, Request
 from fastapi.responses import StreamingResponse
-from pydantic import BaseModel, ConfigDict, Field, StringConstraints
+from pydantic import (
+    BaseModel,
+    ConfigDict,
+    Field,
+    StringConstraints,
+    ValidationInfo,
+    field_validator,
+)
 from starlette.datastructures import CommaSeparatedStrings
 
 from ai_gateway.api.middleware import (
@@ -22,12 +30,18 @@ from ai_gateway.code_suggestions import (
     CodeCompletionsLegacy,
     CodeGenerations,
     CodeSuggestionsChunk,
-    ModelProvider,
 )
 from ai_gateway.code_suggestions.processing.ops import lang_from_filename
 from ai_gateway.deps import CodeSuggestionsContainer
 from ai_gateway.experimentation.base import ExperimentTelemetry
 from ai_gateway.instrumentators.base import Telemetry, TelemetryInstrumentator
+from ai_gateway.models import (
+    PROVIDERS_MODELS_MAP,
+    AnthropicModel,
+    AnthropicModels,
+    ModelProviders,
+    VertexModels,
+)
 from ai_gateway.tracking.instrumentator import SnowplowInstrumentator
 
 __all__ = [
@@ -61,10 +75,24 @@ class SuggestionsRequest(BaseModel):
     project_id: Optional[int] = None
     current_file: CurrentFile
     model_provider: Optional[
-        Literal[ModelProvider.VERTEX_AI, ModelProvider.ANTHROPIC]
+        Literal[ModelProviders.VERTEX_AI, ModelProviders.ANTHROPIC]
     ] = None
+    model_name: Optional[Union[AnthropicModels, VertexModels]] = None
     telemetry: Annotated[List[Telemetry], Field(max_length=10)] = []
     stream: Optional[bool] = False
+
+    @field_validator("model_name")
+    @classmethod
+    def validate_model_name(cls, value: str, info: ValidationInfo) -> str:
+        """Validate model name and model provider are compatible."""
+        if provider := info.data.get("model_provider"):
+            if models := PROVIDERS_MODELS_MAP.get(provider):
+                if value not in list(models):
+                    raise ValueError(
+                        f"model {value} is not supported by provider {provider}"
+                    )
+
+        return value
 
 
 class SuggestionsRequestV1(SuggestionsRequest):
@@ -137,7 +165,7 @@ async def completions(
     )
 
     kwargs = {}
-    if payload.model_provider == ModelProvider.ANTHROPIC:
+    if payload.model_provider == ModelProviders.ANTHROPIC:
         code_completions = code_completions_anthropic()
 
         # We support the prompt version 2 only with the Anthropic models
@@ -185,6 +213,9 @@ async def completions(
 async def generations(
     request: Request,
     payload: SuggestionRequestWithVersion,
+    anthropic_model: AnthropicModel = Depends(
+        Provide[CodeSuggestionsContainer.anthropic_model.provider]
+    ),
     code_generations_vertex: Factory[CodeGenerations] = Depends(
         Provide[CodeSuggestionsContainer.code_generations_vertex.provider]
     ),
@@ -209,8 +240,12 @@ async def generations(
         stream=payload.stream,
     )
 
-    if payload.model_provider == ModelProvider.ANTHROPIC:
-        code_generations = code_generations_anthropic()
+    if payload.model_provider == ModelProviders.ANTHROPIC:
+        code_generations = _resolve_code_generations_anthropic(
+            payload=payload,
+            anthropic_model=anthropic_model,
+            code_generations_anthropic=code_generations_anthropic,
+        )
     else:
         code_generations = code_generations_vertex()
 
@@ -246,6 +281,23 @@ async def generations(
         ),
         choices=_suggestion_choices(suggestion.text),
     )
+
+
+def _resolve_code_generations_anthropic(
+    payload: SuggestionsRequest,
+    anthropic_model: AnthropicModel,
+    code_generations_anthropic: Factory[CodeGenerations],
+) -> CodeGenerations:
+    model_name = (
+        payload.model_name if payload.model_name else AnthropicModels.CLAUDE_2_0
+    )
+    anthropic_opts = {
+        "model_name": model_name,
+        "stop_sequences": ["</new_code>", anthropic.HUMAN_PROMPT],
+    }
+    model = anthropic_model(**anthropic_opts)
+
+    return code_generations_anthropic(model=model)
 
 
 def _suggestion_choices(text: str) -> list:
