@@ -1,5 +1,5 @@
 from contextlib import contextmanager
-from typing import Union
+from typing import Optional
 
 from prometheus_client import Gauge
 
@@ -20,7 +20,7 @@ MAX_CONCURRENT_MODEL_INFERENCES = Gauge(
 
 class ModelRequestInstrumentator:
     class WatchContainer:
-        def __init__(self, labels: dict[str, str], concurrency_limit: Union[int, None]):
+        def __init__(self, labels: dict[str, str], concurrency_limit: Optional[int]):
             self.labels = labels
             self.concurrency_limit = concurrency_limit
 
@@ -35,7 +35,10 @@ class ModelRequestInstrumentator:
             INFERENCE_IN_FLIGHT_GAUGE.labels(**self.labels).dec()
 
     def __init__(
-        self, model_engine: str, model_name: str, concurrency_limit: Union[int, None]
+        self,
+        model_engine: str,
+        model_name: str,
+        concurrency_limit: Optional[int],
     ):
         self.labels = {"model_engine": model_engine, "model_name": model_name}
         self.concurrency_limit = concurrency_limit

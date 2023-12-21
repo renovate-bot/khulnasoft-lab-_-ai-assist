@@ -1,6 +1,6 @@
 import os
 from pathlib import Path
-from typing import Union
+from typing import Optional, Union
 from unittest import mock
 
 import pytest
@@ -160,10 +160,10 @@ def test_config_code_suggestions_excl_post_proc(f_value: str, expected: list):
     ],
 )
 def test_config_model_concurrency_config_for_model(
-    json_value: Union[str, None],
+    json_value: Optional[str],
     model_engine: str,
     model_name: str,
-    expected: Union[int, None],
+    expected: Optional[int],
 ):
     with mock.patch.dict(os.environ, {"MODEL_ENGINE_CONCURRENCY_LIMITS": json_value}):
         config = Config()
