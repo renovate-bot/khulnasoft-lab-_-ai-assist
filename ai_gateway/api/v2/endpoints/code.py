@@ -9,6 +9,7 @@ from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, ConfigDict, Field, StringConstraints
 from starlette.datastructures import CommaSeparatedStrings
 
+from ai_gateway.api.feature_category import feature_category
 from ai_gateway.api.middleware import (
     X_GITLAB_GLOBAL_USER_ID_HEADER,
     X_GITLAB_HOST_NAME_HEADER,
@@ -108,6 +109,7 @@ class StreamSuggestionsResponse(StreamingResponse):
 @router.post("/completions")
 @router.post("/code/completions")
 @requires("code_suggestions")
+@feature_category("code_suggestions")
 @inject
 async def completions(
     request: Request,
@@ -181,6 +183,7 @@ async def completions(
 
 @router.post("/code/generations")
 @requires("code_suggestions")
+@feature_category("code_suggestions")
 @inject
 async def generations(
     request: Request,

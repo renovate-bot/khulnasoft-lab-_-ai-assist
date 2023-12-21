@@ -7,6 +7,7 @@ from dependency_injector.wiring import Provide, inject
 from fastapi import APIRouter, Depends, Request
 from fastapi.responses import StreamingResponse
 
+from ai_gateway.api.feature_category import feature_category
 from ai_gateway.api.v3.types import (
     CompletionRequest,
     CompletionResponse,
@@ -45,6 +46,7 @@ class StreamSuggestionsResponse(StreamingResponse):
 
 @api_router.post("/completions")
 @requires("code_suggestions")
+@feature_category("code_suggestions")
 async def completions(
     request: Request,
     payload: CompletionRequest,
