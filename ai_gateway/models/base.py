@@ -1,4 +1,5 @@
 from abc import ABC, abstractmethod
+from enum import Enum
 from typing import Any, AsyncIterator, NamedTuple, Union
 
 from anthropic import AsyncAnthropic
@@ -15,6 +16,12 @@ from ai_gateway.instrumentators.model_requests import ModelRequestInstrumentator
 config = Config()
 
 __all__ = [
+    "UseCases",
+    "ModelProviders",
+    "AnthropicModels",
+    "VertexModels",
+    "PROVIDERS_MODELS_MAP",
+    "USE_CASES_MODELS_MAP",
     "ModelAPIError",
     "ModelAPICallError",
     "ModelMetadata",
@@ -25,6 +32,57 @@ __all__ = [
     "grpc_connect_vertex",
     "connect_anthropic",
 ]
+
+
+class UseCases(str, Enum):
+    CODE_COMPLETIONS = "code completions"
+    CODE_GENERATIONS = "code generations"
+
+
+class ModelProviders(str, Enum):
+    ANTHROPIC = "anthropic"
+    VERTEX_AI = "vertex-ai"
+
+
+class AnthropicModels(str, Enum):
+    CLAUDE_INSTANT_1 = "claude-instant-1"
+    CLAUDE_INSTANT_1_1 = "claude-instant-1.1"
+    CLAUDE_INSTANT_1_2 = "claude-instant-1.2"
+    CLAUDE_2 = "claude-2"
+    CLAUDE_2_0 = "claude-2.0"
+    CLAUDE_2_1 = "claude-2.1"
+
+
+class VertexModels(str, Enum):
+    CODE_BISON = "code-bison"
+    CODE_BISON_002 = "code-bison@002"
+    CODE_GECKO = "code-gecko"
+    CODE_GECKO_002 = "code-gecko@002"
+    TEXT_BISON = "text-bison"
+    TEXT_BISON_002 = "text-bison@002"
+
+
+PROVIDERS_MODELS_MAP = {
+    ModelProviders.ANTHROPIC: AnthropicModels,
+    ModelProviders.VERTEX_AI: VertexModels,
+}
+
+USE_CASES_MODELS_MAP = {
+    UseCases.CODE_COMPLETIONS: {
+        AnthropicModels.CLAUDE_INSTANT_1,
+        AnthropicModels.CLAUDE_INSTANT_1_1,
+        AnthropicModels.CLAUDE_INSTANT_1_2,
+        VertexModels.CODE_GECKO,
+        VertexModels.CODE_GECKO_002,
+    },
+    UseCases.CODE_GENERATIONS: {
+        AnthropicModels.CLAUDE_2,
+        AnthropicModels.CLAUDE_2_0,
+        AnthropicModels.CLAUDE_2_1,
+        VertexModels.CODE_BISON,
+        VertexModels.CODE_BISON_002,
+    },
+}
 
 
 class ModelAPIError(Exception):

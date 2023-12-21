@@ -278,9 +278,15 @@ class CodeSuggestionsContainer(containers.DeclarativeContainer):
         ),
     )
 
+    anthropic_model = providers.Factory(
+        AnthropicModel,
+        client=client_anthropic,
+    )
+
+    # We need to resolve the model based on model name provided in request payload
+    # Hence, CodeGenerations is only partially applied here.
     code_generations_anthropic = providers.Factory(
         CodeGenerations,
-        model=models_anthropic[AnthropicModel.CLAUDE_V2_0],
         tokenization_strategy=providers.Factory(
             TokenizerTokenStrategy, tokenizer=tokenizer
         ),
