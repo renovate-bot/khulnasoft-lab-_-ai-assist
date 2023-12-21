@@ -9,10 +9,12 @@ from pydantic import BaseModel
 from ai_gateway.instrumentators.model_requests import ModelRequestInstrumentator
 
 __all__ = [
+    "UseCases",
     "ModelProviders",
     "AnthropicModels",
     "VertexModels",
     "PROVIDERS_MODELS_MAP",
+    "USE_CASES_MODELS_MAP",
     "ModelAPIError",
     "ModelAPICallError",
     "ModelMetadata",
@@ -23,6 +25,11 @@ __all__ = [
     "grpc_connect_vertex",
     "connect_anthropic",
 ]
+
+
+class UseCases(str, Enum):
+    CODE_COMPLETIONS = "code completions"
+    CODE_GENERATIONS = "code generations"
 
 
 class ModelProviders(str, Enum):
@@ -51,6 +58,23 @@ class VertexModels(str, Enum):
 PROVIDERS_MODELS_MAP = {
     ModelProviders.ANTHROPIC: AnthropicModels,
     ModelProviders.VERTEX_AI: VertexModels,
+}
+
+USE_CASES_MODELS_MAP = {
+    UseCases.CODE_COMPLETIONS: {
+        AnthropicModels.CLAUDE_INSTANT_1,
+        AnthropicModels.CLAUDE_INSTANT_1_1,
+        AnthropicModels.CLAUDE_INSTANT_1_2,
+        VertexModels.CODE_GECKO,
+        VertexModels.CODE_GECKO_002,
+    },
+    UseCases.CODE_GENERATIONS: {
+        AnthropicModels.CLAUDE_2,
+        AnthropicModels.CLAUDE_2_0,
+        AnthropicModels.CLAUDE_2_1,
+        VertexModels.CODE_BISON,
+        VertexModels.CODE_BISON_002,
+    },
 }
 
 

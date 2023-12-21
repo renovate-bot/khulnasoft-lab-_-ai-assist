@@ -524,8 +524,13 @@ class TestCodeGenerations:
             "prompt_version",
             "prefix",
             "prompt",
+            "model_provider",
+            "model_name",
             "model_output_text",
-            "want_called",
+            "want_vertex_called",
+            "want_anthropic_called",
+            "want_vertex_prompt_prepared_called",
+            "want_anthropic_prompt_prepared_called",
             "want_status",
             "want_prompt",
             "want_choices",
@@ -535,28 +540,73 @@ class TestCodeGenerations:
                 1,
                 "foo",
                 None,
+                "vertex-ai",
+                "code-bison",
                 "foo",
                 True,
+                False,
+                False,
+                False,
                 200,
                 None,
                 [{"text": "foo", "index": 0, "finish_reason": "length"}],
-            ),
+            ),  # v1 without prompt - vertex-ai
+            (
+                1,
+                "foo",
+                None,
+                "anthropic",
+                "claude-2",
+                "foo",
+                False,
+                True,
+                False,
+                False,
+                200,
+                None,
+                [{"text": "foo", "index": 0, "finish_reason": "length"}],
+            ),  # v1 without prompt - anthropic
             (
                 1,
                 "foo",
                 "bar",
+                "vertex-ai",
+                "code-bison",
                 "foo",
                 True,
+                False,
+                False,
+                False,
                 200,
                 None,
                 [{"text": "foo", "index": 0, "finish_reason": "length"}],
-            ),
+            ),  # v1 with prompt - vertex-ai
             (
                 1,
                 "foo",
                 "bar",
+                "vertex-ai",
+                "code-bison",
+                "foo",
+                True,
+                False,
+                False,
+                False,
+                200,
+                None,
+                [{"text": "foo", "index": 0, "finish_reason": "length"}],
+            ),  # v1 with prompt - anthropic
+            (
+                1,
+                "foo",
+                "bar",
+                "vertex-ai",
+                "code-bison",
                 "",
                 True,
+                False,
+                False,
+                False,
                 200,
                 None,
                 [],
@@ -565,27 +615,57 @@ class TestCodeGenerations:
                 2,
                 "foo",
                 "bar",
+                "vertex-ai",
+                "code-bison",
                 "foo",
+                True,
+                False,
+                True,
+                False,
+                200,
+                "bar",
+                [{"text": "foo", "index": 0, "finish_reason": "length"}],
+            ),  # v2 with prompt - vertex-ai
+            (
+                2,
+                "foo",
+                "bar",
+                "anthropic",
+                "claude-2",
+                "foo",
+                False,
+                True,
+                False,
                 True,
                 200,
                 "bar",
                 [{"text": "foo", "index": 0, "finish_reason": "length"}],
-            ),
+            ),  # v2 with prompt - anthropic
             (
                 2,
                 "foo",
                 None,
+                "anthropic",
+                "claude-2",
                 "foo",
+                False,
+                False,
+                False,
                 False,
                 422,
                 None,
                 None,
-            ),  # v2 request need the prompt field
+            ),  # v2 without prompt field
             (
                 2,
                 "foo",
                 "bar",
+                "anthropic",
+                "claude-2",
                 "",
+                False,
+                True,
+                False,
                 True,
                 200,
                 "bar",
@@ -593,14 +673,19 @@ class TestCodeGenerations:
             ),  # v2 empty suggestions from model
         ],
     )
-    def test_request_versioning(
+    def test_non_stream_response(
         self,
         mock_client,
         prompt_version,
         prefix,
         prompt,
+        model_provider,
+        model_name,
         model_output_text,
-        want_called,
+        want_vertex_called,
+        want_anthropic_called,
+        want_vertex_prompt_prepared_called,
+        want_anthropic_prompt_prepared_called,
         want_status,
         want_prompt,
         want_choices,
@@ -612,11 +697,20 @@ class TestCodeGenerations:
             lang_id=LanguageId.PYTHON,
         )
 
-        code_generations_mock = mock.Mock(spec=CodeGenerations)
-        code_generations_mock.execute = mock.AsyncMock(return_value=model_output)
+        code_generations_vertex_mock = mock.Mock(spec=CodeGenerations)
+        code_generations_vertex_mock.execute = mock.AsyncMock(return_value=model_output)
+
+        code_generations_anthropic_mock = mock.Mock(spec=CodeGenerations)
+        code_generations_anthropic_mock.execute = mock.AsyncMock(
+            return_value=model_output
+        )
         container = CodeSuggestionsContainer()
 
-        with container.code_generations_vertex.override(code_generations_mock):
+        with container.code_generations_vertex.override(
+            code_generations_vertex_mock
+        ), container.code_generations_anthropic.override(
+            code_generations_anthropic_mock
+        ):
             response = mock_client.post(
                 "/v2/code/generations",
                 headers={
@@ -633,14 +727,24 @@ class TestCodeGenerations:
                         "content_below_cursor": "\n",
                     },
                     "prompt": prompt,
+                    "model_provider": model_provider,
+                    "model_name": model_name,
                 },
             )
 
         assert response.status_code == want_status
-        assert code_generations_mock.execute.called == want_called
+        assert code_generations_vertex_mock.execute.called == want_vertex_called
+        assert code_generations_anthropic_mock.execute.called == want_anthropic_called
 
-        if code_generations_mock.with_prompt_prepared.called:
-            code_generations_mock.with_prompt_prepared.assert_called_with(want_prompt)
+        if want_vertex_prompt_prepared_called:
+            code_generations_vertex_mock.with_prompt_prepared.assert_called_with(
+                want_prompt
+            )
+
+        if want_anthropic_prompt_prepared_called:
+            code_generations_anthropic_mock.with_prompt_prepared.assert_called_with(
+                want_prompt
+            )
 
         if want_status == 200:
             body = response.json()

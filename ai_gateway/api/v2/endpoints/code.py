@@ -37,10 +37,11 @@ from ai_gateway.experimentation.base import ExperimentTelemetry
 from ai_gateway.instrumentators.base import Telemetry, TelemetryInstrumentator
 from ai_gateway.models import (
     PROVIDERS_MODELS_MAP,
+    USE_CASES_MODELS_MAP,
     AnthropicModel,
     AnthropicModels,
     ModelProviders,
-    VertexModels,
+    UseCases,
 )
 from ai_gateway.tracking.instrumentator import SnowplowInstrumentator
 
@@ -74,38 +75,66 @@ class SuggestionsRequest(BaseModel):
     ] = None
     project_id: Optional[int] = None
     current_file: CurrentFile
-    model_provider: Optional[
-        Literal[ModelProviders.VERTEX_AI, ModelProviders.ANTHROPIC]
-    ] = None
-    model_name: Optional[Union[AnthropicModels, VertexModels]] = None
+    model_provider: Optional[ModelProviders] = None
     telemetry: Annotated[List[Telemetry], Field(max_length=10)] = []
     stream: Optional[bool] = False
+
+
+class CompletionsRequest(SuggestionsRequest):
+    model_name: Optional[
+        Annotated[str, StringConstraints(strip_whitespace=True, max_length=50)]
+    ] = None
 
     @field_validator("model_name")
     @classmethod
     def validate_model_name(cls, value: str, info: ValidationInfo) -> str:
         """Validate model name and model provider are compatible."""
-        if provider := info.data.get("model_provider"):
-            if models := PROVIDERS_MODELS_MAP.get(provider):
-                if value not in list(models):
-                    raise ValueError(
-                        f"model {value} is not supported by provider {provider}"
-                    )
 
-        return value
+        return _validate_model_name(
+            value, UseCases.CODE_COMPLETIONS, info.data.get("model_provider")
+        )
 
 
-class SuggestionsRequestV1(SuggestionsRequest):
+class GenerationsRequest(SuggestionsRequest):
+    model_name: Optional[
+        Annotated[str, StringConstraints(strip_whitespace=True, max_length=50)]
+    ] = None
+
+    @field_validator("model_name")
+    @classmethod
+    def validate_model_name(cls, value: str, info: ValidationInfo) -> str:
+        """Validate model name and model provider are compatible."""
+
+        return _validate_model_name(
+            value, UseCases.CODE_GENERATIONS, info.data.get("model_provider")
+        )
+
+
+class CompletionsRequestV1(CompletionsRequest):
     prompt_version: Literal[1] = 1
 
 
-class SuggestionsRequestV2(SuggestionsRequest):
+class GenerationsRequestV1(GenerationsRequest):
+    prompt_version: Literal[1] = 1
+
+
+class CompletionsRequestV2(CompletionsRequest):
     prompt_version: Literal[2]
     prompt: str
 
 
-SuggestionRequestWithVersion = Annotated[
-    Union[SuggestionsRequestV1, SuggestionsRequestV2],
+class GenerationsRequestV2(GenerationsRequest):
+    prompt_version: Literal[2]
+    prompt: str
+
+
+CompletionsRequestWithVersion = Annotated[
+    Union[CompletionsRequestV1, CompletionsRequestV2],
+    Body(discriminator="prompt_version"),
+]
+
+GenerationsRequestWithVersion = Annotated[
+    Union[GenerationsRequestV1, GenerationsRequestV2],
     Body(discriminator="prompt_version"),
 ]
 
@@ -139,7 +168,7 @@ class StreamSuggestionsResponse(StreamingResponse):
 @inject
 async def completions(
     request: Request,
-    payload: SuggestionRequestWithVersion,
+    payload: CompletionsRequestWithVersion,
     code_completions_legacy: Factory[CodeCompletionsLegacy] = Depends(
         Provide[CodeSuggestionsContainer.code_completions_legacy.provider]
     ),
@@ -212,7 +241,7 @@ async def completions(
 @inject
 async def generations(
     request: Request,
-    payload: SuggestionRequestWithVersion,
+    payload: GenerationsRequestWithVersion,
     anthropic_model: AnthropicModel = Depends(
         Provide[CodeSuggestionsContainer.anthropic_model.provider]
     ),
@@ -347,3 +376,28 @@ async def _handle_stream(
     return StreamSuggestionsResponse(
         _stream_generator(), media_type="text/event-stream"
     )
+
+
+def _validate_model_name(
+    model_name: str,
+    use_case: UseCases,
+    provider: Optional[ModelProviders] = None,
+) -> str:
+    # ignore model name validation when provider is invalid
+    if not provider:
+        return model_name
+
+    use_case_models = USE_CASES_MODELS_MAP.get(use_case)
+    provider_models = PROVIDERS_MODELS_MAP.get(provider)
+
+    if not use_case_models or not provider_models:
+        raise ValueError(f"model {model_name} is unknown")
+
+    valid_model_names = use_case_models & set(provider_models)
+
+    if model_name not in valid_model_names:
+        raise ValueError(
+            f"model {model_name} is not supported by use case {use_case} and provider {provider}"
+        )
+
+    return model_name
