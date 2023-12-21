@@ -1,6 +1,7 @@
+import json
 import os
 from pathlib import Path
-from typing import Any, NamedTuple, Optional
+from typing import Any, NamedTuple, Optional, Union
 
 __all__ = [
     "Config",
@@ -66,6 +67,17 @@ class FeatureFlags(NamedTuple):
 class TrackingConfig(NamedTuple):
     snowplow_enabled: bool
     snowplow_endpoint: str
+
+
+class ModelConcurrencyConfig(NamedTuple):
+    json_config: dict
+
+    @property
+    def parsed_config(self) -> dict:
+        return json.loads(self.json_config)
+
+    def for_model(self, engine: str, name: str) -> Union[int, None]:
+        return self.parsed_config.get(engine, {}).get(name)
 
 
 class Config:
@@ -175,6 +187,12 @@ class Config:
                 Config._get_value("SNOWPLOW_ENABLED", "False")
             ),
             snowplow_endpoint=Config._get_value("SNOWPLOW_ENDPOINT", None),
+        )
+
+    @property
+    def model_concurrency(self) -> ModelConcurrencyConfig:
+        return ModelConcurrencyConfig(
+            json_config=(Config._get_value("MODEL_ENGINE_CONCURRENCY_LIMITS", "{}"))
         )
 
     @staticmethod
