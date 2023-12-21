@@ -11,12 +11,22 @@ from ai_gateway.code_suggestions.processing.ops import (
 from ai_gateway.experimentation import ExperimentTelemetry
 from ai_gateway.models import ModelMetadata
 
-__all__ = ["CodeSuggestionsOutput", "CodeSuggestionsChunk", "ModelProvider"]
+__all__ = [
+    "KindUseCase",
+    "CodeSuggestionsOutput",
+    "CodeSuggestionsChunk",
+    "ModelProvider",
+]
 
 
 class ModelProvider(str, Enum):
     VERTEX_AI = "vertex-ai"
     ANTHROPIC = "anthropic"
+
+
+class KindUseCase(str, Enum):
+    CODE_COMPLETIONS = "code completions"
+    CODE_GENERATIONS = "code generations"
 
 
 class CodeSuggestionsOutput(NamedTuple):

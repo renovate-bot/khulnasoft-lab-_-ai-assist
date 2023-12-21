@@ -13,6 +13,8 @@ from ai_gateway.models import (
     AnthropicAPIConnectionError,
     AnthropicAPIStatusError,
     AnthropicModel,
+    KindAnthropicModel,
+    KindModelProvider,
 )
 
 __all__ = [
@@ -29,8 +31,8 @@ router = APIRouter(
 
 class PackageFilePromptPayload(BaseModel):
     prompt: Annotated[str, StringConstraints(max_length=400000)]
-    provider: Literal[AnthropicModel.MODEL_ENGINE]
-    model: Literal[AnthropicModel.CLAUDE_INSTANT_V1_2, AnthropicModel.CLAUDE_V2_0]
+    provider: Literal[KindModelProvider.ANTHROPIC]
+    model: Literal[KindAnthropicModel.CLAUDE_INSTANT_1_2, KindAnthropicModel.CLAUDE_2_0]
 
 
 class AnyPromptComponent(BaseModel):

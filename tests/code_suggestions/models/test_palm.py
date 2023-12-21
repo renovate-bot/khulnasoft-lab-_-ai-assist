@@ -1,4 +1,4 @@
-from typing import Sequence
+from typing import Sequence, Type, Union
 from unittest.mock import AsyncMock, Mock, patch
 
 import pytest
@@ -7,14 +7,13 @@ from google.cloud.aiplatform.gapic import PredictionServiceAsyncClient, PredictR
 from google.protobuf import json_format
 
 from ai_gateway.models.base import SafetyAttributes
-from ai_gateway.models.palm import (
+from ai_gateway.models.vertex_text import (
     CodeBisonModelInput,
     CodeGeckoModelInput,
+    KindVertexTextModel,
     PalmCodeBisonModel,
     PalmCodeGeckoModel,
     PalmCodeGenBaseModel,
-    PalmCodeGenModel,
-    PalmModel,
     PalmTextBisonModel,
     TextBisonModelInput,
     TextGenModelOutput,
@@ -95,7 +94,7 @@ async def test_palm_model_generate(
     expected_output,
     expected_generate_args,
 ):
-    palm_model = model(client=Mock(), project="test", location="some location")
+    palm_model = model(Mock(), "test", "some location")
     palm_model._generate = AsyncMock(
         side_effect=lambda *_: TextGenModelOutput(
             text=expected_output, score=0, safety_attributes=SafetyAttributes()
@@ -112,11 +111,21 @@ async def test_palm_model_generate(
 
 
 @pytest.mark.asyncio
-@pytest.mark.parametrize("model", PalmCodeGenModel.models.values())
-async def test_palm_model_generate_instrumented(model):
+@pytest.mark.parametrize(
+    ("model", "model_name"),
+    [
+        (PalmCodeGeckoModel, KindVertexTextModel.CODE_GECKO_002),
+        (PalmCodeBisonModel, KindVertexTextModel.CODE_BISON_002),
+        (PalmTextBisonModel, KindVertexTextModel.TEXT_BISON_002),
+    ],
+)
+async def test_palm_model_generate_instrumented(
+    model: Type[Union[PalmTextBisonModel, PalmCodeBisonModel, PalmCodeGeckoModel]],
+    model_name: KindVertexTextModel,
+):
     mock_client = Mock()
     mock_client.predict = AsyncMock(return_value=PredictResponse())
-    palm_model = model(client=mock_client, project="test", location="some location")
+    palm_model = model.from_model_name(model_name, mock_client, "test", "some location")
     with patch(
         "ai_gateway.instrumentators.model_requests.ModelRequestInstrumentator.watch"
     ) as mock_watch:
@@ -183,23 +192,31 @@ async def test_palm_model_api_error(model, client_exception, expected_exception)
 
 
 @pytest.mark.parametrize(
-    ("model_name_version", "expected_metadata_name"),
+    ("model", "model_name", "expected_metadata_name"),
     [
-        (PalmModel.TEXT_BISON.value, f"{PalmModel.TEXT_BISON.value}"),
-        (PalmModel.CODE_BISON.value, f"{PalmModel.CODE_BISON.value}"),
-        (PalmModel.CODE_GECKO.value, f"{PalmModel.CODE_GECKO.value}"),
-        (f"{PalmModel.TEXT_BISON}@001", f"{PalmModel.TEXT_BISON}@001"),
-        (f"{PalmModel.CODE_BISON}@001", f"{PalmModel.CODE_BISON}@001"),
-        (f"{PalmModel.CODE_GECKO}@001", f"{PalmModel.CODE_GECKO}@001"),
+        (
+            PalmTextBisonModel,
+            KindVertexTextModel.TEXT_BISON_002,
+            KindVertexTextModel.TEXT_BISON_002.value,
+        ),
+        (
+            PalmCodeBisonModel,
+            KindVertexTextModel.CODE_BISON_002,
+            KindVertexTextModel.CODE_BISON_002.value,
+        ),
+        (
+            PalmCodeGeckoModel,
+            KindVertexTextModel.CODE_GECKO_002,
+            KindVertexTextModel.CODE_GECKO_002.value,
+        ),
     ],
 )
 def test_palm_model_from_name(
-    model_name_version: str,
+    model: Type[Union[PalmTextBisonModel, PalmCodeBisonModel, PalmCodeGeckoModel]],
+    model_name: KindVertexTextModel,
     expected_metadata_name: str,
 ):
-    model = PalmCodeGenModel.from_model_name(
-        model_name_version, Mock(), "project", "location"
-    )
+    model = model.from_model_name(model_name, Mock(), "project", "location")
 
     assert isinstance(model.metadata.name, str)
 
@@ -239,13 +256,13 @@ def test_palm_model_from_name(
     ],
 )
 async def test_palm_model_stop_sequences(
-    model: PalmCodeGenBaseModel,
+    model: Type[Union[PalmTextBisonModel, PalmCodeBisonModel, PalmCodeGeckoModel]],
     stop_sequences: Sequence[str],
     expected_stop_sequences: Sequence[str],
 ):
     client = Mock()
     client.predict = AsyncMock(return_value=PredictResponse())
-    palm_model = model(client=client, project="test", location="some location")
+    palm_model = model(client, "test", "some location")
 
     await palm_model.generate("foo", "", stop_sequences=stop_sequences)
 
@@ -329,7 +346,7 @@ async def test_palm_model_stop_sequences(
     ],
 )
 async def test_palm_model_safety_attributes(
-    model: PalmCodeGenBaseModel,
+    model: Type[Union[PalmTextBisonModel, PalmCodeBisonModel, PalmCodeGeckoModel]],
     prediction: dict,
     expected_safety_attributes: SafetyAttributes,
 ):
@@ -337,7 +354,7 @@ async def test_palm_model_safety_attributes(
     predict_response = PredictResponse()
     predict_response.predictions.append(prediction)
     client.predict = AsyncMock(return_value=predict_response)
-    palm_model = model(client=client, project="test", location="some location")
+    palm_model = model(client, "test", "some location")
 
     model_output = await palm_model.generate("# bomberman", "")
 

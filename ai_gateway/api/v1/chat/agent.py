@@ -14,6 +14,8 @@ from ai_gateway.models import (
     AnthropicAPIConnectionError,
     AnthropicAPIStatusError,
     AnthropicModel,
+    KindAnthropicModel,
+    KindModelProvider,
     TextGenModelChunk,
 )
 
@@ -49,17 +51,16 @@ class AnthropicParams(BaseModel):
 class PromptPayload(BaseModel):
     content: Annotated[str, StringConstraints(max_length=400000)]
     provider: Optional[
-        Literal[AnthropicModel.MODEL_ENGINE]
+        Literal[KindModelProvider.ANTHROPIC]
     ] = None  # We only support and expect Anthropic for now
     model: Optional[
         Literal[
-            AnthropicModel.CLAUDE_V2_0,
-            AnthropicModel.CLAUDE_V2_1,
-            AnthropicModel.CLAUDE_INSTANT_V1,
-            AnthropicModel.CLAUDE_INSTANT_V1_1,
-            AnthropicModel.CLAUDE_INSTANT_V1_2,
+            KindAnthropicModel.CLAUDE_2_0,
+            KindAnthropicModel.CLAUDE_2_1,
+            KindAnthropicModel.CLAUDE_INSTANT_1_1,
+            KindAnthropicModel.CLAUDE_INSTANT_1_2,
         ]
-    ] = AnthropicModel.CLAUDE_V2_1
+    ] = KindAnthropicModel.CLAUDE_2_1
     params: Optional[AnthropicParams] = None
 
 
@@ -105,7 +106,7 @@ async def chat(
     prompt_component = chat_request.prompt_components[0]
     payload = prompt_component.payload
 
-    anthropic_opts = {"model_name": payload.model}
+    anthropic_opts = {"model_name": payload.model.value}
 
     if payload.params:
         anthropic_opts.update(payload.params.dict())
@@ -123,8 +124,8 @@ async def chat(
             return ChatResponse(
                 response=completion.text,
                 metadata=ChatResponseMetadata(
-                    provider=AnthropicModel.MODEL_ENGINE,
-                    model=payload.model,
+                    provider=KindModelProvider.ANTHROPIC.value,
+                    model=payload.model.value,
                     timestamp=int(time()),
                 ),
             )
@@ -133,8 +134,8 @@ async def chat(
     return ChatResponse(
         response="",
         metadata=ChatResponseMetadata(
-            provider=AnthropicModel.MODEL_ENGINE,
-            model=payload.model,
+            provider=KindModelProvider.ANTHROPIC.value,
+            model=payload.model.value,
             timestamp=int(time()),
         ),
     )

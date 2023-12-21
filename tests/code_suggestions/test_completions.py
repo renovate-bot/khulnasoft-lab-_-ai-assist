@@ -1,17 +1,11 @@
 from contextlib import contextmanager
 from typing import Any, Type
-from unittest.mock import AsyncMock, MagicMock, Mock, patch
+from unittest.mock import AsyncMock, Mock, patch
 
 import pytest
-from dependency_injector.providers import Factory
 
-from ai_gateway.code_suggestions import (
-    CodeCompletions,
-    CodeCompletionsLegacy,
-    CodeSuggestionsChunk,
-)
+from ai_gateway.code_suggestions import CodeCompletions, CodeCompletionsLegacy
 from ai_gateway.code_suggestions.processing import (
-    LanguageId,
     ModelEngineCompletions,
     ModelEngineOutput,
 )
@@ -29,6 +23,7 @@ from ai_gateway.instrumentators import KnownMetrics, TextGenModelInstrumentator
 from ai_gateway.models import (
     AnthropicAPIConnectionError,
     AnthropicAPIStatusError,
+    KindVertexTextModel,
     ModelAPIError,
     ModelMetadata,
     PalmCodeGeckoModel,
@@ -98,9 +93,7 @@ class TestCodeCompletionsLegacy:
         )
         engine = Mock(spec=ModelEngineCompletions)
         engine.generate = AsyncMock(return_value=engine_response)
-        engine.model = PalmCodeGeckoModel(
-            client=Mock(), project="gl", location="us-central-1"
-        )
+        engine.model = PalmCodeGeckoModel(Mock(), "gl", "us-central-1")
 
         post_processor = Mock(spec=PostProcessor)
         post_processor.process.return_value = expected_output
@@ -126,7 +119,7 @@ class TestCodeCompletionsLegacy:
         engine.generate.assert_called_with(prefix, suffix, file_name, editor_lang)
         mock_benchmark.assert_called_with(
             metric_key=KnownMetrics.POST_PROCESSING_DURATION,
-            labels={"model_engine": "vertex-ai", "model_name": "code-gecko"},
+            labels={"model_engine": "vertex-ai", "model_name": "code-gecko@002"},
         )
         post_processor_factory.assert_called_with(
             prefix, suffix=suffix, lang_id=expected_language_id
@@ -180,7 +173,9 @@ class TestCodeCompletionsLegacy:
         engine = Mock(spec=ModelEngineCompletions)
         engine.generate = AsyncMock(return_value=engine_response)
         engine.model = PalmCodeGeckoModel(
-            client=Mock(), project="gl", location="us-central-1"
+            Mock(),
+            "gl",
+            "us-central-1",
         )
 
         post_processor = Mock(spec=PostProcessor)
