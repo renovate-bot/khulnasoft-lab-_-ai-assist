@@ -76,15 +76,15 @@ class SuggestionsRequest(BaseModel):
     project_id: Optional[int] = None
     current_file: CurrentFile
     model_provider: Optional[ModelProviders] = None
+    model_name: Optional[
+        Annotated[str, StringConstraints(strip_whitespace=True, max_length=50)]
+    ] = None
+
     telemetry: Annotated[List[Telemetry], Field(max_length=10)] = []
     stream: Optional[bool] = False
 
 
 class CompletionsRequest(SuggestionsRequest):
-    model_name: Optional[
-        Annotated[str, StringConstraints(strip_whitespace=True, max_length=50)]
-    ] = None
-
     @field_validator("model_name")
     @classmethod
     def validate_model_name(cls, value: str, info: ValidationInfo) -> str:
@@ -96,10 +96,6 @@ class CompletionsRequest(SuggestionsRequest):
 
 
 class GenerationsRequest(SuggestionsRequest):
-    model_name: Optional[
-        Annotated[str, StringConstraints(strip_whitespace=True, max_length=50)]
-    ] = None
-
     @field_validator("model_name")
     @classmethod
     def validate_model_name(cls, value: str, info: ValidationInfo) -> str:
