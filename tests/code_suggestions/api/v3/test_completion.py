@@ -2,44 +2,29 @@ from typing import AsyncIterator
 from unittest import mock
 
 import pytest
-from fastapi import Request
 from fastapi.testclient import TestClient
-from httpx import AsyncClient
 from snowplow_tracker import Snowplow
 
-from ai_gateway.api.v2.endpoints.code import (
-    CurrentFile,
-    SuggestionsRequest,
-    track_snowplow_event,
-)
 from ai_gateway.api.v3.completions import api_router
-from ai_gateway.api.v3.types import (
-    CompletionRequest,
+from ai_gateway.api.v3.code.types import (
     CompletionResponse,
-    ComponentType,
-    EditorContentPayload,
     ModelMetadata,
     ResponseMetadataBase,
 )
 from ai_gateway.auth import User, UserClaims
 from ai_gateway.code_suggestions import (
     CodeCompletions,
-    CodeCompletionsLegacy,
     CodeGenerations,
     CodeSuggestionsChunk,
     CodeSuggestionsOutput,
 )
-from ai_gateway.code_suggestions.processing.base import ModelEngineOutput
 from ai_gateway.code_suggestions.processing.typing import (
     LanguageId,
     MetadataCodeContent,
     MetadataPromptBuilder,
 )
 from ai_gateway.deps import CodeSuggestionsContainer
-from ai_gateway.experimentation.base import ExperimentTelemetry
-from ai_gateway.instrumentators.base import Telemetry
 from ai_gateway.models import ModelMetadata
-from ai_gateway.tracking.instrumentator import SnowplowInstrumentator
 
 
 @pytest.fixture(scope="class")
