@@ -12,6 +12,7 @@ from anthropic import (
 from anthropic._types import NOT_GIVEN
 
 from ai_gateway.models.base import (
+    AnthropicModels,
     ModelAPICallError,
     ModelAPIError,
     ModelMetadata,
@@ -77,11 +78,15 @@ class AnthropicModel(TextGenBaseModel):
 
     def __init__(
         self,
-        model_name: str,
+        model_name: Union[str, AnthropicModels],
         client: AsyncAnthropic,
         version: str = DEFAULT_VERSION,
         **kwargs: Any,
     ):
+        # TODO Consider rewriting with better types
+        # Currently this line converts `model_name` to a string value
+        model_name = AnthropicModels(model_name).value
+
         client_opts = self._obtain_client_opts(version, **kwargs)
         self.client = client.with_options(**client_opts)
         self.model_opts = self._obtain_model_opts(**kwargs)
