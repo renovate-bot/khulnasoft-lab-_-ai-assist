@@ -3,4 +3,4 @@
 from ai_gateway.models.anthropic import *
 from ai_gateway.models.base import *
 from ai_gateway.models.fake import *
-from ai_gateway.models.palm import *
+from ai_gateway.models.vertex_text import *

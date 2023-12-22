@@ -1,3 +1,4 @@
+from enum import Enum
 from typing import Any, AsyncIterator, Callable, Optional, Union
 
 import httpx
@@ -12,7 +13,7 @@ from anthropic import (
 from anthropic._types import NOT_GIVEN
 
 from ai_gateway.models.base import (
-    AnthropicModels,
+    KindModelProvider,
     ModelAPICallError,
     ModelAPIError,
     ModelMetadata,
@@ -26,6 +27,7 @@ __all__ = [
     "AnthropicAPIConnectionError",
     "AnthropicAPIStatusError",
     "AnthropicModel",
+    "KindAnthropicModel",
 ]
 
 log = structlog.stdlib.get_logger("codesuggestions")
@@ -48,19 +50,21 @@ class AnthropicAPIStatusError(ModelAPICallError):
         return wrapper
 
 
+class KindAnthropicModel(str, Enum):
+    # Avoid using model versions that only specify the major version number.
+    # More info - https://docs.anthropic.com/claude/reference/selecting-a-model
+    CLAUDE_INSTANT_1_1 = "claude-instant-1.1"
+    CLAUDE_INSTANT_1_2 = "claude-instant-1.2"
+    CLAUDE_2_0 = "claude-2.0"
+    CLAUDE_2_1 = "claude-2.1"
+
+
 class AnthropicModel(TextGenBaseModel):
     # Ref: https://docs.anthropic.com/claude/reference/selecting-a-model
     MAX_MODEL_LEN = 100_000
-    CLAUDE_INSTANT_V1 = "claude-instant-1"
-    CLAUDE_INSTANT_V1_1 = "claude-instant-1.1"
-    CLAUDE_INSTANT_V1_2 = "claude-instant-1.2"
-    CLAUDE_V2_0 = "claude-2.0"
-    CLAUDE_V2_1 = "claude-2.1"
 
     # Ref: https://docs.anthropic.com/claude/reference/versioning
     DEFAULT_VERSION = "2023-06-01"
-
-    MODEL_ENGINE = "anthropic"
 
     OPTS_CLIENT = {
         "default_headers": {},
@@ -78,22 +82,19 @@ class AnthropicModel(TextGenBaseModel):
 
     def __init__(
         self,
-        model_name: Union[str, AnthropicModels],
         client: AsyncAnthropic,
         version: str = DEFAULT_VERSION,
+        model_name: str = KindAnthropicModel.CLAUDE_2_1.value,
         **kwargs: Any,
     ):
-        # TODO Consider rewriting with better types
-        # Currently this line converts `model_name` to a string value
-        model_name = AnthropicModels(model_name).value
-
         client_opts = self._obtain_client_opts(version, **kwargs)
+
         self.client = client.with_options(**client_opts)
         self.model_opts = self._obtain_model_opts(**kwargs)
 
         self._metadata = ModelMetadata(
             name=model_name,
-            engine=AnthropicModel.MODEL_ENGINE,
+            engine=KindModelProvider.ANTHROPIC.value,
         )
 
     @staticmethod
@@ -158,19 +159,15 @@ class AnthropicModel(TextGenBaseModel):
             after_callback()
 
     @classmethod
-    def from_model_name(cls, name: str, client: AsyncAnthropic, **kwargs: Any):
-        if not name.startswith(
-            (
-                cls.CLAUDE_INSTANT_V1_2,
-                cls.CLAUDE_INSTANT_V1_1,
-                cls.CLAUDE_INSTANT_V1,
-                cls.CLAUDE_V2_0,
-                cls.CLAUDE_V2_1,
-            )
-        ):
+    def from_model_name(
+        cls, name: Union[str, KindAnthropicModel], client: AsyncAnthropic, **kwargs: Any
+    ):
+        try:
+            kind_model = KindAnthropicModel(name)
+        except ValueError:
             raise ValueError(f"no model found by the name '{name}'")
 
-        return cls(name, client, **kwargs)
+        return cls(client, model_name=kind_model.value, **kwargs)
 
 
 def _obtain_opts(default_opts: dict, **kwargs: Any) -> dict:

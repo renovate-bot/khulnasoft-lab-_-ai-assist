@@ -19,7 +19,11 @@ from ai_gateway.experimentation import experiment_registry_provider
 from ai_gateway.models import (
     AnthropicModel,
     FakePalmTextGenModel,
-    PalmCodeGenModel,
+    KindAnthropicModel,
+    KindVertexTextModel,
+    PalmCodeBisonModel,
+    PalmCodeGeckoModel,
+    PalmTextBisonModel,
     connect_anthropic,
     grpc_connect_vertex,
 )
@@ -46,15 +50,20 @@ _VERTEX_MODELS_VERSIONS = {
     ModelRollout.GOOGLE_CODE_GECKO: f"{ModelRollout.GOOGLE_CODE_GECKO}@002",
 }
 
+_VERTEX_MODELS_CLASSES = {
+    KindVertexTextModel.TEXT_BISON_002.value: PalmTextBisonModel,
+    KindVertexTextModel.CODE_BISON_002.value: PalmCodeBisonModel,
+    KindVertexTextModel.CODE_GECKO_002.value: PalmCodeGeckoModel,
+}
 
 _ANTHROPIC_MODELS_VERSIONS = {
-    AnthropicModel.CLAUDE_V2_0: "claude-2.0",
-    AnthropicModel.CLAUDE_INSTANT_V1_2: "claude-instant-1.2",
+    KindAnthropicModel.CLAUDE_2_0: "claude-2.0",
+    KindAnthropicModel.CLAUDE_INSTANT_1_2: "claude-instant-1.2",
 }
 
 _ANTHROPIC_MODELS_OPTS = {
-    AnthropicModel.CLAUDE_V2_0: {},
-    AnthropicModel.CLAUDE_INSTANT_V1_2: {"max_tokens_to_sample": 128},
+    KindAnthropicModel.CLAUDE_2_0: {},
+    KindAnthropicModel.CLAUDE_INSTANT_1_2: {"max_tokens_to_sample": 128},
 }
 
 
@@ -83,11 +92,11 @@ def _create_vertex_model(name, grpc_client_vertex, project, location, real_or_fa
     return providers.Selector(
         real_or_fake,
         real=providers.Singleton(
-            PalmCodeGenModel.from_model_name,
+            _VERTEX_MODELS_CLASSES[name],
+            model_name=name,
             client=grpc_client_vertex,
             project=project,
             location=location,
-            name=name,
         ),
         fake=providers.Singleton(FakePalmTextGenModel),
     )
@@ -97,9 +106,9 @@ def _create_anthropic_model(name, client_anthropic, real_or_fake, **kwargs):
     return providers.Selector(
         real_or_fake,
         real=providers.Singleton(
-            AnthropicModel.from_model_name,
+            AnthropicModel,
             client=client_anthropic,
-            name=name,
+            model_name=name,
             **kwargs,
         ),
         # TODO: We need to update our fake models to be generic
@@ -263,7 +272,7 @@ class CodeSuggestionsContainer(containers.DeclarativeContainer):
 
     code_completions_anthropic = providers.Factory(
         CodeCompletions,
-        model=models_anthropic[AnthropicModel.CLAUDE_INSTANT_V1_2],
+        model=models_anthropic[KindAnthropicModel.CLAUDE_INSTANT_1_2],
         tokenization_strategy=providers.Factory(
             TokenizerTokenStrategy, tokenizer=tokenizer
         ),
@@ -333,7 +342,7 @@ class XRayContainer(containers.DeclarativeContainer):
 
     client_anthropic = providers.Resource(connect_anthropic)
     anthropic_model = _create_anthropic_model(
-        name=AnthropicModel.CLAUDE_V2_0,
+        name=KindAnthropicModel.CLAUDE_2_0.value,
         client_anthropic=client_anthropic,
         real_or_fake=config.palm_text_model.real_or_fake,
     )

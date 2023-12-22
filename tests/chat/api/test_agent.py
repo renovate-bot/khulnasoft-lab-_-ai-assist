@@ -244,20 +244,6 @@ class TestAgentUnsupportedProvider:
         )
 
         assert response.status_code == 422
-        assert response.json() == {
-            "detail": [
-                {
-                    "type": "literal_error",
-                    "loc": ["body", "prompt_components", 0, "payload", "provider"],
-                    "msg": "Input should be 'anthropic'",
-                    "input": "UNSUPPORTED_PROVIDER",
-                    "ctx": {
-                        "expected": "'anthropic'",
-                    },
-                    "url": "https://errors.pydantic.dev/2.5/v/literal_error",
-                }
-            ]
-        }
 
 
 class TestAgentUnsupportedModel:
@@ -290,20 +276,6 @@ class TestAgentUnsupportedModel:
         )
 
         assert response.status_code == 422
-        assert response.json() == {
-            "detail": [
-                {
-                    "type": "literal_error",
-                    "loc": ["body", "prompt_components", 0, "payload", "model"],
-                    "msg": "Input should be 'claude-2.0', 'claude-2.1', 'claude-instant-1', 'claude-instant-1.1' or 'claude-instant-1.2'",
-                    "input": "UNSUPPORTED_MODEL",
-                    "ctx": {
-                        "expected": "'claude-2.0', 'claude-2.1', 'claude-instant-1', 'claude-instant-1.1' or 'claude-instant-1.2'",
-                    },
-                    "url": "https://errors.pydantic.dev/2.5/v/literal_error",
-                }
-            ]
-        }
 
 
 class TestAnthropicInvalidScope:

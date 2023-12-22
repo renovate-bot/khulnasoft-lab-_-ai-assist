@@ -9,14 +9,50 @@ from ai_gateway.code_suggestions.processing.ops import (
     lang_from_filename,
 )
 from ai_gateway.experimentation import ExperimentTelemetry
-from ai_gateway.models import ModelMetadata
+from ai_gateway.models import (
+    KindAnthropicModel,
+    KindModelProvider,
+    KindVertexTextModel,
+    ModelMetadata,
+)
 
-__all__ = ["CodeSuggestionsOutput", "CodeSuggestionsChunk", "ModelProvider"]
+__all__ = [
+    "KindUseCase",
+    "CodeSuggestionsOutput",
+    "CodeSuggestionsChunk",
+    "ModelProvider",
+    "PROVIDERS_MODELS_MAP",
+    "USE_CASES_MODELS_MAP",
+]
 
 
 class ModelProvider(str, Enum):
     VERTEX_AI = "vertex-ai"
     ANTHROPIC = "anthropic"
+
+
+class KindUseCase(str, Enum):
+    CODE_COMPLETIONS = "code completions"
+    CODE_GENERATIONS = "code generations"
+
+
+PROVIDERS_MODELS_MAP = {
+    KindModelProvider.ANTHROPIC: KindAnthropicModel,
+    KindModelProvider.VERTEX_AI: KindVertexTextModel,
+}
+
+USE_CASES_MODELS_MAP = {
+    KindUseCase.CODE_COMPLETIONS: {
+        KindAnthropicModel.CLAUDE_INSTANT_1_1,
+        KindAnthropicModel.CLAUDE_INSTANT_1_2,
+        KindVertexTextModel.CODE_GECKO_002,
+    },
+    KindUseCase.CODE_GENERATIONS: {
+        KindAnthropicModel.CLAUDE_2_0,
+        KindAnthropicModel.CLAUDE_2_1,
+        KindVertexTextModel.CODE_BISON_002,
+    },
+}
 
 
 class CodeSuggestionsOutput(NamedTuple):

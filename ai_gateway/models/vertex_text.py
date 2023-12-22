@@ -1,6 +1,6 @@
 from abc import abstractmethod
 from enum import Enum
-from typing import Optional, Sequence
+from typing import Any, Optional, Sequence, Union
 
 import structlog
 from google.api_core.exceptions import GoogleAPICallError, GoogleAPIError
@@ -9,6 +9,7 @@ from google.protobuf import json_format, struct_pb2
 
 from ai_gateway.models import ModelMetadata, TextGenBaseModel, TextGenModelOutput
 from ai_gateway.models.base import (
+    KindModelProvider,
     ModelAPICallError,
     ModelAPIError,
     ModelInput,
@@ -17,10 +18,10 @@ from ai_gateway.models.base import (
 
 __all__ = [
     "PalmCodeBisonModel",
+    "PalmTextBisonModel",
     "PalmCodeGeckoModel",
     "PalmCodeGenBaseModel",
-    "PalmCodeGenModel",
-    "PalmModel",
+    "KindVertexTextModel",
     "VertexAPIConnectionError",
     "VertexAPIStatusError",
 ]
@@ -80,10 +81,12 @@ class CodeGeckoModelInput(ModelInput):
         return {"prefix": self.prefix, "suffix": self.suffix}
 
 
-class PalmModel(str, Enum):
-    TEXT_BISON = "text-bison"
-    CODE_BISON = "code-bison"
-    CODE_GECKO = "code-gecko"
+class KindVertexTextModel(str, Enum):
+    # Avoid using model versions that only specify the major version number
+    # similar to `KindAnthropicModel`.
+    CODE_BISON_002 = "code-bison@002"
+    CODE_GECKO_002 = "code-gecko@002"
+    TEXT_BISON_002 = "text-bison@002"
 
 
 class PalmCodeGenBaseModel(TextGenBaseModel):
@@ -94,31 +97,19 @@ class PalmCodeGenBaseModel(TextGenBaseModel):
     # how many characters should be in the prompt.
     UPPER_BOUND_MODEL_CHARS = MAX_MODEL_LEN * 5
 
-    # Separator used to version models
-    # E.g.: code-bison@001
-    SEP_MODEL_VERSION = "@"
-
-    MODEL_ENGINE = "vertex-ai"
-
     def __init__(
         self,
-        model_name: PalmModel,
+        model_name: str,
         client: PredictionServiceAsyncClient,
         project: str,
         location: str,
-        model_version: str,
         timeout: int = 30,
     ):
         self.client = client
         self.timeout = timeout
 
-        if model_version:
-            model_name = PalmCodeGenBaseModel.SEP_MODEL_VERSION.join(
-                [model_name, model_version]
-            )
-
         self._metadata = ModelMetadata(
-            name=model_name, engine=PalmCodeGenBaseModel.MODEL_ENGINE
+            name=model_name, engine=KindModelProvider.VERTEX_AI.value
         )
         self.endpoint = f"projects/{project}/locations/{location}/publishers/google/models/{model_name}"
 
@@ -205,9 +196,11 @@ class PalmTextBisonModel(PalmCodeGenBaseModel):
         client: PredictionServiceAsyncClient,
         project: str,
         location: str,
-        version: str = "",
+        model_name: str = KindVertexTextModel.TEXT_BISON_002.value,
+        *args: Any,
+        **kwargs: Any,
     ):
-        super().__init__(PalmModel.TEXT_BISON, client, project, location, version)
+        super().__init__(model_name, client, project, location, *args, **kwargs)
 
     async def generate(
         self,
@@ -232,6 +225,19 @@ class PalmTextBisonModel(PalmCodeGenBaseModel):
 
         return res
 
+    @classmethod
+    def from_model_name(
+        cls,
+        name: Union[str, KindVertexTextModel],
+        client: PredictionServiceAsyncClient,
+        project: str,
+        location: str,
+        **kwargs: Any,
+    ):
+        name = _resolve_model_name(name, "text-bison")
+
+        return cls(client, project, location, model_name=name.value, **kwargs)
+
 
 class PalmCodeBisonModel(PalmCodeGenBaseModel):
     MAX_MODEL_LEN = 4096
@@ -241,9 +247,11 @@ class PalmCodeBisonModel(PalmCodeGenBaseModel):
         client: PredictionServiceAsyncClient,
         project: str,
         location: str,
-        version: str = "",
+        model_name: str = KindVertexTextModel.CODE_BISON_002.value,
+        *args: Any,
+        **kwargs: Any,
     ):
-        super().__init__(PalmModel.CODE_BISON, client, project, location, version)
+        super().__init__(model_name, client, project, location, *args, **kwargs)
 
     async def generate(
         self,
@@ -268,19 +276,35 @@ class PalmCodeBisonModel(PalmCodeGenBaseModel):
 
         return res
 
+    @classmethod
+    def from_model_name(
+        cls,
+        name: Union[str, KindVertexTextModel],
+        client: PredictionServiceAsyncClient,
+        project: str,
+        location: str,
+        **kwargs: Any,
+    ):
+        name = _resolve_model_name(name, "code-bison")
+
+        return cls(client, project, location, model_name=name.value, **kwargs)
+
 
 class PalmCodeGeckoModel(PalmCodeGenBaseModel):
     MAX_MODEL_LEN = 2048
     DEFAULT_STOP_SEQUENCES = ["\n\n"]
+    PREFIX_MODEL_IDENTIFIER = "code-gecko"
 
     def __init__(
         self,
         client: PredictionServiceAsyncClient,
         project: str,
         location: str,
-        version: str = "",
+        model_name: str = KindVertexTextModel.CODE_GECKO_002.value,
+        *args: Any,
+        **kwargs: Any,
     ):
-        super().__init__(PalmModel.CODE_GECKO, client, project, location, version)
+        super().__init__(model_name, client, project, location, *args, **kwargs)
 
     async def generate(
         self,
@@ -309,26 +333,29 @@ class PalmCodeGeckoModel(PalmCodeGenBaseModel):
 
         return res
 
-
-class PalmCodeGenModel:
-    models = {
-        PalmModel.TEXT_BISON: PalmTextBisonModel,
-        PalmModel.CODE_BISON: PalmCodeBisonModel,
-        PalmModel.CODE_GECKO: PalmCodeGeckoModel,
-    }
-
-    @staticmethod
+    @classmethod
     def from_model_name(
-        name: str,
+        cls,
+        name: Union[str, KindVertexTextModel],
         client: PredictionServiceAsyncClient,
         project: str,
         location: str,
-    ) -> PalmCodeGenBaseModel:
-        model_name, _, model_version = name.partition(
-            PalmCodeGenBaseModel.SEP_MODEL_VERSION
-        )
+        **kwargs: Any,
+    ):
+        name = _resolve_model_name(name, "code-gecko")
 
-        if model := PalmCodeGenModel.models.get(PalmModel(model_name), None):
-            return model(client, project, location, version=model_version)
+        return cls(client, project, location, model_name=name.value, **kwargs)
 
-        raise ValueError(f"no model found by the name '{name}'")
+
+def _resolve_model_name(
+    name: Union[str, KindVertexTextModel], prefix: str
+) -> KindVertexTextModel:
+    try:
+        name = KindVertexTextModel(name)
+    except ValueError:
+        raise ValueError(f"no model found by '{name}'")
+
+    if not name.value.startswith(prefix):
+        raise ValueError(f"no model found by '{name.value}'")
+
+    return name

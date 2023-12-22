@@ -27,23 +27,19 @@ from ai_gateway.api.middleware import (
 )
 from ai_gateway.auth.authentication import requires
 from ai_gateway.code_suggestions import (
+    PROVIDERS_MODELS_MAP,
+    USE_CASES_MODELS_MAP,
     CodeCompletions,
     CodeCompletionsLegacy,
     CodeGenerations,
     CodeSuggestionsChunk,
+    KindUseCase,
 )
 from ai_gateway.code_suggestions.processing.ops import lang_from_filename
 from ai_gateway.deps import CodeSuggestionsContainer
 from ai_gateway.experimentation.base import ExperimentTelemetry
 from ai_gateway.instrumentators.base import Telemetry, TelemetryInstrumentator
-from ai_gateway.models import (
-    PROVIDERS_MODELS_MAP,
-    USE_CASES_MODELS_MAP,
-    AnthropicModel,
-    AnthropicModels,
-    ModelProviders,
-    UseCases,
-)
+from ai_gateway.models import AnthropicModel, KindAnthropicModel, KindModelProvider
 from ai_gateway.tracking.instrumentator import SnowplowInstrumentator
 
 __all__ = [
@@ -76,7 +72,7 @@ class SuggestionsRequest(BaseModel):
     ] = None
     project_id: Optional[int] = None
     current_file: CurrentFile
-    model_provider: Optional[ModelProviders] = None
+    model_provider: Optional[KindModelProvider] = None
     model_name: Optional[
         Annotated[str, StringConstraints(strip_whitespace=True, max_length=50)]
     ] = None
@@ -92,7 +88,7 @@ class CompletionsRequest(SuggestionsRequest):
         """Validate model name and model provider are compatible."""
 
         return _validate_model_name(
-            value, UseCases.CODE_COMPLETIONS, info.data.get("model_provider")
+            value, KindUseCase.CODE_COMPLETIONS, info.data.get("model_provider")
         )
 
 
@@ -103,7 +99,7 @@ class GenerationsRequest(SuggestionsRequest):
         """Validate model name and model provider are compatible."""
 
         return _validate_model_name(
-            value, UseCases.CODE_GENERATIONS, info.data.get("model_provider")
+            value, KindUseCase.CODE_GENERATIONS, info.data.get("model_provider")
         )
 
 
@@ -192,7 +188,7 @@ async def completions(
     )
 
     kwargs = {}
-    if payload.model_provider == ModelProviders.ANTHROPIC:
+    if payload.model_provider == KindModelProvider.ANTHROPIC:
         code_completions = code_completions_anthropic()
 
         # We support the prompt version 2 only with the Anthropic models
@@ -241,7 +237,7 @@ async def completions(
 async def generations(
     request: Request,
     payload: GenerationsRequestWithVersion,
-    anthropic_model: AnthropicModel = Depends(
+    anthropic_model: Factory[AnthropicModel] = Depends(
         Provide[CodeSuggestionsContainer.anthropic_model.provider]
     ),
     code_generations_vertex: Factory[CodeGenerations] = Depends(
@@ -268,7 +264,7 @@ async def generations(
         stream=payload.stream,
     )
 
-    if payload.model_provider == ModelProviders.ANTHROPIC:
+    if payload.model_provider == KindModelProvider.ANTHROPIC:
         code_generations = _resolve_code_generations_anthropic(
             payload=payload,
             anthropic_model=anthropic_model,
@@ -313,11 +309,13 @@ async def generations(
 
 def _resolve_code_generations_anthropic(
     payload: SuggestionsRequest,
-    anthropic_model: AnthropicModel,
+    anthropic_model: Factory[AnthropicModel],
     code_generations_anthropic: Factory[CodeGenerations],
 ) -> CodeGenerations:
     model_name = (
-        payload.model_name if payload.model_name else AnthropicModels.CLAUDE_2_0
+        payload.model_name
+        if payload.model_name
+        else KindAnthropicModel.CLAUDE_2_0.value
     )
     anthropic_opts = {
         "model_name": model_name,
@@ -379,8 +377,8 @@ async def _handle_stream(
 
 def _validate_model_name(
     model_name: str,
-    use_case: UseCases,
-    provider: Optional[ModelProviders] = None,
+    use_case: KindUseCase,
+    provider: Optional[KindModelProvider] = None,
 ) -> str:
     # ignore model name validation when provider is invalid
     if not provider:
