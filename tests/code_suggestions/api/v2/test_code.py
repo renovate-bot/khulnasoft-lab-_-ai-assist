@@ -7,7 +7,7 @@ from fastapi.testclient import TestClient
 from snowplow_tracker import Snowplow
 
 from ai_gateway.api.v2.api import api_router
-from ai_gateway.api.v2.code.api import (
+from ai_gateway.api.v2.code.completions import (
     CurrentFile,
     SuggestionsRequest,
     track_snowplow_event,

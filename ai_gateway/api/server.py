@@ -57,7 +57,7 @@ def create_fast_api_server(
 
     sub_router = APIRouter()
     sub_router.include_router(http_api_router_v1, prefix="/v1")
-    sub_router.include_router(http_api_router_v2)
+    sub_router.include_router(http_api_router_v2, prefix="/v2")
     sub_router.include_router(http_api_router_v3)
     sub_router.include_router(http_monitoring_router)
 
