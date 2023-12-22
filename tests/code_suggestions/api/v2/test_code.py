@@ -8,7 +8,7 @@ from httpx import AsyncClient
 from snowplow_tracker import Snowplow
 
 from ai_gateway.api.v2.api import api_router
-from ai_gateway.api.v2.endpoints.code import (
+from ai_gateway.api.v2.code.api import (
     CurrentFile,
     SuggestionsRequest,
     track_snowplow_event,
