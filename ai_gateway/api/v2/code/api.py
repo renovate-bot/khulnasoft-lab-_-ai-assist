@@ -237,7 +237,7 @@ async def completions(
 async def generations(
     request: Request,
     payload: GenerationsRequestWithVersion,
-    anthropic_model: AnthropicModel = Depends(
+    anthropic_model: Factory[AnthropicModel] = Depends(
         Provide[CodeSuggestionsContainer.anthropic_model.provider]
     ),
     code_generations_vertex: Factory[CodeGenerations] = Depends(

@@ -53,7 +53,7 @@ class PromptPayload(BaseModel):
     provider: Optional[
         Literal[KindModelProvider.ANTHROPIC]
     ] = None  # We only support and expect Anthropic for now
-    model: Optional[KindAnthropicModel] = KindAnthropicModel.CLAUDE_2_1
+    model: Optional[KindAnthropicModel] = KindAnthropicModel.CLAUDE_2_0
     params: Optional[AnthropicParams] = None
 
 
