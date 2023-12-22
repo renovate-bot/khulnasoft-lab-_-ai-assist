@@ -36,6 +36,7 @@ snowplow-tracker = "^1.0.1"
 anthropic = "^0.8.0"
 levenshtein = "^0.23.0"
 pydantic = "^2.5.2"
+pydantic-settings = "^2.1.0"
 
 [tool.poetry.group.test]
 optional = true
