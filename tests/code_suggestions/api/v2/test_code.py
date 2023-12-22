@@ -6,12 +6,9 @@ from fastapi import Request
 from fastapi.testclient import TestClient
 from snowplow_tracker import Snowplow
 
-from ai_gateway.api.v2.api import api_router
-from ai_gateway.api.v2.code.completions import (
-    CurrentFile,
-    SuggestionsRequest,
-    track_snowplow_event,
-)
+from ai_gateway.api.v2 import api_router
+from ai_gateway.api.v2.code.completions import track_snowplow_event
+from ai_gateway.api.v2.code.typing import CurrentFile, SuggestionsRequest
 from ai_gateway.auth import User, UserClaims
 from ai_gateway.code_suggestions import (
     CodeCompletions,
@@ -130,7 +127,7 @@ class TestCodeCompletions:
 
         with container.code_completions_legacy.override(code_completions_mock):
             response = mock_client.post(
-                "/v2/completions",
+                "/completions",
                 headers={
                     "Authorization": "Bearer 12345",
                     "X-Gitlab-Authentication-Type": "oidc",
@@ -281,7 +278,7 @@ class TestCodeCompletions:
 
         with container.code_completions_anthropic.override(code_completions_mock):
             response = mock_client.post(
-                "/v2/completions",
+                "/completions",
                 headers={
                     "Authorization": "Bearer 12345",
                     "X-Gitlab-Authentication-Type": "oidc",
@@ -353,7 +350,7 @@ class TestCodeCompletions:
 
         with container.code_completions_anthropic.override(code_completions_mock):
             response = mock_client.post(
-                "/v2/completions",
+                "/completions",
                 headers={
                     "Authorization": "Bearer 12345",
                     "X-Gitlab-Authentication-Type": "oidc",
@@ -711,7 +708,7 @@ class TestCodeGenerations:
             code_generations_anthropic_mock
         ):
             response = mock_client.post(
-                "/v2/code/generations",
+                "/code/generations",
                 headers={
                     "Authorization": "Bearer 12345",
                     "X-Gitlab-Authentication-Type": "oidc",
@@ -787,7 +784,7 @@ class TestCodeGenerations:
 
         with container.code_generations_anthropic.override(code_generations_mock):
             response = mock_client.post(
-                "/v2/code/generations",
+                "/code/generations",
                 headers={
                     "Authorization": "Bearer 12345",
                     "X-Gitlab-Authentication-Type": "oidc",
@@ -819,7 +816,7 @@ class TestUnauthorizedScopes:
             claims=UserClaims(scopes=["unauthorized_scope"]),
         )
 
-    @pytest.mark.parametrize("path", ["/v2/completions", "/v2/code/generations"])
+    @pytest.mark.parametrize("path", ["/completions", "/code/generations"])
     def test_failed_authorization_scope(self, mock_client, path):
         response = mock_client.post(
             path,

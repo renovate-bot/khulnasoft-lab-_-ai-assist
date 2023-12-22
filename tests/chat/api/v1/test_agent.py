@@ -6,7 +6,7 @@ import pytest
 from fastapi.testclient import TestClient
 from structlog.testing import capture_logs
 
-from ai_gateway.api.v1.api import api_router
+from ai_gateway.api.v1 import api_router
 from ai_gateway.auth import User, UserClaims
 from ai_gateway.deps import ChatContainer
 from ai_gateway.models import (
@@ -109,7 +109,7 @@ class TestAgentSuccessfulRequest:
 
         with container.anthropic_model.override(mock_anthropic_model):
             response = mock_client.post(
-                "/v1/chat/agent",
+                "/chat/agent",
                 headers={
                     "Authorization": "Bearer 12345",
                     "X-Gitlab-Authentication-Type": "oidc",
@@ -136,7 +136,7 @@ class TestAgentSuccessfulRequest:
         )
 
 
-class TestAgentSuccessfuStream:
+class TestAgentSuccessfulStream:
     @pytest.mark.asyncio
     @pytest.mark.parametrize(
         ("model_chunks", "expected_response"),
@@ -179,7 +179,7 @@ class TestAgentSuccessfuStream:
 
         with container.anthropic_model.override(mock_anthropic_model):
             response = mock_client.post(
-                "/v1/chat/agent",
+                "/chat/agent",
                 headers={
                     "Authorization": "Bearer 12345",
                     "X-Gitlab-Authentication-Type": "oidc",
@@ -221,7 +221,7 @@ class TestAgentUnsupportedProvider:
         mock_client: TestClient,
     ):
         response = mock_client.post(
-            "/v1/chat/agent",
+            "/chat/agent",
             headers={
                 "Authorization": "Bearer 12345",
                 "X-Gitlab-Authentication-Type": "oidc",
@@ -253,7 +253,7 @@ class TestAgentUnsupportedModel:
         mock_client: TestClient,
     ):
         response = mock_client.post(
-            "/v1/chat/agent",
+            "/chat/agent",
             headers={
                 "Authorization": "Bearer 12345",
                 "X-Gitlab-Authentication-Type": "oidc",
@@ -292,7 +292,7 @@ class TestAnthropicInvalidScope:
         mock_client: TestClient,
     ):
         response = mock_client.post(
-            "/v1/chat/agent",
+            "/chat/agent",
             headers={
                 "Authorization": "Bearer 12345",
                 "X-Gitlab-Authentication-Type": "oidc",
@@ -325,7 +325,7 @@ class TestAgentInvalidRequestMissingFields:
         mock_client: TestClient,
     ):
         response = mock_client.post(
-            "/v1/chat/agent",
+            "/chat/agent",
             headers={
                 "Authorization": "Bearer 12345",
                 "X-Gitlab-Authentication-Type": "oidc",
@@ -371,7 +371,7 @@ class TestAgentInvalidRequestManyPromptComponents:
         mock_client: TestClient,
     ):
         response = mock_client.post(
-            "/v1/chat/agent",
+            "/chat/agent",
             headers={
                 "Authorization": "Bearer 12345",
                 "X-Gitlab-Authentication-Type": "oidc",
@@ -482,7 +482,7 @@ class TestAgentUnsuccessfulAnthropicRequest:
                 "ai_gateway.api.v1.chat.agent.log_exception"
             ) as mock_log_exception:
                 response = mock_client.post(
-                    "/v1/chat/agent",
+                    "/chat/agent",
                     headers={
                         "Authorization": "Bearer 12345",
                         "X-Gitlab-Authentication-Type": "oidc",
