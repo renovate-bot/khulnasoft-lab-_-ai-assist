@@ -5,12 +5,12 @@ import pytest
 from fastapi.testclient import TestClient
 from snowplow_tracker import Snowplow
 
-from ai_gateway.api.v3.completions import api_router
 from ai_gateway.api.v3.code.types import (
     CompletionResponse,
     ModelMetadata,
     ResponseMetadataBase,
 )
+from ai_gateway.api.v3.completions import api_router
 from ai_gateway.auth import User, UserClaims
 from ai_gateway.code_suggestions import (
     CodeCompletions,

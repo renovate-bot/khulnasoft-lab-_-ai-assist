@@ -1,7 +1,6 @@
 from fastapi import APIRouter
 
-from ai_gateway.api.v1 import chat
-from ai_gateway.api.v1 import x_ray
+from ai_gateway.api.v1 import chat, x_ray
 
 api_router = APIRouter()
 api_router.prefix = "/v1"
