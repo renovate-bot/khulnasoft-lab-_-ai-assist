@@ -4,7 +4,6 @@ from unittest import mock
 import pytest
 from fastapi import Request
 from fastapi.testclient import TestClient
-from httpx import AsyncClient
 from snowplow_tracker import Snowplow
 
 from ai_gateway.api.v2.api import api_router
@@ -541,7 +540,7 @@ class TestCodeGenerations:
                 "foo",
                 None,
                 "vertex-ai",
-                "code-bison",
+                "code-bison@002",
                 "foo",
                 True,
                 False,
@@ -556,7 +555,7 @@ class TestCodeGenerations:
                 "foo",
                 None,
                 "anthropic",
-                "claude-2",
+                "claude-2.1",
                 "foo",
                 False,
                 True,
@@ -571,7 +570,7 @@ class TestCodeGenerations:
                 "foo",
                 "bar",
                 "vertex-ai",
-                "code-bison",
+                "code-bison@002",
                 "foo",
                 True,
                 False,
@@ -586,7 +585,7 @@ class TestCodeGenerations:
                 "foo",
                 "bar",
                 "vertex-ai",
-                "code-bison",
+                "code-bison@002",
                 "foo",
                 True,
                 False,
@@ -601,7 +600,7 @@ class TestCodeGenerations:
                 "foo",
                 "bar",
                 "vertex-ai",
-                "code-bison",
+                "code-bison@002",
                 "",
                 True,
                 False,
@@ -616,7 +615,7 @@ class TestCodeGenerations:
                 "foo",
                 "bar",
                 "vertex-ai",
-                "code-bison",
+                "code-bison@002",
                 "foo",
                 True,
                 False,
@@ -631,7 +630,7 @@ class TestCodeGenerations:
                 "foo",
                 "bar",
                 "anthropic",
-                "claude-2",
+                "claude-2.0",
                 "foo",
                 False,
                 True,
@@ -646,7 +645,7 @@ class TestCodeGenerations:
                 "foo",
                 None,
                 "anthropic",
-                "claude-2",
+                "claude-2.0",
                 "foo",
                 False,
                 False,
@@ -661,7 +660,7 @@ class TestCodeGenerations:
                 "foo",
                 "bar",
                 "anthropic",
-                "claude-2",
+                "claude-2.1",
                 "",
                 False,
                 True,

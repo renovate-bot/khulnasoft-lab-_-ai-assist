@@ -167,7 +167,7 @@ class AnthropicModel(TextGenBaseModel):
         except ValueError:
             raise ValueError(f"no model found by the name '{name}'")
 
-        return cls(kind_model.value, client, **kwargs)
+        return cls(client, model_name=kind_model.value, **kwargs)
 
 
 def _obtain_opts(default_opts: dict, **kwargs: Any) -> dict:
