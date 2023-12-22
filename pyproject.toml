@@ -58,7 +58,7 @@ black = "^23.3.0"
 
 [tool.pytest.ini_options]
 addopts = "--disable-warnings --cov=ai_gateway --cov-report=term --cov-report=html"
-testpaths = ["tests/code_suggestions", "tests/chat", "tests/x_ray"]
+testpaths = ["tests"]
 filterwarnings = ["error::UserWarning"]
 
 [tool.poetry.scripts]
