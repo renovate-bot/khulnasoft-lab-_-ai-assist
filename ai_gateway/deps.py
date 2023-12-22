@@ -210,7 +210,7 @@ class CodeSuggestionsContainer(containers.DeclarativeContainer):
         modules=[
             "ai_gateway.api.v2.code.completions",
             "ai_gateway.api.monitoring",
-            "ai_gateway.api.v3.completions",
+            "ai_gateway.api.v3.code.completions",
         ]
     )
 

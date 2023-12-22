@@ -3,14 +3,9 @@ from unittest import mock
 
 import pytest
 from fastapi.testclient import TestClient
-from snowplow_tracker import Snowplow
 
-from ai_gateway.api.v3.completions import api_router
-from ai_gateway.api.v3.types import (
-    CompletionResponse,
-    ModelMetadata,
-    ResponseMetadataBase,
-)
+from ai_gateway.api.v3.code.completions import router
+from ai_gateway.api.v3.code.typing import ModelMetadata
 from ai_gateway.auth import User, UserClaims
 from ai_gateway.code_suggestions import (
     CodeCompletions,
@@ -18,18 +13,14 @@ from ai_gateway.code_suggestions import (
     CodeSuggestionsChunk,
     CodeSuggestionsOutput,
 )
-from ai_gateway.code_suggestions.processing.typing import (
-    LanguageId,
-    MetadataCodeContent,
-    MetadataPromptBuilder,
-)
+from ai_gateway.code_suggestions.processing.typing import LanguageId
 from ai_gateway.deps import CodeSuggestionsContainer
 from ai_gateway.models import ModelMetadata
 
 
 @pytest.fixture(scope="class")
 def fast_api_router():
-    return api_router
+    return router
 
 
 @pytest.fixture
