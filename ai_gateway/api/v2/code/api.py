@@ -1,5 +1,5 @@
 from time import time
-from typing import Annotated, AsyncIterator, List, Literal, Optional, Type, Union
+from typing import Annotated, AsyncIterator, List, Literal, Optional, Union
 
 import anthropic
 import structlog
@@ -331,7 +331,7 @@ async def generations(
 
 def _resolve_code_generations_anthropic(
     payload: SuggestionsRequest,
-    anthropic_model: Type[AnthropicModel],
+    anthropic_model: Factory[AnthropicModel],
     code_generations_anthropic: Factory[CodeGenerations],
 ) -> CodeGenerations:
     model_name = (
