@@ -27,6 +27,8 @@ from ai_gateway.api.middleware import (
 )
 from ai_gateway.auth.authentication import requires
 from ai_gateway.code_suggestions import (
+    PROVIDERS_MODELS_MAP,
+    USE_CASES_MODELS_MAP,
     CodeCompletions,
     CodeCompletionsLegacy,
     CodeGenerations,
@@ -37,12 +39,7 @@ from ai_gateway.code_suggestions.processing.ops import lang_from_filename
 from ai_gateway.deps import CodeSuggestionsContainer
 from ai_gateway.experimentation.base import ExperimentTelemetry
 from ai_gateway.instrumentators.base import Telemetry, TelemetryInstrumentator
-from ai_gateway.models import (
-    AnthropicModel,
-    KindAnthropicModel,
-    KindModelProvider,
-    KindVertexTextModel,
-)
+from ai_gateway.models import AnthropicModel, KindAnthropicModel, KindModelProvider
 from ai_gateway.tracking.instrumentator import SnowplowInstrumentator
 
 __all__ = [
@@ -55,25 +52,6 @@ router = APIRouter(
     prefix="",
     tags=["completions"],
 )
-
-
-PROVIDERS_MODELS_MAP = {
-    KindModelProvider.ANTHROPIC: KindAnthropicModel,
-    KindModelProvider.VERTEX_AI: KindVertexTextModel,
-}
-
-USE_CASES_MODELS_MAP = {
-    KindUseCase.CODE_COMPLETIONS: {
-        KindAnthropicModel.CLAUDE_INSTANT_1_1,
-        KindAnthropicModel.CLAUDE_INSTANT_1_2,
-        KindVertexTextModel.CODE_GECKO_002,
-    },
-    KindUseCase.CODE_GENERATIONS: {
-        KindAnthropicModel.CLAUDE_2_0,
-        KindAnthropicModel.CLAUDE_2_1,
-        KindVertexTextModel.CODE_BISON_002,
-    },
-}
 
 
 class CurrentFile(BaseModel):
