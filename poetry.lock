@@ -1101,19 +1101,19 @@ grpc = ["grpcio (>=1.38.0,<2.0dev)"]
 
 [[package]]
 name = "google-cloud-profiler"
-version = "4.0.0"
+version = "4.1.0"
 description = "Google Cloud Profiler Python Agent"
 optional = false
 python-versions = "*"
 files = [
-    {file = "google-cloud-profiler-4.0.0.tar.gz", hash = "sha256:b3cbffb69a0b240113e6ab874cc8a4034004975b3f232be266bdc592f2fe5a95"},
+    {file = "google-cloud-profiler-4.1.0.tar.gz", hash = "sha256:2d90f9c6d4c075ad6d43752ae39424c3d0bad63e6549a2c761881f9a235067ae"},
 ]
 
 [package.dependencies]
 google-api-python-client = "<1.12.0 || >1.12.0,<2.0.2 || >2.0.2"
 google-auth = ">=1.0.0"
 google-auth-httplib2 = "*"
-protobuf = "*"
+protobuf = ">=3.20"
 requests = "*"
 
 [[package]]
