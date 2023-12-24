@@ -17,7 +17,7 @@ dependency-injector = "^4.41.0"
 uvicorn = { extras = ["standard"], version = "^0.20.0" }
 requests = "^2.28.1"
 numpy = "^1.24.1"
-python-dotenv = "^0.21.0"
+python-dotenv = "^1.0.0"
 regex = "^2022.10.31"
 detect-secrets = "^1.4.0"
 fastapi-health = "^0.4.0"
