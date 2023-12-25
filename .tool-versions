@@ -1,6 +1,6 @@
 checkov 2.5.18 # datasource=github-releases depName=bridgecrewio/checkov
 gcloud 428.0.0 # datasource=github-tags depName=GoogleCloudPlatform/cloud-sdk-docker
 helm 3.12.0 # datasource=github-releases depName=helm/helm
-helmfile 0.154.0 # datasource=github-releases depName=helmfile/helmfile
+helmfile 0.160.0 # datasource=github-releases depName=helmfile/helmfile
 poetry 1.7.1 # datasource=pypi depName=poetry
 python 3.9.18 # datasource=github-tags depName=python/cpython
