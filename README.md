@@ -78,24 +78,21 @@ available in a `.env`:
 ```shell
 API_EXTERNAL_PORT=5001  # External port for the API used in docker-compose
 METRICS_EXTERNAL_PORT=8082  # External port for the /metrics endpoint used in docker-compose
-F_IS_THIRD_PARTY_AI_DEFAULT=true
-F_THIRD_PARTY_ROLLOUT_PERCENTAGE=100
-PALM_TEXT_MODEL_NAME=text-bison
-PALM_TEXT_PROJECT=ai-enablement-dev-69497ba7
-FASTAPI_API_HOST=0.0.0.0
-FASTAPI_API_PORT=5000
-FASTAPI_METRICS_HOST=0.0.0.0
-FASTAPI_METRICS_PORT=8082
-# FASTAPI_DOCS_URL=None  # To disable docs on the API endpoint
-# FASTAPI_OPENAPI_URL=None  # To disable docs on the API endpoint
-# FASTAPI_REDOC_URL=None  # To disable docs on the API endpoint
+AIGW_VERTEX_TEXT_MODEL__PROJECT=ai-enablement-dev-69497ba7
+AIGW_FASTAPI__API_HOST=0.0.0.0
+AIGW_FASTAPI__API_PORT=5000
+AIGW_FASTAPI__METRICS_HOST=0.0.0.0
+AIGW_FASTAPI__METRICS_PORT=8082
+# AIGW_FASTAPI__DOCS_URL=None  # To disable docs on the API endpoint
+# AIGW_FASTAPI__OPENAPI_URL=None  # To disable docs on the API endpoint
+# AIGW_FASTAPI__REDOC_URL=None  # To disable docs on the API endpoint
 # ANTHROPIC_API_KEY="SECRET_KEY_HERE" # To authenticate requests to the Anthropic models API
-AUTH_BYPASS_EXTERNAL=False  # Can be used for local development to bypass the GitLab server side check
-GITLAB_URL=https://gitlab.com/  # Can be changed to GDK: http://127.0.0.1:3000/
-GITLAB_API_URL=https://gitlab.com/api/v4/  # Can be changed to GDK: http://127.0.0.1:3000/api/v4/
+AIGW_AUTH__BYPASS_EXTERNAL=False  # Can be used for local development to bypass the GitLab server side check
+AIGW_GITLAB_URL=https://gitlab.com/  # Can be changed to GDK: http://127.0.0.1:3000/
+AIGW_GITLAB_API_URL=https://gitlab.com/api/v4/  # Can be changed to GDK: http://127.0.0.1:3000/api/v4/
 ```
 
-Note that the `FASTAPI_xxx_URL` values must either be commented out or
+Note that the `AIGW_FASTAPI__xxx_URL` values must either be commented out or
 prefaced with a valid route that begins with `/`. `python-dotenv` will
 treat any value as a string, so specifying `None` maps to the Python
 value `'None'`.
@@ -108,14 +105,11 @@ value `'None'`.
 1. Update the `.env` file in the root folder with the following variables:
 
    ```shell
-   AUTH_BYPASS_EXTERNAL=true
-   F_IS_THIRD_PARTY_AI_DEFAULT=true
-   F_THIRD_PARTY_ROLLOUT_PERCENTAGE=100
-   PALM_TEXT_MODEL_NAME=text-bison
-   PALM_TEXT_PROJECT=ai-enablement-dev-69497ba7
-   FASTAPI_DOCS_URL=/docs
-   FASTAPI_OPENAPI_URL=/openapi.json
-   FASTAPI_API_PORT=5052
+   AIGW_AUTH__BYPASS_EXTERNAL=true
+   AIGW_VERTEX_TEXT_MODEL__PROJECT=ai-enablement-dev-69497ba7
+   AIGW_FASTAPI__DOCS_URL=/docs
+   AIGW_FASTAPI__OPENAPI_URL=/openapi.json
+   AIGW_FASTAPI__API_PORT=5052
    ```
 
 1. Ensure you're authenticated with the `gcloud` CLI by running `gcloud auth application-default login`
@@ -138,8 +132,8 @@ If you want to log data between different steps for development purposes,
 please update the `.env` file by setting the following variables:
 
 ```shell
-LOG_LEVEL=debug
-LOG_TO_FILE=../modelgateway_debug.log
+AIGW_LOGGING__LEVEL=debug
+AIGW_LOGGING__TO_FILE=../modelgateway_debug.log
 ```
 
 ## Local development using GDK
