@@ -8,11 +8,11 @@ from fastapi import APIRouter, Depends, Request
 
 from ai_gateway.api.feature_category import feature_category
 from ai_gateway.api.v3.code.typing import (
+    CodeEditorComponents,
     CompletionRequest,
     CompletionResponse,
     EditorContentCompletionPayload,
     EditorContentGenerationPayload,
-    CodeEditorComponents,
     ModelMetadata,
     ResponseMetadataBase,
     StreamSuggestionsResponse,
