@@ -8,7 +8,7 @@ from starlette.responses import StreamingResponse
 from ai_gateway.code_suggestions import ModelProvider
 
 __all__ = [
-    "KindCodeEditorComponent",
+    "CodeEditorComponents",
     "CompletionRequest",
     "CompletionResponse",
     "EditorContentCompletionPayload",
@@ -17,7 +17,7 @@ __all__ = [
 ]
 
 
-class KindCodeEditorComponent(str, Enum):
+class CodeEditorComponents(str, Enum):
     COMPLETION = "code_editor_completion"
     GENERATION = "code_editor_generation"
 
@@ -52,13 +52,13 @@ class EditorContentGenerationPayload(EditorContentPayload):
 
 
 class CodeEditorCompletion(BaseModel):
-    type: Literal[KindCodeEditorComponent.COMPLETION]
+    type: Literal[CodeEditorComponents.COMPLETION]
     payload: EditorContentCompletionPayload
     metadata: Optional[MetadataBase] = None
 
 
 class CodeEditorGeneration(BaseModel):
-    type: Literal[KindCodeEditorComponent.GENERATION]
+    type: Literal[CodeEditorComponents.GENERATION]
     payload: EditorContentGenerationPayload
     metadata: Optional[MetadataBase] = None
 

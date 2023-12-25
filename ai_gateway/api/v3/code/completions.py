@@ -12,7 +12,7 @@ from ai_gateway.api.v3.code.typing import (
     CompletionResponse,
     EditorContentCompletionPayload,
     EditorContentGenerationPayload,
-    KindCodeEditorComponent,
+    CodeEditorComponents,
     ModelMetadata,
     ResponseMetadataBase,
     StreamSuggestionsResponse,
@@ -44,9 +44,9 @@ async def completions(
     payload: CompletionRequest,
 ):
     component = payload.prompt_components[0]
-    if component.type == KindCodeEditorComponent.COMPLETION:
+    if component.type == CodeEditorComponents.COMPLETION:
         return await code_completion(payload=component.payload)
-    if component.type == KindCodeEditorComponent.GENERATION:
+    if component.type == CodeEditorComponents.GENERATION:
         return await code_generation(payload=component.payload)
 
 
