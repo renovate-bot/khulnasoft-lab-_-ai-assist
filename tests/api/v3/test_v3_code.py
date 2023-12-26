@@ -13,7 +13,7 @@ from ai_gateway.code_suggestions import (
     CodeSuggestionsOutput,
 )
 from ai_gateway.code_suggestions.processing.typing import LanguageId
-from ai_gateway.deps import CodeSuggestionsContainer
+from ai_gateway.container import ContainerApplication
 from ai_gateway.models import ModelMetadata
 
 
@@ -88,7 +88,7 @@ class TestEditorContentCompletion:
     ):
         code_completions_mock = mock.Mock(spec=CodeCompletions)
         code_completions_mock.execute = mock.AsyncMock(return_value=model_output)
-        container = CodeSuggestionsContainer()
+        container = ContainerApplication()
 
         payload = {
             "file_name": "main.py",
@@ -209,7 +209,7 @@ class TestEditorContentCompletion:
 
         anthropic_mock = mock.Mock(spec=CodeCompletions)
         anthropic_mock.execute = mock.AsyncMock(return_value=anthropic_output)
-        container = CodeSuggestionsContainer()
+        container = ContainerApplication()
 
         payload = {
             "file_name": "main.py",
@@ -282,7 +282,7 @@ class TestEditorContentCompletion:
 
         code_completions_mock = mock.Mock(spec=CodeCompletions)
         code_completions_mock.execute = mock.AsyncMock(side_effect=_stream_generator)
-        container = CodeSuggestionsContainer()
+        container = ContainerApplication()
 
         payload = {
             "file_name": "main.py",
@@ -383,7 +383,7 @@ class TestEditorContentGeneration:
     ):
         code_generations_mock = mock.Mock(spec=CodeGenerations)
         code_generations_mock.execute = mock.AsyncMock(return_value=model_output)
-        container = CodeSuggestionsContainer()
+        container = ContainerApplication()
 
         payload = {
             "file_name": "main.py",
@@ -466,7 +466,7 @@ class TestEditorContentGeneration:
         code_generations_mock = mock.Mock(spec=CodeGenerations)
         code_generations_mock.execute = mock.AsyncMock(return_value=model_output)
         code_generations_mock.with_prompt_prepared = mock.AsyncMock()
-        container = CodeSuggestionsContainer()
+        container = ContainerApplication()
 
         payload = {
             "file_name": "main.py",
@@ -576,7 +576,7 @@ class TestEditorContentGeneration:
 
         anthropic_mock = mock.Mock(spec=CodeGenerations)
         anthropic_mock.execute = mock.AsyncMock(return_value=anthropic_output)
-        container = CodeSuggestionsContainer()
+        container = ContainerApplication()
 
         payload = {
             "file_name": "main.py",
@@ -653,7 +653,7 @@ class TestEditorContentGeneration:
 
         code_generations_mock = mock.Mock(spec=CodeGenerations)
         code_generations_mock.execute = mock.AsyncMock(side_effect=_stream_generator)
-        container = CodeSuggestionsContainer()
+        container = ContainerApplication()
 
         payload = {
             "file_name": "main.py",
@@ -816,7 +816,7 @@ class TestIncomingRequest:
         )
         code_completions_mock = mock.Mock(spec=CodeCompletions)
         code_completions_mock.execute = mock.AsyncMock(return_value=model_output)
-        container = CodeSuggestionsContainer()
+        container = ContainerApplication()
 
         with container.code_completions_legacy.override(code_completions_mock):
             response = mock_client.post(

@@ -8,7 +8,7 @@ from structlog.testing import capture_logs
 
 from ai_gateway.api.v1 import api_router
 from ai_gateway.auth import User, UserClaims
-from ai_gateway.deps import ChatContainer
+from ai_gateway.container import ChatContainer
 from ai_gateway.models import (
     AnthropicAPIConnectionError,
     AnthropicAPIStatusError,

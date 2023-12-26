@@ -7,7 +7,7 @@ from fastapi.testclient import TestClient
 
 from ai_gateway.api import create_fast_api_server
 from ai_gateway.config import Config, ConfigAuth
-from ai_gateway.deps import FastApiContainer
+from ai_gateway.container import FastApiContainer
 
 _ROUTES_V1 = [
     ("/v1/chat/agent", ["POST"]),

@@ -2,8 +2,9 @@ from typing import Any, AsyncIterator, Optional, Union
 
 from dependency_injector.providers import Factory
 
-from ai_gateway.code_suggestions import CodeSuggestionsChunk, CodeSuggestionsOutput
 from ai_gateway.code_suggestions.base import (
+    CodeSuggestionsChunk,
+    CodeSuggestionsOutput,
     LanguageId,
     increment_lang_counter,
     resolve_lang_id,

@@ -13,7 +13,7 @@ from ai_gateway.api.monitoring import router as http_monitoring_router
 from ai_gateway.api.v1 import api_router as http_api_router_v1
 from ai_gateway.api.v2 import api_router as http_api_router_v2
 from ai_gateway.api.v3 import api_router as http_api_router_v3
-from ai_gateway.deps import FastApiContainer
+from ai_gateway.container import ContainerApplication
 
 __all__ = [
     "create_fast_api_server",
@@ -22,13 +22,15 @@ __all__ = [
 
 @inject
 def create_fast_api_server(
-    config: dict = Provide[FastApiContainer.config.fastapi],
+    config: dict = Provide[ContainerApplication.config.fastapi],
     auth_middleware: MiddlewareAuthentication = Provide[
-        FastApiContainer.auth_middleware
+        ContainerApplication.fastapi.auth_middleware
     ],
-    log_middleware: MiddlewareLogRequest = Provide[FastApiContainer.log_middleware],
+    log_middleware: MiddlewareLogRequest = Provide[
+        ContainerApplication.fastapi.log_middleware
+    ],
     telemetry_middleware: MiddlewareModelTelemetry = Provide[
-        FastApiContainer.telemetry_middleware
+        ContainerApplication.fastapi.telemetry_middleware
     ],
 ):
     context_middleware = Middleware(RawContextMiddleware)

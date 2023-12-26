@@ -7,7 +7,7 @@ from ai_gateway.code_suggestions import CodeCompletionsLegacy, CodeGenerations
 from ai_gateway.code_suggestions.processing import ModelEngineCompletions
 from ai_gateway.code_suggestions.processing.post.completions import PostProcessor
 from ai_gateway.code_suggestions.processing.pre import TokenizerTokenStrategy
-from ai_gateway.deps import CodeSuggestionsContainer
+from ai_gateway.container import ContainerApplication
 from ai_gateway.experimentation import ExperimentRegistry
 from ai_gateway.models import FakePalmTextGenModel
 from ai_gateway.tokenizer import init_tokenizer
@@ -32,7 +32,7 @@ class TestFakeModels:
     def test_fake_completions(self, mock_client: TestClient):
         """Completions: v1 with Vertex AI models."""
 
-        container = CodeSuggestionsContainer()
+        container = ContainerApplication()
         engine = ModelEngineCompletions(
             model=FakePalmTextGenModel(),
             tokenizer=init_tokenizer(),
@@ -72,7 +72,7 @@ class TestFakeModels:
     def test_fake_generations(self, mock_client: TestClient):
         """Generations: v2 with Anthropic models."""
 
-        container = CodeSuggestionsContainer()
+        container = ContainerApplication()
         tokenization_strategy = TokenizerTokenStrategy(init_tokenizer())
 
         code_generations_mock = CodeGenerations(

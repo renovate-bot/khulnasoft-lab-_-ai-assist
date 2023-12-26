@@ -13,7 +13,7 @@ from ai_gateway.api.v1.chat.typing import (
     ChatResponseMetadata,
     StreamChatResponse,
 )
-from ai_gateway.deps import ChatContainer
+from ai_gateway.container import ContainerApplication
 from ai_gateway.models import (
     AnthropicAPIConnectionError,
     AnthropicAPIStatusError,
@@ -40,17 +40,19 @@ router = APIRouter()
 async def chat(
     request: Request,
     chat_request: ChatRequest,
-    anthropic_model: AnthropicModel = Depends(Provide[ChatContainer.anthropic_model]),
+    anthropic_model: AnthropicModel = Depends(
+        Provide[ContainerApplication.chat.anthropic_claude.provider]
+    ),
 ):
     prompt_component = chat_request.prompt_components[0]
     payload = prompt_component.payload
 
-    anthropic_opts = {"model_name": payload.model.value}
+    anthropic_opts = {"name": payload.model}
 
     if payload.params:
         anthropic_opts.update(payload.params.dict())
 
-    model = anthropic_model.provider(**anthropic_opts)
+    model = anthropic_model(**anthropic_opts)
 
     try:
         completion = await model.generate(

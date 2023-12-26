@@ -23,7 +23,7 @@ from ai_gateway.code_suggestions.processing.typing import (
     MetadataCodeContent,
     MetadataPromptBuilder,
 )
-from ai_gateway.deps import CodeSuggestionsContainer
+from ai_gateway.container import ContainerApplication
 from ai_gateway.experimentation.base import ExperimentTelemetry
 from ai_gateway.instrumentators.base import Telemetry
 from ai_gateway.models import ModelMetadata
@@ -123,7 +123,7 @@ class TestCodeCompletions:
     ):
         code_completions_mock = mock.Mock(spec=CodeCompletionsLegacy)
         code_completions_mock.execute = mock.AsyncMock(return_value=model_output)
-        container = CodeSuggestionsContainer()
+        container = ContainerApplication()
 
         with container.code_completions_legacy.override(code_completions_mock):
             response = mock_client.post(
@@ -250,7 +250,7 @@ class TestCodeCompletions:
     ):
         code_completions_mock = mock.Mock(spec=CodeCompletions)
         code_completions_mock.execute = mock.AsyncMock(return_value=model_output)
-        container = CodeSuggestionsContainer()
+        container = ContainerApplication()
 
         current_file = {
             "file_name": "main.py",
@@ -332,7 +332,7 @@ class TestCodeCompletions:
 
         code_completions_mock = mock.Mock(spec=CodeCompletions)
         code_completions_mock.execute = mock.AsyncMock(side_effect=_stream_generator)
-        container = CodeSuggestionsContainer()
+        container = ContainerApplication()
 
         current_file = {
             "file_name": "main.py",
@@ -700,7 +700,7 @@ class TestCodeGenerations:
         code_generations_anthropic_mock.execute = mock.AsyncMock(
             return_value=model_output
         )
-        container = CodeSuggestionsContainer()
+        container = ContainerApplication()
 
         with container.code_generations_vertex.override(
             code_generations_vertex_mock
@@ -780,7 +780,7 @@ class TestCodeGenerations:
 
         code_generations_mock = mock.Mock(spec=CodeGenerations)
         code_generations_mock.execute = mock.AsyncMock(side_effect=_stream_generator)
-        container = CodeSuggestionsContainer()
+        container = ContainerApplication()
 
         with container.code_generations_anthropic.override(code_generations_mock):
             response = mock_client.post(

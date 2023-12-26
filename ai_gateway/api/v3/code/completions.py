@@ -26,8 +26,7 @@ from ai_gateway.code_suggestions import (
     CodeSuggestionsChunk,
     ModelProvider,
 )
-from ai_gateway.deps import CodeSuggestionsContainer
-from ai_gateway.models import AnthropicModel, KindAnthropicModel
+from ai_gateway.container import ContainerApplication
 
 __all__ = [
     "router",
@@ -56,10 +55,12 @@ async def completions(
 async def code_completion(
     payload: EditorContentCompletionPayload,
     code_completions_legacy: Factory[CodeCompletionsLegacy] = Depends(
-        Provide[CodeSuggestionsContainer.code_completions_legacy.provider]
+        Provide[
+            ContainerApplication.code_suggestions.completions.vertex_legacy.provider
+        ]
     ),
     code_completions_anthropic: Factory[CodeCompletions] = Depends(
-        Provide[CodeSuggestionsContainer.code_completions_anthropic.provider]
+        Provide[ContainerApplication.code_suggestions.completions.anthropic.provider]
     ),
 ):
     if payload.model_provider == ModelProvider.ANTHROPIC:
@@ -95,7 +96,10 @@ async def code_completion(
 async def code_generation(
     payload: EditorContentGenerationPayload,
     code_generations_vertex: Factory[CodeGenerations] = Depends(
-        Provide[CodeSuggestionsContainer.code_generations_vertex.provider]
+        Provide[ContainerApplication.code_suggestions.generations.vertex.provider]
+    ),
+    code_generations_anthropic: Factory[CodeGenerations] = Depends(
+        Provide[ContainerApplication.code_suggestions.generations.anthropic.provider]
     ),
 ):
     if payload.model_provider == ModelProvider.ANTHROPIC:

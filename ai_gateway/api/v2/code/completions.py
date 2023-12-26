@@ -33,7 +33,7 @@ from ai_gateway.code_suggestions import (
     CodeSuggestionsChunk,
 )
 from ai_gateway.code_suggestions.processing.ops import lang_from_filename
-from ai_gateway.deps import CodeSuggestionsContainer
+from ai_gateway.container import ContainerApplication
 from ai_gateway.instrumentators.base import TelemetryInstrumentator
 from ai_gateway.models import AnthropicModel, KindAnthropicModel, KindModelProvider
 from ai_gateway.tracking.errors import log_exception
@@ -68,13 +68,15 @@ async def completions(
     request: Request,
     payload: CompletionsRequestWithVersion,
     code_completions_legacy: Factory[CodeCompletionsLegacy] = Depends(
-        Provide[CodeSuggestionsContainer.code_completions_legacy.provider]
+        Provide[
+            ContainerApplication.code_suggestions.completions.vertex_legacy.provider
+        ]
     ),
     code_completions_anthropic: Factory[CodeCompletions] = Depends(
-        Provide[CodeSuggestionsContainer.code_completions_anthropic.provider]
+        Provide[ContainerApplication.code_suggestions.completions.anthropic.provider]
     ),
     snowplow_instrumentator: SnowplowInstrumentator = Depends(
-        Provide[CodeSuggestionsContainer.snowplow_instrumentator]
+        Provide[ContainerApplication.snowplow.instrumentator]
     ),
 ):
     try:
@@ -141,17 +143,14 @@ async def completions(
 async def generations(
     request: Request,
     payload: GenerationsRequestWithVersion,
-    anthropic_model: Factory[AnthropicModel] = Depends(
-        Provide[CodeSuggestionsContainer.anthropic_model.provider]
-    ),
     code_generations_vertex: Factory[CodeGenerations] = Depends(
-        Provide[CodeSuggestionsContainer.code_generations_vertex.provider]
+        Provide[ContainerApplication.code_suggestions.generations.vertex.provider]
     ),
     code_generations_anthropic: Factory[CodeGenerations] = Depends(
-        Provide[CodeSuggestionsContainer.code_generations_anthropic.provider]
+        Provide[ContainerApplication.code_suggestions.generations.anthropic.provider]
     ),
     snowplow_instrumentator: SnowplowInstrumentator = Depends(
-        Provide[CodeSuggestionsContainer.snowplow_instrumentator]
+        Provide[ContainerApplication.snowplow.instrumentator]
     ),
 ):
     try:
@@ -171,7 +170,6 @@ async def generations(
     if payload.model_provider == KindModelProvider.ANTHROPIC:
         code_generations = _resolve_code_generations_anthropic(
             payload=payload,
-            anthropic_model=anthropic_model,
             code_generations_anthropic=code_generations_anthropic,
         )
     else:
@@ -213,21 +211,16 @@ async def generations(
 
 def _resolve_code_generations_anthropic(
     payload: SuggestionsRequest,
-    anthropic_model: Factory[AnthropicModel],
     code_generations_anthropic: Factory[CodeGenerations],
 ) -> CodeGenerations:
     model_name = (
-        payload.model_name
-        if payload.model_name
-        else KindAnthropicModel.CLAUDE_2_0.value
+        payload.model_name if payload.model_name else KindAnthropicModel.CLAUDE_2_0
     )
-    anthropic_opts = {
-        "model_name": model_name,
-        "stop_sequences": ["</new_code>", anthropic.HUMAN_PROMPT],
-    }
-    model = anthropic_model(**anthropic_opts)
 
-    return code_generations_anthropic(model=model)
+    return code_generations_anthropic(
+        model__name=model_name,
+        model__stop_sequences=["</new_code>", anthropic.HUMAN_PROMPT],
+    )
 
 
 def _suggestion_choices(text: str) -> list:

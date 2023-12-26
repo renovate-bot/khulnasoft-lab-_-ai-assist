@@ -5,7 +5,7 @@ from starlette.authentication import requires
 
 from ai_gateway.api.feature_category import feature_category
 from ai_gateway.api.v1.x_ray.typing import XRayRequest, XRayResponse
-from ai_gateway.deps import XRayContainer
+from ai_gateway.container import ContainerApplication
 from ai_gateway.models import (
     AnthropicAPIConnectionError,
     AnthropicAPIStatusError,
@@ -29,7 +29,9 @@ router = APIRouter()
 async def libraries(
     request: Request,
     payload: XRayRequest,
-    model: AnthropicModel = Depends(Provide[XRayContainer.anthropic_model]),
+    model: AnthropicModel = Depends(
+        Provide[ContainerApplication.x_ray.anthropic_claude]
+    ),
 ):
     package_file_prompt = payload.prompt_components[0].payload
 
