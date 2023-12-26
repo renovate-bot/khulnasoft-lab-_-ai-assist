@@ -135,13 +135,13 @@ files = [
 
 [[package]]
 name = "anthropic"
-version = "0.8.0"
+version = "0.8.1"
 description = "The official Python library for the anthropic API"
 optional = false
 python-versions = ">=3.7"
 files = [
-    {file = "anthropic-0.8.0-py3-none-any.whl", hash = "sha256:4cd394b22d16013a8846bbea3ff6cbf83cfa6260af01b7142256204c6a8545da"},
-    {file = "anthropic-0.8.0.tar.gz", hash = "sha256:5a5d7fd9149f28d6df875685f66ec68072edd0a9acf919648c041c6fc2da6f11"},
+    {file = "anthropic-0.8.1-py3-none-any.whl", hash = "sha256:4578b99d6e140c84ad5f409e460aabc85acffc6e189dfd91378b9277b4c158b7"},
+    {file = "anthropic-0.8.1.tar.gz", hash = "sha256:736cf85681b8ed066014b0485d8d5be1f2aae65f86e6a25c76a5d5ebb970eee5"},
 ]
 
 [package.dependencies]
@@ -151,7 +151,7 @@ httpx = ">=0.23.0,<1"
 pydantic = ">=1.9.0,<3"
 sniffio = "*"
 tokenizers = ">=0.13.0"
-typing-extensions = ">=4.5,<5"
+typing-extensions = ">=4.7,<5"
 
 [[package]]
 name = "anyio"
