@@ -49,13 +49,11 @@ def note_for_spins_role(spins, role)
     return note if note
   end
 
-  NOT_AVAILABLE_TEMPLATE % { role: role }
+  format(NOT_AVAILABLE_TEMPLATE, role: role)
 end
 
 def note_for_spin_role(spin, role)
-  if spin.optional_role == role
-    return OPTIONAL_REVIEW_TEMPLATE % { role: role.capitalize }
-  end
+  return format(OPTIONAL_REVIEW_TEMPLATE, role: role.capitalize) if spin.optional_role == role
 
   spin.public_send(role)&.markdown_name(author: roulette.team_mr_author)
 end
