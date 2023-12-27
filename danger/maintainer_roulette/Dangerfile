@@ -5,41 +5,38 @@
 
 PROJECT_NAME = helper.config.project_name
 
-MESSAGE = <<MARKDOWN
-## Maintainer roulette
-
+MESSAGE = <<~MARKDOWN
+  ## Maintainer roulette
 MARKDOWN
 
-TABLE_MARKDOWN = <<MARKDOWN
+TABLE_MARKDOWN = <<~MARKDOWN
+  To spread load more evenly across eligible maintainers, Danger has picked a candidate for each
+  review slot. Feel free to
+  [override these selections](https://about.gitlab.com/handbook/engineering/projects/##{PROJECT_NAME})
+  if you think someone else would be better-suited
+  or use the [GitLab Review Workload Dashboard](https://gitlab-org.gitlab.io/gitlab-roulette/?currentProject=#{PROJECT_NAME}) to find other available maintainers.
 
-To spread load more evenly across eligible maintainers, Danger has picked a candidate for each
-review slot. Feel free to
-[override these selections](https://about.gitlab.com/handbook/engineering/projects/##{PROJECT_NAME})
-if you think someone else would be better-suited
-or use the [GitLab Review Workload Dashboard](https://gitlab-org.gitlab.io/gitlab-roulette/?currentProject=#{PROJECT_NAME}) to find other available maintainers.
+  To read more on how to use the maintainer roulette, please take a look at the
+  [Engineering workflow](https://about.gitlab.com/handbook/engineering/workflow/#basics)
+  and [code review guidelines](https://docs.gitlab.com/ee/development/code_review.html).
 
-To read more on how to use the maintainer roulette, please take a look at the
-[Engineering workflow](https://about.gitlab.com/handbook/engineering/workflow/#basics)
-and [code review guidelines](https://docs.gitlab.com/ee/development/code_review.html).
-
-Once you've decided who will review this merge request, mention them as you
-normally would! Danger does not automatically notify them for you.
-
+  Once you've decided who will review this merge request, mention them as you
+  normally would! Danger does not automatically notify them for you.
 MARKDOWN
 
-TABLE_HEADER_WITH_CATEGORIES = <<MARKDOWN
-| Category | Maintainer |
-| -------- | ---------- |
+TABLE_HEADER_WITH_CATEGORIES = <<~MARKDOWN
+  | Category | Maintainer |
+  | -------- | ---------- |
 MARKDOWN
 
-TABLE_HEADER_WITHOUT_CATEGORIES = <<MARKDOWN
-| Maintainer |
-| ---------- |
+TABLE_HEADER_WITHOUT_CATEGORIES = <<~MARKDOWN
+  | Maintainer |
+  | ---------- |
 MARKDOWN
 
-WARNING_MESSAGE = <<MARKDOWN
-⚠ Failed to retrieve information ⚠
-%{warnings}
+WARNING_MESSAGE = <<~MARKDOWN
+  ⚠ Failed to retrieve information ⚠
+  %{warnings}
 MARKDOWN
 
 OPTIONAL_REVIEW_TEMPLATE = '%{role} review is optional'
