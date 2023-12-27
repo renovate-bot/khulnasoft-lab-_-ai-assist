@@ -125,7 +125,9 @@ class TestCodeCompletions:
         code_completions_mock.execute = mock.AsyncMock(return_value=model_output)
         container = ContainerApplication()
 
-        with container.code_completions_legacy.override(code_completions_mock):
+        with container.code_suggestions.completions.vertex_legacy.override(
+            code_completions_mock
+        ):
             response = mock_client.post(
                 "/completions",
                 headers={
@@ -276,7 +278,9 @@ class TestCodeCompletions:
                 {"raw_prompt": current_file["content_above_cursor"]}
             )
 
-        with container.code_completions_anthropic.override(code_completions_mock):
+        with container.code_suggestions.completions.anthropic.override(
+            code_completions_mock
+        ):
             response = mock_client.post(
                 "/completions",
                 headers={
@@ -348,7 +352,9 @@ class TestCodeCompletions:
             "stream": True,
         }
 
-        with container.code_completions_anthropic.override(code_completions_mock):
+        with container.code_suggestions.completions.anthropic.override(
+            code_completions_mock
+        ):
             response = mock_client.post(
                 "/completions",
                 headers={
@@ -702,9 +708,9 @@ class TestCodeGenerations:
         )
         container = ContainerApplication()
 
-        with container.code_generations_vertex.override(
+        with container.code_suggestions.generations.vertex.override(
             code_generations_vertex_mock
-        ), container.code_generations_anthropic.override(
+        ), container.code_suggestions.generations.anthropic_factory.override(
             code_generations_anthropic_mock
         ):
             response = mock_client.post(
@@ -782,7 +788,9 @@ class TestCodeGenerations:
         code_generations_mock.execute = mock.AsyncMock(side_effect=_stream_generator)
         container = ContainerApplication()
 
-        with container.code_generations_anthropic.override(code_generations_mock):
+        with container.code_suggestions.generations.anthropic_factory.override(
+            code_generations_mock
+        ):
             response = mock_client.post(
                 "/code/generations",
                 headers={

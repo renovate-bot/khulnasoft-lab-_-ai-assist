@@ -54,19 +54,19 @@ async def completions(
 @inject
 async def code_completion(
     payload: EditorContentCompletionPayload,
-    code_completions_legacy: Factory[CodeCompletionsLegacy] = Depends(
+    completions_legacy_factory: Factory[CodeCompletionsLegacy] = Depends(
         Provide[
             ContainerApplication.code_suggestions.completions.vertex_legacy.provider
         ]
     ),
-    code_completions_anthropic: Factory[CodeCompletions] = Depends(
+    completions_anthropic_factory: Factory[CodeCompletions] = Depends(
         Provide[ContainerApplication.code_suggestions.completions.anthropic.provider]
     ),
 ):
     if payload.model_provider == ModelProvider.ANTHROPIC:
-        engine = code_completions_anthropic()
+        engine = completions_anthropic_factory()
     else:
-        engine = code_completions_legacy()
+        engine = completions_legacy_factory()
 
     suggestion = await engine.execute(
         prefix=payload.content_above_cursor,
@@ -95,17 +95,19 @@ async def code_completion(
 @inject
 async def code_generation(
     payload: EditorContentGenerationPayload,
-    code_generations_vertex: Factory[CodeGenerations] = Depends(
+    generations_vertex_factory: Factory[CodeGenerations] = Depends(
         Provide[ContainerApplication.code_suggestions.generations.vertex.provider]
     ),
-    code_generations_anthropic: Factory[CodeGenerations] = Depends(
-        Provide[ContainerApplication.code_suggestions.generations.anthropic.provider]
+    generations_anthropic_factory: Factory[CodeGenerations] = Depends(
+        Provide[
+            ContainerApplication.code_suggestions.generations.anthropic_factory.provider
+        ]
     ),
 ):
     if payload.model_provider == ModelProvider.ANTHROPIC:
         engine = _resolve_code_generations_anthropic()
     else:
-        engine = code_generations_vertex()
+        engine = generations_vertex_factory()
 
     if payload.prompt:
         engine.with_prompt_prepared(payload.prompt)

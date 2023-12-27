@@ -36,7 +36,7 @@ class ContainerCodeGenerations(containers.DeclarativeContainer):
 
     # We need to resolve the model based on model name provided in request payload
     # Hence, CodeGenerations is only partially applied here.
-    anthropic = providers.Factory(
+    anthropic_factory = providers.Factory(
         CodeGenerations,
         model=providers.Factory(
             providers.Factory(

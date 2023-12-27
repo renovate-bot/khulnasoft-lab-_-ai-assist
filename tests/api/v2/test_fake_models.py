@@ -44,25 +44,26 @@ class TestFakeModels:
             post_processor=PostProcessor,
         )
 
-        container.code_completions_legacy.override(code_completions_mock)
-
-        response = mock_client.post(
-            "/code/completions",
-            headers={
-                "Authorization": "Bearer 12345",
-                "X-Gitlab-Authentication-Type": "oidc",
-            },
-            json={
-                "prompt_version": 1,
-                "project_path": "gitlab-org/gitlab",
-                "project_id": 278964,
-                "current_file": {
-                    "file_name": "main.py",
-                    "content_above_cursor": "def beautiful_",
-                    "content_below_cursor": "\n",
+        with container.code_suggestions.completions.vertex_legacy.override(
+            code_completions_mock
+        ):
+            response = mock_client.post(
+                "/code/completions",
+                headers={
+                    "Authorization": "Bearer 12345",
+                    "X-Gitlab-Authentication-Type": "oidc",
                 },
-            },
-        )
+                json={
+                    "prompt_version": 1,
+                    "project_path": "gitlab-org/gitlab",
+                    "project_id": 278964,
+                    "current_file": {
+                        "file_name": "main.py",
+                        "content_above_cursor": "def beautiful_",
+                        "content_below_cursor": "\n",
+                    },
+                },
+            )
 
         assert response.status_code == 200
 
@@ -79,27 +80,28 @@ class TestFakeModels:
             model=FakePalmTextGenModel(), tokenization_strategy=tokenization_strategy
         )
 
-        container.code_generations_anthropic.override(code_generations_mock)
-
-        response = mock_client.post(
-            "/code/generations",
-            headers={
-                "Authorization": "Bearer 12345",
-                "X-Gitlab-Authentication-Type": "oidc",
-            },
-            json={
-                "prompt_version": 2,
-                "project_path": "gitlab-org/gitlab",
-                "project_id": 278964,
-                "current_file": {
-                    "file_name": "main.py",
-                    "content_above_cursor": "wonder",
-                    "content_below_cursor": "\n",
+        with container.code_suggestions.generations.anthropic_factory.override(
+            code_generations_mock
+        ):
+            response = mock_client.post(
+                "/code/generations",
+                headers={
+                    "Authorization": "Bearer 12345",
+                    "X-Gitlab-Authentication-Type": "oidc",
                 },
-                "prompt": "write a wonderful function",
-                "model_provider": "anthropic",
-            },
-        )
+                json={
+                    "prompt_version": 2,
+                    "project_path": "gitlab-org/gitlab",
+                    "project_id": 278964,
+                    "current_file": {
+                        "file_name": "main.py",
+                        "content_above_cursor": "wonder",
+                        "content_below_cursor": "\n",
+                    },
+                    "prompt": "write a wonderful function",
+                    "model_provider": "anthropic",
+                },
+            )
 
         assert response.status_code == 200
 
