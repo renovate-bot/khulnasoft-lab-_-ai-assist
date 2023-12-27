@@ -4,7 +4,6 @@ from anthropic import AsyncAnthropic
 from dependency_injector import containers, providers
 from google.cloud.aiplatform.gapic import PredictionServiceAsyncClient
 
-from ai_gateway.config import Config
 from ai_gateway.models.anthropic import AnthropicModel
 from ai_gateway.models.base import connect_anthropic, grpc_connect_vertex
 from ai_gateway.models.fake import FakePalmTextGenModel
@@ -49,11 +48,10 @@ def _init_anthropic_client(use_fake: bool) -> Iterator[Optional[AsyncAnthropic]]
 
 
 class ContainerModels(containers.DeclarativeContainer):
-    # We need to resolve the model based on the model name provided in the request payload.
+    # We need to resolve the model based on the model name provided by the upstream container.
     # Hence, `VertexTextBaseModel.from_model_name` and `AnthropicModel.from_model_name` are only partially applied here.
 
     config = providers.Configuration()
-    config.from_dict(Config().model_dump())
 
     grpc_client_vertex = providers.Resource(
         _init_vertex_grpc_client,

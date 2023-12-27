@@ -10,7 +10,6 @@ from ai_gateway.code_suggestions.processing.post.completions import (
     PostProcessor as PostProcessorCompletions,
 )
 from ai_gateway.code_suggestions.processing.pre import TokenizerTokenStrategy
-from ai_gateway.config import Config
 from ai_gateway.experimentation import experiment_registry_provider
 from ai_gateway.models import KindAnthropicModel, KindVertexTextModel, TextGenBaseModel
 from ai_gateway.tokenizer import init_tokenizer
@@ -57,7 +56,6 @@ class ContainerCodeCompletions(containers.DeclarativeContainer):
     anthropic_claude = providers.Dependency(instance_of=TextGenBaseModel)
 
     config = providers.Configuration()
-    config.from_dict(Config().model_dump())
 
     vertex_legacy = providers.Factory(
         CodeCompletionsLegacy,
@@ -71,7 +69,7 @@ class ContainerCodeCompletions(containers.DeclarativeContainer):
         ),
         post_processor=providers.Factory(
             PostProcessorCompletions,
-            exclude=config.f.feature_flags.code_suggestions.excl_post_proc,
+            exclude=config.excl_post_proc,
         ).provider,
     )
 
@@ -93,7 +91,6 @@ class ContainerCodeSuggestions(containers.DeclarativeContainer):
     models = providers.DependenciesContainer()
 
     config = providers.Configuration()
-    config.from_dict(Config().model_dump())
 
     tokenizer = providers.Resource(init_tokenizer)
 
@@ -109,4 +106,5 @@ class ContainerCodeSuggestions(containers.DeclarativeContainer):
         tokenizer=tokenizer,
         vertex_code_gecko=models.vertex_code_gecko,
         anthropic_claude=models.anthropic_claude,
+        config=config,
     )

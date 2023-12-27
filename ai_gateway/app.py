@@ -23,8 +23,8 @@ dictConfig(config.fastapi.uvicorn_logger)
 
 
 def main():
-    code_suggestions_container = ContainerApplication()
-    code_suggestions_container.config.from_dict(config.model_dump())
+    container_application = ContainerApplication()
+    container_application.config.from_dict(config.model_dump())
 
     app = create_fast_api_server()
     setup_logging(app, config.logging)
@@ -51,7 +51,7 @@ def main():
 
     @app.on_event("startup")
     def on_server_startup():
-        code_suggestions_container.init_resources()
+        container_application.init_resources()
 
         # https://github.com/trallnag/prometheus-fastapi-instrumentator/issues/10
         log.info(
@@ -65,7 +65,7 @@ def main():
 
     @app.on_event("shutdown")
     def on_server_shutdown():
-        code_suggestions_container.shutdown_resources()
+        container_application.shutdown_resources()
 
     # For now, trust all IPs for proxy headers until https://github.com/encode/uvicorn/pull/1611 is available.
     uvicorn.run(

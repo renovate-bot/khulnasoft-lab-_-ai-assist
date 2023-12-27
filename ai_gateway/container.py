@@ -5,7 +5,6 @@ from ai_gateway.api import middleware
 from ai_gateway.auth import GitLabOidcProvider
 from ai_gateway.chat.container import ContainerChat
 from ai_gateway.code_suggestions.container import ContainerCodeSuggestions
-from ai_gateway.config import Config
 from ai_gateway.models.container import ContainerModels
 from ai_gateway.tracking.container import ContainerTracking
 
@@ -20,7 +19,6 @@ _PROBS_ENDPOINTS = ["/monitoring/healthz", "/metrics"]
 
 class ContainerFastApi(containers.DeclarativeContainer):
     config = providers.Configuration()
-    config.from_dict(Config().model_dump())
 
     oidc_provider = providers.Singleton(
         GitLabOidcProvider,
@@ -63,7 +61,6 @@ class ContainerApplication(containers.DeclarativeContainer):
     )
 
     config = providers.Configuration()
-    config.from_dict(Config().model_dump())
 
     interceptor = providers.Resource(
         PromClientInterceptor,
@@ -72,10 +69,14 @@ class ContainerApplication(containers.DeclarativeContainer):
         enable_client_stream_send_time_histogram=True,
     )
 
-    pkg_models = providers.Container(ContainerModels)
+    pkg_models = providers.Container(
+        ContainerModels,
+        config=config,
+    )
     code_suggestions = providers.Container(
         ContainerCodeSuggestions,
         models=pkg_models,
+        config=config.f.feature_flags.code_suggestions,
     )
     x_ray = providers.Container(
         ContainerXRay,
@@ -86,5 +87,8 @@ class ContainerApplication(containers.DeclarativeContainer):
         models=pkg_models,
     )
 
-    snowplow = providers.Container(ContainerTracking)
-    fastapi = providers.Container(ContainerFastApi)
+    snowplow = providers.Container(ContainerTracking, config=config.snowplow)
+    fastapi = providers.Container(
+        ContainerFastApi,
+        config=config,
+    )
