@@ -5,5 +5,5 @@
     ":semanticCommitTypeAll(chore)"
   ],
   "reviewersSampleSize": 2,
-  "additionalReviewers": ["achueshev", "stanhu", "tle_gitlab"]
+  "additionalReviewers": ["achueshev", "stanhu", "tle_gitlab", "shinya.maeda"]
 }
