@@ -9,3 +9,8 @@ include:
   - local: /ci/gitlab-com.yml
     rules:
       - if: $CI_API_V4_URL == "https://gitlab.com/api/v4"
+  - project: 'gitlab-org/quality/pipeline-common'
+    file:
+      - '/ci/danger-review.yml'
+    rules:
+      - if: $CI_SERVER_HOST == "gitlab.com"
