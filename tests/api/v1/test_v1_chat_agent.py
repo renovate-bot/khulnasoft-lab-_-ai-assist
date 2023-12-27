@@ -3,17 +3,19 @@ from unittest import mock
 from unittest.mock import AsyncMock, patch
 
 import pytest
+from dependency_injector import providers
 from fastapi.testclient import TestClient
 from structlog.testing import capture_logs
 
 from ai_gateway.api.v1 import api_router
 from ai_gateway.auth import User, UserClaims
-from ai_gateway.container import ChatContainer
+from ai_gateway.container import ContainerApplication
 from ai_gateway.models import (
     AnthropicAPIConnectionError,
     AnthropicAPIStatusError,
     AnthropicAPITimeoutError,
     AnthropicModel,
+    KindAnthropicModel,
     ModelAPIError,
     SafetyAttributes,
     TextGenModelChunk,
@@ -57,7 +59,7 @@ class TestAgentSuccessfulRequest:
                     ]
                 },
                 {
-                    "model_name": "claude-2.0",
+                    "name": KindAnthropicModel.CLAUDE_2_0,
                 },
             ),
             (
@@ -72,7 +74,7 @@ class TestAgentSuccessfulRequest:
                             "payload": {
                                 "content": "\n\nHuman: hello, what is your name?\n\nAssistant:",
                                 "provider": "anthropic",
-                                "model": "claude-2.0",
+                                "model": "claude-2.1",
                                 "params": {
                                     "temperature": 0.3,
                                     "stop_sequences": ["\n\nHuman", "Observation:"],
@@ -83,7 +85,7 @@ class TestAgentSuccessfulRequest:
                     ]
                 },
                 {
-                    "model_name": "claude-2.0",
+                    "name": KindAnthropicModel.CLAUDE_2_1,
                     "temperature": 0.3,
                     "stop_sequences": ["\n\nHuman", "Observation:"],
                     "max_tokens_to_sample": 1024,
@@ -102,12 +104,12 @@ class TestAgentSuccessfulRequest:
                 safety_attributes=SafetyAttributes(),
             )
         )
-        mock_anthropic_model = mock.Mock()
-        mock_anthropic_model.provider.return_value = mock_model
 
-        container = ChatContainer()
-
-        with container.anthropic_model.override(mock_anthropic_model):
+        container = ContainerApplication()
+        mock_anthropic_factory = mock.Mock(return_value=mock_model)
+        with container.chat.anthropic_claude_factory.override(
+            providers.Factory(mock_anthropic_factory)
+        ):
             response = mock_client.post(
                 "/chat/agent",
                 headers={
@@ -118,7 +120,6 @@ class TestAgentSuccessfulRequest:
             )
 
         assert response.status_code == 200
-
         assert response.json()["response"] == "test completion"
 
         response_metadata = response.json()["metadata"]
@@ -128,7 +129,7 @@ class TestAgentSuccessfulRequest:
             == request_body["prompt_components"][0]["payload"]["model"]
         )
 
-        mock_anthropic_model.provider.assert_called_with(**expected_provider_args)
+        mock_anthropic_factory.assert_called_with(**expected_provider_args)
         mock_model.generate.assert_called_with(
             prefix="\n\nHuman: hello, what is your name?\n\nAssistant:",
             _suffix="",
@@ -169,15 +170,15 @@ class TestAgentSuccessfulStream:
             for chunk in model_chunks:
                 yield chunk
 
-        model_name = "claude-2.0"
+        model_name = KindAnthropicModel.CLAUDE_2_0
         mock_model = mock.Mock(spec=AnthropicModel)
         mock_model.generate = AsyncMock(side_effect=_stream_generator)
-        mock_anthropic_model = mock.Mock()
-        mock_anthropic_model.provider.return_value = mock_model
 
-        container = ChatContainer()
-
-        with container.anthropic_model.override(mock_anthropic_model):
+        container = ContainerApplication()
+        mock_anthropic_factory = mock.Mock(return_value=mock_model)
+        with container.chat.anthropic_claude_factory.override(
+            providers.Factory(mock_anthropic_factory)
+        ):
             response = mock_client.post(
                 "/chat/agent",
                 headers={
@@ -195,7 +196,7 @@ class TestAgentSuccessfulStream:
                             "payload": {
                                 "content": "\n\nHuman: hello, what is your name?\n\nAssistant:",
                                 "provider": "anthropic",
-                                "model": model_name,
+                                "model": model_name.value,
                             },
                         },
                     ],
@@ -207,7 +208,7 @@ class TestAgentSuccessfulStream:
         assert response.text == expected_response
         assert response.headers["content-type"] == "text/event-stream; charset=utf-8"
 
-        mock_anthropic_model.provider.assert_called_with(model_name=model_name)
+        mock_anthropic_factory.assert_called_with(name=model_name)
         mock_model.generate.assert_called_with(
             prefix="\n\nHuman: hello, what is your name?\n\nAssistant:",
             _suffix="",
@@ -472,15 +473,10 @@ class TestAgentUnsuccessfulAnthropicRequest:
                 safety_attributes=SafetyAttributes(),
             ),
         )
-        mock_anthropic_model = mock.Mock()
-        mock_anthropic_model.provider.return_value = mock_model
 
-        container = ChatContainer()
-
-        with container.anthropic_model.override(mock_anthropic_model):
-            with patch(
-                "ai_gateway.api.v1.chat.agent.log_exception"
-            ) as mock_log_exception:
+        container = ContainerApplication()
+        with container.chat.anthropic_claude_factory.override(mock_model):
+            with capture_logs() as cap_logs:
                 response = mock_client.post(
                     "/chat/agent",
                     headers={

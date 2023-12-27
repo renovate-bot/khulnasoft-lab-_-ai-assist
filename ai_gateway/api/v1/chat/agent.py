@@ -2,6 +2,7 @@ from time import time
 from typing import AsyncIterator
 
 import structlog
+from dependency_injector.providers import Factory
 from dependency_injector.wiring import Provide, inject
 from fastapi import APIRouter, Depends, HTTPException, Request, status
 from starlette.authentication import requires
@@ -40,8 +41,8 @@ router = APIRouter()
 async def chat(
     request: Request,
     chat_request: ChatRequest,
-    anthropic_model: AnthropicModel = Depends(
-        Provide[ContainerApplication.chat.anthropic_claude.provider]
+    anthropic_claude_factory: Factory[AnthropicModel] = Depends(
+        Provide[ContainerApplication.chat.anthropic_claude_factory.provider]
     ),
 ):
     prompt_component = chat_request.prompt_components[0]
@@ -52,7 +53,7 @@ async def chat(
     if payload.params:
         anthropic_opts.update(payload.params.dict())
 
-    model = anthropic_model(**anthropic_opts)
+    model = anthropic_claude_factory(**anthropic_opts)
 
     try:
         completion = await model.generate(
