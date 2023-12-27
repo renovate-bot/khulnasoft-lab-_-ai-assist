@@ -24,12 +24,7 @@ TABLE_MARKDOWN = <<~MARKDOWN
   normally would! Danger does not automatically notify them for you.
 MARKDOWN
 
-TABLE_HEADER_WITH_CATEGORIES = <<~MARKDOWN
-  | Category | Maintainer |
-  | -------- | ---------- |
-MARKDOWN
-
-TABLE_HEADER_WITHOUT_CATEGORIES = <<~MARKDOWN
+TABLE_HEADER = <<~MARKDOWN
   | Maintainer |
   | ---------- |
 MARKDOWN
@@ -58,12 +53,10 @@ def note_for_spin_role(spin, role)
   spin.public_send(role)&.markdown_name(author: roulette.team_mr_author)
 end
 
-def markdown_row_for_spins(category, spins_array, show_category_column:)
+def markdown_row_for_spins(spins_array)
   maintainer_note = note_for_spins_role(spins_array, :maintainer)
 
-  row = +"| #{maintainer_note} |"
-  row.prepend("| #{helper.label_for_category(category)} ") if show_category_column
-  row
+  "| #{maintainer_note} |"
 end
 
 def warning_list(roulette)
@@ -73,23 +66,18 @@ def warning_list(roulette)
 end
 
 changes = helper.changes_by_category
-categories = roulette.prepare_categories(changes.keys)
 
 if changes.any?
-  show_category_column = categories.size > 1 || categories.first != :none
-  random_roulette_spins = roulette.spin(nil, categories)
+  random_roulette_spins = roulette.spin
 
   rows = random_roulette_spins.map do |spin|
-    markdown_row_for_spins(spin.category, [spin], show_category_column: show_category_column)
+    markdown_row_for_spins([spin])
   end
-
-  table_header = show_category_column ? TABLE_HEADER_WITH_CATEGORIES : TABLE_HEADER_WITHOUT_CATEGORIES
 
   markdown(MESSAGE)
 
   warnings = warning_list(roulette)
-
   markdown(format(WARNING_MESSAGE, warnings: warnings)) if warnings
 
-  markdown(TABLE_MARKDOWN + table_header + rows.join("\n")) unless rows.empty?
+  markdown(TABLE_MARKDOWN + TABLE_HEADER + rows.join("\n")) unless rows.empty?
 end
