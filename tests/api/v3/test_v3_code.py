@@ -230,7 +230,7 @@ class TestEditorContentCompletion:
             "prompt_components": [prompt_component],
         }
 
-        with container.code_completions_legacy.override(
+        with container.code_suggestions.completions.vertex_legacy.override(
             vertex_mock
         ) and container.code_suggestions.completions.anthropic.override(anthropic_mock):
             response = mock_client.post(
