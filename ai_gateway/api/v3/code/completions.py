@@ -100,7 +100,7 @@ async def code_generation(
     ),
     generations_anthropic_factory: Factory[CodeGenerations] = Depends(
         Provide[
-            ContainerApplication.code_suggestions.generations.anthropic_factory.provider
+            ContainerApplication.code_suggestions.generations.anthropic_default.provider
         ]
     ),
 ):

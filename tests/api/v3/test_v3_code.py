@@ -597,7 +597,7 @@ class TestEditorContentGeneration:
 
         with container.code_suggestions.generations.vertex.override(
             vertex_mock
-        ) and container.code_suggestions.generations.anthropic_factory.override(anthropic_mock):
+        ) and container.code_suggestions.generations.anthropic_default.override(anthropic_mock):
             response = mock_client.post(
                 "/code/completions",
                 headers={
@@ -673,7 +673,7 @@ class TestEditorContentGeneration:
             "prompt_components": [prompt_component],
         }
 
-        with container.code_suggestions.generations.anthropic_factory.override(code_generations_mock):
+        with container.code_suggestions.generations.anthropic_default.override(code_generations_mock):
             response = mock_client.post(
                 "/code/completions",
                 headers={

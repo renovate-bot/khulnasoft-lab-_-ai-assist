@@ -39,14 +39,18 @@ class ContainerCodeGenerations(containers.DeclarativeContainer):
     anthropic_factory = providers.Factory(
         CodeGenerations,
         model=providers.Factory(
-            providers.Factory(
-                anthropic_claude,
-            ),
+            anthropic_claude,
             stop_sequences=["</new_code>", "\n\nHuman:"],
         ),
         tokenization_strategy=providers.Factory(
             TokenizerTokenStrategy, tokenizer=tokenizer
         ),
+    )
+
+    # Default use case with claude.2.0
+    anthropic_default = providers.Factory(
+        anthropic_factory,
+        model__name=KindAnthropicModel.CLAUDE_2_0,
     )
 
 
@@ -76,10 +80,10 @@ class ContainerCodeCompletions(containers.DeclarativeContainer):
     anthropic = providers.Factory(
         CodeCompletions,
         model=providers.Factory(
-            providers.Factory(
-                anthropic_claude, name=KindAnthropicModel.CLAUDE_INSTANT_1_2
-            ),
+            anthropic_claude,
+            name=KindAnthropicModel.CLAUDE_INSTANT_1_2,
             stop_sequences=["</new_code>", "\n\nHuman:"],
+            max_tokens_to_sample=128,
         ),
         tokenization_strategy=providers.Factory(
             TokenizerTokenStrategy, tokenizer=tokenizer
