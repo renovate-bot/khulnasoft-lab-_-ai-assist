@@ -10,7 +10,4 @@ __all__ = [
 class ContainerXRay(containers.DeclarativeContainer):
     models = providers.DependenciesContainer()
 
-    anthropic_claude = providers.Factory(
-        providers.Factory(models.anthropic_claude, name=KindAnthropicModel.CLAUDE_2_0),
-        stop_sequences=["</new_code>", "\n\nHuman:"],
-    )
+    anthropic_claude = providers.Factory(models.anthropic_claude, name=KindAnthropicModel.CLAUDE_2_0)
