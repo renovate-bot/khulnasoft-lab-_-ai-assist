@@ -43,11 +43,13 @@ include:
     file: "kaniko.yml"
 
   - project: "gitlab-com/gl-infra/platform/runway/ci-tasks"
+    # TODO: Bump `ref` after merging https://gitlab.com/gitlab-com/gl-infra/platform/runway/ci-tasks/-/merge_requests/71
     ref: v1.16.0 # renovate:managed
     file: "service-project/runway.yml"
     inputs:
       runway_service_id: ai-gateway
       image: "$CI_REGISTRY_IMAGE/model-gateway:${CI_COMMIT_SHORT_SHA}"
+      # TODO: Bump `runway_version` after merging https://gitlab.com/gitlab-com/gl-infra/platform/runway/ci-tasks/-/merge_requests/71
       runway_version: v1.16.0 # please keep in sync with `ref` above
 
 cache:
