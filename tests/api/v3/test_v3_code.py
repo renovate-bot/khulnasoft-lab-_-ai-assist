@@ -106,7 +106,9 @@ class TestEditorContentCompletion:
             "prompt_components": [prompt_component],
         }
 
-        with container.code_suggestions.completions.vertex_legacy.override(code_completions_mock):
+        with container.code_suggestions.completions.vertex_legacy.override(
+            code_completions_mock
+        ):
             response = mock_client.post(
                 "/code/completions",
                 headers={
@@ -302,7 +304,9 @@ class TestEditorContentCompletion:
             "prompt_components": [prompt_component],
         }
 
-        with container.code_suggestions.completions.anthropic.override(code_completions_mock):
+        with container.code_suggestions.completions.anthropic.override(
+            code_completions_mock
+        ):
             response = mock_client.post(
                 "/code/completions",
                 headers={
@@ -401,7 +405,9 @@ class TestEditorContentGeneration:
             "prompt_components": [prompt_component],
         }
 
-        with container.code_suggestions.generations.vertex.override(code_generations_mock):
+        with container.code_suggestions.generations.vertex.override(
+            code_generations_mock
+        ):
             response = mock_client.post(
                 "/code/completions",
                 headers={
@@ -485,7 +491,9 @@ class TestEditorContentGeneration:
             "prompt_components": [prompt_component],
         }
 
-        with container.code_suggestions.generations.vertex.override(code_generations_mock):
+        with container.code_suggestions.generations.vertex.override(
+            code_generations_mock
+        ):
             response = mock_client.post(
                 "/code/completions",
                 headers={
@@ -597,7 +605,9 @@ class TestEditorContentGeneration:
 
         with container.code_suggestions.generations.vertex.override(
             vertex_mock
-        ) and container.code_suggestions.generations.anthropic_default.override(anthropic_mock):
+        ) and container.code_suggestions.generations.anthropic_default.override(
+            anthropic_mock
+        ):
             response = mock_client.post(
                 "/code/completions",
                 headers={
@@ -673,7 +683,9 @@ class TestEditorContentGeneration:
             "prompt_components": [prompt_component],
         }
 
-        with container.code_suggestions.generations.anthropic_default.override(code_generations_mock):
+        with container.code_suggestions.generations.anthropic_default.override(
+            code_generations_mock
+        ):
             response = mock_client.post(
                 "/code/completions",
                 headers={
@@ -818,7 +830,9 @@ class TestIncomingRequest:
         code_completions_mock.execute = mock.AsyncMock(return_value=model_output)
         container = ContainerApplication()
 
-        with container.code_suggestions.completions.vertex_legacy.override(code_completions_mock):
+        with container.code_suggestions.completions.vertex_legacy.override(
+            code_completions_mock
+        ):
             response = mock_client.post(
                 "/code/completions",
                 headers={
