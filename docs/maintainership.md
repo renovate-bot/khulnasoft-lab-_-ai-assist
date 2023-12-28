@@ -11,8 +11,8 @@ If you have a question, please reach out one of the maintainers that you can fin
 
 To maintain AI Gateway project, the following domain knowledge is preferred:
 
-- Python as the primary programming language.
-- Poetry and Pyproject as the package manager and virtual environment.
+- [Python](https://www.python.org) as the primary programming language.
+- [Poetry](https://python-poetry.org) as the package and virtual environment manager.
 - [FastAPI](https://fastapi.tiangolo.com/) as the modern web framework.
 - [Architectural blueprint](https://docs.gitlab.com/ee/architecture/blueprints/ai_gateway/) to understand how the AI Gateway is integrated with the other components.
 
