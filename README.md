@@ -262,3 +262,7 @@ For more information and assistance, please check out:
 - [Runway - Docs](https://gitlab.com/gitlab-com/gl-infra/platform/runway/docs)
 - [Runway - Issue Tracker](https://gitlab.com/groups/gitlab-com/gl-infra/platform/runway/-/issues)
 - `#f_runway` in Slack.
+
+## How to become a project maintainer
+
+See [Maintainership](docs/maintainership.md).
