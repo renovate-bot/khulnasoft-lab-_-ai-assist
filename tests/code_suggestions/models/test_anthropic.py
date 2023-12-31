@@ -14,6 +14,7 @@ from anthropic.types import Completion
 from ai_gateway.models import (
     AnthropicAPIConnectionError,
     AnthropicAPIStatusError,
+    AnthropicAPITimeoutError,
     AnthropicModel,
     KindAnthropicModel,
     SafetyAttributes,
@@ -107,7 +108,7 @@ def test_anthropic_provider_opts(
         ("claude-instant-1.2", BadRequestError, AnthropicAPIStatusError),
         ("claude-instant-1.2", UnprocessableEntityError, AnthropicAPIStatusError),
         ("claude-instant-1.2", APIConnectionError, AnthropicAPIConnectionError),
-        ("claude-instant-1.2", APITimeoutError, AnthropicAPIConnectionError),
+        ("claude-instant-1.2", APITimeoutError, AnthropicAPITimeoutError),
     ],
 )
 async def test_anthropic_model_error(

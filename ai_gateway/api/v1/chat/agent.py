@@ -3,7 +3,7 @@ from typing import Annotated, AsyncIterator, List, Literal, Optional
 
 import structlog
 from dependency_injector.wiring import Provide, inject
-from fastapi import APIRouter, Depends, Request
+from fastapi import APIRouter, Depends, HTTPException, Request, status
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field, StringConstraints
 from starlette.authentication import requires
@@ -13,11 +13,13 @@ from ai_gateway.deps import ChatContainer
 from ai_gateway.models import (
     AnthropicAPIConnectionError,
     AnthropicAPIStatusError,
+    AnthropicAPITimeoutError,
     AnthropicModel,
     KindAnthropicModel,
     KindModelProvider,
     TextGenModelChunk,
 )
+from ai_gateway.tracking import log_exception
 
 __all__ = [
     "router",
@@ -87,7 +89,7 @@ class StreamChatResponse(StreamingResponse):
     pass
 
 
-@router.post("/agent", response_model=ChatResponse)
+@router.post("/agent", response_model=ChatResponse, status_code=status.HTTP_200_OK)
 @requires("duo_chat")
 @feature_category("duo_chat")
 @inject
@@ -107,31 +109,40 @@ async def chat(
     model = anthropic_model.provider(**anthropic_opts)
 
     try:
-        if completion := await model.generate(
+        completion = await model.generate(
             prefix=payload.content,
             _suffix="",
             stream=chat_request.stream,
-        ):
-            if isinstance(completion, AsyncIterator):
-                return await _handle_stream(completion)
-            return ChatResponse(
-                response=completion.text,
-                metadata=ChatResponseMetadata(
-                    provider=KindModelProvider.ANTHROPIC.value,
-                    model=payload.model.value,
-                    timestamp=int(time()),
-                ),
-            )
-    except (AnthropicAPIConnectionError, AnthropicAPIStatusError) as ex:
-        log.error(f"failed to execute Anthropic request: {ex}")
-    return ChatResponse(
-        response="",
-        metadata=ChatResponseMetadata(
-            provider=KindModelProvider.ANTHROPIC.value,
-            model=payload.model.value,
-            timestamp=int(time()),
-        ),
-    )
+        )
+
+        if isinstance(completion, AsyncIterator):
+            return await _handle_stream(completion)
+        return ChatResponse(
+            response=completion.text,
+            metadata=ChatResponseMetadata(
+                provider=KindModelProvider.ANTHROPIC.value,
+                model=payload.model.value,
+                timestamp=int(time()),
+            ),
+        )
+    except AnthropicAPIStatusError as ex:
+        log_exception(ex)
+        raise HTTPException(
+            status_code=status.HTTP_502_BAD_GATEWAY,
+            detail="Anthropic API Status Error.",
+        )
+    except AnthropicAPITimeoutError as ex:
+        log_exception(ex)
+        raise HTTPException(
+            status_code=status.HTTP_504_GATEWAY_TIMEOUT,
+            detail="Anthropic API Timeout Error.",
+        )
+    except AnthropicAPIConnectionError as ex:
+        log_exception(ex)
+        raise HTTPException(
+            status_code=status.HTTP_502_BAD_GATEWAY,
+            detail="Anthropic API Connection Error.",
+        )
 
 
 async def _handle_stream(

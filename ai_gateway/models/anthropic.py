@@ -5,8 +5,8 @@ import httpx
 import structlog
 from anthropic import (
     APIConnectionError,
-    APIError,
     APIStatusError,
+    APITimeoutError,
     AsyncAnthropic,
     AsyncStream,
 )
@@ -25,6 +25,7 @@ from ai_gateway.models.base import (
 
 __all__ = [
     "AnthropicAPIConnectionError",
+    "AnthropicAPITimeoutError",
     "AnthropicAPIStatusError",
     "AnthropicModel",
     "KindAnthropicModel",
@@ -35,7 +36,7 @@ log = structlog.stdlib.get_logger("codesuggestions")
 
 class AnthropicAPIConnectionError(ModelAPIError):
     @classmethod
-    def from_exception(cls, ex: APIError):
+    def from_exception(cls, ex: APIConnectionError):
         wrapper = cls(ex.message, errors=(ex,))
 
         return wrapper
@@ -45,6 +46,14 @@ class AnthropicAPIStatusError(ModelAPICallError):
     @classmethod
     def from_exception(cls, ex: APIStatusError):
         cls.code = ex.status_code
+        wrapper = cls(ex.message, errors=(ex,))
+
+        return wrapper
+
+
+class AnthropicAPITimeoutError(ModelAPIError):
+    @classmethod
+    def from_exception(cls, ex: APITimeoutError):
         wrapper = cls(ex.message, errors=(ex,))
 
         return wrapper
@@ -135,6 +144,8 @@ class AnthropicModel(TextGenBaseModel):
                 )
             except APIStatusError as ex:
                 raise AnthropicAPIStatusError.from_exception(ex)
+            except APITimeoutError as ex:
+                raise AnthropicAPITimeoutError.from_exception(ex)
             except APIConnectionError as ex:
                 raise AnthropicAPIConnectionError.from_exception(ex)
 
