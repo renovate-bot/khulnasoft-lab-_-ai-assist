@@ -1,6 +1,6 @@
 from fastapi import APIRouter
 
-from ai_gateway.api.v2.code import completions
+from ai_gateway.api.v3.code import completions
 
 __all__ = [
     "router",

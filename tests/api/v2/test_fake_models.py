@@ -1,7 +1,7 @@
 import pytest
 from fastapi.testclient import TestClient
 
-from ai_gateway.api.v2.api import api_router
+from ai_gateway.api.v2 import api_router
 from ai_gateway.auth import User, UserClaims
 from ai_gateway.code_suggestions import CodeCompletionsLegacy, CodeGenerations
 from ai_gateway.code_suggestions.processing import ModelEngineCompletions
@@ -47,7 +47,7 @@ class TestFakeModels:
         container.code_completions_legacy.override(code_completions_mock)
 
         response = mock_client.post(
-            "/v2/code/completions",
+            "/code/completions",
             headers={
                 "Authorization": "Bearer 12345",
                 "X-Gitlab-Authentication-Type": "oidc",
@@ -82,7 +82,7 @@ class TestFakeModels:
         container.code_generations_anthropic.override(code_generations_mock)
 
         response = mock_client.post(
-            "/v2/code/generations",
+            "/code/generations",
             headers={
                 "Authorization": "Bearer 12345",
                 "X-Gitlab-Authentication-Type": "oidc",

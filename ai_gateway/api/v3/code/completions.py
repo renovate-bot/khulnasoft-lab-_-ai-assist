@@ -5,17 +5,17 @@ import structlog
 from dependency_injector.providers import Factory
 from dependency_injector.wiring import Provide, inject
 from fastapi import APIRouter, Depends, Request
-from fastapi.responses import StreamingResponse
 
 from ai_gateway.api.feature_category import feature_category
-from ai_gateway.api.v3.types import (
+from ai_gateway.api.v3.code.typing import (
+    CodeEditorComponents,
     CompletionRequest,
     CompletionResponse,
-    ComponentType,
     EditorContentCompletionPayload,
     EditorContentGenerationPayload,
     ModelMetadata,
     ResponseMetadataBase,
+    StreamSuggestionsResponse,
 )
 from ai_gateway.auth.authentication import requires
 from ai_gateway.code_suggestions import (
@@ -28,23 +28,15 @@ from ai_gateway.code_suggestions import (
 from ai_gateway.deps import CodeSuggestionsContainer
 
 __all__ = [
-    "api_router",
+    "router",
 ]
 
 log = structlog.stdlib.get_logger("codesuggestions")
 
-
-api_router = APIRouter(
-    prefix="/v3",
-    tags=["completions"],
-)
+router = APIRouter()
 
 
-class StreamSuggestionsResponse(StreamingResponse):
-    pass
-
-
-@api_router.post("/completions")
+@router.post("/completions")
 @requires("code_suggestions")
 @feature_category("code_suggestions")
 async def completions(
@@ -52,9 +44,9 @@ async def completions(
     payload: CompletionRequest,
 ):
     component = payload.prompt_components[0]
-    if component.type == ComponentType.CODE_EDITOR_COMPLETION:
+    if component.type == CodeEditorComponents.COMPLETION:
         return await code_completion(payload=component.payload)
-    if component.type == ComponentType.CODE_EDITOR_GENERATION:
+    if component.type == CodeEditorComponents.GENERATION:
         return await code_generation(payload=component.payload)
 
 

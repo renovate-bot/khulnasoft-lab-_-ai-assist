@@ -3,14 +3,8 @@ from unittest import mock
 
 import pytest
 from fastapi.testclient import TestClient
-from snowplow_tracker import Snowplow
 
-from ai_gateway.api.v3.completions import api_router
-from ai_gateway.api.v3.types import (
-    CompletionResponse,
-    ModelMetadata,
-    ResponseMetadataBase,
-)
+from ai_gateway.api.v3 import api_router
 from ai_gateway.auth import User, UserClaims
 from ai_gateway.code_suggestions import (
     CodeCompletions,
@@ -18,11 +12,7 @@ from ai_gateway.code_suggestions import (
     CodeSuggestionsChunk,
     CodeSuggestionsOutput,
 )
-from ai_gateway.code_suggestions.processing.typing import (
-    LanguageId,
-    MetadataCodeContent,
-    MetadataPromptBuilder,
-)
+from ai_gateway.code_suggestions.processing.typing import LanguageId
 from ai_gateway.deps import CodeSuggestionsContainer
 from ai_gateway.models import ModelMetadata
 
@@ -118,7 +108,7 @@ class TestEditorContentCompletion:
 
         with container.code_completions_legacy.override(code_completions_mock):
             response = mock_client.post(
-                "/v3/completions",
+                "/code/completions",
                 headers={
                     "Authorization": "Bearer 12345",
                     "X-Gitlab-Authentication-Type": "oidc",
@@ -242,7 +232,7 @@ class TestEditorContentCompletion:
             vertex_mock
         ) and container.code_completions_anthropic.override(anthropic_mock):
             response = mock_client.post(
-                "/v3/completions",
+                "/code/completions",
                 headers={
                     "Authorization": "Bearer 12345",
                     "X-Gitlab-Authentication-Type": "oidc",
@@ -314,7 +304,7 @@ class TestEditorContentCompletion:
 
         with container.code_completions_anthropic.override(code_completions_mock):
             response = mock_client.post(
-                "/v3/completions",
+                "/code/completions",
                 headers={
                     "Authorization": "Bearer 12345",
                     "X-Gitlab-Authentication-Type": "oidc",
@@ -413,7 +403,7 @@ class TestEditorContentGeneration:
 
         with container.code_generations_vertex.override(code_generations_mock):
             response = mock_client.post(
-                "/v3/completions",
+                "/code/completions",
                 headers={
                     "Authorization": "Bearer 12345",
                     "X-Gitlab-Authentication-Type": "oidc",
@@ -497,7 +487,7 @@ class TestEditorContentGeneration:
 
         with container.code_generations_vertex.override(code_generations_mock):
             response = mock_client.post(
-                "/v3/completions",
+                "/code/completions",
                 headers={
                     "Authorization": "Bearer 12345",
                     "X-Gitlab-Authentication-Type": "oidc",
@@ -609,7 +599,7 @@ class TestEditorContentGeneration:
             vertex_mock
         ) and container.code_generations_anthropic.override(anthropic_mock):
             response = mock_client.post(
-                "/v3/completions",
+                "/code/completions",
                 headers={
                     "Authorization": "Bearer 12345",
                     "X-Gitlab-Authentication-Type": "oidc",
@@ -685,7 +675,7 @@ class TestEditorContentGeneration:
 
         with container.code_generations_anthropic.override(code_generations_mock):
             response = mock_client.post(
-                "/v3/completions",
+                "/code/completions",
                 headers={
                     "Authorization": "Bearer 12345",
                     "X-Gitlab-Authentication-Type": "oidc",
@@ -708,7 +698,7 @@ class TestUnauthorizedScopes:
 
     def test_failed_authorization_scope(self, mock_client):
         response = mock_client.post(
-            "/v3/completions",
+            "/code/completions",
             headers={
                 "Authorization": "Bearer 12345",
                 "X-Gitlab-Authentication-Type": "oidc",
@@ -830,7 +820,7 @@ class TestIncomingRequest:
 
         with container.code_completions_legacy.override(code_completions_mock):
             response = mock_client.post(
-                "/v3/completions",
+                "/code/completions",
                 headers={
                     "Authorization": "Bearer 12345",
                     "X-Gitlab-Authentication-Type": "oidc",

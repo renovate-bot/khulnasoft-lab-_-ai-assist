@@ -22,8 +22,8 @@ curl --header "Authorization: Bearer <access_token>" --header "X-Gitlab-Authenti
 The v3 endpoint is aligned to the [architectural blueprint](https://docs.gitlab.com/ee/architecture/blueprints/ai_gateway/index.html#example-feature-code-suggestions).
 
 ```plaintext
-POST /v3/completions
-POST /ai/v3/completions
+POST /v3/code/completions
+POST /ai/v3/code/completions
 ```
 
 #### Completion
@@ -42,7 +42,7 @@ POST /ai/v3/completions
 
 ```shell
 curl --request POST \
-  --url 'https://codesuggestions.gitlab.com/v3/completions' \
+  --url 'https://codesuggestions.gitlab.com/v3/code/completions' \
   --header 'Authorization: Bearer <access_token>' \
   --header 'X-Gitlab-Authentication-Type: oidc' \
   --header 'Content-Type: application/json' \
@@ -99,7 +99,7 @@ Example response:
 
 ```shell
 curl --request POST \
-  --url 'https://codesuggestions.gitlab.com/v3/completions' \
+  --url 'https://codesuggestions.gitlab.com/v3/code/completions' \
   --header 'Authorization: Bearer <access_token>' \
   --header 'X-Gitlab-Authentication-Type: oidc' \
   --header 'Content-Type: application/json' \

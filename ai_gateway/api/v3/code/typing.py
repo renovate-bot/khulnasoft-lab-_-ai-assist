@@ -3,17 +3,23 @@ from typing import Annotated, List, Literal, Optional, Union
 
 from fastapi import Body
 from pydantic import BaseModel, ConfigDict, Field, StringConstraints
+from starlette.responses import StreamingResponse
 
 from ai_gateway.code_suggestions import ModelProvider
 
 __all__ = [
+    "CodeEditorComponents",
     "CompletionRequest",
+    "CompletionResponse",
+    "EditorContentCompletionPayload",
+    "EditorContentGenerationPayload",
+    "StreamSuggestionsResponse",
 ]
 
 
-class ComponentType(str, Enum):
-    CODE_EDITOR_COMPLETION = "code_editor_completion"
-    CODE_EDITOR_GENERATION = "code_editor_generation"
+class CodeEditorComponents(str, Enum):
+    COMPLETION = "code_editor_completion"
+    GENERATION = "code_editor_generation"
 
 
 class MetadataBase(BaseModel):
@@ -46,13 +52,13 @@ class EditorContentGenerationPayload(EditorContentPayload):
 
 
 class CodeEditorCompletion(BaseModel):
-    type: Literal[ComponentType.CODE_EDITOR_COMPLETION]
+    type: Literal[CodeEditorComponents.COMPLETION]
     payload: EditorContentCompletionPayload
     metadata: Optional[MetadataBase] = None
 
 
 class CodeEditorGeneration(BaseModel):
-    type: Literal[ComponentType.CODE_EDITOR_GENERATION]
+    type: Literal[CodeEditorComponents.GENERATION]
     payload: EditorContentGenerationPayload
     metadata: Optional[MetadataBase] = None
 
@@ -82,3 +88,7 @@ class ResponseMetadataBase(BaseModel):
 class CompletionResponse(BaseModel):
     response: Optional[str] = None
     metadata: Optional[ResponseMetadataBase] = None
+
+
+class StreamSuggestionsResponse(StreamingResponse):
+    pass

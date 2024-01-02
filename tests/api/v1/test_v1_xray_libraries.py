@@ -1,10 +1,9 @@
-from typing import AsyncIterator
 from unittest import mock
 
 import pytest
 
-from ai_gateway.api.v1.api import api_router
-from ai_gateway.api.v1.x_ray.libraries import AnyPromptComponent
+from ai_gateway.api.v1 import api_router
+from ai_gateway.api.v1.x_ray.typing import AnyPromptComponent
 from ai_gateway.auth import User, UserClaims
 from ai_gateway.deps import XRayContainer
 from ai_gateway.models import AnthropicModel, SafetyAttributes, TextGenModelOutput
@@ -61,7 +60,7 @@ class TestXRayLibraries:
 
         with container.anthropic_model.override(anthropic_model_mock):
             response = mock_client.post(
-                "/v1/x-ray/libraries",
+                "/x-ray/libraries",
                 headers={
                     "Authorization": "Bearer 12345",
                     "X-Gitlab-Authentication-Type": "oidc",
@@ -100,7 +99,7 @@ class TestUnauthorizedScopes:
             claims=UserClaims(scopes=["unauthorized_scope"]),
         )
 
-    @pytest.mark.parametrize("path", ["/v1/x-ray/libraries"])
+    @pytest.mark.parametrize("path", ["/x-ray/libraries"])
     def test_failed_authorization_scope(self, mock_client, path):
         response = mock_client.post(
             path,
