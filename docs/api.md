@@ -42,7 +42,7 @@ POST /ai/v3/code/completions
 
 ```shell
 curl --request POST \
-  --url 'https://codesuggestions.gitlab.com/v3/completions' \
+  --url 'https://codesuggestions.gitlab.com/v3/code/completions' \
   --header 'Authorization: Bearer <access_token>' \
   --header 'X-Gitlab-Authentication-Type: oidc' \
   --header 'Content-Type: application/json' \
@@ -99,7 +99,7 @@ Example response:
 
 ```shell
 curl --request POST \
-  --url 'https://codesuggestions.gitlab.com/v3/completions' \
+  --url 'https://codesuggestions.gitlab.com/v3/code/completions' \
   --header 'Authorization: Bearer <access_token>' \
   --header 'X-Gitlab-Authentication-Type: oidc' \
   --header 'Content-Type: application/json' \
