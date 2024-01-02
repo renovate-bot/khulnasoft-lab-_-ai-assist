@@ -28,6 +28,7 @@ from uvicorn.protocols.utils import get_path_with_query_string
 from ai_gateway.api.timing import timing
 from ai_gateway.auth import AuthProvider, UserClaims
 from ai_gateway.instrumentators.base import Telemetry, TelemetryInstrumentator
+from ai_gateway.tracking.errors import log_exception
 
 __all__ = [
     "GitLabUser",
@@ -113,6 +114,7 @@ class MiddlewareLogRequest(Middleware):
                     "message": str(e),
                     "backtrace": traceback.format_exc(),
                 }
+                log_exception(e)
                 raise
             finally:
                 elapsed_time = time.perf_counter() - start_time_total
@@ -294,7 +296,7 @@ class MiddlewareModelTelemetry(Middleware):
                 with self.instrumentator.watch([telemetry]):
                     return await call_next(request)
             except ValidationError as e:
-                access_logger.error(f"failed to capture model telemetry: {e}")
+                log_exception(e)
                 return await call_next(request)
 
         def _missing_header(self, headers: list) -> bool:

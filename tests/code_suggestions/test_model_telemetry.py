@@ -1,5 +1,7 @@
 from unittest import mock
+from unittest.mock import patch
 
+from pydantic import ValidationError
 from starlette.applications import Starlette
 from starlette.responses import JSONResponse
 from starlette.routing import Route
@@ -79,13 +81,11 @@ def test_telemetry_capture_invalid_headers(mock_counter):
         "X-GitLab-CS-Errors": "time",
     }
 
-    with capture_logs() as cap_logs, request_cycle_context(context):
+    with patch("ai_gateway.api.middleware.log_exception") as mock_log_exception:
         response = client.post("/", headers=headers, data={"foo": "bar"})
 
+        args, _ = mock_log_exception.call_args
+        assert type(args[0]) is ValidationError
+
     assert response.status_code == 200
-
-    assert len(cap_logs) == 1
-    assert cap_logs[0]["event"].startswith("failed to capture model telemetry")
-    assert cap_logs[0]["log_level"] == "error"
-
     assert mock_counter.call_count == 0

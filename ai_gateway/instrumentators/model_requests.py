@@ -3,6 +3,8 @@ from typing import Optional
 
 from prometheus_client import Gauge
 
+from ai_gateway.tracking.errors import log_exception
+
 METRIC_LABELS = ["model_engine", "model_name"]
 
 INFERENCE_IN_FLIGHT_GAUGE = Gauge(
@@ -51,6 +53,9 @@ class ModelRequestInstrumentator:
         watcher.start()
         try:
             yield watcher
+        except Exception as ex:
+            log_exception(ex, self.labels)
+            raise
         finally:
             if not stream:
                 watcher.finish()

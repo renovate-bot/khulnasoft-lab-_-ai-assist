@@ -1,4 +1,3 @@
-import logging
 import urllib.parse
 from abc import ABC, abstractmethod
 from collections import defaultdict
@@ -9,6 +8,7 @@ from jose import JWTError, jwt
 
 from ai_gateway.auth.cache import LocalAuthCache
 from ai_gateway.auth.user import User, UserClaims
+from ai_gateway.tracking.errors import log_exception
 
 __all__ = [
     "AuthProvider",
@@ -57,7 +57,7 @@ class GitLabOidcProvider(AuthProvider):
             scopes = jwt_claims.get("scopes", [])
             is_allowed = True
         except JWTError as err:
-            logging.error(f"Failed to decode JWT token: {str(err)}")
+            log_exception(err)
 
         return User(
             authenticated=is_allowed,
@@ -99,9 +99,7 @@ class GitLabOidcProvider(AuthProvider):
             res = requests.get(url=url, timeout=REQUEST_TIMEOUT_SECONDS)
             well_known = res.json()
         except requests.exceptions.RequestException as err:
-            logging.error(
-                f"Unable to fetch OpenID configuration from {oidc_provider}: {err}"
-            )
+            log_exception(err, {"oidc_provider": oidc_provider})
 
         return well_known
 
@@ -116,6 +114,6 @@ class GitLabOidcProvider(AuthProvider):
             res = requests.get(url=url, timeout=REQUEST_TIMEOUT_SECONDS)
             jwks = res.json()
         except requests.exceptions.RequestException as err:
-            logging.error(f"Unable to fetch jwks from {oidc_provider}: {err}")
+            log_exception(err, {"oidc_provider": oidc_provider})
 
         return jwks
