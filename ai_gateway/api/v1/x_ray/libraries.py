@@ -11,6 +11,7 @@ from ai_gateway.models import (
     AnthropicAPIStatusError,
     AnthropicModel,
 )
+from ai_gateway.tracking.errors import log_exception
 
 __all__ = [
     "router",
@@ -40,5 +41,5 @@ async def libraries(
             return XRayResponse(response=completion.text)
 
     except (AnthropicAPIConnectionError, AnthropicAPIStatusError) as ex:
-        log.error(f"failed to execute Anthropic request: {ex}")
+        log_exception(ex)
     return XRayResponse(response="")

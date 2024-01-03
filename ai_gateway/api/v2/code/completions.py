@@ -36,6 +36,7 @@ from ai_gateway.code_suggestions.processing.ops import lang_from_filename
 from ai_gateway.deps import CodeSuggestionsContainer
 from ai_gateway.instrumentators.base import TelemetryInstrumentator
 from ai_gateway.models import AnthropicModel, KindAnthropicModel, KindModelProvider
+from ai_gateway.tracking.errors import log_exception
 from ai_gateway.tracking.instrumentator import SnowplowInstrumentator
 
 __all__ = [
@@ -79,7 +80,7 @@ async def completions(
     try:
         track_snowplow_event(request, payload, snowplow_instrumentator)
     except Exception as e:
-        log.error(f"failed to track Snowplow event: {e}")
+        log_exception(e)
 
     log.debug(
         "code completion input:",
@@ -156,7 +157,7 @@ async def generations(
     try:
         track_snowplow_event(request, payload, snowplow_instrumentator)
     except Exception as e:
-        log.error(f"failed to track Snowplow event: {e}")
+        log_exception(e)
 
     log.debug(
         "code creation input:",

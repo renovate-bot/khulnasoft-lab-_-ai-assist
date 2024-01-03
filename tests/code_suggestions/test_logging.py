@@ -1,3 +1,5 @@
+from unittest import mock
+
 from starlette.applications import Starlette
 from starlette.middleware import Middleware
 from starlette.routing import Route
@@ -22,7 +24,8 @@ app = Starlette(
 client = TestClient(app)
 
 
-def test_x_gitlab_headers_logged_when_set():
+@mock.patch("ai_gateway.api.middleware.log_exception")
+def test_x_gitlab_headers_logged_when_set(mock_log_exception):
     with capture_logs() as cap_logs:
         client.post(
             "/",
@@ -36,6 +39,8 @@ def test_x_gitlab_headers_logged_when_set():
             data={"foo": "bar"},
         )
 
+        mock_log_exception.assert_called_once()
+
     assert cap_logs[0]["gitlab_instance_id"] == "ABC"
     assert cap_logs[0]["gitlab_global_user_id"] == "DEF"
     assert cap_logs[0]["gitlab_host_name"] == "awesome-org.com"
@@ -43,9 +48,12 @@ def test_x_gitlab_headers_logged_when_set():
     assert cap_logs[0]["gitlab_realm"] == "saas"
 
 
-def test_x_gitlab_headers_not_logged_when_not_set():
+@mock.patch("ai_gateway.api.middleware.log_exception")
+def test_x_gitlab_headers_not_logged_when_not_set(mock_log_exception):
     with capture_logs() as cap_logs:
         client.post("/", headers={}, data={"foo": "bar"})
+
+        mock_log_exception.assert_called_once()
 
     assert cap_logs[0]["gitlab_instance_id"] is None
     assert cap_logs[0]["gitlab_global_user_id"] is None
@@ -53,9 +61,12 @@ def test_x_gitlab_headers_not_logged_when_not_set():
     assert cap_logs[0]["gitlab_realm"] is None
 
 
-def test_exeption_capture():
+@mock.patch("ai_gateway.api.middleware.log_exception")
+def test_exeption_capture(mock_log_exception):
     with capture_logs() as cap_logs:
         response = client.post("/", headers={}, data={"foo": "bar"})
+
+        mock_log_exception.assert_called_once()
 
     assert response.status_code == 500
 

@@ -1,6 +1,7 @@
 import json
 import logging
 from time import sleep
+from unittest.mock import patch
 
 import pytest
 import requests
@@ -227,7 +228,7 @@ UGw3kIW+604fnnXLDm4TaLA=
 
     @responses.activate
     @pytest.mark.parametrize(
-        "config_response_body,jwks_url,jwks_response_body,logged_errors,expected_jwks_call_count",
+        "config_response_body,jwks_url,jwks_response_body,problematic_provider,expected_jwks_call_count",
         [
             ('{"jwks_uri": ""}', "", '{"keys": []}', [], 0),
             ("{}", "", "{}", [], 0),
@@ -235,41 +236,38 @@ UGw3kIW+604fnnXLDm4TaLA=
                 requests.exceptions.RequestException("OIDC config request failed"),
                 "",
                 "{}",
-                [
-                    "Unable to fetch OpenID configuration from CustomersDot: OIDC config request failed"
-                ],
+                "CustomersDot",
                 0,
             ),
             (
                 '{"jwks_uri": "http://test.com/oauth/discovery/keys"}',
                 "http://test.com/oauth/discovery/keys",
                 '{"keys": []}',
-                [],
+                None,
                 1,
             ),
             (
                 '{"jwks_uri": "http://test.com/oauth/discovery/keys"}',
                 "http://test.com/oauth/discovery/keys",
                 "{}",
-                [],
+                None,
                 1,
             ),
             (
                 '{"jwks_uri": "http://test.com/oauth/discovery/keys"}',
                 "http://test.com/oauth/discovery/keys",
                 requests.exceptions.RequestException("JWKS request failed"),
-                ["Unable to fetch jwks from CustomersDot: JWKS request failed"],
+                "CustomersDot",
                 1,
             ),
         ],
     )
     def test_broken_gitlab_oidc_provider_responses(
         self,
-        caplog,
         config_response_body,
         jwks_url,
         jwks_response_body,
-        logged_errors,
+        problematic_provider,
         expected_jwks_call_count,
     ):
         # We only need one endpoint to simulate failures; this one will be successful.
@@ -309,10 +307,19 @@ UGw3kIW+604fnnXLDm4TaLA=
             algorithm="RS256",
         )
 
-        user = auth_provider.authenticate(token)
-        assert user is not None
+        with patch("ai_gateway.auth.providers.log_exception") as mock_log_exception:
+            user = auth_provider.authenticate(token)
 
-        assert logged_errors == [rec.message for rec in caplog.records]
+            if problematic_provider and isinstance(config_response_body, Exception):
+                mock_log_exception.assert_called_once_with(
+                    config_response_body, {"oidc_provider": problematic_provider}
+                )
+            elif problematic_provider and isinstance(jwks_response_body, Exception):
+                mock_log_exception.assert_called_once_with(
+                    jwks_response_body, {"oidc_provider": problematic_provider}
+                )
+
+        assert user is not None
 
         # The successful provider calls.
         assert well_known_test_response.call_count == 1
