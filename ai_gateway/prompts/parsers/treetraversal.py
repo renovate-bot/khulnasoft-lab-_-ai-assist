@@ -42,12 +42,14 @@ def tree_bfs(node: Node, visitor: Union[Callable, BaseVisitor], max_depth: int =
             q2.clear()
 
 
-def tree_dfs(tree: Tree, visitor: BaseVisitor):
+def tree_dfs(tree: Tree, visitor: BaseVisitor, max_visit_count: int = 1_000):
     cursor = tree.walk()
     has_next = True
+    visit_count = 0
 
-    while has_next:
+    while has_next and visit_count < max_visit_count:
         current_node = cursor.node
+        visit_count += 1
 
         if visitor.stop_tree_traversal:
             break

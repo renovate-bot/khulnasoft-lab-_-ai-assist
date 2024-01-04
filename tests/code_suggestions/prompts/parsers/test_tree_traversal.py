@@ -59,6 +59,18 @@ def test_level_order_traversal(
     assert len(visited_nodes) == expected_node_count
 
 
+class StubSimpleVisitor(BaseVisitor):
+    def __init__(self):
+        super().__init__()
+        self.visited_nodes = []
+
+    def _visit_node(self, node: Node):
+        self.visited_nodes.append(node)
+
+    def visit(self, node: Node):
+        self._visit_node(node)
+
+
 class StubLimitedDepthVisitor(BaseVisitor):
     def __init__(self, stop_limit=-1):
         self.visited_nodes = []
@@ -121,5 +133,26 @@ def test_preorder_traversal(
     tree = CodeParser.from_language_id(source_code, lang_id).tree
 
     tree_dfs(tree, visitor)
+
+    assert len(visitor.visited_nodes) == expected_node_count
+
+
+@pytest.mark.parametrize(
+    ("lang_id", "source_code", "visitor", "max_visit_count", "expected_node_count"),
+    [
+        (LanguageId.JAVA, JAVA_SAMPLE_SOURCE, StubSimpleVisitor(), 2, 2),
+        (LanguageId.JAVA, JAVA_SAMPLE_SOURCE, StubSimpleVisitor(), 80, 77),
+    ],
+)
+def test_tree_dfs_max_visit_count(
+    lang_id: LanguageId,
+    source_code: str,
+    visitor: StubSimpleVisitor,
+    max_visit_count: int,
+    expected_node_count: int,
+):
+    tree = CodeParser.from_language_id(source_code, lang_id).tree
+
+    tree_dfs(tree, visitor, max_visit_count=max_visit_count)
 
     assert len(visitor.visited_nodes) == expected_node_count
