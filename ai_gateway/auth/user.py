@@ -7,7 +7,7 @@ __all__ = [
 
 
 class UserClaims(NamedTuple):
-    gitlab_realm: str = "saas"
+    gitlab_realm: str = ""
     scopes: list = []
 
 

@@ -27,7 +27,6 @@ class AuthProvider(ABC):
 class GitLabOidcProvider(AuthProvider):
     CACHE_KEY = "jwks"
     ALGORITHM = "RS256"
-    DEFAULT_REALM = "saas"
     AUDIENCE = "gitlab-ai-gateway"
 
     class CriticalAuthError(Exception):
@@ -46,14 +45,14 @@ class GitLabOidcProvider(AuthProvider):
             )
 
         is_allowed = False
-        gitlab_realm = self.DEFAULT_REALM
+        gitlab_realm = ""
         scopes = []
 
         try:
             jwt_claims = jwt.decode(
                 token, jwks, audience=self.AUDIENCE, algorithms=[self.ALGORITHM]
             )
-            gitlab_realm = jwt_claims.get("gitlab_realm", self.DEFAULT_REALM)
+            gitlab_realm = jwt_claims.get("gitlab_realm", "")
             scopes = jwt_claims.get("scopes", [])
             is_allowed = True
         except JWTError as err:

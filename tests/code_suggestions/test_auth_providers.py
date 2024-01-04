@@ -152,7 +152,7 @@ UGw3kIW+604fnnXLDm4TaLA=
             (
                 forged_private_key,
                 claims | ai_gateway_audience,
-                "saas",
+                "",
                 False,
             ),
             (
@@ -163,7 +163,11 @@ UGw3kIW+604fnnXLDm4TaLA=
             ),
             (
                 private_key_test,
-                {"is_life_beautiful": True, "scopes": ["code_suggestions"]}
+                {
+                    "is_life_beautiful": True,
+                    "scopes": ["code_suggestions"],
+                    "gitlab_realm": "saas",
+                }
                 | ai_gateway_audience,
                 "saas",
                 True,
@@ -213,8 +217,9 @@ UGw3kIW+604fnnXLDm4TaLA=
 
         assert user is not None
         assert user.authenticated is authenticated
+        assert user.claims.gitlab_realm == gitlab_realm
+
         if authenticated:
-            assert user.claims.gitlab_realm == gitlab_realm
             assert user.claims.scopes == ["code_suggestions"]
 
         assert well_known_test_response.call_count == 1
