@@ -21,7 +21,7 @@ Example below:
    ```shell
    docker run --platform linux/amd64 --rm \
      -p 5052:5052 \
-     -e AUTH_BYPASS_EXTERNAL=true \
+     -e AIGW_AUTH__BYPASS_EXTERNAL=true \
      -v $PWD:/app -it ai-gateway:dev
    ```
 -->
