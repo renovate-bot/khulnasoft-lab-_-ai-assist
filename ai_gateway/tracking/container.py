@@ -12,7 +12,9 @@ __all__ = [
 ]
 
 
-def _init_snowplow_client(enabled: bool, configuration: SnowplowClientConfiguration):
+def _init_snowplow_client(
+    enabled: bool, configuration: SnowplowClientConfiguration
+) -> SnowplowClient | SnowplowClientStub:
     if not enabled:
         return SnowplowClientStub()
 

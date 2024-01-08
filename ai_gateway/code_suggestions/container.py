@@ -1,5 +1,6 @@
 import anthropic
 from dependency_injector import containers, providers
+from transformers import PreTrainedTokenizerFast
 
 from ai_gateway.code_suggestions.completions import (
     CodeCompletions,
@@ -21,7 +22,7 @@ __all__ = [
 
 
 class ContainerCodeGenerations(containers.DeclarativeContainer):
-    tokenizer = providers.Dependency()
+    tokenizer = providers.Dependency(instance_of=PreTrainedTokenizerFast)
     vertex_code_bison = providers.Dependency(instance_of=TextGenBaseModel)
     anthropic_claude = providers.Dependency(instance_of=TextGenBaseModel)
 
@@ -56,7 +57,7 @@ class ContainerCodeGenerations(containers.DeclarativeContainer):
 
 
 class ContainerCodeCompletions(containers.DeclarativeContainer):
-    tokenizer = providers.Dependency()
+    tokenizer = providers.Dependency(instance_of=PreTrainedTokenizerFast)
     vertex_code_gecko = providers.Dependency(instance_of=TextGenBaseModel)
     anthropic_claude = providers.Dependency(instance_of=TextGenBaseModel)
 
