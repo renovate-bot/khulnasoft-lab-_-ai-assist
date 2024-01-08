@@ -35,7 +35,7 @@ from ai_gateway.code_suggestions import (
 from ai_gateway.code_suggestions.processing.ops import lang_from_filename
 from ai_gateway.container import ContainerApplication
 from ai_gateway.instrumentators.base import TelemetryInstrumentator
-from ai_gateway.models import AnthropicModel, KindAnthropicModel, KindModelProvider
+from ai_gateway.models import KindAnthropicModel, KindModelProvider
 from ai_gateway.tracking.errors import log_exception
 from ai_gateway.tracking.instrumentator import SnowplowInstrumentator
 

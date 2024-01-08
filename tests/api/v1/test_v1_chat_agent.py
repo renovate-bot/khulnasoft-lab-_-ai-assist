@@ -106,10 +106,7 @@ class TestAgentSuccessfulRequest:
         )
 
         container = ContainerApplication()
-        mock_anthropic_factory = mock.Mock(return_value=mock_model)
-        with container.chat.anthropic_claude_factory.override(
-            providers.Factory(mock_anthropic_factory)
-        ):
+        with container.chat.anthropic_claude_factory.override(mock_model):
             response = mock_client.post(
                 "/chat/agent",
                 headers={
@@ -129,7 +126,6 @@ class TestAgentSuccessfulRequest:
             == request_body["prompt_components"][0]["payload"]["model"]
         )
 
-        mock_anthropic_factory.assert_called_with(**expected_provider_args)
         mock_model.generate.assert_called_with(
             prefix="\n\nHuman: hello, what is your name?\n\nAssistant:",
             _suffix="",
@@ -175,10 +171,7 @@ class TestAgentSuccessfulStream:
         mock_model.generate = AsyncMock(side_effect=_stream_generator)
 
         container = ContainerApplication()
-        mock_anthropic_factory = mock.Mock(return_value=mock_model)
-        with container.chat.anthropic_claude_factory.override(
-            providers.Factory(mock_anthropic_factory)
-        ):
+        with container.chat.anthropic_claude_factory.override(mock_model):
             response = mock_client.post(
                 "/chat/agent",
                 headers={
@@ -208,7 +201,6 @@ class TestAgentSuccessfulStream:
         assert response.text == expected_response
         assert response.headers["content-type"] == "text/event-stream; charset=utf-8"
 
-        mock_anthropic_factory.assert_called_with(name=model_name)
         mock_model.generate.assert_called_with(
             prefix="\n\nHuman: hello, what is your name?\n\nAssistant:",
             _suffix="",
@@ -475,33 +467,34 @@ class TestAgentUnsuccessfulAnthropicRequest:
         )
 
         container = ContainerApplication()
-        with container.chat.anthropic_claude_factory.override(mock_model):
-            with capture_logs() as cap_logs:
-                response = mock_client.post(
-                    "/chat/agent",
-                    headers={
-                        "Authorization": "Bearer 12345",
-                        "X-Gitlab-Authentication-Type": "oidc",
-                    },
-                    json={
-                        "prompt_components": [
-                            {
-                                "type": "prompt",
-                                "metadata": {
-                                    "source": "gitlab-rails-sm",
-                                    "version": "16.5.0-ee",
-                                },
-                                "payload": {
-                                    "content": "\n\nHuman: hello, what is your name?\n\nAssistant:",
-                                    "provider": "anthropic",
-                                    "model": "claude-2.0",
-                                },
-                            }
-                        ]
-                    },
-                )
+        with container.chat.anthropic_claude_factory.override(mock_model), patch(
+            "ai_gateway.api.v1.chat.agent.log_exception"
+        ) as mock_log_exception, capture_logs() as cap_logs:
+            response = mock_client.post(
+                "/chat/agent",
+                headers={
+                    "Authorization": "Bearer 12345",
+                    "X-Gitlab-Authentication-Type": "oidc",
+                },
+                json={
+                    "prompt_components": [
+                        {
+                            "type": "prompt",
+                            "metadata": {
+                                "source": "gitlab-rails-sm",
+                                "version": "16.5.0-ee",
+                            },
+                            "payload": {
+                                "content": "\n\nHuman: hello, what is your name?\n\nAssistant:",
+                                "provider": "anthropic",
+                                "model": "claude-2.0",
+                            },
+                        }
+                    ]
+                },
+            )
 
-                mock_log_exception.assert_called_once()
+            mock_log_exception.assert_called_once()
 
         if issubclass(model_exception_type, AnthropicAPIStatusError):
             assert response.status_code == 502

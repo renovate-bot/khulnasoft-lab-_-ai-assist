@@ -510,7 +510,12 @@ class TestEditorContentGeneration:
             code_generations_mock.with_prompt_prepared.assert_called_with(prompt)
 
     @pytest.mark.parametrize(
-        ("model_provider", "expected_code", "expected_response", "expected_model"),
+        (
+            "model_provider",
+            "expected_code",
+            "expected_response",
+            "expected_model",
+        ),
         [
             (
                 "vertex-ai",
@@ -626,7 +631,6 @@ class TestEditorContentGeneration:
         body = response.json()
 
         assert body["response"] == expected_response
-
         assert body["metadata"]["model"] == expected_model
 
     @pytest.mark.parametrize(

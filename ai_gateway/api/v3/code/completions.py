@@ -2,7 +2,6 @@ from time import time
 from typing import AsyncIterator
 
 import structlog
-from anthropic import HUMAN_PROMPT as anthropic_human_prompt
 from dependency_injector.providers import Factory
 from dependency_injector.wiring import Provide, inject
 from fastapi import APIRouter, Depends, Request
@@ -27,10 +26,12 @@ from ai_gateway.code_suggestions import (
     ModelProvider,
 )
 from ai_gateway.container import ContainerApplication
+from ai_gateway.models import KindModelProvider
 
 __all__ = [
     "router",
 ]
+
 
 log = structlog.stdlib.get_logger("codesuggestions")
 
@@ -104,8 +105,8 @@ async def code_generation(
         ]
     ),
 ):
-    if payload.model_provider == ModelProvider.ANTHROPIC:
-        engine = _resolve_code_generations_anthropic()
+    if payload.model_provider == KindModelProvider.ANTHROPIC:
+        engine = generations_anthropic_factory()
     else:
         engine = generations_vertex_factory()
 
@@ -134,24 +135,6 @@ async def code_generation(
             ),
         ),
     )
-
-
-@inject
-def _resolve_code_generations_anthropic(
-    anthropic_model: Factory[AnthropicModel] = Depends(
-        Provide[CodeSuggestionsContainer.anthropic_model.provider]
-    ),
-    code_generations_anthropic: Factory[CodeGenerations] = Depends(
-        Provide[CodeSuggestionsContainer.code_generations_anthropic.provider]
-    ),
-) -> CodeGenerations:
-    anthropic_opts = {
-        "model_name": KindAnthropicModel.CLAUDE_2_0.value,
-        "stop_sequences": ["</new_code>", anthropic_human_prompt],
-    }
-    model = anthropic_model(**anthropic_opts)
-
-    return code_generations_anthropic(model=model)
 
 
 async def _handle_stream(

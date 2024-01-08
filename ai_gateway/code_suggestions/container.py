@@ -1,3 +1,4 @@
+import anthropic
 from dependency_injector import containers, providers
 
 from ai_gateway.code_suggestions.completions import (
@@ -40,7 +41,7 @@ class ContainerCodeGenerations(containers.DeclarativeContainer):
         CodeGenerations,
         model=providers.Factory(
             anthropic_claude,
-            stop_sequences=["</new_code>", "\n\nHuman:"],
+            stop_sequences=["</new_code>", anthropic.HUMAN_PROMPT],
         ),
         tokenization_strategy=providers.Factory(
             TokenizerTokenStrategy, tokenizer=tokenizer
@@ -82,7 +83,7 @@ class ContainerCodeCompletions(containers.DeclarativeContainer):
         model=providers.Factory(
             anthropic_claude,
             name=KindAnthropicModel.CLAUDE_INSTANT_1_2,
-            stop_sequences=["</new_code>", "\n\nHuman:"],
+            stop_sequences=["</new_code>", anthropic.HUMAN_PROMPT],
             max_tokens_to_sample=128,
         ),
         tokenization_strategy=providers.Factory(
