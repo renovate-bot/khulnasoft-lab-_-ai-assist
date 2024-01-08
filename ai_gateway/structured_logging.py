@@ -7,7 +7,7 @@ from asgi_correlation_id import CorrelationIdMiddleware
 from starlette.types import ASGIApp
 from structlog.types import EventDict, Processor
 
-from ai_gateway.config import LoggingConfig
+from ai_gateway.config import ConfigLogging
 
 access_logger = structlog.stdlib.get_logger("api.access")
 
@@ -42,7 +42,7 @@ def add_custom_keys(_, __, event_dict: EventDict) -> EventDict:
     return event_dict
 
 
-def setup_logging(app: ASGIApp, logging_config: LoggingConfig):
+def setup_logging(app: ASGIApp, logging_config: ConfigLogging):
     app.add_middleware(CorrelationIdMiddleware, validator=None)
 
     timestamper = structlog.processors.TimeStamper(fmt="iso")
@@ -59,7 +59,7 @@ def setup_logging(app: ASGIApp, logging_config: LoggingConfig):
         structlog.processors.StackInfoRenderer(),
     ]
 
-    if logging_config.json:
+    if logging_config.format_json:
         # We rename the `event` key to `message` only in JSON logs, as Elasticsearch looks for the
         # `message` key but the pretty ConsoleRenderer looks for `event`
         shared_processors.append(rename_event_key)
@@ -78,7 +78,7 @@ def setup_logging(app: ASGIApp, logging_config: LoggingConfig):
     )
 
     log_renderer: structlog.types.Processor
-    if logging_config.json:
+    if logging_config.format_json:
         log_renderer = structlog.processors.JSONRenderer()
     else:
         log_renderer = structlog.dev.ConsoleRenderer()
@@ -95,8 +95,8 @@ def setup_logging(app: ASGIApp, logging_config: LoggingConfig):
         ],
     )
 
-    if logging_config.log_to_file:
-        file = Path(logging_config.log_to_file).resolve()
+    if logging_config.to_file:
+        file = Path(logging_config.to_file).resolve()
         handler = logging.FileHandler(filename=str(file), mode="a")
     else:
         handler = logging.StreamHandler()

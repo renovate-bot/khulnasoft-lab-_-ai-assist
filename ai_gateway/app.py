@@ -6,8 +6,8 @@ from dotenv import load_dotenv
 from prometheus_client import start_http_server
 from prometheus_fastapi_instrumentator import Instrumentator, metrics
 
-from ai_gateway import Config
 from ai_gateway.api import create_fast_api_server
+from ai_gateway.config import Config
 from ai_gateway.deps import (
     _PROBS_ENDPOINTS,
     CodeSuggestionsContainer,
@@ -29,26 +29,19 @@ dictConfig(config.fastapi.uvicorn_logger)
 
 def main():
     fast_api_container = FastApiContainer()
-    fast_api_container.config.auth.from_value(config.auth._asdict())
-    fast_api_container.config.fastapi.from_value(config.fastapi._asdict())
+    fast_api_container.config.from_dict(config.model_dump())
 
     code_suggestions_container = CodeSuggestionsContainer()
-    code_suggestions_container.config.palm_text_model.from_value(
-        config.palm_text_model._asdict()
-    )
-    code_suggestions_container.config.feature_flags.from_value(
-        config.feature_flags._asdict()
-    )
-    code_suggestions_container.config.tracking.from_value(config.tracking._asdict())
+    code_suggestions_container.config.from_dict(config.model_dump())
 
     x_ray_container = XRayContainer()
-    x_ray_container.config.palm_text_model.from_value(config.palm_text_model._asdict())
+    x_ray_container.config.from_dict(config.model_dump())
 
     app = create_fast_api_server()
     setup_logging(app, config.logging)
     log = logging.getLogger("uvicorn.error")
 
-    setup_profiling(config.profiling, log)
+    setup_profiling(config.google_cloud_profiler, log)
 
     instrumentator = Instrumentator(
         should_group_status_codes=True,

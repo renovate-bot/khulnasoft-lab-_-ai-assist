@@ -1,3 +1,5 @@
+from typing import Callable
+
 import anthropic
 from dependency_injector import containers, providers
 from py_grpc_prometheus.prometheus_client_interceptor import PromClientInterceptor
@@ -15,6 +17,7 @@ from ai_gateway.code_suggestions.processing.post.completions import (
     PostProcessor as PostProcessorCompletions,
 )
 from ai_gateway.code_suggestions.processing.pre import TokenizerTokenStrategy
+from ai_gateway.config import Config
 from ai_gateway.experimentation import experiment_registry_provider
 from ai_gateway.models import (
     AnthropicModel,
@@ -67,8 +70,12 @@ _ANTHROPIC_MODELS_OPTS = {
 }
 
 
-def _init_vertex_grpc_client(api_endpoint: str, real_or_fake):
-    if real_or_fake == "fake":
+def _real_or_fake(use_fake: Callable) -> Callable:
+    return lambda: "fake" if use_fake() else "real"
+
+
+def _init_vertex_grpc_client(api_endpoint: str, use_fake: Callable):
+    if use_fake:
         yield None
         return
 
@@ -88,9 +95,9 @@ def _init_snowplow_client(enabled: bool, configuration: SnowplowClientConfigurat
     return SnowplowClient(configuration)
 
 
-def _create_vertex_model(name, grpc_client_vertex, project, location, real_or_fake):
+def _create_vertex_model(name, grpc_client_vertex, project, location, use_fake):
     return providers.Selector(
-        real_or_fake,
+        _real_or_fake(use_fake),
         real=providers.Singleton(
             _VERTEX_MODELS_CLASSES[name],
             model_name=name,
@@ -102,9 +109,9 @@ def _create_vertex_model(name, grpc_client_vertex, project, location, real_or_fa
     )
 
 
-def _create_anthropic_model(name, client_anthropic, real_or_fake, **kwargs):
+def _create_anthropic_model(name, client_anthropic, use_fake, **kwargs):
     return providers.Selector(
-        real_or_fake,
+        _real_or_fake(use_fake),
         real=providers.Singleton(
             AnthropicModel,
             client=client_anthropic,
@@ -130,7 +137,11 @@ def _create_engine_code_completions(
 
 
 def _all_vertex_models(
-    models_key_name, grpc_client_vertex, project, location, real_or_fake
+    models_key_name,
+    grpc_client_vertex,
+    project,
+    location,
+    use_fake,
 ):
     return {
         model_key: _create_vertex_model(
@@ -138,7 +149,7 @@ def _all_vertex_models(
             grpc_client_vertex,
             project,
             location,
-            real_or_fake,
+            use_fake,
         )
         for model_key, model_name in models_key_name.items()
     }
@@ -148,11 +159,11 @@ def _all_anthropic_models(
     models_key_name,
     models_opts,
     client_anthropic,
-    real_or_fake,
+    use_fake,
 ):
     return {
         model_key: _create_anthropic_model(
-            model_name, client_anthropic, real_or_fake, **model_opts
+            model_name, client_anthropic, use_fake, **model_opts
         )
         for (model_key, model_name), model_opts, in zip(
             models_key_name.items(), models_opts.values()
@@ -176,13 +187,14 @@ class FastApiContainer(containers.DeclarativeContainer):
     wiring_config = containers.WiringConfiguration(modules=["ai_gateway.api.server"])
 
     config = providers.Configuration()
+    config.from_dict(Config().model_dump())
 
     oidc_provider = providers.Singleton(
         GitLabOidcProvider,
         oidc_providers=providers.Dict(
             {
-                "Gitlab": config.auth.gitlab_base_url,
-                "CustomersDot": config.auth.customer_portal_base_url,
+                "Gitlab": config.gitlab_url,
+                "CustomersDot": config.customer_portal_base_url,
             }
         ),
     )
@@ -190,7 +202,7 @@ class FastApiContainer(containers.DeclarativeContainer):
     auth_middleware = providers.Factory(
         middleware.MiddlewareAuthentication,
         oidc_provider,
-        bypass_auth=config.auth.bypass,
+        bypass_auth=config.auth.bypass_external,
         skip_endpoints=_PROBS_ENDPOINTS,
     )
 
@@ -215,6 +227,7 @@ class CodeSuggestionsContainer(containers.DeclarativeContainer):
     )
 
     config = providers.Configuration()
+    config.from_dict(Config().model_dump())
 
     interceptor = providers.Resource(
         PromClientInterceptor,
@@ -225,8 +238,8 @@ class CodeSuggestionsContainer(containers.DeclarativeContainer):
 
     grpc_client_vertex = providers.Resource(
         _init_vertex_grpc_client,
-        api_endpoint=config.palm_text_model.vertex_api_endpoint,
-        real_or_fake=config.palm_text_model.real_or_fake,
+        api_endpoint=config.vertex_text_model.endpoint,
+        use_fake=config.use_fake_models,
     )
 
     client_anthropic = providers.Resource(connect_anthropic)
@@ -236,9 +249,9 @@ class CodeSuggestionsContainer(containers.DeclarativeContainer):
     models_vertex = _all_vertex_models(
         _VERTEX_MODELS_VERSIONS,
         grpc_client_vertex,
-        config.palm_text_model.project,
-        config.palm_text_model.location,
-        config.palm_text_model.real_or_fake,
+        config.vertex_text_model.project,
+        config.vertex_text_model.location,
+        config.use_fake_models,
     )
 
     models_anthropic = _all_anthropic_models(
@@ -252,7 +265,7 @@ class CodeSuggestionsContainer(containers.DeclarativeContainer):
         },
         client_anthropic,
         # TODO: We need to update our fake model settings to be generic
-        config.palm_text_model.real_or_fake,
+        config.use_fake_models,
     )
 
     engines = _all_engines(models_vertex, tokenizer)
@@ -266,7 +279,7 @@ class CodeSuggestionsContainer(containers.DeclarativeContainer):
         engine=engines[ModelRollout.GOOGLE_CODE_GECKO],
         post_processor=providers.Factory(
             PostProcessorCompletions,
-            exclude=config.feature_flags.code_suggestions_excl_post_proc,
+            exclude=config.f.feature_flags.code_suggestions.excl_post_proc,
         ).provider,
     )
 
@@ -302,12 +315,12 @@ class CodeSuggestionsContainer(containers.DeclarativeContainer):
 
     snowplow_config = providers.Resource(
         SnowplowClientConfiguration,
-        endpoint=config.tracking.snowplow_endpoint,
+        endpoint=config.snowplow.endpoint,
     )
 
     snowplow_client = providers.Resource(
         _init_snowplow_client,
-        enabled=config.tracking.snowplow_enabled,
+        enabled=config.snowplow.enabled,
         configuration=snowplow_config,
     )
 
@@ -344,5 +357,5 @@ class XRayContainer(containers.DeclarativeContainer):
     anthropic_model = _create_anthropic_model(
         name=KindAnthropicModel.CLAUDE_2_0.value,
         client_anthropic=client_anthropic,
-        real_or_fake=config.palm_text_model.real_or_fake,
+        use_fake=config.use_fake_models,
     )

@@ -12,7 +12,7 @@ class TestTextGenBaseModel:
         def generate(self, **kwargs):
             pass
 
-    @mock.patch("ai_gateway.Config.model_concurrency")
+    @mock.patch("ai_gateway.models.base.config.model_engine_concurrency_limits")
     def test_instrumentator(self, mock_config):
         mock_config.for_model.return_value = 7
 

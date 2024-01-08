@@ -1,6 +1,4 @@
 from typing import Iterator, cast
-from unittest import mock
-from unittest.mock import PropertyMock
 
 import pytest
 from fastapi import FastAPI
@@ -8,7 +6,7 @@ from fastapi.routing import APIRoute
 from fastapi.testclient import TestClient
 
 from ai_gateway.api import create_fast_api_server
-from ai_gateway.config import AuthConfig, Config
+from ai_gateway.config import Config, ConfigAuth
 from ai_gateway.deps import FastApiContainer
 
 _ROUTES_V1 = [
@@ -38,23 +36,13 @@ _ROUTES_V3 = [
 
 @pytest.fixture(scope="module")
 def fastapi_server_app() -> Iterator[FastAPI]:
-    with mock.patch(
-        "ai_gateway.config.Config.auth", new_callable=PropertyMock
-    ) as auth_property:
-        auth_property.return_value = AuthConfig(
-            gitlab_base_url="localhost",
-            gitlab_api_base_url="localhost",
-            customer_portal_base_url="localhost",
-            bypass=True,  # Disable authorization for testing purposes
-        )
+    # Disable authorization for testing purposes
+    config = Config(_env_file=None, auth=ConfigAuth(bypass_external=True))
 
-        config = Config()
+    fast_api_container = FastApiContainer()
+    fast_api_container.config.from_dict(config.model_dump())
 
-        fast_api_container = FastApiContainer()
-        fast_api_container.config.auth.from_value(config.auth._asdict())
-        fast_api_container.config.fastapi.from_value(config.fastapi._asdict())
-
-        yield create_fast_api_server()
+    yield create_fast_api_server()
 
 
 @pytest.mark.parametrize("routes_expected", [_ROUTES_V1, _ROUTES_V2, _ROUTES_V3])
