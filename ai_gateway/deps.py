@@ -194,7 +194,7 @@ class FastApiContainer(containers.DeclarativeContainer):
         oidc_providers=providers.Dict(
             {
                 "Gitlab": config.gitlab_url,
-                "CustomersDot": config.customer_portal_base_url,
+                "CustomersDot": config.customer_portal_url,
             }
         ),
     )
