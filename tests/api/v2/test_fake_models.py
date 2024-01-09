@@ -1,4 +1,7 @@
+from unittest import mock
+
 import pytest
+from dependency_injector import containers
 from fastapi.testclient import TestClient
 
 from ai_gateway.api.v2 import api_router
@@ -29,10 +32,13 @@ def auth_user():
 class TestFakeModels:
     # Verify fake models with most used routes
 
-    def test_fake_completions(self, mock_client: TestClient):
+    def test_fake_completions(
+        self,
+        mock_client: TestClient,
+        mock_container: containers.DeclarativeContainer,
+    ):
         """Completions: v1 with Vertex AI models."""
 
-        container = ContainerApplication()
         engine = ModelEngineCompletions(
             model=FakePalmTextGenModel(),
             tokenizer=init_tokenizer(),
@@ -44,7 +50,7 @@ class TestFakeModels:
             post_processor=PostProcessor,
         )
 
-        with container.code_suggestions.completions.vertex_legacy.override(
+        with mock_container.code_suggestions.completions.vertex_legacy.override(
             code_completions_mock
         ):
             response = mock_client.post(
@@ -70,17 +76,18 @@ class TestFakeModels:
         body = response.json()
         assert body["choices"][0]["text"] == "fake code suggestion from PaLM Text"
 
-    def test_fake_generations(self, mock_client: TestClient):
+    def test_fake_generations(
+        self, mock_client: TestClient, mock_container: containers.DeclarativeContainer
+    ):
         """Generations: v2 with Anthropic models."""
 
-        container = ContainerApplication()
         tokenization_strategy = TokenizerTokenStrategy(init_tokenizer())
 
         code_generations_mock = CodeGenerations(
             model=FakePalmTextGenModel(), tokenization_strategy=tokenization_strategy
         )
 
-        with container.code_suggestions.generations.anthropic_factory.override(
+        with mock_container.code_suggestions.generations.anthropic_factory.override(
             code_generations_mock
         ):
             response = mock_client.post(
