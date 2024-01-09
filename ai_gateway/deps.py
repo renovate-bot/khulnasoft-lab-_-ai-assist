@@ -186,7 +186,7 @@ def _all_engines(models, tokenizer):
 class FastApiContainer(containers.DeclarativeContainer):
     wiring_config = containers.WiringConfiguration(modules=["ai_gateway.api.server"])
 
-    config = providers.Configuration()
+    config = providers.Configuration(strict=True)
     config.from_dict(Config().model_dump())
 
     oidc_provider = providers.Singleton(
@@ -194,7 +194,7 @@ class FastApiContainer(containers.DeclarativeContainer):
         oidc_providers=providers.Dict(
             {
                 "Gitlab": config.gitlab_url,
-                "CustomersDot": config.customer_portal_base_url,
+                "CustomersDot": config.customer_portal_url,
             }
         ),
     )
@@ -226,7 +226,7 @@ class CodeSuggestionsContainer(containers.DeclarativeContainer):
         ]
     )
 
-    config = providers.Configuration()
+    config = providers.Configuration(strict=True)
     config.from_dict(Config().model_dump())
 
     interceptor = providers.Resource(
@@ -279,7 +279,7 @@ class CodeSuggestionsContainer(containers.DeclarativeContainer):
         engine=engines[ModelRollout.GOOGLE_CODE_GECKO],
         post_processor=providers.Factory(
             PostProcessorCompletions,
-            exclude=config.f.feature_flags.code_suggestions.excl_post_proc,
+            exclude=config.f.code_suggestions.excl_post_proc,
         ).provider,
     )
 
@@ -351,7 +351,8 @@ class XRayContainer(containers.DeclarativeContainer):
         ]
     )
 
-    config = providers.Configuration()
+    config = providers.Configuration(strict=True)
+    config.from_dict(Config().model_dump())
 
     client_anthropic = providers.Resource(connect_anthropic)
     anthropic_model = _create_anthropic_model(
