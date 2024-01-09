@@ -18,14 +18,14 @@ _PROBS_ENDPOINTS = ["/monitoring/healthz", "/metrics"]
 
 
 class ContainerFastApi(containers.DeclarativeContainer):
-    config = providers.Configuration()
+    config = providers.Configuration(strict=True)
 
     oidc_provider = providers.Singleton(
         GitLabOidcProvider,
         oidc_providers=providers.Dict(
             {
                 "Gitlab": config.gitlab_url,
-                "CustomersDot": config.customer_portal_base_url,
+                "CustomersDot": config.customer_portal_url,
             }
         ),
     )
@@ -60,7 +60,7 @@ class ContainerApplication(containers.DeclarativeContainer):
         ]
     )
 
-    config = providers.Configuration()
+    config = providers.Configuration(strict=True)
 
     interceptor = providers.Resource(
         PromClientInterceptor,
@@ -76,7 +76,7 @@ class ContainerApplication(containers.DeclarativeContainer):
     code_suggestions = providers.Container(
         ContainerCodeSuggestions,
         models=pkg_models,
-        config=config.f.feature_flags.code_suggestions,
+        config=config.f.code_suggestions,
     )
     x_ray = providers.Container(
         ContainerXRay,

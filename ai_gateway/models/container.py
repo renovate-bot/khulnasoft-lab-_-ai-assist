@@ -48,7 +48,7 @@ class ContainerModels(containers.DeclarativeContainer):
     # We need to resolve the model based on the model name provided by the upstream container.
     # Hence, `VertexTextBaseModel.from_model_name` and `AnthropicModel.from_model_name` are only partially applied here.
 
-    config = providers.Configuration()
+    config = providers.Configuration(strict=True)
 
     real_or_fake = providers.Callable(_real_or_fake, config.use_fake_models)
 

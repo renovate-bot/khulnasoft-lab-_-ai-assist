@@ -22,7 +22,7 @@ def _init_snowplow_client(
 
 
 class ContainerTracking(containers.DeclarativeContainer):
-    config = providers.Configuration()
+    config = providers.Configuration(strict=True)
 
     client = providers.Resource(
         _init_snowplow_client,

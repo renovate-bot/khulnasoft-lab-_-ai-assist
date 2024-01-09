@@ -61,7 +61,7 @@ class ContainerCodeCompletions(containers.DeclarativeContainer):
     vertex_code_gecko = providers.Dependency(instance_of=TextGenBaseModel)
     anthropic_claude = providers.Dependency(instance_of=TextGenBaseModel)
 
-    config = providers.Configuration()
+    config = providers.Configuration(strict=True)
 
     vertex_legacy = providers.Factory(
         CodeCompletionsLegacy,
@@ -96,7 +96,7 @@ class ContainerCodeCompletions(containers.DeclarativeContainer):
 class ContainerCodeSuggestions(containers.DeclarativeContainer):
     models = providers.DependenciesContainer()
 
-    config = providers.Configuration()
+    config = providers.Configuration(strict=True)
 
     tokenizer = providers.Resource(init_tokenizer)
 
