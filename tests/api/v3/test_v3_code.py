@@ -13,7 +13,7 @@ from ai_gateway.code_suggestions import (
     CodeSuggestionsOutput,
 )
 from ai_gateway.code_suggestions.processing.typing import LanguageId
-from ai_gateway.deps import CodeSuggestionsContainer
+from ai_gateway.container import ContainerApplication
 from ai_gateway.models import ModelMetadata
 
 
@@ -88,7 +88,7 @@ class TestEditorContentCompletion:
     ):
         code_completions_mock = mock.Mock(spec=CodeCompletions)
         code_completions_mock.execute = mock.AsyncMock(return_value=model_output)
-        container = CodeSuggestionsContainer()
+        container = ContainerApplication()
 
         payload = {
             "file_name": "main.py",
@@ -106,7 +106,9 @@ class TestEditorContentCompletion:
             "prompt_components": [prompt_component],
         }
 
-        with container.code_completions_legacy.override(code_completions_mock):
+        with container.code_suggestions.completions.vertex_legacy.override(
+            code_completions_mock
+        ):
             response = mock_client.post(
                 "/code/completions",
                 headers={
@@ -209,7 +211,7 @@ class TestEditorContentCompletion:
 
         anthropic_mock = mock.Mock(spec=CodeCompletions)
         anthropic_mock.execute = mock.AsyncMock(return_value=anthropic_output)
-        container = CodeSuggestionsContainer()
+        container = ContainerApplication()
 
         payload = {
             "file_name": "main.py",
@@ -228,9 +230,9 @@ class TestEditorContentCompletion:
             "prompt_components": [prompt_component],
         }
 
-        with container.code_completions_legacy.override(
+        with container.code_suggestions.completions.vertex_legacy.override(
             vertex_mock
-        ) and container.code_completions_anthropic.override(anthropic_mock):
+        ) and container.code_suggestions.completions.anthropic.override(anthropic_mock):
             response = mock_client.post(
                 "/code/completions",
                 headers={
@@ -282,7 +284,7 @@ class TestEditorContentCompletion:
 
         code_completions_mock = mock.Mock(spec=CodeCompletions)
         code_completions_mock.execute = mock.AsyncMock(side_effect=_stream_generator)
-        container = CodeSuggestionsContainer()
+        container = ContainerApplication()
 
         payload = {
             "file_name": "main.py",
@@ -302,7 +304,9 @@ class TestEditorContentCompletion:
             "prompt_components": [prompt_component],
         }
 
-        with container.code_completions_anthropic.override(code_completions_mock):
+        with container.code_suggestions.completions.anthropic.override(
+            code_completions_mock
+        ):
             response = mock_client.post(
                 "/code/completions",
                 headers={
@@ -383,7 +387,7 @@ class TestEditorContentGeneration:
     ):
         code_generations_mock = mock.Mock(spec=CodeGenerations)
         code_generations_mock.execute = mock.AsyncMock(return_value=model_output)
-        container = CodeSuggestionsContainer()
+        container = ContainerApplication()
 
         payload = {
             "file_name": "main.py",
@@ -401,7 +405,9 @@ class TestEditorContentGeneration:
             "prompt_components": [prompt_component],
         }
 
-        with container.code_generations_vertex.override(code_generations_mock):
+        with container.code_suggestions.generations.vertex.override(
+            code_generations_mock
+        ):
             response = mock_client.post(
                 "/code/completions",
                 headers={
@@ -466,7 +472,7 @@ class TestEditorContentGeneration:
         code_generations_mock = mock.Mock(spec=CodeGenerations)
         code_generations_mock.execute = mock.AsyncMock(return_value=model_output)
         code_generations_mock.with_prompt_prepared = mock.AsyncMock()
-        container = CodeSuggestionsContainer()
+        container = ContainerApplication()
 
         payload = {
             "file_name": "main.py",
@@ -485,7 +491,9 @@ class TestEditorContentGeneration:
             "prompt_components": [prompt_component],
         }
 
-        with container.code_generations_vertex.override(code_generations_mock):
+        with container.code_suggestions.generations.vertex.override(
+            code_generations_mock
+        ):
             response = mock_client.post(
                 "/code/completions",
                 headers={
@@ -502,7 +510,12 @@ class TestEditorContentGeneration:
             code_generations_mock.with_prompt_prepared.assert_called_with(prompt)
 
     @pytest.mark.parametrize(
-        ("model_provider", "expected_code", "expected_response", "expected_model"),
+        (
+            "model_provider",
+            "expected_code",
+            "expected_response",
+            "expected_model",
+        ),
         [
             (
                 "vertex-ai",
@@ -576,7 +589,7 @@ class TestEditorContentGeneration:
 
         anthropic_mock = mock.Mock(spec=CodeGenerations)
         anthropic_mock.execute = mock.AsyncMock(return_value=anthropic_output)
-        container = CodeSuggestionsContainer()
+        container = ContainerApplication()
 
         payload = {
             "file_name": "main.py",
@@ -595,9 +608,11 @@ class TestEditorContentGeneration:
             "prompt_components": [prompt_component],
         }
 
-        with container.code_generations_vertex.override(
+        with container.code_suggestions.generations.vertex.override(
             vertex_mock
-        ) and container.code_generations_anthropic.override(anthropic_mock):
+        ) and container.code_suggestions.generations.anthropic_default.override(
+            anthropic_mock
+        ):
             response = mock_client.post(
                 "/code/completions",
                 headers={
@@ -616,7 +631,6 @@ class TestEditorContentGeneration:
         body = response.json()
 
         assert body["response"] == expected_response
-
         assert body["metadata"]["model"] == expected_model
 
     @pytest.mark.parametrize(
@@ -653,7 +667,7 @@ class TestEditorContentGeneration:
 
         code_generations_mock = mock.Mock(spec=CodeGenerations)
         code_generations_mock.execute = mock.AsyncMock(side_effect=_stream_generator)
-        container = CodeSuggestionsContainer()
+        container = ContainerApplication()
 
         payload = {
             "file_name": "main.py",
@@ -673,7 +687,9 @@ class TestEditorContentGeneration:
             "prompt_components": [prompt_component],
         }
 
-        with container.code_generations_anthropic.override(code_generations_mock):
+        with container.code_suggestions.generations.anthropic_default.override(
+            code_generations_mock
+        ):
             response = mock_client.post(
                 "/code/completions",
                 headers={
@@ -816,9 +832,11 @@ class TestIncomingRequest:
         )
         code_completions_mock = mock.Mock(spec=CodeCompletions)
         code_completions_mock.execute = mock.AsyncMock(return_value=model_output)
-        container = CodeSuggestionsContainer()
+        container = ContainerApplication()
 
-        with container.code_completions_legacy.override(code_completions_mock):
+        with container.code_suggestions.completions.vertex_legacy.override(
+            code_completions_mock
+        ):
             response = mock_client.post(
                 "/code/completions",
                 headers={

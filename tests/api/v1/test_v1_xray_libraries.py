@@ -5,7 +5,7 @@ import pytest
 from ai_gateway.api.v1 import api_router
 from ai_gateway.api.v1.x_ray.typing import AnyPromptComponent
 from ai_gateway.auth import User, UserClaims
-from ai_gateway.deps import XRayContainer
+from ai_gateway.container import ContainerApplication
 from ai_gateway.models import AnthropicModel, SafetyAttributes, TextGenModelOutput
 
 
@@ -56,9 +56,9 @@ class TestXRayLibraries:
 
         anthropic_model_mock = mock.Mock(spec=AnthropicModel)
         anthropic_model_mock.generate = mock.AsyncMock(return_value=model_output)
-        container = XRayContainer()
+        container = ContainerApplication()
 
-        with container.anthropic_model.override(anthropic_model_mock):
+        with container.x_ray.anthropic_claude.override(anthropic_model_mock):
             response = mock_client.post(
                 "/x-ray/libraries",
                 headers={

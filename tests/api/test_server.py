@@ -7,7 +7,7 @@ from fastapi.testclient import TestClient
 
 from ai_gateway.api import create_fast_api_server
 from ai_gateway.config import Config, ConfigAuth
-from ai_gateway.deps import FastApiContainer
+from ai_gateway.container import ContainerApplication
 
 _ROUTES_V1 = [
     ("/v1/chat/agent", ["POST"]),
@@ -39,7 +39,7 @@ def fastapi_server_app() -> Iterator[FastAPI]:
     # Disable authorization for testing purposes
     config = Config(_env_file=None, auth=ConfigAuth(bypass_external=True))
 
-    fast_api_container = FastApiContainer()
+    fast_api_container = ContainerApplication()
     fast_api_container.config.from_dict(config.model_dump())
 
     yield create_fast_api_server()

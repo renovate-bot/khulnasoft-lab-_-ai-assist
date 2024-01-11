@@ -2,6 +2,7 @@ from typing import AsyncIterator
 from unittest import mock
 
 import pytest
+from dependency_injector import containers
 from fastapi import Request
 from fastapi.testclient import TestClient
 from snowplow_tracker import Snowplow
@@ -23,7 +24,7 @@ from ai_gateway.code_suggestions.processing.typing import (
     MetadataCodeContent,
     MetadataPromptBuilder,
 )
-from ai_gateway.deps import CodeSuggestionsContainer
+from ai_gateway.container import ContainerApplication
 from ai_gateway.experimentation.base import ExperimentTelemetry
 from ai_gateway.instrumentators.base import Telemetry
 from ai_gateway.models import ModelMetadata
@@ -118,14 +119,16 @@ class TestCodeCompletions:
     def test_legacy_successful_response(
         self,
         mock_client: TestClient,
+        mock_container: containers.DeclarativeContainer,
         model_output: ModelEngineOutput,
         expected_response: dict,
     ):
         code_completions_mock = mock.Mock(spec=CodeCompletionsLegacy)
         code_completions_mock.execute = mock.AsyncMock(return_value=model_output)
-        container = CodeSuggestionsContainer()
 
-        with container.code_completions_legacy.override(code_completions_mock):
+        with mock_container.code_suggestions.completions.vertex_legacy.override(
+            code_completions_mock
+        ):
             response = mock_client.post(
                 "/completions",
                 headers={
@@ -245,12 +248,12 @@ class TestCodeCompletions:
         self,
         prompt_version: int,
         mock_client: TestClient,
+        mock_container: containers.DeclarativeContainer,
         model_output: CodeSuggestionsOutput,
         expected_response: dict,
     ):
         code_completions_mock = mock.Mock(spec=CodeCompletions)
         code_completions_mock.execute = mock.AsyncMock(return_value=model_output)
-        container = CodeSuggestionsContainer()
 
         current_file = {
             "file_name": "main.py",
@@ -276,7 +279,9 @@ class TestCodeCompletions:
                 {"raw_prompt": current_file["content_above_cursor"]}
             )
 
-        with container.code_completions_anthropic.override(code_completions_mock):
+        with mock_container.code_suggestions.completions.anthropic.override(
+            code_completions_mock
+        ):
             response = mock_client.post(
                 "/completions",
                 headers={
@@ -321,6 +326,7 @@ class TestCodeCompletions:
     def test_successful_stream_response(
         self,
         mock_client: TestClient,
+        mock_container: containers.DeclarativeContainer,
         model_chunks: list[CodeSuggestionsChunk],
         expected_response: str,
     ):
@@ -332,7 +338,6 @@ class TestCodeCompletions:
 
         code_completions_mock = mock.Mock(spec=CodeCompletions)
         code_completions_mock.execute = mock.AsyncMock(side_effect=_stream_generator)
-        container = CodeSuggestionsContainer()
 
         current_file = {
             "file_name": "main.py",
@@ -348,7 +353,9 @@ class TestCodeCompletions:
             "stream": True,
         }
 
-        with container.code_completions_anthropic.override(code_completions_mock):
+        with mock_container.code_suggestions.completions.anthropic.override(
+            code_completions_mock
+        ):
             response = mock_client.post(
                 "/completions",
                 headers={
@@ -672,6 +679,7 @@ class TestCodeGenerations:
     def test_non_stream_response(
         self,
         mock_client,
+        mock_container: containers.DeclarativeContainer,
         prompt_version,
         prefix,
         prompt,
@@ -700,11 +708,10 @@ class TestCodeGenerations:
         code_generations_anthropic_mock.execute = mock.AsyncMock(
             return_value=model_output
         )
-        container = CodeSuggestionsContainer()
 
-        with container.code_generations_vertex.override(
+        with mock_container.code_suggestions.generations.vertex.override(
             code_generations_vertex_mock
-        ), container.code_generations_anthropic.override(
+        ), mock_container.code_suggestions.generations.anthropic_factory.override(
             code_generations_anthropic_mock
         ):
             response = mock_client.post(
@@ -765,6 +772,7 @@ class TestCodeGenerations:
     def test_successful_stream_response(
         self,
         mock_client: TestClient,
+        mock_container: containers.DeclarativeContainer,
         model_chunks: list[CodeSuggestionsChunk],
         expected_response: str,
     ):
@@ -780,9 +788,10 @@ class TestCodeGenerations:
 
         code_generations_mock = mock.Mock(spec=CodeGenerations)
         code_generations_mock.execute = mock.AsyncMock(side_effect=_stream_generator)
-        container = CodeSuggestionsContainer()
 
-        with container.code_generations_anthropic.override(code_generations_mock):
+        with mock_container.code_suggestions.generations.anthropic_factory.override(
+            code_generations_mock
+        ):
             response = mock_client.post(
                 "/code/generations",
                 headers={

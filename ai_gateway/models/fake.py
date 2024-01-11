@@ -1,6 +1,6 @@
-from typing import Optional
+from typing import Any, Optional
 
-from ai_gateway.models import (
+from ai_gateway.models.base import (
     ModelMetadata,
     SafetyAttributes,
     TextGenBaseModel,
@@ -13,6 +13,9 @@ __all__ = [
 
 
 class FakePalmTextGenModel(TextGenBaseModel):
+    def __init__(self, *args: Any, **kwargs: Any):
+        pass
+
     @property
     def metadata(self) -> ModelMetadata:
         return ModelMetadata(name="fake-palm-model", engine="fake-palm-engine")

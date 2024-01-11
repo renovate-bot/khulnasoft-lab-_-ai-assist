@@ -8,12 +8,7 @@ from prometheus_fastapi_instrumentator import Instrumentator, metrics
 
 from ai_gateway.api import create_fast_api_server
 from ai_gateway.config import Config
-from ai_gateway.deps import (
-    _PROBS_ENDPOINTS,
-    CodeSuggestionsContainer,
-    FastApiContainer,
-    XRayContainer,
-)
+from ai_gateway.container import _PROBS_ENDPOINTS, ContainerApplication
 from ai_gateway.profiling import setup_profiling
 from ai_gateway.structured_logging import setup_logging
 
@@ -28,14 +23,8 @@ dictConfig(config.fastapi.uvicorn_logger)
 
 
 def main():
-    fast_api_container = FastApiContainer()
-    fast_api_container.config.from_dict(config.model_dump())
-
-    code_suggestions_container = CodeSuggestionsContainer()
-    code_suggestions_container.config.from_dict(config.model_dump())
-
-    x_ray_container = XRayContainer()
-    x_ray_container.config.from_dict(config.model_dump())
+    container_application = ContainerApplication()
+    container_application.config.from_dict(config.model_dump())
 
     app = create_fast_api_server()
     setup_logging(app, config.logging)
@@ -62,9 +51,7 @@ def main():
 
     @app.on_event("startup")
     def on_server_startup():
-        fast_api_container.init_resources()
-        code_suggestions_container.init_resources()
-        x_ray_container.init_resources()
+        container_application.init_resources()
 
         # https://github.com/trallnag/prometheus-fastapi-instrumentator/issues/10
         log.info(
@@ -78,9 +65,7 @@ def main():
 
     @app.on_event("shutdown")
     def on_server_shutdown():
-        fast_api_container.shutdown_resources()
-        code_suggestions_container.shutdown_resources()
-        x_ray_container.shutdown_resources()
+        container_application.shutdown_resources()
 
     # For now, trust all IPs for proxy headers until https://github.com/encode/uvicorn/pull/1611 is available.
     uvicorn.run(

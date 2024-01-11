@@ -7,13 +7,15 @@ from google.api_core.exceptions import GoogleAPICallError, GoogleAPIError
 from google.cloud.aiplatform.gapic import PredictionServiceAsyncClient, PredictResponse
 from google.protobuf import json_format, struct_pb2
 
-from ai_gateway.models import ModelMetadata, TextGenBaseModel, TextGenModelOutput
 from ai_gateway.models.base import (
     KindModelProvider,
     ModelAPICallError,
     ModelAPIError,
     ModelInput,
+    ModelMetadata,
     SafetyAttributes,
+    TextGenBaseModel,
+    TextGenModelOutput,
 )
 
 __all__ = [
