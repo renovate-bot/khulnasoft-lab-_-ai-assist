@@ -9,6 +9,10 @@ spec:
   observability:
     scrape_targets:
       - "localhost:8082"
+  startup_probe:
+    path: "/monitoring/healthz"
+  liveness_probe:
+    path: "/monitoring/healthz"
   scalability:
     min_instances: 9
     max_instances: 200
