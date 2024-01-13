@@ -22,7 +22,7 @@ regex = "^2023.0.0"
 detect-secrets = "^1.4.0"
 fastapi-health = "^0.4.0"
 google-cloud-aiplatform = "^1.36.4"
-structlog = "^23.1.0"
+structlog = "^24.0.0"
 asgi-correlation-id = "^4.1.0"
 prometheus-fastapi-instrumentator = "^6.0.0"
 python-jose = {extras = ["cryptography"], version = "^3.3.0"}
