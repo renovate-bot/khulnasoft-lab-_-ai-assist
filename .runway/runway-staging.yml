@@ -2,7 +2,7 @@ apiVersion: runway/v1.0.0-beta
 kind: RunwayService
 metadata:
   name: ai_gateway
-  owner: ai_assisted
+  owner: code_creation
 spec:
   image: "$CI_REGISTRY_IMAGE/model-gateway:${CI_COMMIT_SHORT_SHA}"
   request_timeout: 60
