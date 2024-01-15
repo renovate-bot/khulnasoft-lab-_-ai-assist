@@ -22,6 +22,8 @@ class SnowplowClientConfiguration:
     endpoint: str
     namespace: str = "gl"
     app_id: str = "gitlab_ai_gateway"
+    batch_size: int = 10
+    thread_count: int = 1
 
 
 @dataclass
@@ -78,8 +80,8 @@ class SnowplowClient(Client):
 
     def __init__(self, configuration: SnowplowClientConfiguration) -> None:
         emitter = AsyncEmitter(
-            batch_size=1,
-            thread_count=5,
+            batch_size=configuration.batch_size,
+            thread_count=configuration.thread_count,
             endpoint=configuration.endpoint,
         )
 

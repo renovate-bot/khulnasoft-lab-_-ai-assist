@@ -30,6 +30,8 @@ class ContainerTracking(containers.DeclarativeContainer):
         configuration=providers.Resource(
             SnowplowClientConfiguration,
             endpoint=config.endpoint,
+            batch_size=config.batch_size,
+            thread_count=config.thread_count,
         ),
     )
 
