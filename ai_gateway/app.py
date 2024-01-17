@@ -1,3 +1,4 @@
+import asyncio
 import logging
 from logging.config import dictConfig
 
@@ -9,6 +10,7 @@ from prometheus_fastapi_instrumentator import Instrumentator, metrics
 from ai_gateway.api import create_fast_api_server
 from ai_gateway.config import Config
 from ai_gateway.container import _PROBS_ENDPOINTS, ContainerApplication
+from ai_gateway.instrumentators.threads import monitor_threads
 from ai_gateway.profiling import setup_profiling
 from ai_gateway.structured_logging import setup_logging
 
@@ -52,6 +54,14 @@ def main():
     @app.on_event("startup")
     def on_server_startup():
         container_application.init_resources()
+
+        if config.instrumentator.thread_monitoring_enabled:
+            loop = asyncio.get_running_loop()
+            loop.create_task(
+                monitor_threads(
+                    loop, interval=config.instrumentator.thread_monitoring_interval
+                )
+            )
 
         # https://github.com/trallnag/prometheus-fastapi-instrumentator/issues/10
         log.info(

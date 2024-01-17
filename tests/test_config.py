@@ -8,6 +8,7 @@ from ai_gateway.config import (
     ConfigAuth,
     ConfigFastApi,
     ConfigGoogleCloudProfiler,
+    ConfigInstrumentator,
     ConfigLogging,
     ConfigModelConcurrency,
     ConfigSnowplow,
@@ -181,6 +182,28 @@ def test_config_snowplow(values: dict, expected: ConfigSnowplow):
         config = Config(_env_file=None)
 
         assert config.snowplow == expected
+
+
+@pytest.mark.parametrize(
+    ("values", "expected"),
+    [
+        ({}, ConfigInstrumentator()),
+        (
+            {
+                "AIGW_INSTRUMENTATOR__THREAD_MONITORING_ENABLED": "True",
+                "AIGW_INSTRUMENTATOR__THREAD_MONITORING_INTERVAL": "45",
+            },
+            ConfigInstrumentator(
+                thread_monitoring_enabled=True, thread_monitoring_interval=45
+            ),
+        ),
+    ],
+)
+def test_config_instrumentator(values: dict, expected: ConfigInstrumentator):
+    with mock.patch.dict(os.environ, values, clear=True):
+        config = Config(_env_file=None)
+
+        assert config.instrumentator == expected
 
 
 @pytest.mark.parametrize(
