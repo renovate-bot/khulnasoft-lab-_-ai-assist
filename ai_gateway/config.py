@@ -63,6 +63,8 @@ class FFlags(BaseSettings):
 class ConfigSnowplow(BaseModel):
     enabled: bool = False
     endpoint: Optional[str] = None
+    batch_size: Optional[int] = 10
+    thread_count: Optional[int] = 1
 
 
 class ConfigVertexTextModel(BaseModel):

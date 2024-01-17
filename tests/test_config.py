@@ -167,8 +167,12 @@ def test_config_f_flags_code_suggestions(values: dict, expected: FFlagsCodeSugge
             {
                 "AIGW_SNOWPLOW__ENABLED": "yes",
                 "AIGW_SNOWPLOW__ENDPOINT": "endpoint.test",
+                "AIGW_SNOWPLOW__BATCH_SIZE": "8",
+                "AIGW_SNOWPLOW__THREAD_COUNT": "7",
             },
-            ConfigSnowplow(enabled=True, endpoint="endpoint.test"),
+            ConfigSnowplow(
+                enabled=True, endpoint="endpoint.test", thread_count=7, batch_size=8
+            ),
         ),
     ],
 )

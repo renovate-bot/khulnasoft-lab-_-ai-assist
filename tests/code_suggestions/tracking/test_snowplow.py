@@ -32,6 +32,8 @@ class TestSnowplowClient:
             namespace="gl",
             endpoint="https://whitechoc.local",
             app_id="gitlab_ai_gateway",
+            batch_size=3,
+            thread_count=2,
         )
         SnowplowClient(configuration)
 
@@ -39,8 +41,8 @@ class TestSnowplowClient:
         mock_tracker_init.assert_called_once()
 
         emitter_args = mock_emitter_init.call_args[1]
-        assert emitter_args["batch_size"] == 1
-        assert emitter_args["thread_count"] == 5
+        assert emitter_args["batch_size"] == 3
+        assert emitter_args["thread_count"] == 2
         assert emitter_args["endpoint"] == configuration.endpoint
 
         tracker_args = mock_tracker_init.call_args[1]
