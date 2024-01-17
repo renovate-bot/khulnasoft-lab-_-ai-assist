@@ -408,5 +408,5 @@ def truncate_content(
     )
 
 
-def strip_whitespaces(text: str) -> str:
+async def strip_whitespaces(text: str) -> str:
     return "" if text.isspace() else text

@@ -136,7 +136,8 @@ def print_hello():
         ),
     ],
 )
-def test_min_allowed_block_visitor(
+@pytest.mark.asyncio
+async def test_min_allowed_block_visitor(
     lang_id: LanguageId,
     source_code: str,
     target_point: Point,
@@ -144,7 +145,7 @@ def test_min_allowed_block_visitor(
 ):
     source_code = source_code.strip("\n")
 
-    parser = CodeParser.from_language_id(
+    parser = await CodeParser.from_language_id(
         source_code,
         lang_id,
     )
@@ -179,14 +180,15 @@ def test_min_allowed_block_visitor(
         ),
     ],
 )
-def test_error_blocks_visitor(
+@pytest.mark.asyncio
+async def test_error_blocks_visitor(
     lang_id: LanguageId,
     source_code: str,
     expected_points: list,
 ):
     source_code = source_code.strip("\n")
 
-    parser = CodeParser.from_language_id(
+    parser = await CodeParser.from_language_id(
         source_code,
         lang_id,
     )

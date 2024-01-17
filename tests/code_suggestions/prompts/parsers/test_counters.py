@@ -486,12 +486,13 @@ fun main() {
         ),
     ],
 )
-def test_symbol_counter(
+@pytest.mark.asyncio
+async def test_symbol_counter(
     lang_id: LanguageId,
     source_code: str,
     target_symbols_counts: dict[str],
 ):
-    parser = CodeParser.from_language_id(source_code, lang_id)
+    parser = await CodeParser.from_language_id(source_code, lang_id)
     output = parser.count_symbols()
 
     assert len(output) == len(target_symbols_counts)

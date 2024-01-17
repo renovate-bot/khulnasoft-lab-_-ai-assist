@@ -45,10 +45,11 @@ PYTHON_SAMPLE_SOURCE = """import os"""
         (LanguageId.PYTHON, PYTHON_SAMPLE_SOURCE, 3, 4),
     ],
 )
-def test_level_order_traversal(
+@pytest.mark.asyncio
+async def test_level_order_traversal(
     lang_id: LanguageId, source_code: str, max_depth: int, expected_node_count: int
 ):
-    root_node = CodeParser.from_language_id(source_code, lang_id).tree.root_node
+    root_node = (await CodeParser.from_language_id(source_code, lang_id)).tree.root_node
 
     visited_nodes = []
 
@@ -124,13 +125,14 @@ class StubLimitedNodeTraversalVisitor(BaseVisitor):
         ),
     ],
 )
-def test_preorder_traversal(
+@pytest.mark.asyncio
+async def test_preorder_traversal(
     lang_id: LanguageId,
     source_code: str,
     visitor: StubLimitedDepthVisitor,
     expected_node_count: int,
 ):
-    tree = CodeParser.from_language_id(source_code, lang_id).tree
+    tree = (await CodeParser.from_language_id(source_code, lang_id)).tree
 
     tree_dfs(tree, visitor)
 
@@ -144,14 +146,15 @@ def test_preorder_traversal(
         (LanguageId.JAVA, JAVA_SAMPLE_SOURCE, StubSimpleVisitor(), 80, 77),
     ],
 )
-def test_tree_dfs_max_visit_count(
+@pytest.mark.asyncio
+async def test_tree_dfs_max_visit_count(
     lang_id: LanguageId,
     source_code: str,
     visitor: StubSimpleVisitor,
     max_visit_count: int,
     expected_node_count: int,
 ):
-    tree = CodeParser.from_language_id(source_code, lang_id).tree
+    tree = (await CodeParser.from_language_id(source_code, lang_id)).tree
 
     tree_dfs(tree, visitor, max_visit_count=max_visit_count)
 

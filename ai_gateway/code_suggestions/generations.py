@@ -103,7 +103,7 @@ class CodeGenerations:
                     if isinstance(res, AsyncIterator):
                         return self._handle_stream(res)
 
-                    return self._handle_sync(
+                    return await self._handle_sync(
                         response=res,
                         lang_id=lang_id,
                         model_provider=model_provider,
@@ -131,7 +131,7 @@ class CodeGenerations:
             chunk_content = CodeSuggestionsChunk(text=chunk.text)
             yield chunk_content
 
-    def _handle_sync(
+    async def _handle_sync(
         self,
         response: TextGenModelOutput,
         lang_id: Optional[LanguageId],
@@ -148,7 +148,7 @@ class CodeGenerations:
             if model_provider == ModelProvider.ANTHROPIC
             else PostProcessor
         )
-        generation = processor(prefix).process(response.text)
+        generation = await processor(prefix).process(response.text)
 
         return CodeSuggestionsOutput(
             text=generation,

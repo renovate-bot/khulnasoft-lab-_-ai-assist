@@ -191,7 +191,7 @@ class ModelEngineCompletions(ModelEngineBase):
         stream: bool = False,
         **kwargs: Any,
     ) -> ModelEngineOutput:
-        prompt = self._build_prompt(prefix, file_name, suffix, lang_id)
+        prompt = await self._build_prompt(prefix, file_name, suffix, lang_id)
 
         empty_output = ModelEngineOutput(
             text="",
@@ -206,7 +206,7 @@ class ModelEngineCompletions(ModelEngineBase):
         ) as watch_container:
             try:
                 # count symbols of the final prompt
-                self._count_symbols(prompt.prefix, lang_id, watch_container)
+                await self._count_symbols(prompt.prefix, lang_id, watch_container)
 
                 # log experiments included in this request
                 self._count_experiments(prompt.metadata.experiments, watch_container)
@@ -238,20 +238,20 @@ class ModelEngineCompletions(ModelEngineBase):
 
         return empty_output
 
-    def _build_prompt(
+    async def _build_prompt(
         self,
         prefix: str,
         file_name: str,
         suffix: str,
         lang_id: Optional[LanguageId] = None,
     ) -> Prompt:
-        imports = self._get_imports(prefix, lang_id)
+        imports = await self._get_imports(prefix, lang_id)
         prompt_len_imports_max = int(
             self.model.MAX_MODEL_LEN * self.MAX_TOKENS_IMPORTS_PERCENT
         )
         prompt_len_imports = min(imports.total_length_tokens, prompt_len_imports_max)
 
-        func_signatures = self._get_function_signatures(suffix, lang_id)
+        func_signatures = await self._get_function_signatures(suffix, lang_id)
         prompt_len_func_signatures = min(
             func_signatures.total_length_tokens, 1024
         )  # max 1024 tokens
@@ -287,26 +287,26 @@ class ModelEngineCompletions(ModelEngineBase):
 
         return prompt
 
-    def _get_imports(
+    async def _get_imports(
         self, content: str, lang_id: Optional[LanguageId] = None
     ) -> _CodeInfo:
-        imports = self._extract(content, "imports", lang_id)
+        imports = await self._extract(content, "imports", lang_id)
         return self._to_code_info(imports, lang_id, as_comments=False)
 
-    def _get_function_signatures(
+    async def _get_function_signatures(
         self, content: str, lang_id: Optional[LanguageId] = None
     ) -> _CodeInfo:
-        signatures = self._extract(content, "function_signatures", lang_id)
+        signatures = await self._extract(content, "function_signatures", lang_id)
         return self._to_code_info(signatures, lang_id, as_comments=True)
 
     @staticmethod
-    def _extract(
+    async def _extract(
         content: str, target: str, lang_id: Optional[LanguageId] = None
     ) -> list[str]:
         extracted = []
         if lang_id:
             try:
-                parser = CodeParser.from_language_id(content, lang_id)
+                parser = await CodeParser.from_language_id(content, lang_id)
                 if target == "imports":
                     extracted = parser.imports()
                 elif target == "function_signatures":
@@ -369,14 +369,14 @@ class ModelEngineCompletions(ModelEngineBase):
 
         return _CodeBody(prefix=prefix_trimmed, suffix=suffix_truncated)
 
-    def _count_symbols(
+    async def _count_symbols(
         self,
         prompt: str,
         lang_id: LanguageId,
         watch_container: TextGenModelInstrumentator.WatchContainer,
     ) -> None:
         try:
-            parser = CodeParser.from_language_id(prompt, lang_id)
+            parser = await CodeParser.from_language_id(prompt, lang_id)
             symbol_map = parser.count_symbols()
             self.increment_code_symbol_counter(lang_id, symbol_map)
             self.log_symbol_map(watch_container, symbol_map)

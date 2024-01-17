@@ -61,12 +61,12 @@ class PostProcessor(PostProcessorBase):
             (strip_whitespaces.__name__, strip_whitespaces),
         ]
 
-    def process(self, completion: str, **kwargs: Any) -> str:
+    async def process(self, completion: str, **kwargs: Any) -> str:
         for key, func in self.ops:
             if key in self.exclude:
                 continue
 
-            completion = func(completion)
+            completion = await func(completion)
             if completion == "":
                 return ""
 

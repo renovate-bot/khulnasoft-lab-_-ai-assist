@@ -1,3 +1,4 @@
+import asyncio
 import os
 from typing import Optional
 
@@ -117,7 +118,18 @@ class CodeParser(BaseCodeParser):
         return visitor.comments_only
 
     @classmethod
-    def from_language_id(
+    async def from_language_id(
+        cls,
+        content: str,
+        lang_id: LanguageId,
+        lib_path: Optional[str] = None,
+    ):
+        return await asyncio.to_thread(
+            cls._from_language_id, content, lang_id, lib_path
+        )
+
+    @classmethod
+    def _from_language_id(
         cls,
         content: str,
         lang_id: LanguageId,

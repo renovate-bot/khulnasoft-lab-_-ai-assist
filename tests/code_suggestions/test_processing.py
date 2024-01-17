@@ -250,8 +250,9 @@ def test_find_common_lines(source: list, target: list, expected: list):
         ("\n hello \t world", "\n hello \t world"),
     ],
 )
-def test_strip_whitespaces(completion, expected_output):
-    actual = ops.strip_whitespaces(completion)
+@pytest.mark.asyncio
+async def test_strip_whitespaces(completion, expected_output):
+    actual = await ops.strip_whitespaces(completion)
 
     assert actual == expected_output
 
