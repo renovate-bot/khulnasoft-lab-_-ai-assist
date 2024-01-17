@@ -68,9 +68,10 @@ def test_prepend_new_line(code_context: str, completion: str, expected_value: st
         ),
     ],
 )
-def test_remove_comment_only_completion(
+@pytest.mark.asyncio
+async def test_remove_comment_only_completion(
     completion: str, lang_id: LanguageId, expected: str
 ):
-    actual = remove_comment_only_completion(completion, lang_id)
+    actual = await remove_comment_only_completion(completion, lang_id)
 
     assert actual == expected

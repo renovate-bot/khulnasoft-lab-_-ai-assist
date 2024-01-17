@@ -190,9 +190,12 @@ end
         ("def hello \n\n\n ", "\n\n\n", 3, "\n\n\n"),
     ],
 )
-def test_clean_model_reflection(
+@pytest.mark.asyncio
+async def test_clean_model_reflection(
     context: str, completion: str, min_block_size: int, expected: str
 ):
-    actual = clean_model_reflection(context, completion, min_block_size=min_block_size)
+    actual = await clean_model_reflection(
+        context, completion, min_block_size=min_block_size
+    )
 
     assert actual == expected

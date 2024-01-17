@@ -29,7 +29,7 @@ _SPECIAL_CHARS = "()[];.,$%&^*@#!{}/"
 _RE_MARKDOWN_CODE_BLOCK_BEGIN = re.compile(r"^`{3}\S*\n", flags=re.MULTILINE)
 
 
-def clean_model_reflection(context: str, completion: str, **kwargs: Any) -> str:
+async def clean_model_reflection(context: str, completion: str, **kwargs: Any) -> str:
     def _is_single_line_comment(lines: list[str]):
         return len(lines) == 1 and lines[0].lstrip().startswith(
             tuple(_COMMENT_IDENTIFIERS)
@@ -108,7 +108,7 @@ def clean_model_reflection(context: str, completion: str, **kwargs: Any) -> str:
     return completion
 
 
-def trim_by_min_allowed_context(
+async def trim_by_min_allowed_context(
     prefix: str,
     completion: str,
     lang_id: Optional[LanguageId] = None,
@@ -120,7 +120,7 @@ def trim_by_min_allowed_context(
         return completion
 
     try:
-        parser = CodeParser.from_language_id(
+        parser = await CodeParser.from_language_id(
             code_sample,
             lang_id,
         )
@@ -137,7 +137,7 @@ def trim_by_min_allowed_context(
     return out
 
 
-def fix_end_block_errors(
+async def fix_end_block_errors(
     prefix: str,
     completion: str,
     suffix: str,
@@ -165,7 +165,7 @@ def fix_end_block_errors(
         # Check if any errors exists when joining the original suffix
         # and the updated version of the completion.
         code_sample = f"{prefix}{completion_lookup}{suffix}"
-        parser = CodeParser.from_language_id(code_sample, lang_id)
+        parser = await CodeParser.from_language_id(code_sample, lang_id)
         if len(parser.errors()) == 0:
             completion = completion_lookup
     except ValueError as e:
@@ -210,14 +210,14 @@ def _split_code_lines(s: str) -> list[str]:
 
 
 # If the completion contains only comments, we should not return anything
-def remove_comment_only_completion(
+async def remove_comment_only_completion(
     completion: str,
     lang_id: Optional[LanguageId] = None,
 ) -> str:
     if not completion:
         return completion
     try:
-        parser = CodeParser.from_language_id(
+        parser = await CodeParser.from_language_id(
             completion,
             lang_id,
         )

@@ -96,7 +96,8 @@ const reverseString = (inpStr) => {
         (JAVASCRIPT_SAMPLE_1, (12, 14), LanguageId.JS, [(12, 14), (13, 1)]),
     ],
 )
-def test_trim_by_min_allowed_context(
+@pytest.mark.asyncio
+async def test_trim_by_min_allowed_context(
     code_sample: str, point: tuple[int, int], lang_id: LanguageId, expected_range: list
 ):
     code_sample = code_sample.strip("\n")
@@ -108,7 +109,7 @@ def test_trim_by_min_allowed_context(
     expected_start = find_cursor_position(code_sample, expected_range[0])
     expected_end = find_cursor_position(code_sample, expected_range[1])
 
-    actual_string = trim_by_min_allowed_context(prefix, completion, lang_id)
+    actual_string = await trim_by_min_allowed_context(prefix, completion, lang_id)
     expected_string = code_sample[expected_start:expected_end]
 
     assert actual_string == expected_string

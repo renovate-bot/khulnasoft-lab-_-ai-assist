@@ -45,6 +45,11 @@ class ConfigGoogleCloudProfiler(BaseModel):
     period_ms: int = 10
 
 
+class Instrumentator(BaseModel):
+    thread_monitoring_enabled: bool = False
+    thread_monitoring_interval: int = 60
+
+
 class FFlagsCodeSuggestions(BaseModel):
     excl_post_proc: list[str] = []
 
@@ -94,6 +99,7 @@ class Config(BaseSettings):
     google_cloud_profiler: Annotated[
         ConfigGoogleCloudProfiler, Field(default_factory=ConfigGoogleCloudProfiler)
     ]
+    instrumentator: Annotated[Instrumentator, Field(default_factory=Instrumentator)]
     f: Annotated[FFlags, Field(default_factory=FFlags)]
     snowplow: Annotated[ConfigSnowplow, Field(default_factory=ConfigSnowplow)]
     vertex_text_model: Annotated[

@@ -15,20 +15,20 @@ class PostProcessor(PostProcessorBase):
     def __init__(self, code_context: str):
         self.code_context = code_context
 
-    def process(self, completion: str, **kwargs: Any) -> str:
+    async def process(self, completion: str, **kwargs: Any) -> str:
         completion = strip_code_block_markdown(completion)
         completion = prepend_new_line(self.code_context, completion)
 
         # Note: `clean_model_reflection` joins code context and completion
         # we need to call the function right after prepending a new line
-        completion = clean_model_reflection(self.code_context, completion)
-        completion = strip_whitespaces(completion)
+        completion = await clean_model_reflection(self.code_context, completion)
+        completion = await strip_whitespaces(completion)
 
         return completion
 
 
 class PostProcessorAnthropic(PostProcessor):
-    def process(self, completion: str, **kwargs: Any) -> str:
-        completion = strip_whitespaces(completion)
+    async def process(self, completion: str, **kwargs: Any) -> str:
+        completion = await strip_whitespaces(completion)
 
         return completion

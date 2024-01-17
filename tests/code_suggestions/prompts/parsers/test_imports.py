@@ -98,8 +98,11 @@ import java.util.Random
         (LanguageId.KOTLIN, KOTLIN_SOURCE_SAMPLE, ["import java.util.Random"]),
     ],
 )
-def test_import_extractor(lang_id: LanguageId, source_code: str, expected_output: str):
-    parser = CodeParser.from_language_id(source_code, lang_id)
+@pytest.mark.asyncio
+async def test_import_extractor(
+    lang_id: LanguageId, source_code: str, expected_output: str
+):
+    parser = await CodeParser.from_language_id(source_code, lang_id)
 
     output = parser.imports()
 
@@ -123,8 +126,9 @@ def test_import_extractor(lang_id: LanguageId, source_code: str, expected_output
         (LanguageId.KOTLIN, "nothing to import here"),
     ],
 )
-def test_unparseable(lang_id: LanguageId, source_code: str):
-    parser = CodeParser.from_language_id(source_code, lang_id)
+@pytest.mark.asyncio
+async def test_unparseable(lang_id: LanguageId, source_code: str):
+    parser = await CodeParser.from_language_id(source_code, lang_id)
     output = parser.imports()
 
     assert len(output) == 0

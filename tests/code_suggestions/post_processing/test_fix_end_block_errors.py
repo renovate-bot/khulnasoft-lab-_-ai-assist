@@ -91,11 +91,12 @@ GOLANG_SAMPLE_4 = (
         (GOLANG_SAMPLE_4, LanguageId.GO, '\tfmt.Println("hello")\n'),
     ],
 )
-def test_fix_end_block_errors(
+@pytest.mark.asyncio
+async def test_fix_end_block_errors(
     code_sample: tuple, lang_id: LanguageId, expected_completion: str
 ):
     prefix, completion, suffix = code_sample
-    actual_completion = fix_end_block_errors(
+    actual_completion = await fix_end_block_errors(
         prefix, completion, suffix, lang_id=lang_id
     )
 

@@ -109,14 +109,15 @@ class BaseVisitor(ABC):
         ),
     ],
 )
-def test_base_context_visitor(
+@pytest.mark.asyncio
+async def test_base_context_visitor(
     lang_id: LanguageId,
     source_code: str,
     target_point: tuple[int, int],
     expected_context: str,
     priority_list: list[str],
 ):
-    parser = CodeParser.from_language_id(source_code, lang_id)
+    parser = await CodeParser.from_language_id(source_code, lang_id)
     visitor = BaseContextVisitor(target_point)
     tree_dfs(parser.tree, visitor)
 
@@ -637,14 +638,15 @@ Cypress.on("before:run", () => { // don't care
         ),
     ],
 )
-def test_suffix_near_cursor(
+@pytest.mark.asyncio
+async def test_suffix_near_cursor(
     lang_id: LanguageId,
     source_code: str,
     target_point: tuple[int, int],
     expected_prefix: str,
     expected_suffix: str,
 ):
-    parser = CodeParser.from_language_id(source_code, lang_id)
+    parser = await CodeParser.from_language_id(source_code, lang_id)
     actual_prefix, _ = split_on_point(source_code, target_point)
 
     print(f"{target_point=}")

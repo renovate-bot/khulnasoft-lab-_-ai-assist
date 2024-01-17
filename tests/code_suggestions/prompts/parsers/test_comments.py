@@ -230,8 +230,9 @@ echo "Hello World!";
         (LanguageId.PHP, PHP_SOURCE_SAMPLE_MIXED, False),
     ],
 )
-def test_comments_only(lang_id: LanguageId, source_code: str, expected: bool):
-    parser = CodeParser.from_language_id(source_code, lang_id)
+@pytest.mark.asyncio
+async def test_comments_only(lang_id: LanguageId, source_code: str, expected: bool):
+    parser = await CodeParser.from_language_id(source_code, lang_id)
     output = parser.comments_only()
 
     assert output == expected

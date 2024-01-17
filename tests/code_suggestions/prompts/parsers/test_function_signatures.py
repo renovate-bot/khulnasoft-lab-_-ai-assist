@@ -175,8 +175,11 @@ def addInt( a:Int, b:Int ) : Int = {
         (LanguageId.SCALA, SCALA_SOURCE_SAMPLE, ["def addInt( a:Int, b:Int ) : Int ="]),
     ],
 )
-def test_import_extractor(lang_id: LanguageId, source_code: str, expected_outputs: str):
-    parser = CodeParser.from_language_id(source_code, lang_id)
+@pytest.mark.asyncio
+async def test_import_extractor(
+    lang_id: LanguageId, source_code: str, expected_outputs: str
+):
+    parser = await CodeParser.from_language_id(source_code, lang_id)
 
     outputs = parser.function_signatures()
 
@@ -201,8 +204,9 @@ def test_import_extractor(lang_id: LanguageId, source_code: str, expected_output
         (LanguageId.TS, "no functions here"),
     ],
 )
-def test_unparseable(lang_id: LanguageId, source_code: str):
-    parser = CodeParser.from_language_id(source_code, lang_id)
+@pytest.mark.asyncio
+async def test_unparseable(lang_id: LanguageId, source_code: str):
+    parser = await CodeParser.from_language_id(source_code, lang_id)
     output = parser.function_signatures()
 
     assert len(output) == 0

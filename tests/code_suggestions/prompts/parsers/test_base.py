@@ -5,13 +5,15 @@ from ai_gateway.prompts.parsers import CodeParser
 
 
 @pytest.mark.parametrize("lang_id", [None])
-def test_unsupported_languages(lang_id: LanguageId):
+@pytest.mark.asyncio
+async def test_unsupported_languages(lang_id: LanguageId):
     with pytest.raises(ValueError):
-        CodeParser.from_language_id("import Foundation", lang_id)
+        await CodeParser.from_language_id("import Foundation", lang_id)
 
 
-def test_non_utf8():
+@pytest.mark.asyncio
+async def test_non_utf8():
     value = b"\xc3\x28"  # Invalid UTF-8 byte sequence
 
     with pytest.raises(ValueError):
-        CodeParser.from_language_id(value, LanguageId.JS)
+        await CodeParser.from_language_id(value, LanguageId.JS)

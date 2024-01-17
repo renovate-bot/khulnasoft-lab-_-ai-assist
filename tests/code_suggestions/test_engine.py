@@ -617,7 +617,8 @@ def fib(n: int) -> int:
         ),
     ],
 )
-def test_prompt_building_model_engine_palm(
+@pytest.mark.asyncio
+async def test_prompt_building_model_engine_palm(
     text_gen_base_model,
     prefix: str,
     suffix: str,
@@ -631,7 +632,7 @@ def test_prompt_building_model_engine_palm(
         tokenizer=tokenizer,
         experiment_registry=ExperimentRegistry(),
     )
-    prompt = engine._build_prompt(
+    prompt = await engine._build_prompt(
         prefix=prefix, file_name=file_name, suffix=suffix, lang_id=lang_id
     )
 

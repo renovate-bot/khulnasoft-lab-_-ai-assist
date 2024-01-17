@@ -131,6 +131,11 @@ tests:
       coverage_report:
         coverage_format: cobertura
         path: .test-reports/coverage.xml
+  variables:
+    # Enabling debug mode of asyncio so that the test fails in the following cases:
+    # - asyncio checks for coroutines that were not awaited and logs them; this mitigates the “forgotten await” pitfall.
+    # - Many non-threadsafe asyncio APIs (such as loop.call_soon() and loop.call_at() methods) raise an exception if they are called from a wrong thread.
+    PYTHONASYNCIODEBUG: "True"
 
 container_scanning:
   stage: test

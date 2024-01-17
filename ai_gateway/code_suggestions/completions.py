@@ -64,7 +64,7 @@ class CodeCompletionsLegacy:
                 "model_name": self.engine.model.metadata.name,
             },
         ):
-            processed_completion = self.post_processor(
+            processed_completion = await self.post_processor(
                 prefix, suffix=suffix, lang_id=response.lang_id
             ).process(response.text)
 
