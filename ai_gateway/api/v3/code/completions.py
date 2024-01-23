@@ -4,7 +4,7 @@ from typing import AsyncIterator
 import structlog
 from dependency_injector.providers import Factory
 from dependency_injector.wiring import Provide, inject
-from fastapi import APIRouter, Depends, Request
+from fastapi import APIRouter, Request
 
 from ai_gateway.api.feature_category import feature_category
 from ai_gateway.api.v3.code.typing import (
@@ -55,14 +55,12 @@ async def completions(
 @inject
 async def code_completion(
     payload: EditorContentCompletionPayload,
-    completions_legacy_factory: Factory[CodeCompletionsLegacy] = Depends(
-        Provide[
-            ContainerApplication.code_suggestions.completions.vertex_legacy.provider
-        ]
-    ),
-    completions_anthropic_factory: Factory[CodeCompletions] = Depends(
-        Provide[ContainerApplication.code_suggestions.completions.anthropic.provider]
-    ),
+    completions_legacy_factory: Factory[CodeCompletionsLegacy] = Provide[
+        ContainerApplication.code_suggestions.completions.vertex_legacy.provider
+    ],
+    completions_anthropic_factory: Factory[CodeCompletions] = Provide[
+        ContainerApplication.code_suggestions.completions.anthropic.provider
+    ],
 ):
     if payload.model_provider == ModelProvider.ANTHROPIC:
         engine = completions_anthropic_factory()
@@ -96,14 +94,12 @@ async def code_completion(
 @inject
 async def code_generation(
     payload: EditorContentGenerationPayload,
-    generations_vertex_factory: Factory[CodeGenerations] = Depends(
-        Provide[ContainerApplication.code_suggestions.generations.vertex.provider]
-    ),
-    generations_anthropic_factory: Factory[CodeGenerations] = Depends(
-        Provide[
-            ContainerApplication.code_suggestions.generations.anthropic_default.provider
-        ]
-    ),
+    generations_vertex_factory: Factory[CodeGenerations] = Provide[
+        ContainerApplication.code_suggestions.generations.vertex.provider
+    ],
+    generations_anthropic_factory: Factory[CodeGenerations] = Provide[
+        ContainerApplication.code_suggestions.generations.anthropic_default.provider
+    ],
 ):
     if payload.model_provider == KindModelProvider.ANTHROPIC:
         engine = generations_anthropic_factory()
