@@ -1,11 +1,10 @@
 import structlog
-from dependency_injector.wiring import Provide, inject
 from fastapi import APIRouter, Depends, Request
 from starlette.authentication import requires
 
 from ai_gateway.api.feature_category import feature_category
 from ai_gateway.api.v1.x_ray.typing import XRayRequest, XRayResponse
-from ai_gateway.container import ContainerApplication
+from ai_gateway.async_dependency_resolver import get_x_ray_anthropic_claude
 from ai_gateway.models import (
     AnthropicAPIConnectionError,
     AnthropicAPIStatusError,
@@ -25,13 +24,10 @@ router = APIRouter()
 @router.post("/libraries", response_model=XRayResponse)
 @requires("code_suggestions")
 @feature_category("code_suggestions")
-@inject
 async def libraries(
     request: Request,
     payload: XRayRequest,
-    model: AnthropicModel = Depends(
-        Provide[ContainerApplication.x_ray.anthropic_claude]
-    ),
+    model: AnthropicModel = Depends(get_x_ray_anthropic_claude),
 ):
     package_file_prompt = payload.prompt_components[0].payload
 

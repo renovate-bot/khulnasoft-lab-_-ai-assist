@@ -101,26 +101,29 @@ class TestUnauthorizedScopes:
 
     @pytest.mark.parametrize("path", ["/x-ray/libraries"])
     def test_failed_authorization_scope(self, mock_client, path):
-        response = mock_client.post(
-            path,
-            headers={
-                "Authorization": "Bearer 12345",
-                "X-Gitlab-Authentication-Type": "oidc",
-            },
-            json={
-                "prompt_components": [
-                    {
-                        "type": "x_ray_package_file_prompt",
-                        "payload": {
-                            "prompt": "Human: Parse Gemfile content: `gem kaminari`. Respond using only valid JSON with list of libraries",
-                            "provider": "anthropic",
-                            "model": "claude-2.0",
-                        },
-                        "metadata": {"scannerVersion": "0.0.1"},
-                    }
-                ]
-            },
-        )
+        container = ContainerApplication()
+
+        with container.x_ray.anthropic_claude.override(mock.Mock()):
+            response = mock_client.post(
+                path,
+                headers={
+                    "Authorization": "Bearer 12345",
+                    "X-Gitlab-Authentication-Type": "oidc",
+                },
+                json={
+                    "prompt_components": [
+                        {
+                            "type": "x_ray_package_file_prompt",
+                            "payload": {
+                                "prompt": "Human: Parse Gemfile content: `gem kaminari`. Respond using only valid JSON with list of libraries",
+                                "provider": "anthropic",
+                                "model": "claude-2.0",
+                            },
+                            "metadata": {"scannerVersion": "0.0.1"},
+                        }
+                    ]
+                },
+            )
 
         assert response.status_code == 403
         assert response.json() == {"detail": "Forbidden"}

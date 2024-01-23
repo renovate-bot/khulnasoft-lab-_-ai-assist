@@ -4,7 +4,6 @@ from typing import Annotated, AsyncIterator, Union
 import anthropic
 import structlog
 from dependency_injector.providers import Factory
-from dependency_injector.wiring import Provide, inject
 from fastapi import APIRouter, Body, Depends, Request
 from starlette.datastructures import CommaSeparatedStrings
 
@@ -25,6 +24,13 @@ from ai_gateway.api.v2.code.typing import (
     SuggestionsRequest,
     SuggestionsResponse,
 )
+from ai_gateway.async_dependency_resolver import (
+    get_code_suggestions_completions_anthropic_provider,
+    get_code_suggestions_completions_vertex_legacy_provider,
+    get_code_suggestions_generations_anthropic_factory_provider,
+    get_code_suggestions_generations_vertex_provider,
+    get_snowplow_instrumentator,
+)
 from ai_gateway.auth.authentication import requires
 from ai_gateway.code_suggestions import (
     CodeCompletions,
@@ -33,7 +39,6 @@ from ai_gateway.code_suggestions import (
     CodeSuggestionsChunk,
 )
 from ai_gateway.code_suggestions.processing.ops import lang_from_filename
-from ai_gateway.container import ContainerApplication
 from ai_gateway.instrumentators.base import TelemetryInstrumentator
 from ai_gateway.models import KindAnthropicModel, KindModelProvider
 from ai_gateway.tracking.errors import log_exception
@@ -63,20 +68,17 @@ GenerationsRequestWithVersion = Annotated[
 @router.post("/code/completions")
 @requires("code_suggestions")
 @feature_category("code_suggestions")
-@inject
 async def completions(
     request: Request,
     payload: CompletionsRequestWithVersion,
     completions_legacy_factory: Factory[CodeCompletionsLegacy] = Depends(
-        Provide[
-            ContainerApplication.code_suggestions.completions.vertex_legacy.provider
-        ]
+        get_code_suggestions_completions_vertex_legacy_provider
     ),
     completions_anthropic_factory: Factory[CodeCompletions] = Depends(
-        Provide[ContainerApplication.code_suggestions.completions.anthropic.provider]
+        get_code_suggestions_completions_anthropic_provider
     ),
     snowplow_instrumentator: SnowplowInstrumentator = Depends(
-        Provide[ContainerApplication.snowplow.instrumentator]
+        get_snowplow_instrumentator
     ),
 ):
     try:
@@ -139,20 +141,17 @@ async def completions(
 @router.post("/code/generations")
 @requires("code_suggestions")
 @feature_category("code_suggestions")
-@inject
 async def generations(
     request: Request,
     payload: GenerationsRequestWithVersion,
     generations_vertex_factory: Factory[CodeGenerations] = Depends(
-        Provide[ContainerApplication.code_suggestions.generations.vertex.provider]
+        get_code_suggestions_generations_vertex_provider
     ),
     generations_anthropic_factory: Factory[CodeGenerations] = Depends(
-        Provide[
-            ContainerApplication.code_suggestions.generations.anthropic_factory.provider
-        ]
+        get_code_suggestions_generations_anthropic_factory_provider
     ),
     snowplow_instrumentator: SnowplowInstrumentator = Depends(
-        Provide[ContainerApplication.snowplow.instrumentator]
+        get_snowplow_instrumentator
     ),
 ):
     try:
