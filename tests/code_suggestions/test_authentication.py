@@ -82,7 +82,7 @@ invalid_authentication_token_type_error = {
                 claims=UserClaims(scopes=["feature1", "feature3"]),
             ),
             {"error": "No authorization header presented"},
-            [],
+            ["auth_error_details"],
         ),
         (
             {"Authorization": "invalid"},
@@ -93,7 +93,7 @@ invalid_authentication_token_type_error = {
                 claims=UserClaims(scopes=["feature1", "feature3"]),
             ),
             {"error": "Invalid authorization header"},
-            [],
+            ["auth_error_details"],
         ),
         (
             {"Authorization": "Bearer 12345"},
@@ -104,7 +104,7 @@ invalid_authentication_token_type_error = {
                 claims=UserClaims(scopes=["feature1", "feature3"]),
             ),
             invalid_authentication_token_type_error,
-            ["auth_duration_s"],
+            ["auth_duration_s", "auth_error_details"],
         ),
         (
             {
@@ -235,7 +235,7 @@ invalid_authentication_token_type_error = {
                 claims=UserClaims(scopes=["feature1", "feature3"]),
             ),
             {"error": "Forbidden by auth provider"},
-            ["auth_duration_s"],
+            ["auth_duration_s", "auth_error_details"],
         ),
     ],
 )
