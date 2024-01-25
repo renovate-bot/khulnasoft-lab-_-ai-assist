@@ -1,3 +1,4 @@
+from abc import ABC, abstractmethod
 from enum import Enum
 from typing import Mapping, NamedTuple, Optional
 
@@ -9,6 +10,8 @@ __all__ = [
     "MetadataExtraInfo",
     "MetadataPromptBuilder",
     "CodeContent",
+    "Prompt",
+    "TokenStrategyBase",
 ]
 
 
@@ -49,3 +52,21 @@ class MetadataPromptBuilder(NamedTuple):
 class CodeContent(NamedTuple):
     text: str
     length_tokens: int
+
+
+class Prompt(NamedTuple):
+    prefix: str
+    metadata: MetadataPromptBuilder
+    suffix: Optional[str] = None
+
+
+class TokenStrategyBase(ABC):
+    @abstractmethod
+    def truncate_content(
+        self, text: str, max_length: int, truncation_side: str = "left"
+    ) -> CodeContent:
+        pass
+
+    @abstractmethod
+    def estimate_length(self, text: str | list[str]) -> list[int]:
+        pass

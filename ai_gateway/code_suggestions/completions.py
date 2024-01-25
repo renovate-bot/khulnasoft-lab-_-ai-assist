@@ -13,12 +13,10 @@ from ai_gateway.code_suggestions.processing import (
     ModelEngineCompletions,
     ModelEngineOutput,
     Prompt,
-)
-from ai_gateway.code_suggestions.processing.post.completions import PostProcessor
-from ai_gateway.code_suggestions.processing.pre import (
-    PromptBuilderPrefixBased,
     TokenStrategyBase,
 )
+from ai_gateway.code_suggestions.processing.post.completions import PostProcessor
+from ai_gateway.code_suggestions.processing.pre import PromptBuilderPrefixBased
 from ai_gateway.instrumentators import (
     KnownMetrics,
     TextGenModelInstrumentator,

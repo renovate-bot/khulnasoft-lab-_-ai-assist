@@ -8,15 +8,12 @@ from ai_gateway.code_suggestions.base import (
     increment_lang_counter,
     resolve_lang_id,
 )
-from ai_gateway.code_suggestions.processing import LanguageId, Prompt
+from ai_gateway.code_suggestions.processing import LanguageId, Prompt, TokenStrategyBase
 from ai_gateway.code_suggestions.processing.post.generations import (
     PostProcessor,
     PostProcessorAnthropic,
 )
-from ai_gateway.code_suggestions.processing.pre import (
-    PromptBuilderPrefixBased,
-    TokenStrategyBase,
-)
+from ai_gateway.code_suggestions.processing.pre import PromptBuilderPrefixBased
 from ai_gateway.instrumentators import TextGenModelInstrumentator
 from ai_gateway.models import (
     ModelAPICallError,

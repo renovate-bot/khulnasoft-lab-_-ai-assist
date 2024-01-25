@@ -5,15 +5,12 @@ from unittest.mock import AsyncMock, Mock, patch
 import pytest
 
 from ai_gateway.code_suggestions import CodeGenerations, ModelProvider
-from ai_gateway.code_suggestions.processing import LanguageId
+from ai_gateway.code_suggestions.processing import LanguageId, TokenStrategyBase
 from ai_gateway.code_suggestions.processing.post.generations import (
     PostProcessor,
     PostProcessorAnthropic,
 )
-from ai_gateway.code_suggestions.processing.pre import (
-    PromptBuilderBase,
-    TokenStrategyBase,
-)
+from ai_gateway.code_suggestions.processing.pre import PromptBuilderBase
 from ai_gateway.instrumentators import TextGenModelInstrumentator
 from ai_gateway.models import (
     SafetyAttributes,

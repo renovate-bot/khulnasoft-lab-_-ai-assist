@@ -1,11 +1,6 @@
-from typing import Union
-
 from transformers import PreTrainedTokenizer
 
-from ai_gateway.code_suggestions.processing.pre.base import (
-    CodeContent,
-    TokenStrategyBase,
-)
+from ai_gateway.code_suggestions.processing.typing import CodeContent, TokenStrategyBase
 
 __all__ = [
     "TokenizerTokenStrategy",
@@ -38,15 +33,10 @@ class TokenizerTokenStrategy(TokenStrategyBase):
             length_tokens=len(tokens["input_ids"]),
         )
 
-    def estimate_length(self, *text: str) -> Union[int, list[int]]:
-        lengths = self.tokenizer(
-            list(text),
+    def estimate_length(self, text: str | list[str]) -> list[int]:
+        return self.tokenizer(
+            text,
             return_length=True,
             return_attention_mask=False,
             add_special_tokens=False,
         )["length"]
-
-        if len(lengths) == 1:
-            return lengths.pop()
-
-        return lengths

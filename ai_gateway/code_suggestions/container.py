@@ -70,7 +70,9 @@ class ContainerCodeCompletions(containers.DeclarativeContainer):
             model=providers.Factory(
                 vertex_code_gecko, name=KindVertexTextModel.CODE_GECKO_002
             ),
-            tokenizer=tokenizer,
+            tokenization_strategy=providers.Factory(
+                TokenizerTokenStrategy, tokenizer=tokenizer
+            ),
             experiment_registry=experiment_registry_provider(),
         ),
         post_processor=providers.Factory(
