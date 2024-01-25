@@ -99,9 +99,9 @@ value `'None'`.
 
 ## How to run the server locally
 
-1. Clone project and change to project directory
-1. Run `mise install` (recommended) or `asdf install`
-    - To install `mise`, see [instruction](https://mise.jdx.dev/getting-started.html).
+1. Clone project and change to project directory.
+1. Run `mise install` (recommended) or `asdf install`.
+   - To install `mise`, see [instruction](https://mise.jdx.dev/getting-started.html).
 1. Create virtualenv and init shell: `poetry shell`
 1. Install dependencies: `poetry install`
 1. Copy the `example.env` file to `.env`: `cp example.env .env`
