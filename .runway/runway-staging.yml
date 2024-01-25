@@ -11,6 +11,7 @@ spec:
       - "localhost:8082"
   startup_probe:
     path: "/monitoring/healthz"
+    initial_delay_seconds: 10
   liveness_probe:
     path: "/monitoring/healthz"
   scalability:
