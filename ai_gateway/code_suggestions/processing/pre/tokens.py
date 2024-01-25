@@ -14,7 +14,6 @@ class TokenizerTokenStrategy(TokenStrategyBase):
     def truncate_content(
         self, text: str, max_length: int, truncation_side: str = "left"
     ) -> CodeContent:
-        prev_truncation_side = self.tokenizer.truncation_side
         self.tokenizer.truncation_side = truncation_side
 
         tokens = self.tokenizer(
@@ -26,7 +25,6 @@ class TokenizerTokenStrategy(TokenStrategyBase):
         )
 
         decoded = self.tokenizer.decode(tokens["input_ids"])
-        self.tokenizer.truncation_side = prev_truncation_side
 
         return CodeContent(
             text=decoded,
