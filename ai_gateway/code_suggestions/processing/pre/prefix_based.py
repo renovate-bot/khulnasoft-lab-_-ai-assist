@@ -1,14 +1,12 @@
 import math
 from typing import Any, Optional
 
-from ai_gateway.code_suggestions.processing import (
+from ai_gateway.code_suggestions.processing.pre.base import PromptBuilderBase
+from ai_gateway.code_suggestions.processing.typing import (
+    CodeContent,
     MetadataCodeContent,
     MetadataPromptBuilder,
     Prompt,
-)
-from ai_gateway.code_suggestions.processing.pre.base import (
-    CodeContent,
-    PromptBuilderBase,
     TokenStrategyBase,
 )
 
@@ -97,7 +95,7 @@ class PromptBuilderPrefixBased(PromptBuilderBase):
             length_tokens=max_length - length,
         )
 
-    def _build_suffix(self, max_length: float) -> Optional[CodeContent]:
+    def _build_suffix(self, max_length: int) -> Optional[CodeContent]:
         if not self.suffix:
             return None
 

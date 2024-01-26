@@ -4,10 +4,9 @@ from typing import Callable, NamedTuple, Optional, Union
 
 import numpy as np
 from Levenshtein import ratio as levenshtein_ratio
-from transformers import PreTrainedTokenizer
 from tree_sitter import Node
 
-from ai_gateway.code_suggestions.processing.typing import CodeContent, LanguageId
+from ai_gateway.code_suggestions.processing.typing import LanguageId
 
 __all__ = [
     "prepend_lang_id",
@@ -17,7 +16,6 @@ __all__ = [
     "trim_by_sep",
     "find_non_whitespace_point",
     "find_cursor_position",
-    "truncate_content",
     "find_newline_position",
     "compare_exact",
     "compare_levenshtein",
@@ -380,32 +378,6 @@ def convert_point_to_relative_point_in_node(
     row = point[0] - node.start_point[0]
     col = point[1] - node.start_point[1]
     return (row, col)
-
-
-def truncate_content(
-    tokenizer: PreTrainedTokenizer,
-    val: str,
-    max_length: int,
-    truncation_side: str = "left",
-) -> CodeContent:
-    prev_truncation_side = tokenizer.truncation_side
-    tokenizer.truncation_side = truncation_side
-
-    tokens = tokenizer(
-        val,
-        max_length=max_length,
-        truncation=True,
-        return_attention_mask=False,
-        add_special_tokens=False,
-    )
-
-    decoded = tokenizer.decode(tokens["input_ids"])
-    tokenizer.truncation_side = prev_truncation_side
-
-    return CodeContent(
-        text=decoded,
-        length_tokens=len(tokens["input_ids"]),
-    )
 
 
 async def strip_whitespaces(text: str) -> str:

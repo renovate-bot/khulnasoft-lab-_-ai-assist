@@ -41,7 +41,7 @@ class TestFakeModels:
 
         engine = ModelEngineCompletions(
             model=FakePalmTextGenModel(),
-            tokenizer=init_tokenizer(),
+            tokenization_strategy=TokenizerTokenStrategy(init_tokenizer()),
             experiment_registry=ExperimentRegistry(),
         )
 

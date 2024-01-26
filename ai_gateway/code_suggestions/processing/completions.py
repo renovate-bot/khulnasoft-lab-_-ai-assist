@@ -1,25 +1,22 @@
 from typing import Any, Callable, NamedTuple, Optional
 
 import structlog
-from transformers import PreTrainedTokenizer
 
 from ai_gateway.code_suggestions.processing.base import (
     MINIMIMUM_CONFIDENCE_SCORE,
     ModelEngineBase,
     ModelEngineOutput,
-    Prompt,
     PromptBuilderBase,
 )
-from ai_gateway.code_suggestions.processing.ops import (
-    remove_incomplete_block,
-    truncate_content,
-)
+from ai_gateway.code_suggestions.processing.ops import remove_incomplete_block
 from ai_gateway.code_suggestions.processing.typing import (
     CodeContent,
     LanguageId,
     MetadataCodeContent,
     MetadataExtraInfo,
     MetadataPromptBuilder,
+    Prompt,
+    TokenStrategyBase,
 )
 from ai_gateway.experimentation import ExperimentRegistry, ExperimentTelemetry
 from ai_gateway.instrumentators import TextGenModelInstrumentator
@@ -175,10 +172,10 @@ class ModelEngineCompletions(ModelEngineBase):
     def __init__(
         self,
         model: PalmCodeGenBaseModel,
-        tokenizer: PreTrainedTokenizer,
+        tokenization_strategy: TokenStrategyBase,
         experiment_registry: ExperimentRegistry,
     ):
-        super().__init__(model, tokenizer)
+        super().__init__(model, tokenization_strategy)
         self.experiment_registry = experiment_registry
 
     async def _generate(
@@ -331,32 +328,25 @@ class ModelEngineCompletions(ModelEngineBase):
             comment_converter = COMMENT_GENERATOR[lang_id]
             contents = [comment_converter(content) for content in contents]
 
-        contents_tokenized = self.tokenizer(
-            contents,
-            return_length=True,
-            return_attention_mask=False,
-            add_special_tokens=False,
-        )
+        content_lengths = self.tokenization_strategy.estimate_length(contents)
 
         code_contents = [
             CodeContent(text=text, length_tokens=length)
-            for text, length in zip(contents, contents_tokenized["length"])
+            for text, length in zip(contents, content_lengths)
         ]
 
         return _CodeInfo(content=code_contents)
 
     def _get_body(self, prefix: str, suffix: str, max_length: int) -> _CodeBody:
         suffix_len = int(max_length * self.MAX_TOKENS_SUFFIX_PERCENT)
-        suffix_truncated = truncate_content(
-            self.tokenizer,
+        suffix_truncated = self.tokenization_strategy.truncate_content(
             suffix,
             max_length=suffix_len,
             truncation_side="right",
         )
 
         prefix_len = max_length - suffix_truncated.length_tokens
-        prefix_truncated = truncate_content(
-            self.tokenizer,
+        prefix_truncated = self.tokenization_strategy.truncate_content(
             prefix,
             max_length=prefix_len,
             truncation_side="left",

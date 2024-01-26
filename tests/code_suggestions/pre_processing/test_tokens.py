@@ -36,21 +36,18 @@ class TestTokenizerTokenStrategy:
     @pytest.mark.parametrize(
         ("text", "expected_length"),
         [
-            ("random_text", 3),
+            ("random_text", [3]),
             (["random_text", "random"], [3, 1]),
             (["random_text", "random"], [3, 1]),
-            ("", 0),
+            ("", [0]),
             (["", ""], [0, 0]),
         ],
     )
     def test_estimate_length(
-        self, text: Union[str, list[str]], expected_length: Union[int, list[int]]
+        self, text: Union[str, list[str]], expected_length: list[int]
     ):
         strategy = TokenizerTokenStrategy(self.tokenizer)
 
-        if isinstance(text, str):
-            actual = strategy.estimate_length(text)
-        else:
-            actual = strategy.estimate_length(*text)
+        actual = strategy.estimate_length(text)
 
         assert actual == expected_length

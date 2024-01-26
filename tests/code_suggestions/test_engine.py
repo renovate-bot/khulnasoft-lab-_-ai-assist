@@ -13,6 +13,7 @@ from ai_gateway.code_suggestions.processing import (
     ModelEngineCompletions,
     ops,
 )
+from ai_gateway.code_suggestions.processing.pre import TokenizerTokenStrategy
 from ai_gateway.experimentation import ExperimentRegistry
 from ai_gateway.models import (
     ModelMetadata,
@@ -23,7 +24,9 @@ from ai_gateway.models import (
     VertexAPIStatusError,
 )
 
-tokenizer = AutoTokenizer.from_pretrained("Salesforce/codegen2-16B")
+tokenization_strategy = TokenizerTokenStrategy(
+    tokenizer=AutoTokenizer.from_pretrained("Salesforce/codegen2-16B")
+)
 
 
 class MockInstrumentor:
@@ -124,7 +127,8 @@ def _side_effect_with_suffix(
     def _fn(prompt: str, suffix: str):
         assert original_suffix.startswith(suffix)
         assert (
-            token_length(prompt) + token_length(suffix)
+            tokenization_strategy.estimate_length(prompt)[0]
+            + tokenization_strategy.estimate_length(suffix)[0]
             <= PalmCodeGenBaseModel.MAX_MODEL_LEN
         )
 
@@ -178,10 +182,6 @@ def _side_effect_with_status_exception(
         raise VertexAPIStatusError("status exception")
 
     return _fn
-
-
-def token_length(s: str):
-    return len(tokenizer(s)["input_ids"])
 
 
 @pytest.mark.asyncio
@@ -464,7 +464,7 @@ async def test_model_engine_palm(
 
     engine = ModelEngineCompletions(
         model=text_gen_base_model,
-        tokenizer=tokenizer,
+        tokenization_strategy=tokenization_strategy,
         experiment_registry=ExperimentRegistry(),
     )
     engine.instrumentator = MockInstrumentor()
@@ -629,7 +629,7 @@ async def test_prompt_building_model_engine_palm(
 ):
     engine = ModelEngineCompletions(
         model=text_gen_base_model,
-        tokenizer=tokenizer,
+        tokenization_strategy=tokenization_strategy,
         experiment_registry=ExperimentRegistry(),
     )
     prompt = await engine._build_prompt(
