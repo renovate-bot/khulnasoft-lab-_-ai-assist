@@ -110,9 +110,6 @@ value `'None'`.
    ```shell
    AIGW_AUTH__BYPASS_EXTERNAL=true
    AIGW_VERTEX_TEXT_MODEL__PROJECT=ai-enablement-dev-69497ba7
-   AIGW_FASTAPI__DOCS_URL=/docs
-   AIGW_FASTAPI__OPENAPI_URL=/openapi.json
-   AIGW_FASTAPI__API_PORT=5052
    ```
 
 1. Ensure you're authenticated with the `gcloud` CLI by running `gcloud auth application-default login`
@@ -137,6 +134,23 @@ please update the `.env` file by setting the following variables:
 ```shell
 AIGW_LOGGING__LEVEL=debug
 AIGW_LOGGING__TO_FILE=../modelgateway_debug.log
+```
+
+### Set OIDC providers
+
+When `AIGW_AUTH__BYPASS_EXTERNAL` is true, OIDC provider discovery is skipped.
+
+To test OIDC, set the following in `.env`:
+
+```shell
+AIGW_AUTH__BYPASS_EXTERNAL=False
+
+# To test GitLab SaaS instance as OIDC provider
+AIGW_GITLAB_URL="http://127.0.0.1:3000/"
+AIGW_GITLAB_API_URL="http://127.0.0.1:3000/api/v4/"
+
+# To test CustomersDot as OIDC provider
+AIGW_CUSTOMER_PORTAL_URL="http://127.0.0.1:5000"
 ```
 
 ## Local development using GDK
