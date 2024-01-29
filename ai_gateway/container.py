@@ -14,7 +14,8 @@ __all__ = [
 
 from ai_gateway.x_ray.container import ContainerXRay
 
-_PROBS_ENDPOINTS = ["/monitoring/healthz", "/metrics"]
+_PROBS_ENDPOINTS = ["/monitoring/healthz"]
+_METRICS_ENDPOINTS = ["/metrics"]
 
 
 class ContainerFastApi(containers.DeclarativeContainer):
@@ -34,17 +35,17 @@ class ContainerFastApi(containers.DeclarativeContainer):
         middleware.MiddlewareAuthentication,
         oidc_provider,
         bypass_auth=config.auth.bypass_external,
-        skip_endpoints=_PROBS_ENDPOINTS,
+        skip_endpoints=_PROBS_ENDPOINTS + _METRICS_ENDPOINTS,
     )
 
     log_middleware = providers.Factory(
         middleware.MiddlewareLogRequest,
-        skip_endpoints=_PROBS_ENDPOINTS,
+        skip_endpoints=_METRICS_ENDPOINTS,
     )
 
     telemetry_middleware = providers.Factory(
         middleware.MiddlewareModelTelemetry,
-        skip_endpoints=_PROBS_ENDPOINTS,
+        skip_endpoints=_PROBS_ENDPOINTS + _METRICS_ENDPOINTS,
     )
 
 

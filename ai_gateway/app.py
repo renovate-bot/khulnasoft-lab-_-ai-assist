@@ -12,7 +12,11 @@ from starlette_context import context
 
 from ai_gateway.api import create_fast_api_server
 from ai_gateway.config import Config
-from ai_gateway.container import _PROBS_ENDPOINTS, ContainerApplication
+from ai_gateway.container import (
+    _METRICS_ENDPOINTS,
+    _PROBS_ENDPOINTS,
+    ContainerApplication,
+)
 from ai_gateway.instrumentators.threads import monitor_threads
 from ai_gateway.profiling import setup_profiling
 from ai_gateway.structured_logging import setup_logging
@@ -42,7 +46,7 @@ def main():
         should_ignore_untemplated=True,
         should_respect_env_var=False,
         should_instrument_requests_inprogress=False,
-        excluded_handlers=_PROBS_ENDPOINTS,
+        excluded_handlers=_PROBS_ENDPOINTS + _METRICS_ENDPOINTS,
     )
     instrumentator.add(
         metrics.latency(
