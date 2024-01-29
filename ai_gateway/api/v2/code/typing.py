@@ -32,9 +32,9 @@ from ai_gateway.models import KindModelProvider
 
 class CurrentFile(BaseModel):
     file_name: Annotated[str, StringConstraints(strip_whitespace=True, max_length=255)]
-    language_identifier: Optional[
-        Annotated[str, StringConstraints(max_length=255)]
-    ] = None  # https://code.visualstudio.com/docs/languages/identifiers
+    language_identifier: Optional[Annotated[str, StringConstraints(max_length=255)]] = (
+        None  # https://code.visualstudio.com/docs/languages/identifiers
+    )
     content_above_cursor: Annotated[str, StringConstraints(max_length=100000)]
     content_below_cursor: Annotated[str, StringConstraints(max_length=100000)]
 

@@ -34,9 +34,9 @@ class EditorContentPayload(BaseModel):
     file_name: Annotated[str, StringConstraints(strip_whitespace=True, max_length=255)]
     content_above_cursor: Annotated[str, StringConstraints(max_length=100000)]
     content_below_cursor: Annotated[str, StringConstraints(max_length=100000)]
-    language_identifier: Optional[
-        Annotated[str, StringConstraints(max_length=255)]
-    ] = None
+    language_identifier: Optional[Annotated[str, StringConstraints(max_length=255)]] = (
+        None
+    )
     model_provider: Optional[
         Literal[ModelProvider.VERTEX_AI, ModelProvider.ANTHROPIC]
     ] = None

@@ -32,9 +32,9 @@ class AnthropicParams(BaseModel):
 
 class PromptPayload(BaseModel):
     content: Annotated[str, StringConstraints(max_length=400000)]
-    provider: Optional[
-        Literal[KindModelProvider.ANTHROPIC]
-    ] = None  # We only support and expect Anthropic for now
+    provider: Optional[Literal[KindModelProvider.ANTHROPIC]] = (
+        None  # We only support and expect Anthropic for now
+    )
     model: Optional[KindAnthropicModel] = KindAnthropicModel.CLAUDE_2_0
     params: Optional[AnthropicParams] = None
 
