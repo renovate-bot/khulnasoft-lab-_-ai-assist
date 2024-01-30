@@ -23,5 +23,3 @@ spec:
     limits:
       cpu: 2
       memory: 8G
-  network_policies:
-    cloudflare: true
