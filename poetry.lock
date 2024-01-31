@@ -13,13 +13,13 @@ files = [
 
 [[package]]
 name = "anthropic"
-version = "0.10.0"
+version = "0.13.0"
 description = "The official Python library for the anthropic API"
 optional = false
 python-versions = ">=3.7"
 files = [
-    {file = "anthropic-0.10.0-py3-none-any.whl", hash = "sha256:e48b79b35f5898301a48ac668c4e250ae67ac26377af9752044e352cbc12dbef"},
-    {file = "anthropic-0.10.0.tar.gz", hash = "sha256:0dea5a55a3725b022afb5a5a5db18f1258bfa29fc2c8276c036ee5fa29302aee"},
+    {file = "anthropic-0.13.0-py3-none-any.whl", hash = "sha256:2d4b6a69bf5b31a596669d68820f40f5ed9a9a3333ddaa727166a11ed29275e8"},
+    {file = "anthropic-0.13.0.tar.gz", hash = "sha256:b935d2fee12f7dbfcc80398b3da5f20103ece42aecb97d8ce24459e3c4f8ec8a"},
 ]
 
 [package.dependencies]
@@ -30,6 +30,9 @@ pydantic = ">=1.9.0,<3"
 sniffio = "*"
 tokenizers = ">=0.13.0"
 typing-extensions = ">=4.7,<5"
+
+[package.extras]
+vertex = ["google-auth (>=2,<3)"]
 
 [[package]]
 name = "anyio"
@@ -3174,4 +3177,4 @@ files = [
 [metadata]
 lock-version = "2.0"
 python-versions = "~3.10.0"
-content-hash = "e11bf077953952e1f53d27144484244682cc302c6c0f250abe5dcc91601f2fcd"
+content-hash = "d6f7d4b9fb0194aa7cd59cfc1217b546beac5152b025fe4245d21fd33345468a"
