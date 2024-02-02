@@ -12,25 +12,16 @@ from ai_gateway.container import ContainerApplication
 _ROUTES_V1 = [
     ("/v1/chat/agent", ["POST"]),
     ("/v1/x-ray/libraries", ["POST"]),
-    # with the `ai` prefix
-    ("/ai/v1/chat/agent", ["POST"]),
-    ("/ai/v1/x-ray/libraries", ["POST"]),
 ]
 
 _ROUTES_V2 = [
     ("/v2/code/completions", ["POST"]),
     ("/v2/completions", ["POST"]),  # legacy path
     ("/v2/code/generations", ["POST"]),
-    # with the `ai` prefix
-    ("/ai/v2/code/completions", ["POST"]),
-    ("/ai/v2/completions", ["POST"]),  # legacy path
-    ("/ai/v2/code/generations", ["POST"]),
 ]
 
 _ROUTES_V3 = [
     ("/v3/code/completions", ["POST"]),
-    # with the `ai` prefix
-    ("/ai/v3/code/completions", ["POST"]),
 ]
 
 

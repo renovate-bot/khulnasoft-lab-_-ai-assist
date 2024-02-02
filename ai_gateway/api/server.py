@@ -1,5 +1,5 @@
 from dependency_injector.wiring import Provide, inject
-from fastapi import APIRouter, FastAPI
+from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from starlette.middleware import Middleware
 from starlette_context.middleware import RawContextMiddleware
@@ -57,15 +57,9 @@ def create_fast_api_server(
         ],
     )
 
-    sub_router = APIRouter()
-    sub_router.include_router(http_api_router_v1, prefix="/v1")
-    sub_router.include_router(http_api_router_v2, prefix="/v2")
-    sub_router.include_router(http_api_router_v3, prefix="/v3")
-    sub_router.include_router(http_monitoring_router)
-
-    fastapi_app.include_router(sub_router)
-    # Include alias routes for Cloudflare LoadBalancer cloud.gitlab.com
-    # https://gitlab.com/gitlab-org/modelops/applied-ml/code-suggestions/ai-assist/-/issues/358
-    fastapi_app.include_router(sub_router, prefix="/ai")
+    fastapi_app.include_router(http_api_router_v1, prefix="/v1")
+    fastapi_app.include_router(http_api_router_v2, prefix="/v2")
+    fastapi_app.include_router(http_api_router_v3, prefix="/v3")
+    fastapi_app.include_router(http_monitoring_router)
 
     return fastapi_app
