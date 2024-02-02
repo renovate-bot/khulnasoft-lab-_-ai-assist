@@ -23,7 +23,6 @@ The v3 endpoint is aligned to the [architectural blueprint](https://docs.gitlab.
 
 ```plaintext
 POST /v3/code/completions
-POST /ai/v3/code/completions
 ```
 
 #### Completion
@@ -158,9 +157,7 @@ two versions of payloads.
 
 ```plaintext
 POST /v2/completions
-POST /ai/v2/completions
 POST /v2/code/completions
-POST /ai/v2/code/completions
 ```
 
 ##### V1 Prompt
@@ -359,7 +356,6 @@ two versions of payloads.
 
 ```plaintext
 POST /v2/code/generations
-POST /ai/v2/code/generations
 ```
 
 ##### V1 Prompt
@@ -556,7 +552,6 @@ Given a prompt, the service will return response received from an AI provider as
 
 ```plaintext
 POST /v1/agent/chat
-POST /ai/v1/agent/chat
 ```
 
 | Attribute                                      | Type   | Required | Description                                                                                                                                     | Example                                               |
@@ -622,7 +617,6 @@ Given a prompt template, the service will return response received from an AI pr
 
 ```plaintext
 POST /v1/x-ray/libraries
-POST /ai/v1/x-ray/libraries
 ```
 
 | Attribute                            | Type   | Required | Description                                                                                                                                     | Example                               |
