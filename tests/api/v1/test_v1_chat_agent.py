@@ -345,14 +345,14 @@ class TestAgentInvalidRequestMissingFields:
                     "loc": ["body", "prompt_components", 0, "metadata", "version"],
                     "msg": "Field required",
                     "input": {"source": "gitlab-rails-sm"},
-                    "url": "https://errors.pydantic.dev/2.5/v/missing",
+                    "url": "https://errors.pydantic.dev/2.6/v/missing",
                 },
                 {
                     "type": "missing",
                     "loc": ["body", "prompt_components", 0, "payload", "content"],
                     "msg": "Field required",
                     "input": {"provider": "anthropic", "model": "claude-2.0"},
-                    "url": "https://errors.pydantic.dev/2.5/v/missing",
+                    "url": "https://errors.pydantic.dev/2.6/v/missing",
                 },
             ]
         }
@@ -430,7 +430,7 @@ class TestAgentInvalidRequestManyPromptComponents:
                         },
                     ],
                     "ctx": {"field_type": "List", "max_length": 1, "actual_length": 2},
-                    "url": "https://errors.pydantic.dev/2.5/v/too_long",
+                    "url": "https://errors.pydantic.dev/2.6/v/too_long",
                 }
             ]
         }
