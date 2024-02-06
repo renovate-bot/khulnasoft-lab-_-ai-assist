@@ -114,7 +114,7 @@ value `'None'`.
 
 1. Ensure you're authenticated with the `gcloud` CLI by running `gcloud auth application-default login`
 1. Start the model-gateway server locally: `poetry run ai_gateway`
-1. Open `http://0.0.0.0:5052/docs` in your browser and run any requests to the model
+1. Open `http://localhost:5052/docs` in your browser and run any requests to the model
 
 ### Faking out AI models
 
@@ -260,7 +260,9 @@ the authenticity of the suggestion requests.
 
 Code suggestions is continuously deployed to [Runway](https://about.gitlab.com/handbook/engineering/infrastructure/platforms/tools/runway/).
 
-This deployment is serving 100% of production traffic from `codesuggestions.gitlab.com`.
+This deployment is currently available at `https://ai-gateway.runway.gitlab.net`.
+Note, however, that clients should not connect to this host directly, but use `cloud.gitlab.com/ai` instead,
+which is managed by Cloudflare and is the entry point GitLab instances use instead.
 
 When an MR gets merged, CI will build a new Docker image, and trigger a Runway downstream pipeline that will deploy this image to staging, and then production. Downstream pipelines run against the [deployment project](https://gitlab.com/gitlab-com/gl-infra/platform/runway/deployments/ai-gateway).
 
