@@ -1,8 +1,8 @@
 import asyncio
-import os
 from typing import Optional
 
-from tree_sitter import Language, Node, Parser, Tree
+from tree_sitter import Node, Tree
+from tree_sitter_languages import get_parser
 
 from ai_gateway.code_suggestions.processing.ops import (
     LanguageId,
@@ -122,32 +122,24 @@ class CodeParser(BaseCodeParser):
         cls,
         content: str,
         lang_id: LanguageId,
-        lib_path: Optional[str] = None,
     ):
-        return await asyncio.to_thread(
-            cls._from_language_id, content, lang_id, lib_path
-        )
+        return await asyncio.to_thread(cls._from_language_id, content, lang_id)
 
     @classmethod
     def _from_language_id(
         cls,
         content: str,
         lang_id: LanguageId,
-        lib_path: Optional[str] = None,
     ):
-        if lib_path is None:
-            lib_path = "%s/tree-sitter-languages.so" % os.getenv("LIB_DIR", "/usr/lib")
-
         if lang_id is None:
             raise ValueError(f"Unsupported language: {lang_id}")
 
         lang_def = ProgramLanguage.from_language_id(lang_id)
 
         try:
-            parser = Parser()
-            parser.set_language(Language(lib_path, lang_def.grammar_name))
+            parser = get_parser(lang_def.grammar_name)
             tree = parser.parse(bytes(content, "utf8"))
-        except TypeError as ex:
+        except (AttributeError, TypeError) as ex:
             raise ValueError(f"Unsupported code content: {str(ex)}")
 
         return cls(tree, lang_id)

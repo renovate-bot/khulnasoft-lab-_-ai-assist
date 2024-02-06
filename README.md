@@ -15,11 +15,6 @@ You'll need:
 - `docker compose` >= 1.28
 - [`gcloud` CLI](https://cloud.google.com/docs/authentication/provide-credentials-adc#how-to)
 
-If you're working locally, you'll also need other tools to build a
-[`tree-sitter`](https://tree-sitter.github.io/tree-sitter/) library:
-
-- `gcc`
-
 ### Google Cloud SDK
 
 Install and setup cloud sdk by following the [GCP docs](https://cloud.google.com/sdk/docs/install). Post installation, authorize your google account to setup credentials using the command - `gcloud init`.
