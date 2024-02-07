@@ -25,6 +25,7 @@ class SnowplowInstrumentator:
         gitlab_global_user_id: str,
         gitlab_host_name: str,
         gitlab_saas_namespace_ids: list[str],
+        gitlab_saas_duo_pro_namespace_ids: list[str],
     ) -> None:
         request_counts = []
         for stats in telemetry:
@@ -51,6 +52,9 @@ class SnowplowInstrumentator:
                 gitlab_global_user_id=gitlab_global_user_id,
                 gitlab_host_name=gitlab_host_name,
                 gitlab_saas_namespace_ids=[int(id) for id in gitlab_saas_namespace_ids],
+                gitlab_saas_duo_pro_namespace_ids=[
+                    int(id) for id in gitlab_saas_duo_pro_namespace_ids
+                ],
             )
         )
 

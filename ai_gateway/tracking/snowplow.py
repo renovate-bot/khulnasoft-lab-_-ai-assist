@@ -52,6 +52,7 @@ class SnowplowEventContext:
     gitlab_global_user_id: str
     gitlab_host_name: str
     gitlab_saas_namespace_ids: list[int]
+    gitlab_saas_duo_pro_namespace_ids: list[int]
 
 
 @dataclass

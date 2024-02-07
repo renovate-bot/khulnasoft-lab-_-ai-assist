@@ -13,6 +13,7 @@ from ai_gateway.api.middleware import (
     X_GITLAB_HOST_NAME_HEADER,
     X_GITLAB_INSTANCE_ID_HEADER,
     X_GITLAB_REALM_HEADER,
+    X_GITLAB_SAAS_DUO_PRO_NAMESPACE_IDS_HEADER,
     X_GITLAB_SAAS_NAMESPACE_IDS_HEADER,
 )
 from ai_gateway.api.v2.code.typing import (
@@ -253,6 +254,11 @@ def track_snowplow_event(
         gitlab_instance_id=req.headers.get(X_GITLAB_INSTANCE_ID_HEADER, ""),
         gitlab_global_user_id=req.headers.get(X_GITLAB_GLOBAL_USER_ID_HEADER, ""),
         gitlab_host_name=req.headers.get(X_GITLAB_HOST_NAME_HEADER, ""),
+        gitlab_saas_duo_pro_namespace_ids=list(
+            CommaSeparatedStrings(
+                req.headers.get(X_GITLAB_SAAS_DUO_PRO_NAMESPACE_IDS_HEADER, "")
+            )
+        ),
         gitlab_saas_namespace_ids=list(
             CommaSeparatedStrings(
                 req.headers.get(X_GITLAB_SAAS_NAMESPACE_IDS_HEADER, "")

@@ -80,6 +80,7 @@ class TestSnowplowClient:
             gitlab_global_user_id="123XYZ",
             gitlab_host_name="gitlab.com",
             gitlab_saas_namespace_ids=[12345],
+            gitlab_saas_duo_pro_namespace_ids=[54321],
         )
         event = SnowplowEvent(
             context=context,
@@ -124,6 +125,7 @@ class TestSnowplowInstrumentator:
                     "gitlab_global_user_id": "XTuMnZ6XTWkP3yh0ZwXualmOZvm2Gg/bk9jyfkL7Y6k=",
                     "gitlab_host_name": "gitlab.com",
                     "gitlab_saas_namespace_ids": ["12345"],
+                    "gitlab_saas_duo_pro_namespace_ids": ["54321"],
                 },
                 {
                     "prefix_length": 11,
@@ -135,6 +137,7 @@ class TestSnowplowInstrumentator:
                     "gitlab_global_user_id": "XTuMnZ6XTWkP3yh0ZwXualmOZvm2Gg/bk9jyfkL7Y6k=",
                     "gitlab_host_name": "gitlab.com",
                     "gitlab_saas_namespace_ids": [12345],
+                    "gitlab_saas_duo_pro_namespace_ids": [54321],
                 },
             ),
             (
@@ -148,6 +151,7 @@ class TestSnowplowInstrumentator:
                     "gitlab_global_user_id": "test",
                     "gitlab_host_name": "gitlab.com",
                     "gitlab_saas_namespace_ids": ["345"],
+                    "gitlab_saas_duo_pro_namespace_ids": ["321"],
                 },
                 {
                     "prefix_length": 33,
@@ -159,6 +163,7 @@ class TestSnowplowInstrumentator:
                     "gitlab_global_user_id": "test",
                     "gitlab_host_name": "gitlab.com",
                     "gitlab_saas_namespace_ids": [345],
+                    "gitlab_saas_duo_pro_namespace_ids": [321],
                 },
             ),
         ],
