@@ -45,6 +45,7 @@ X_GITLAB_INSTANCE_ID_HEADER = "X-Gitlab-Instance-Id"
 X_GITLAB_GLOBAL_USER_ID_HEADER = "X-Gitlab-Global-User-Id"
 X_GITLAB_HOST_NAME_HEADER = "X-Gitlab-Host-Name"
 X_GITLAB_SAAS_NAMESPACE_IDS_HEADER = "X-Gitlab-Saas-Namespace-Ids"
+X_GITLAB_SAAS_DUO_PRO_NAMESPACE_IDS_HEADER = "X-Gitlab-Saas-Duo-Pro-Namespace-Ids"
 
 
 class _PathResolver:
@@ -142,6 +143,9 @@ class MiddlewareLogRequest(Middleware):
                         X_GITLAB_GLOBAL_USER_ID_HEADER
                     ),
                     gitlab_host_name=request.headers.get(X_GITLAB_HOST_NAME_HEADER),
+                    gitlab_saas_duo_pro_namespace_ids=request.headers.get(
+                        X_GITLAB_SAAS_DUO_PRO_NAMESPACE_IDS_HEADER
+                    ),
                     gitlab_saas_namespace_ids=request.headers.get(
                         X_GITLAB_SAAS_NAMESPACE_IDS_HEADER
                     ),
