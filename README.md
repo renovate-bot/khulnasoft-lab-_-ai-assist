@@ -111,6 +111,8 @@ value `'None'`.
    AIGW_AUTH__BYPASS_EXTERNAL=true
    AIGW_VERTEX_TEXT_MODEL__PROJECT=ai-enablement-dev-69497ba7
    ANTHROPIC_API_KEY=<YOUR ACTIVE KEY> # Be sure to update this!
+   ```
+
 1. Ensure you're authenticated with the `gcloud` CLI by running `gcloud auth application-default login`
 1. Start the model-gateway server locally: `poetry run ai_gateway`
 1. Open `http://localhost:5052/docs` in your browser and run any requests to the model
