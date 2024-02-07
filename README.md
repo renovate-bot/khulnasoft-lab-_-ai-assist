@@ -110,6 +110,7 @@ value `'None'`.
    ```shell
    AIGW_AUTH__BYPASS_EXTERNAL=true
    AIGW_VERTEX_TEXT_MODEL__PROJECT=ai-enablement-dev-69497ba7
+   ANTHROPIC_API_KEY=<YOUR ACTIVE KEY> # Be sure to update this!
    ```
 
 1. Ensure you're authenticated with the `gcloud` CLI by running `gcloud auth application-default login`
