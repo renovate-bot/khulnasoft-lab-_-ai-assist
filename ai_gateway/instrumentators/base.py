@@ -26,6 +26,7 @@ INFERENCE_HISTOGRAM = Histogram(
     "code_suggestions_inference_request_duration_seconds",
     "Duration of the inference request in seconds",
     METRIC_LABELS,
+    buckets=(0.5, 1, 2.5, 5, 10, 30, 60),
 )
 
 INFERENCE_PROMPT_HISTOGRAM = Histogram(
