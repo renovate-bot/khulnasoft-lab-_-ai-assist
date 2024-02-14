@@ -23,18 +23,13 @@ FROM base-image AS install-image
 
 ENV DEBIAN_FRONTEND=noninteractive
 
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    build-essential \
+    && rm -rf /var/lib/apt/lists/*
+
 COPY scripts /app/scripts
 
-# Install tree-sitter build dependencies
-RUN /app/scripts/install-tree-sitter-deps
-
 RUN poetry install --no-interaction --no-ansi --no-cache --no-root --only main
-
-# Workaround to resolve https://github.com/orgs/community/discussions/55820
-RUN git config --global http.version HTTP/1.1
-
-# Build tree-sitter library for the grammars supported
-RUN poetry run python /app/scripts/build-tree-sitter-lib.py
 
 ##
 ## Final image copies dependencies from install-image
@@ -42,7 +37,6 @@ RUN poetry run python /app/scripts/build-tree-sitter-lib.py
 FROM base-image as final
 
 COPY --from=install-image /opt/venv /opt/venv
-COPY --from=install-image /app/scripts/lib/*.so /usr/lib
 
 COPY ai_gateway/ ai_gateway/
 

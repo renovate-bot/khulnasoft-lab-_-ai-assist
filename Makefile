@@ -76,10 +76,6 @@ check-pylint: install-lint-deps
 install-test-deps:
 	@echo "Installing test dependencies..."
 	@poetry install --with test
-	@echo 'Building tree-sitter library...'
-	@poetry run python scripts/build-tree-sitter-lib.py
-	@mkdir -p lib
-	@mv scripts/lib/*.so lib
 
 .PHONY: test
 test: LIB_DIR ?= ${ROOT_DIR}/lib
