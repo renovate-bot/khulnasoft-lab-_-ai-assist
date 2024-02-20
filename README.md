@@ -274,7 +274,7 @@ For more information and assistance, please check out:
 
 ## Rate limiting
 
-Access to AI Gateway is subjet to reate limiting defined as part of https://gitlab.com/gitlab-com/gl-infra/scalability/-/issues/2719#note_1780449328
+Access to AI Gateway is subjected to rate limiting defined as part of https://gitlab.com/gitlab-com/gl-infra/scalability/-/issues/2719#note_1780449328.
 
 ## How to become a project maintainer
 
