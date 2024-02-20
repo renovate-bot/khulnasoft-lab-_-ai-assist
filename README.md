@@ -272,6 +272,10 @@ For more information and assistance, please check out:
 - [Runway - Issue Tracker](https://gitlab.com/groups/gitlab-com/gl-infra/platform/runway/-/issues)
 - `#f_runway` in Slack.
 
+## Rate limiting
+
+Access to AI Gateway is subjet to reate limiting defined as part of https://gitlab.com/gitlab-com/gl-infra/scalability/-/issues/2719#note_1780449328
+
 ## How to become a project maintainer
 
 See [Maintainership](docs/maintainership.md).
