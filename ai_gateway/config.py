@@ -88,6 +88,7 @@ class Config(BaseSettings):
         protected_namespaces=(),
         env_file=find_dotenv(),
         env_file_encoding="utf-8",
+        extra="ignore",
     )
 
     gitlab_url: str = "https://gitlab.com"
