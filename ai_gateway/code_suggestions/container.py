@@ -60,6 +60,7 @@ class ContainerCodeCompletions(containers.DeclarativeContainer):
     tokenizer = providers.Dependency(instance_of=PreTrainedTokenizerFast)
     vertex_code_gecko = providers.Dependency(instance_of=TextGenBaseModel)
     anthropic_claude = providers.Dependency(instance_of=TextGenBaseModel)
+    snowplow_container = providers.DependenciesContainer()
 
     config = providers.Configuration(strict=True)
 
@@ -79,6 +80,7 @@ class ContainerCodeCompletions(containers.DeclarativeContainer):
             PostProcessorCompletions,
             exclude=config.excl_post_proc,
         ).provider,
+        snowplow_instrumentator=providers.Factory(snowplow_container.instrumentator),
     )
 
     anthropic = providers.Factory(
@@ -102,6 +104,8 @@ class ContainerCodeSuggestions(containers.DeclarativeContainer):
 
     tokenizer = providers.Resource(init_tokenizer)
 
+    snowplow_container = providers.DependenciesContainer()
+
     generations = providers.Container(
         ContainerCodeGenerations,
         tokenizer=tokenizer,
@@ -115,4 +119,5 @@ class ContainerCodeSuggestions(containers.DeclarativeContainer):
         vertex_code_gecko=models.vertex_code_gecko,
         anthropic_claude=models.anthropic_claude,
         config=config,
+        snowplow_container=snowplow_container,
     )

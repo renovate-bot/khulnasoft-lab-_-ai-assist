@@ -71,6 +71,8 @@ class ContainerApplication(containers.DeclarativeContainer):
         enable_client_stream_send_time_histogram=True,
     )
 
+    snowplow = providers.Container(ContainerTracking, config=config.snowplow)
+
     pkg_models = providers.Container(
         ContainerModels,
         config=config,
@@ -79,6 +81,7 @@ class ContainerApplication(containers.DeclarativeContainer):
         ContainerCodeSuggestions,
         models=pkg_models,
         config=config.f.code_suggestions,
+        snowplow_container=snowplow,
     )
     x_ray = providers.Container(
         ContainerXRay,
@@ -89,7 +92,6 @@ class ContainerApplication(containers.DeclarativeContainer):
         models=pkg_models,
     )
 
-    snowplow = providers.Container(ContainerTracking, config=config.snowplow)
     fastapi = providers.Container(
         ContainerFastApi,
         config=config,
