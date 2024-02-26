@@ -23,6 +23,8 @@ from ai_gateway.models import (
     TextGenModelOutput,
 )
 from ai_gateway.prompts import PromptTemplate
+from ai_gateway.tracking.instrumentator import SnowplowInstrumentator
+from ai_gateway.tracking.snowplow import SnowplowEvent
 
 __all__ = ["CodeGenerations"]
 
@@ -41,6 +43,7 @@ class CodeGenerations:
         self,
         model: TextGenBaseModel,
         tokenization_strategy: TokenStrategyBase,
+        snowplow_instrumentator: SnowplowInstrumentator,
     ):
         self.model = model
 
@@ -51,6 +54,7 @@ class CodeGenerations:
         self.prompt_builder = PromptBuilderPrefixBased(
             model.MAX_MODEL_LEN, tokenization_strategy
         )
+        self.snowplow_instrumentator = snowplow_instrumentator
 
     def _get_prompt(
         self, prefix: str, file_name: str, lang_id: Optional[LanguageId] = None
@@ -89,6 +93,17 @@ class CodeGenerations:
         increment_lang_counter(file_name, lang_id, editor_lang)
 
         prompt = self._get_prompt(prefix, file_name, lang_id)
+
+        self.snowplow_instrumentator.watch(
+            SnowplowEvent(
+                context=None,
+                action="tokens_per_user_request_prompt",
+                label="code_suggestion",
+                value=sum(
+                    md.length_tokens for md in prompt.metadata.components.values()
+                ),
+            )
+        )
 
         with self.instrumentator.watch(prompt) as watch_container:
             try:

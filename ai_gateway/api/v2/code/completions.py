@@ -204,11 +204,6 @@ async def generations(
         language=suggestion.lang,
     )
 
-    for _, md in code_generations.prompt.metadata.components.items():
-        snowplow_instrumentator.watch(
-            _tokens_per_user_request_prompt_snowplow_event(token_used=md.length_tokens)
-        )
-
     return SuggestionsResponse(
         id="id",
         created=int(time()),

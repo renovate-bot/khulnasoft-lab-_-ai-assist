@@ -81,7 +81,7 @@ class ContainerApplication(containers.DeclarativeContainer):
         ContainerCodeSuggestions,
         models=pkg_models,
         config=config.f.code_suggestions,
-        snowplow_container=snowplow,
+        snowplow_instrumentator=providers.Factory(snowplow.instrumentator),
     )
     x_ray = providers.Container(
         ContainerXRay,

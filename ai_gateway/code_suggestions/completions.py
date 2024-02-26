@@ -40,7 +40,7 @@ class CodeCompletionsLegacy:
         self,
         engine: ModelEngineCompletions,
         post_processor: Factory[PostProcessor],
-        snowplow_instrumentator: Factory[SnowplowInstrumentator],
+        snowplow_instrumentator: SnowplowInstrumentator,
     ):
         self.engine = engine
         self.post_processor = post_processor
