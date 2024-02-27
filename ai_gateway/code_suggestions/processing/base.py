@@ -50,6 +50,7 @@ class ModelEngineOutput(NamedTuple):
     model: ModelMetadata
     metadata: MetadataPromptBuilder
     lang_id: Optional[LanguageId] = None
+    token_lenght: Optional[int] = None
 
     @property
     def lang(self) -> str:

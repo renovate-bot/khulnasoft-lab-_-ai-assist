@@ -286,15 +286,6 @@ def _suggestion_requested_snowplow_event(
     )
 
 
-def _tokens_per_user_request_prompt_snowplow_event(token_used: int) -> SnowplowEvent:
-    return SnowplowEvent(
-        context=None,
-        action="tokens_per_user_request_prompt",
-        label="code_suggestion",
-        value=token_used,
-    )
-
-
 async def _handle_stream(
     response: AsyncIterator[CodeSuggestionsChunk],
 ) -> StreamSuggestionsResponse:

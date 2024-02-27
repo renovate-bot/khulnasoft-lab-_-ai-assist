@@ -56,8 +56,28 @@ class CodeCompletionsLegacy:
     ) -> ModelEngineOutput:
         response = await self.engine.generate(prefix, suffix, file_name, editor_lang)
 
+        self.instrumentator.watch(
+            SnowplowEvent(
+                context=None,
+                action="tokens_per_user_request_prompt",
+                label="code_suggestion",
+                value=sum(
+                    md.length_tokens for md in response.metadata.components.values()
+                ),
+            )
+        )
+
         if not response.text:
             return response
+
+        self.instrumentator.watch(
+            SnowplowEvent(
+                context=None,
+                action="tokens_per_user_request_response",
+                label="code_suggestion",
+                value=response.token_lenght,
+            )
+        )
 
         with benchmark(
             metric_key=KnownMetrics.POST_PROCESSING_DURATION,
@@ -69,17 +89,6 @@ class CodeCompletionsLegacy:
             processed_completion = await self.post_processor(
                 prefix, suffix=suffix, lang_id=response.lang_id
             ).process(response.text)
-
-        self.instrumentator.watch(
-            SnowplowEvent(
-                context=None,
-                action="tokens_per_user_request_prompt",
-                label="code_suggestion",
-                value=sum(
-                    md.length_tokens for md in response.metadata.components.values()
-                ),
-            )
-        )
 
         return ModelEngineOutput(
             text=processed_completion,

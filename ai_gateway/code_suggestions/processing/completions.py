@@ -1,7 +1,5 @@
 from typing import Any, Callable, NamedTuple, Optional
 
-import structlog
-
 from ai_gateway.code_suggestions.processing.base import (
     MINIMIMUM_CONFIDENCE_SCORE,
     ModelEngineBase,
@@ -26,8 +24,6 @@ from ai_gateway.models import (
     VertexAPIStatusError,
 )
 from ai_gateway.prompts.parsers import CodeParser
-
-log = structlog.stdlib.get_logger("codesuggestions")
 
 __all__ = [
     "ModelEngineCompletions",
@@ -195,6 +191,7 @@ class ModelEngineCompletions(ModelEngineBase):
             score=0,
             model=self.model.metadata,
             metadata=MetadataPromptBuilder(components={}),
+            token_lenght=0,
         )
 
         # TODO: keep watching the suffix length until logging ModelEngineOutput in the upper layer
@@ -229,6 +226,9 @@ class ModelEngineCompletions(ModelEngineBase):
                         model=self.model.metadata,
                         lang_id=lang_id,
                         metadata=prompt.metadata,
+                        token_lenght=self.tokenization_strategy.estimate_length(
+                            completion
+                        )[0],
                     )
             except (VertexAPIConnectionError, VertexAPIStatusError) as ex:
                 watch_container.register_model_exception(str(ex), ex.code)

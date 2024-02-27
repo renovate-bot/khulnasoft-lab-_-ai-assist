@@ -54,6 +54,7 @@ class CodeGenerations:
         self.prompt_builder = PromptBuilderPrefixBased(
             model.MAX_MODEL_LEN, tokenization_strategy
         )
+        self.tokenization_strategy = tokenization_strategy
         self.snowplow_instrumentator = snowplow_instrumentator
 
     def _get_prompt(
@@ -130,10 +131,7 @@ class CodeGenerations:
                 watch_container.register_model_exception(str(ex), -1)
 
         return CodeSuggestionsOutput(
-            text="",
-            score=0,
-            model=self.model.metadata,
-            lang_id=lang_id,
+            text="", score=0, model=self.model.metadata, lang_id=lang_id
         )
 
     async def _handle_stream(
@@ -141,6 +139,14 @@ class CodeGenerations:
     ) -> AsyncIterator[CodeSuggestionsChunk]:
         async for chunk in response:
             chunk_content = CodeSuggestionsChunk(text=chunk.text)
+            self.snowplow_instrumentator.watch(
+                SnowplowEvent(
+                    context=None,
+                    action="tokens_per_user_request_response",
+                    label="code_suggestion",
+                    value=self.tokenization_strategy.estimate_length(chunk.text)[0],
+                )
+            )
             yield chunk_content
 
     async def _handle_sync(
@@ -161,6 +167,15 @@ class CodeGenerations:
             else PostProcessor
         )
         generation = await processor(prefix).process(response.text)
+
+        self.snowplow_instrumentator.watch(
+            SnowplowEvent(
+                context=None,
+                action="tokens_per_user_request_response",
+                label="code_suggestion",
+                value=self.tokenization_strategy.estimate_length(response.text)[0],
+            )
+        )
 
         return CodeSuggestionsOutput(
             text=generation,
