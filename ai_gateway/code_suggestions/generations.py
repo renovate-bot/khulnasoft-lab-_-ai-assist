@@ -137,17 +137,21 @@ class CodeGenerations:
     async def _handle_stream(
         self, response: AsyncIterator[TextGenModelChunk]
     ) -> AsyncIterator[CodeSuggestionsChunk]:
-        async for chunk in response:
-            chunk_content = CodeSuggestionsChunk(text=chunk.text)
+        chunks = []
+        try:
+            async for chunk in response:
+                chunk_content = CodeSuggestionsChunk(text=chunk.text)
+                chunks.append(chunk.text)
+                yield chunk_content
+        finally:
             self.snowplow_instrumentator.watch(
                 SnowplowEvent(
                     context=None,
                     action="tokens_per_user_request_response",
                     label="code_suggestion",
-                    value=self.tokenization_strategy.estimate_length(chunk.text)[0],
+                    value=sum(self.tokenization_strategy.estimate_length(chunks)),
                 )
             )
-            yield chunk_content
 
     async def _handle_sync(
         self,
