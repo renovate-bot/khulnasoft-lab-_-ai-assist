@@ -16,6 +16,7 @@ from ai_gateway.models.base import (
     SafetyAttributes,
     TextGenBaseModel,
     TextGenModelOutput,
+    TokensConsumptionMetadata,
 )
 
 __all__ = [
@@ -155,7 +156,17 @@ class PalmCodeGenBaseModel(TextGenBaseModel):
                     timeout=self.timeout,
                 )
                 response = PredictResponse.to_dict(response)
-
+                tokens_metatada = response.get("metadata", {}).get("tokenMetadata", {})
+                log.debug(
+                    "codegen vertex response:",
+                    tokens_metatada=tokens_metatada,
+                    input_tokens=tokens_metatada.get("inputTokenCount", {}).get(
+                        "totalTokens", None
+                    ),
+                    output_tokens=tokens_metatada.get("outputTokenCount", {}).get(
+                        "totalTokens", None
+                    ),
+                )
                 predictions = response.get("predictions", [])
             except GoogleAPICallError as ex:
                 raise VertexAPIStatusError.from_exception(ex)
@@ -168,6 +179,14 @@ class PalmCodeGenBaseModel(TextGenBaseModel):
                 score=prediction.get("score"),
                 safety_attributes=SafetyAttributes(
                     **prediction.get("safetyAttributes", {})
+                ),
+                metadata=TokensConsumptionMetadata(
+                    input_tokens=tokens_metatada.get("inputTokenCount", {}).get(
+                        "totalTokens", None
+                    ),
+                    output_tokens=tokens_metatada.get("outputTokenCount", {}).get(
+                        "totalTokens", None
+                    ),
                 ),
             )
 

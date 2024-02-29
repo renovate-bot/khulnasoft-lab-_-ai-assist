@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 from enum import Enum
-from typing import Any, AsyncIterator, NamedTuple, Union
+from typing import Any, AsyncIterator, NamedTuple, Optional, Union
 
 from anthropic import AsyncAnthropic
 from google.cloud.aiplatform.gapic import PredictionServiceAsyncClient
@@ -20,6 +20,7 @@ __all__ = [
     "ModelAPIError",
     "ModelAPICallError",
     "ModelMetadata",
+    "TokensConsumptionMetadata",
     "SafetyAttributes",
     "TextGenModelOutput",
     "TextGenModelChunk",
@@ -69,6 +70,11 @@ class ModelMetadata(NamedTuple):
     engine: str
 
 
+class TokensConsumptionMetadata(NamedTuple):
+    input_tokens: int
+    output_tokens: int
+
+
 class ModelInput(ABC):
     @abstractmethod
     def is_valid(self) -> bool:
@@ -92,6 +98,7 @@ class TextGenModelOutput(NamedTuple):
     text: str
     score: float
     safety_attributes: SafetyAttributes
+    metadata: Optional[TokensConsumptionMetadata] = None
 
 
 class TextGenModelChunk(NamedTuple):

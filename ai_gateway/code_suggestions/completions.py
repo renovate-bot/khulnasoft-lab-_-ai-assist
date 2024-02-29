@@ -61,23 +61,21 @@ class CodeCompletionsLegacy:
                 context=None,
                 action="tokens_per_user_request_prompt",
                 label="code_suggestion",
-                value=sum(
-                    md.length_tokens for md in response.metadata.components.values()
-                ),
+                value=response.tokens_consumption_metadata.input_tokens,
             )
         )
-
-        if not response.text:
-            return response
 
         self.instrumentator.watch(
             SnowplowEvent(
                 context=None,
                 action="tokens_per_user_request_response",
                 label="code_suggestion",
-                value=response.token_lenght,
+                value=response.tokens_consumption_metadata.output_tokens,
             )
         )
+
+        if not response.text:
+            return response
 
         with benchmark(
             metric_key=KnownMetrics.POST_PROCESSING_DURATION,
@@ -96,6 +94,7 @@ class CodeCompletionsLegacy:
             model=response.model,
             lang_id=response.lang_id,
             metadata=response.metadata,
+            tokens_consumption_metadata=response.tokens_consumption_metadata,
         )
 
 

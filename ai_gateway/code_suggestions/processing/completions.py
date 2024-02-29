@@ -1,5 +1,7 @@
 from typing import Any, Callable, NamedTuple, Optional
 
+import structlog
+
 from ai_gateway.code_suggestions.processing.base import (
     MINIMIMUM_CONFIDENCE_SCORE,
     ModelEngineBase,
@@ -23,7 +25,10 @@ from ai_gateway.models import (
     VertexAPIConnectionError,
     VertexAPIStatusError,
 )
+from ai_gateway.models.base import TokensConsumptionMetadata
 from ai_gateway.prompts.parsers import CodeParser
+
+log = structlog.stdlib.get_logger("codesuggestions")
 
 __all__ = [
     "ModelEngineCompletions",
@@ -191,7 +196,9 @@ class ModelEngineCompletions(ModelEngineBase):
             score=0,
             model=self.model.metadata,
             metadata=MetadataPromptBuilder(components={}),
-            token_lenght=0,
+            tokens_consumption_metadata=TokensConsumptionMetadata(
+                input_tokens=0, output_tokens=0
+            ),
         )
 
         # TODO: keep watching the suffix length until logging ModelEngineOutput in the upper layer
@@ -220,15 +227,33 @@ class ModelEngineCompletions(ModelEngineBase):
                         watch_container.register_is_discarded()
                         completion = ""
 
+                    if res.metadata != None:
+                        log.debug(
+                            "token consumption metadata:",
+                            metadata=res.metadata,
+                        )
+                        tokens_consumption_metadata = res.metadata
+                    else:
+                        log.debug(
+                            "code completions: token consumption metadata is not available, using estimates"
+                        )
+                        tokens_consumption_metadata = TokensConsumptionMetadata(
+                            output_tokens=self.tokenization_strategy.estimate_length(
+                                completion
+                            )[0],
+                            input_tokens=sum(
+                                md.length_tokens
+                                for md in prompt.metadata.components.values()
+                            ),
+                        )
+
                     return ModelEngineOutput(
                         text=completion,
                         score=res.score,
                         model=self.model.metadata,
                         lang_id=lang_id,
                         metadata=prompt.metadata,
-                        token_lenght=self.tokenization_strategy.estimate_length(
-                            completion
-                        )[0],
+                        tokens_consumption_metadata=tokens_consumption_metadata,
                     )
             except (VertexAPIConnectionError, VertexAPIStatusError) as ex:
                 watch_container.register_model_exception(str(ex), ex.code)
