@@ -60,7 +60,7 @@ class CodeCompletionsLegacy:
             SnowplowEvent(
                 context=None,
                 action="tokens_per_user_request_prompt",
-                label="code_suggestion",
+                label="code_completion",
                 value=response.tokens_consumption_metadata.input_tokens,
             )
         )
@@ -69,7 +69,7 @@ class CodeCompletionsLegacy:
             SnowplowEvent(
                 context=None,
                 action="tokens_per_user_request_response",
-                label="code_suggestion",
+                label="code_completion",
                 value=response.tokens_consumption_metadata.output_tokens,
             )
         )
