@@ -176,7 +176,7 @@ class CodeGenerations:
             SnowplowEvent(
                 context=None,
                 action="tokens_per_user_request_response",
-                label="code_suggestion",
+                label="code_generation",
                 value=self.tokenization_strategy.estimate_length(response.text)[0],
             )
         )

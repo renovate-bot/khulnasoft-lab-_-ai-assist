@@ -1,6 +1,6 @@
 from contextlib import contextmanager
 from typing import Any, Type
-from unittest.mock import AsyncMock, Mock, patch
+from unittest.mock import AsyncMock, Mock, call, patch
 
 import pytest
 
@@ -30,6 +30,9 @@ from ai_gateway.models import (
     TextGenModelChunk,
     TextGenModelOutput,
 )
+from ai_gateway.models.base import TokensConsumptionMetadata
+from ai_gateway.tracking.instrumentator import SnowplowInstrumentator
+from ai_gateway.tracking.snowplow import SnowplowEvent
 
 
 class InstrumentorMock(Mock):
@@ -88,6 +91,9 @@ class TestCodeCompletionsLegacy:
                     "suffix": MetadataCodeContent(length=10, length_tokens=2),
                 },
             ),
+            tokens_consumption_metadata=TokensConsumptionMetadata(
+                input_tokens=1, output_tokens=2
+            ),
         )
         engine = Mock(spec=ModelEngineCompletions)
         engine.generate = AsyncMock(return_value=engine_response)
@@ -102,7 +108,9 @@ class TestCodeCompletionsLegacy:
             "ai_gateway.code_suggestions.completions.benchmark"
         ) as mock_benchmark:
             use_case = CodeCompletionsLegacy(
-                engine=engine, post_processor=post_processor_factory
+                engine=engine,
+                post_processor=post_processor_factory,
+                snowplow_instrumentator=Mock(spec=SnowplowInstrumentator),
             )
             actual = await use_case.execute(
                 prefix=prefix,
@@ -167,6 +175,9 @@ class TestCodeCompletionsLegacy:
                     "suffix": MetadataCodeContent(length=10, length_tokens=2),
                 },
             ),
+            tokens_consumption_metadata=TokensConsumptionMetadata(
+                input_tokens=1, output_tokens=2
+            ),
         )
         engine = Mock(spec=ModelEngineCompletions)
         engine.generate = AsyncMock(return_value=engine_response)
@@ -185,9 +196,11 @@ class TestCodeCompletionsLegacy:
             "ai_gateway.code_suggestions.completions.benchmark"
         ) as mock_benchmark:
             use_case = CodeCompletionsLegacy(
-                engine=engine, post_processor=post_processor_factory
+                engine=engine,
+                post_processor=post_processor_factory,
+                snowplow_instrumentator=Mock(spec=SnowplowInstrumentator),
             )
-            _ = await use_case.execute(
+            await use_case.execute(
                 prefix=prefix,
                 suffix=suffix,
                 file_name=file_name,
@@ -196,6 +209,70 @@ class TestCodeCompletionsLegacy:
 
         mock_benchmark.assert_not_called()
         post_processor.process.assert_not_called()
+
+    async def test_snowplow_instrumentation(
+        self,
+    ):
+        snowplow_instrumentator_mock = Mock(spec=SnowplowInstrumentator)
+        expected_event_1 = SnowplowEvent(
+            context=None,
+            action="tokens_per_user_request_prompt",
+            label="code_completion",
+            value=1,
+        )
+
+        expected_event_2 = SnowplowEvent(
+            context=None,
+            action="tokens_per_user_request_response",
+            label="code_completion",
+            value=2,
+        )
+
+        engine_response = ModelEngineOutput(
+            text="",
+            score=0,
+            model=ModelMetadata(name="code-gecko", engine="vertex-ai"),
+            lang_id=LanguageId.PYTHON,
+            metadata=MetadataPromptBuilder(
+                components={
+                    "prefix": MetadataCodeContent(length=10, length_tokens=2),
+                    "suffix": MetadataCodeContent(length=10, length_tokens=2),
+                },
+            ),
+            tokens_consumption_metadata=TokensConsumptionMetadata(
+                input_tokens=1, output_tokens=2
+            ),
+        )
+        engine = Mock(spec=ModelEngineCompletions)
+        engine.generate = AsyncMock(return_value=engine_response)
+        engine.model = PalmCodeGeckoModel(
+            Mock(),
+            "gl",
+            "us-central-1",
+        )
+
+        post_processor = Mock(spec=PostProcessor)
+        post_processor_factory = Mock()
+        post_processor_factory.return_value = post_processor
+
+        with patch(
+            "ai_gateway.code_suggestions.completions.benchmark"
+        ) as mock_benchmark:
+            use_case = CodeCompletionsLegacy(
+                engine=engine,
+                post_processor=post_processor_factory,
+                snowplow_instrumentator=snowplow_instrumentator_mock,
+            )
+            _ = await use_case.execute(
+                prefix="random_prefix",
+                suffix="random_suffix",
+                file_name="file_name",
+                editor_lang="python",
+            )
+
+        snowplow_instrumentator_mock.watch.assert_has_calls(
+            [call(expected_event_1), call(expected_event_2)]
+        )
 
 
 @pytest.mark.asyncio
