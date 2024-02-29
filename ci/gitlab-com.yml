@@ -119,6 +119,7 @@ tests:
   script:
     - poetry install --with test
     - poetry run pytest --junitxml=".test-reports/tests.xml" --cov --cov-report term --cov-report xml:.test-reports/coverage.xml
+  coverage: '/(?i)total.*? (100(?:\.0+)?\%|[1-9]?\d(?:\.\d+)?\%)$/'
   artifacts:
     when: always
     expire_in: 1 weeks
