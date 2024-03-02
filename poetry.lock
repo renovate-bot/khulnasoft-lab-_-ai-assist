@@ -1642,13 +1642,13 @@ files = [
 
 [[package]]
 name = "py-grpc-prometheus"
-version = "0.7.0"
+version = "0.8.0"
 description = "Python gRPC Prometheus Interceptors"
 optional = false
 python-versions = "*"
 files = [
-    {file = "py_grpc_prometheus-0.7.0-py3-none-any.whl", hash = "sha256:b171ad09d2884e72b11847e4eba76f06da53e8ef0b8415ca95705d978a22d1eb"},
-    {file = "py_grpc_prometheus-0.7.0.tar.gz", hash = "sha256:72248c4dfa48c4d9f628f89a90cb9dd27674d6a21b252c53700c3adc50e9552e"},
+    {file = "py_grpc_prometheus-0.8.0-py3-none-any.whl", hash = "sha256:358d3418e85a1967cccca51090ef6c204bc3fcc0ace7bf7704cbc0d9a2b4edc7"},
+    {file = "py_grpc_prometheus-0.8.0.tar.gz", hash = "sha256:364311dc88aaf4e74f8664e7f2bb8471f1822fd082e0aac174f72d35213bba6a"},
 ]
 
 [package.dependencies]
@@ -3209,4 +3209,4 @@ files = [
 [metadata]
 lock-version = "2.0"
 python-versions = "~3.10.0"
-content-hash = "3d40cb0fd74874570e6530b3c91d10ca79cf2e0f9a162382e530d4426f261365"
+content-hash = "d82a3adb7c669d0a466c1927aab53ffa462c8779258cf0768272ad75357fc836"
