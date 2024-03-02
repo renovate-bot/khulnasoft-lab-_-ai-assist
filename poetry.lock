@@ -2543,13 +2543,13 @@ files = [
 
 [[package]]
 name = "snowplow-tracker"
-version = "1.0.1"
+version = "1.0.2"
 description = "Snowplow event tracker for Python. Add analytics to your Python and Django apps, webapps and games"
 optional = false
 python-versions = "*"
 files = [
-    {file = "snowplow-tracker-1.0.1.tar.gz", hash = "sha256:63c5de72bf0c5e1cd3042ee8b1fe21df17941b48af324b59e35c4a08c4cfb662"},
-    {file = "snowplow_tracker-1.0.1-py3-none-any.whl", hash = "sha256:06cf2df063e91e6d1b994b06809fde76a9e61b134d849d22278ea825c64d8c6e"},
+    {file = "snowplow-tracker-1.0.2.tar.gz", hash = "sha256:40093edf4ce72c85e180abc6cba04aea3dcb22325710c4284e8a2655394d87e3"},
+    {file = "snowplow_tracker-1.0.2-py3-none-any.whl", hash = "sha256:8b323c3d0d02e3ffa8b2ea4e6e4190c105bfb879b3ba71957b3987d3a8a9e557"},
 ]
 
 [package.dependencies]
