@@ -28,7 +28,7 @@ prometheus-fastapi-instrumentator = "^6.0.0"
 python-jose = {extras = ["cryptography"], version = "^3.3.0"}
 starlette-context = "^0.3.6"
 google-cloud-profiler = "^4.0.0"
-py-grpc-prometheus = "^0.7.0"
+py-grpc-prometheus = "^0.8.0"
 tree-sitter = "^0.20.4"
 transformers = "^4.37.2"
 snowplow-tracker = "^1.0.1"
