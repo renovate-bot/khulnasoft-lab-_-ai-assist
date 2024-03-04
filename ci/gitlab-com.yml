@@ -42,13 +42,12 @@ include:
     ref: v1.73.0 # renovate:managed
     file: "kaniko.yml"
 
-  - project: "gitlab-com/gl-infra/platform/runway/ci-tasks"
-    ref: v1.25.0 # renovate:managed
-    file: "service-project/runway.yml"
+  - project: "gitlab-com/gl-infra/platform/runway/runwayctl"
+    file: "ci-tasks/service-project/runway.yml"
     inputs:
       runway_service_id: ai-gateway
       image: "$CI_REGISTRY_IMAGE/model-gateway:${CI_COMMIT_SHORT_SHA}"
-      runway_version: v1.25.0 # please keep in sync with `ref` above
+      runway_version: v2.16.4
 
 cache:
   key:
