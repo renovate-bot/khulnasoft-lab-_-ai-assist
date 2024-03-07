@@ -108,14 +108,14 @@ class ContainerCodeSuggestions(containers.DeclarativeContainer):
 
     tokenizer = providers.Resource(init_tokenizer)
 
-    snowplow_instrumentator = providers.Dependency(instance_of=SnowplowInstrumentator)
+    snowplow = providers.DependenciesContainer()
 
     generations = providers.Container(
         ContainerCodeGenerations,
         tokenizer=tokenizer,
         vertex_code_bison=models.vertex_code_bison,
         anthropic_claude=models.anthropic_claude,
-        snowplow_instrumentator=snowplow_instrumentator,
+        snowplow_instrumentator=snowplow.instrumentator,
     )
 
     completions = providers.Container(
@@ -124,5 +124,5 @@ class ContainerCodeSuggestions(containers.DeclarativeContainer):
         vertex_code_gecko=models.vertex_code_gecko,
         anthropic_claude=models.anthropic_claude,
         config=config,
-        snowplow_instrumentator=snowplow_instrumentator,
+        snowplow_instrumentator=snowplow.instrumentator,
     )
