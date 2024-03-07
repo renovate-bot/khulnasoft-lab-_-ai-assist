@@ -24,6 +24,7 @@ from ai_gateway.code_suggestions.processing.typing import (
 )
 from ai_gateway.experimentation.base import ExperimentTelemetry
 from ai_gateway.models import ModelMetadata
+from ai_gateway.models.base import TokensConsumptionMetadata
 from ai_gateway.tracking.container import ContainerTracking
 from ai_gateway.tracking.instrumentator import SnowplowInstrumentator
 from ai_gateway.tracking.snowplow import (
@@ -71,6 +72,9 @@ class TestCodeCompletions:
                             ExperimentTelemetry(name="truncate_suffix", variant=1)
                         ],
                     ),
+                    tokens_consumption_metadata=TokensConsumptionMetadata(
+                        input_tokens=0, output_tokens=0
+                    ),
                 ),
                 {
                     "id": "id",
@@ -106,6 +110,9 @@ class TestCodeCompletions:
                         experiments=[
                             ExperimentTelemetry(name="truncate_suffix", variant=1)
                         ],
+                    ),
+                    tokens_consumption_metadata=TokensConsumptionMetadata(
+                        input_tokens=0, output_tokens=0
                     ),
                 ),
                 {
@@ -466,6 +473,9 @@ class TestCodeCompletions:
                     "suffix": MetadataCodeContent(length=10, length_tokens=2),
                 },
                 experiments=[ExperimentTelemetry(name="truncate_suffix", variant=1)],
+            ),
+            tokens_consumption_metadata=TokensConsumptionMetadata(
+                input_tokens=0, output_tokens=0
             ),
         )
 
