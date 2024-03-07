@@ -227,7 +227,7 @@ class ModelEngineCompletions(ModelEngineBase):
                         watch_container.register_is_discarded()
                         completion = ""
 
-                    if res.metadata is not None:
+                    if res.metadata:
                         log.debug(
                             "token consumption metadata:",
                             metadata=res.metadata,

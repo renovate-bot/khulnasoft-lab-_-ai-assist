@@ -14,7 +14,7 @@ from ai_gateway.container import ContainerApplication
 from ai_gateway.experimentation import ExperimentRegistry
 from ai_gateway.models import FakePalmTextGenModel
 from ai_gateway.tokenizer import init_tokenizer
-from ai_gateway.tracking.instrumentator import Client, SnowplowInstrumentator
+from ai_gateway.tracking.instrumentator import SnowplowInstrumentator
 
 
 @pytest.fixture(scope="class")
