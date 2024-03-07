@@ -50,7 +50,7 @@ class ModelEngineOutput(NamedTuple):
     score: float
     model: ModelMetadata
     metadata: MetadataPromptBuilder
-    tokens_consumption_metadata: Optional[TokensConsumptionMetadata] = None
+    tokens_consumption_metadata: TokensConsumptionMetadata
     lang_id: Optional[LanguageId] = None
 
     @property
