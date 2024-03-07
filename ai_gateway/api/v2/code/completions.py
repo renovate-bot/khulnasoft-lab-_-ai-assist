@@ -248,9 +248,8 @@ def _suggestion_requested_snowplow_event(
     if not gitlab_realm and req.user and req.user.claims:
         gitlab_realm = req.user.claims.gitlab_realm
 
-    request_counts = []
-    for stats in payload.telemetry:
-        request_count = RequestCount(
+    request_counts = [
+        RequestCount(
             requests=stats.requests,
             accepts=stats.accepts,
             errors=stats.errors,
@@ -258,8 +257,8 @@ def _suggestion_requested_snowplow_event(
             model_engine=stats.model_engine,
             model_name=stats.model_name,
         )
-
-    request_counts.append(request_count)
+        for stats in payload.telemetry
+    ]
 
     return SnowplowEvent(
         context=SnowplowEventContext(
