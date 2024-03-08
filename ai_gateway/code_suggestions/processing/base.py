@@ -19,6 +19,7 @@ from ai_gateway.code_suggestions.processing.typing import (
 from ai_gateway.experimentation import ExperimentTelemetry
 from ai_gateway.instrumentators import TextGenModelInstrumentator
 from ai_gateway.models import ModelMetadata, PalmCodeGenBaseModel
+from ai_gateway.models.base import TokensConsumptionMetadata
 
 __all__ = [
     "ModelEngineOutput",
@@ -49,6 +50,7 @@ class ModelEngineOutput(NamedTuple):
     score: float
     model: ModelMetadata
     metadata: MetadataPromptBuilder
+    tokens_consumption_metadata: TokensConsumptionMetadata
     lang_id: Optional[LanguageId] = None
 
     @property

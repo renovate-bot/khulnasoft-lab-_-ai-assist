@@ -62,6 +62,8 @@ class SnowplowEvent:
     context: Optional[SnowplowEventContext] = None
     category: str = "code_suggestions"
     action: str = "suggestion_requested"
+    label: str = None
+    value: int = None
 
 
 class Client(ABC):
@@ -99,9 +101,15 @@ class SnowplowClient(Client):
             event: A domain event which is transformed to Snowplow StructuredEvent for tracking.
         """
         structured_event = StructuredEvent(
-            context=[SelfDescribingJson(self.SCHEMA, asdict(event.context))],
+            context=(
+                [SelfDescribingJson(self.SCHEMA, asdict(event.context))]
+                if event.context
+                else None
+            ),
             category=event.category,
             action=event.action,
+            label=event.label,
+            value=event.value,
         )
 
         self.tracker.track(structured_event)

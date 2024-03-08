@@ -23,6 +23,7 @@ from ai_gateway.models import (
     VertexAPIConnectionError,
     VertexAPIStatusError,
 )
+from ai_gateway.models.base import TokensConsumptionMetadata
 
 tokenization_strategy = TokenizerTokenStrategy(
     tokenizer=AutoTokenizer.from_pretrained("Salesforce/codegen2-16B")
@@ -156,6 +157,24 @@ def _side_effect_with_imports(
     return _fn
 
 
+def _side_effect_with_tokens_consumption_metadata(
+    content: str,
+    suffix: str,
+    filename: str,
+    model_output: str,
+    safety_attributes: SafetyAttributes,
+):
+    def _fn(prompt: str, suffix: str):
+        return TextGenModelOutput(
+            text=model_output,
+            score=-1,
+            safety_attributes=safety_attributes,
+            metadata=TokensConsumptionMetadata(input_tokens=1, output_tokens=2),
+        )
+
+    return _fn
+
+
 def _side_effect_with_connection_exception(
     content: str,
     suffix: str,
@@ -187,7 +206,8 @@ def _side_effect_with_status_exception(
 @pytest.mark.asyncio
 @pytest.mark.parametrize(
     "prefix,suffix,file_name,editor_language,model_gen_func,successful_predict,model_output,safety_attributes,"
-    "language,prompt_builder_metadata,expected_completion,expected_prompt_symbol_counts,expected_safety_attributes",
+    "language,prompt_builder_metadata,expected_completion,expected_prompt_symbol_counts,expected_safety_attributes,"
+    "expected_input_tokens,expected_output_tokens,estimate_tokens_consumption",
     [
         (
             "prompt",
@@ -218,6 +238,42 @@ def _side_effect_with_status_exception(
             "random completion",
             None,
             SafetyAttributes(),
+            None,
+            None,
+            True,
+        ),
+        (
+            "prompt",
+            "",
+            "f.unk",
+            None,
+            _side_effect_with_tokens_consumption_metadata,
+            True,
+            "random completion",
+            SafetyAttributes(),
+            None,
+            MetadataPromptBuilder(
+                components={
+                    "prefix": MetadataCodeContent(length=6, length_tokens=2),
+                    "suffix": MetadataCodeContent(length=0, length_tokens=0),
+                },
+                imports=MetadataExtraInfo(
+                    name="imports",
+                    pre=MetadataCodeContent(length=0, length_tokens=0),
+                    post=MetadataCodeContent(length=0, length_tokens=0),
+                ),
+                function_signatures=MetadataExtraInfo(
+                    name="function_signatures",
+                    pre=MetadataCodeContent(length=0, length_tokens=0),
+                    post=MetadataCodeContent(length=0, length_tokens=0),
+                ),
+            ),
+            "random completion",
+            None,
+            SafetyAttributes(),
+            1,
+            2,
+            False,
         ),
         (
             "prompt",
@@ -248,6 +304,42 @@ def _side_effect_with_status_exception(
             "random completion",
             None,
             SafetyAttributes(),
+            None,
+            None,
+            False,
+        ),
+        (
+            "prompt",
+            "",
+            "f.unk",
+            None,
+            _side_effect_unknown_tpl_palm,
+            True,
+            "random completion",
+            SafetyAttributes(),
+            None,
+            MetadataPromptBuilder(
+                components={
+                    "prefix": MetadataCodeContent(length=6, length_tokens=2),
+                    "suffix": MetadataCodeContent(length=0, length_tokens=0),
+                },
+                imports=MetadataExtraInfo(
+                    name="imports",
+                    pre=MetadataCodeContent(length=0, length_tokens=0),
+                    post=MetadataCodeContent(length=0, length_tokens=0),
+                ),
+                function_signatures=MetadataExtraInfo(
+                    name="function_signatures",
+                    pre=MetadataCodeContent(length=0, length_tokens=0),
+                    post=MetadataCodeContent(length=0, length_tokens=0),
+                ),
+            ),
+            "random completion",
+            None,
+            SafetyAttributes(),
+            None,
+            None,
+            False,
         ),
         (
             "prompt",
@@ -278,6 +370,9 @@ def _side_effect_with_status_exception(
             "random completion",
             {"comment": 1},
             SafetyAttributes(),
+            None,
+            None,
+            False,
         ),
         (
             "prompt",
@@ -308,6 +403,9 @@ def _side_effect_with_status_exception(
             "random completion\nnew line",
             None,
             SafetyAttributes(),
+            None,
+            None,
+            False,
         ),
         (
             "prompt " * 2048,
@@ -338,6 +436,9 @@ def _side_effect_with_status_exception(
             "random completion\nnew line",
             {"comment": 1},
             SafetyAttributes(),
+            None,
+            None,
+            False,
         ),
         (
             "prompt " * 2048,
@@ -358,6 +459,9 @@ def _side_effect_with_status_exception(
             "random completion\nnew line",
             None,
             SafetyAttributes(),
+            None,
+            None,
+            False,
         ),
         (
             "import os\nimport pytest\n" + "prompt" * 2048,
@@ -388,6 +492,9 @@ def _side_effect_with_status_exception(
             "random completion",
             {"comment": 1, "import_statement": 2},
             SafetyAttributes(),
+            None,
+            None,
+            False,
         ),
         (
             "random_prefix",
@@ -403,6 +510,9 @@ def _side_effect_with_status_exception(
             "",
             None,
             None,
+            None,
+            None,
+            False,
         ),
         (
             "random_prefix",
@@ -418,6 +528,9 @@ def _side_effect_with_status_exception(
             "",
             None,
             None,
+            None,
+            None,
+            False,
         ),
         (
             "",
@@ -433,6 +546,9 @@ def _side_effect_with_status_exception(
             "",
             {"comment": 1},
             SafetyAttributes(),
+            None,
+            None,
+            False,
         ),
     ],
 )
@@ -451,6 +567,9 @@ async def test_model_engine_palm(
     expected_completion,
     expected_prompt_symbol_counts,
     expected_safety_attributes,
+    expected_input_tokens,
+    expected_output_tokens,
+    estimate_tokens_consumption,
 ):
     model_name = "palm-model"
     model_engine = "vertex-ai"
@@ -493,6 +612,23 @@ async def test_model_engine_palm(
 
         max_prefix_len = body_len - components["suffix"].length_tokens
         assert 0 <= components["prefix"].length_tokens <= max_prefix_len
+
+    if estimate_tokens_consumption:
+        assert completion.tokens_consumption_metadata.output_tokens == (
+            tokenization_strategy.estimate_length(model_output)[0]
+        )
+        assert completion.tokens_consumption_metadata.input_tokens == (
+            completion.metadata.components["prefix"].length_tokens
+            + completion.metadata.components["suffix"].length_tokens
+        )
+
+    if expected_input_tokens is not None and expected_output_tokens is not None:
+        assert completion.tokens_consumption_metadata.output_tokens == (
+            expected_output_tokens
+        )
+        assert completion.tokens_consumption_metadata.input_tokens == (
+            expected_input_tokens
+        )
 
     if not prefix and completion.metadata:
         assert 0 == completion.metadata.components["prefix"].length

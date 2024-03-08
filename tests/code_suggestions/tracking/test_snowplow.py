@@ -2,9 +2,8 @@ from dataclasses import asdict
 from unittest import mock
 
 import pytest
-from snowplow_tracker import Snowplow
+from snowplow_tracker import SelfDescribingJson, Snowplow, StructuredEvent
 
-from ai_gateway.instrumentators.base import Telemetry
 from ai_gateway.tracking import (
     RequestCount,
     SnowplowClient,
@@ -50,55 +49,69 @@ class TestSnowplowClient:
         assert tracker_args["namespace"] == configuration.namespace
         assert len(tracker_args["emitters"]) == 1
 
-    @mock.patch("snowplow_tracker.events.StructuredEvent.__init__")
-    @mock.patch("snowplow_tracker.Tracker.track")
-    def test_track(self, mock_track, mock_structured_event_init):
-        mock_structured_event_init.return_value = None
-
-        configuration = SnowplowClientConfiguration(
-            namespace="gl",
-            endpoint="https://whitechoc.local",
-            app_id="gitlab_ai_gateway",
-        )
-        context = SnowplowEventContext(
-            request_counts=[
-                RequestCount(
-                    requests=1,
-                    errors=0,
-                    accepts=1,
-                    lang="python",
-                    model_engine="vertex-ai",
-                    model_name="code-gecko",
+    @pytest.mark.parametrize(
+        ("inputs"),
+        [
+            (
+                SnowplowEvent(
+                    context=None,
+                    category="code_suggestions",
+                    action="suggestion_requested",
+                    label="some label",
+                    value=1,
                 )
-            ],
-            prefix_length=2048,
-            suffix_length=1024,
-            language="python",
-            user_agent="vs-code-gitlab-workflow",
-            gitlab_realm="saas",
-            gitlab_instance_id="ABCDEF",
-            gitlab_global_user_id="123XYZ",
-            gitlab_host_name="gitlab.com",
-            gitlab_saas_namespace_ids=[12345],
-            gitlab_saas_duo_pro_namespace_ids=[54321],
-        )
-        event = SnowplowEvent(
-            context=context,
-            category="code_suggestions",
-            action="suggestion_requested",
-        )
-        SnowplowClient(configuration).track(event)
+            ),
+            (
+                SnowplowEvent(
+                    category="code_suggestions",
+                    action="suggestion_requested",
+                    label="some label",
+                    value=1,
+                    context=SnowplowEventContext(
+                        request_counts=[],
+                        prefix_length=2048,
+                        suffix_length=1024,
+                        language="python",
+                        user_agent="vs-code-gitlab-workflow",
+                        gitlab_realm="saas",
+                        gitlab_instance_id="ABCDEF",
+                        gitlab_global_user_id="123XYZ",
+                        gitlab_host_name="gitlab.com",
+                        gitlab_saas_namespace_ids=[12345],
+                        gitlab_saas_duo_pro_namespace_ids=[54321],
+                    ),
+                )
+            ),
+        ],
+    )
+    def test_track(self, inputs):
+        with mock.patch("snowplow_tracker.Tracker.track") as mock_track, mock.patch(
+            "snowplow_tracker.events.StructuredEvent.__init__"
+        ) as mock_structured_event_init:
+            configuration = SnowplowClientConfiguration(
+                namespace="gl",
+                endpoint="https://whitechoc.local",
+                app_id="gitlab_ai_gateway",
+            )
+            mock_structured_event_init.return_value = None
+            SnowplowClient(configuration).track(event=inputs)
 
-        mock_structured_event_init.assert_called_once()
+            mock_track.assert_called_once()
+            mock_structured_event_init.assert_called_once()
+            event_init_args = mock_structured_event_init.call_args[1]
 
-        init_args = mock_structured_event_init.call_args[1]
-        assert init_args["category"] == event.category
-        assert init_args["action"] == event.action
+            assert event_init_args["value"] == inputs.value
+            assert event_init_args["category"] == inputs.category
+            assert event_init_args["action"] == inputs.action
+            assert event_init_args["label"] == inputs.label
 
-        context_data = init_args["context"][0].to_json()["data"]
-        assert context_data == asdict(event.context)
+            if inputs.context is None:
+                return
 
-        mock_track.assert_called_once()
+            context = event_init_args["context"][0]
+            assert isinstance(context, SelfDescribingJson)
+            assert context.to_json()["schema"] == SnowplowClient.SCHEMA
+            assert context.to_json()["data"] == asdict(inputs.context)
 
 
 class TestSnowplowInstrumentator:
@@ -115,94 +128,29 @@ class TestSnowplowInstrumentator:
         ),
         [
             (
-                {
-                    "prefix_length": 11,
-                    "suffix_length": 22,
-                    "language": "ruby",
-                    "user_agent": "vs-code",
-                    "gitlab_realm": "saas",
-                    "gitlab_instance_id": "9ebada7a-f5e2-477a-8609-17797fa95cb9",
-                    "gitlab_global_user_id": "XTuMnZ6XTWkP3yh0ZwXualmOZvm2Gg/bk9jyfkL7Y6k=",
-                    "gitlab_host_name": "gitlab.com",
-                    "gitlab_saas_namespace_ids": ["12345"],
-                    "gitlab_saas_duo_pro_namespace_ids": ["54321"],
-                },
-                {
-                    "prefix_length": 11,
-                    "suffix_length": 22,
-                    "language": "ruby",
-                    "user_agent": "vs-code",
-                    "gitlab_realm": "saas",
-                    "gitlab_instance_id": "9ebada7a-f5e2-477a-8609-17797fa95cb9",
-                    "gitlab_global_user_id": "XTuMnZ6XTWkP3yh0ZwXualmOZvm2Gg/bk9jyfkL7Y6k=",
-                    "gitlab_host_name": "gitlab.com",
-                    "gitlab_saas_namespace_ids": [12345],
-                    "gitlab_saas_duo_pro_namespace_ids": [54321],
-                },
-            ),
-            (
-                {
-                    "prefix_length": 33,
-                    "suffix_length": 44,
-                    "language": "python",
-                    "user_agent": "web-ide",
-                    "gitlab_realm": "saas",
-                    "gitlab_instance_id": "test",
-                    "gitlab_global_user_id": "test",
-                    "gitlab_host_name": "gitlab.com",
-                    "gitlab_saas_namespace_ids": ["345"],
-                    "gitlab_saas_duo_pro_namespace_ids": ["321"],
-                },
-                {
-                    "prefix_length": 33,
-                    "suffix_length": 44,
-                    "language": "python",
-                    "user_agent": "web-ide",
-                    "gitlab_realm": "saas",
-                    "gitlab_instance_id": "test",
-                    "gitlab_global_user_id": "test",
-                    "gitlab_host_name": "gitlab.com",
-                    "gitlab_saas_namespace_ids": [345],
-                    "gitlab_saas_duo_pro_namespace_ids": [321],
-                },
-            ),
+                SnowplowEvent(
+                    context=None,
+                    category="code_suggestions",
+                    action="suggestion_requested",
+                    label="some label",
+                    value=1,
+                ),
+                SnowplowEvent(
+                    context=None,
+                    category="code_suggestions",
+                    action="suggestion_requested",
+                    label="some label",
+                    value=1,
+                ),
+            )
         ],
     )
     def test_watch(self, inputs, expectations):
         mock_client = mock.Mock(spec=SnowplowClient)
         instrumentator = SnowplowInstrumentator(client=mock_client)
 
-        telemetry_1 = Telemetry(
-            requests=1,
-            accepts=2,
-            errors=3,
-            lang="python",
-            model_engine="vertex",
-            model_name="code-gecko",
-        )
-        telemetry_2 = Telemetry(
-            requests=4,
-            accepts=5,
-            errors=6,
-            lang="golang",
-            model_engine="vertex",
-            model_name="text-bison",
-        )
-
-        test_telemetry = [telemetry_1, telemetry_2]
-
-        instrumentator.watch(telemetry=test_telemetry, **inputs)
+        instrumentator.watch(inputs)
 
         mock_client.track.assert_called_once()
 
-        event = mock_client.track.call_args[0][0].context
-
-        assert len(event.request_counts) == 2
-
-        del telemetry_1.__dict__["experiments"]
-        del telemetry_2.__dict__["experiments"]
-        assert event.request_counts[0].__dict__ == telemetry_1.__dict__
-        assert event.request_counts[1].__dict__ == telemetry_2.__dict__
-
-        for k, v in expectations.items():
-            assert getattr(event, k) == v
+        assert mock_client.track.call_args[0][0] == expectations

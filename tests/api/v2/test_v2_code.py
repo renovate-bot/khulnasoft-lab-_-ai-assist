@@ -1,15 +1,13 @@
-from typing import AsyncIterator
+from typing import AsyncIterator, Dict, List, Union
 from unittest import mock
 
 import pytest
 from dependency_injector import containers
-from fastapi import Request
 from fastapi.testclient import TestClient
 from snowplow_tracker import Snowplow
+from starlette.datastructures import CommaSeparatedStrings
 
 from ai_gateway.api.v2 import api_router
-from ai_gateway.api.v2.code.completions import track_snowplow_event
-from ai_gateway.api.v2.code.typing import CurrentFile, SuggestionsRequest
 from ai_gateway.auth import User, UserClaims
 from ai_gateway.code_suggestions import (
     CodeCompletions,
@@ -24,11 +22,16 @@ from ai_gateway.code_suggestions.processing.typing import (
     MetadataCodeContent,
     MetadataPromptBuilder,
 )
-from ai_gateway.container import ContainerApplication
 from ai_gateway.experimentation.base import ExperimentTelemetry
-from ai_gateway.instrumentators.base import Telemetry
 from ai_gateway.models import ModelMetadata
+from ai_gateway.models.base import TokensConsumptionMetadata
+from ai_gateway.tracking.container import ContainerTracking
 from ai_gateway.tracking.instrumentator import SnowplowInstrumentator
+from ai_gateway.tracking.snowplow import (
+    RequestCount,
+    SnowplowEvent,
+    SnowplowEventContext,
+)
 
 
 @pytest.fixture(scope="class")
@@ -45,6 +48,11 @@ def auth_user():
 
 
 class TestCodeCompletions:
+    def cleanup(self):
+        """Ensure Snowplow cache is reset between tests."""
+        yield
+        Snowplow.reset()
+
     @pytest.mark.parametrize(
         ("model_output", "expected_response"),
         [
@@ -63,6 +71,9 @@ class TestCodeCompletions:
                         experiments=[
                             ExperimentTelemetry(name="truncate_suffix", variant=1)
                         ],
+                    ),
+                    tokens_consumption_metadata=TokensConsumptionMetadata(
+                        input_tokens=0, output_tokens=0
                     ),
                 ),
                 {
@@ -100,6 +111,9 @@ class TestCodeCompletions:
                             ExperimentTelemetry(name="truncate_suffix", variant=1)
                         ],
                     ),
+                    tokens_consumption_metadata=TokensConsumptionMetadata(
+                        input_tokens=0, output_tokens=0
+                    ),
                 ),
                 {
                     "id": "id",
@@ -125,7 +139,6 @@ class TestCodeCompletions:
     ):
         code_completions_mock = mock.Mock(spec=CodeCompletionsLegacy)
         code_completions_mock.execute = mock.AsyncMock(return_value=model_output)
-
         with mock_container.code_suggestions.completions.vertex_legacy.override(
             code_completions_mock
         ):
@@ -377,27 +390,30 @@ class TestCodeCompletions:
             stream=True,
         )
 
-
-class TestSnowplowInstrumentator:
-    @pytest.fixture(scope="class", autouse=True)
-    def cleanup(self):
-        """Ensure Snowplow cache is reset between tests."""
-        yield
-        Snowplow.reset()
-
     @pytest.mark.parametrize(
         (
+            "telemetry",
+            "current_file",
             "request_headers",
-            "jwt_realm_claim",
-            "expected_instance_id",
-            "expected_user_id",
-            "expected_gitlab_host_name",
-            "expected_gitlab_saas_namespace_ids",
-            "expected_gitlab_saas_duo_pro_namespace_ids",
-            "expected_realm",
+            "expected_language",
         ),
         [
             (
+                [
+                    {
+                        "model_engine": "vertex",
+                        "model_name": "code-gecko",
+                        "requests": 1,
+                        "accepts": 1,
+                        "errors": 0,
+                        "lang": None,
+                    }
+                ],
+                {
+                    "file_name": "main.py",
+                    "content_above_cursor": "# Create a fast binary search\n",
+                    "content_below_cursor": "\n",
+                },
                 {
                     "User-Agent": "vs-code",
                     "X-Gitlab-Instance-Id": "9ebada7a-f5e2-477a-8609-17797fa95cb9",
@@ -407,133 +423,103 @@ class TestSnowplowInstrumentator:
                     "X-Gitlab-Saas-Duo-Pro-Namespace-Ids": "4,5,6",
                     "X-Gitlab-Realm": "saas",
                 },
-                None,
-                "9ebada7a-f5e2-477a-8609-17797fa95cb9",
-                "XTuMnZ6XTWkP3yh0ZwXualmOZvm2Gg/bk9jyfkL7Y6k=",
-                "gitlab.com",
-                ["1", "2", "3"],
-                ["4", "5", "6"],
-                "saas",
-            ),
-            (
-                {
-                    "User-Agent": "vs-code",
-                    "X-Gitlab-Instance-Id": "9ebada7a-f5e2-477a-8609-17797fa95cb9",
-                    "X-Gitlab-Global-User-Id": "XTuMnZ6XTWkP3yh0ZwXualmOZvm2Gg/bk9jyfkL7Y6k=",
-                    "X-Gitlab-Host-Name": "awesome-org.com",
-                    "X-Gitlab-Realm": "self-managed",
-                },
-                "saas",
-                "9ebada7a-f5e2-477a-8609-17797fa95cb9",
-                "XTuMnZ6XTWkP3yh0ZwXualmOZvm2Gg/bk9jyfkL7Y6k=",
-                "awesome-org.com",
-                [],
-                [],
-                "self-managed",
-            ),
-            (
-                {
-                    "User-Agent": "vs-code",
-                    "X-Gitlab-Instance-Id": "9ebada7a-f5e2-477a-8609-17797fa95cb9",
-                    "X-Gitlab-Global-User-Id": "XTuMnZ6XTWkP3yh0ZwXualmOZvm2Gg/bk9jyfkL7Y6k=",
-                    "X-Gitlab-Host-Name": "gitlab.com",
-                    "X-Gitlab-Saas-Namespace-Ids": "1",
-                    "X-Gitlab-Saas-Duo-Pro-Namespace-Ids": "2",
-                },
-                "saas",
-                "9ebada7a-f5e2-477a-8609-17797fa95cb9",
-                "XTuMnZ6XTWkP3yh0ZwXualmOZvm2Gg/bk9jyfkL7Y6k=",
-                "gitlab.com",
-                ["1"],
-                ["2"],
-                "saas",
-            ),
-            (
-                {
-                    "User-Agent": "vs-code",
-                },
-                None,
-                "",
-                "",
-                "",
-                [],
-                [],
-                "",
-            ),
+                "python",
+            )
         ],
     )
-    def test_track_snowplow_event(
+    def test_snowplow_tracking(
         self,
-        request_headers,
-        jwt_realm_claim,
-        expected_instance_id,
-        expected_user_id,
-        expected_gitlab_host_name,
-        expected_gitlab_saas_namespace_ids,
-        expected_gitlab_saas_duo_pro_namespace_ids,
-        expected_realm,
+        mock_client: TestClient,
+        mock_container: containers.DeclarativeContainer,
+        telemetry: List[Dict[str, Union[str, int, None]]],
+        current_file: Dict[str, str],
+        expected_language: str,
+        request_headers: Dict[str, str],
     ):
-        mock_request = mock.Mock(spec=Request)
-
-        mock_instrumentator = mock.Mock(spec=SnowplowInstrumentator)
-        mock_request.headers = request_headers
-        mock_request.user.claims.gitlab_realm = jwt_realm_claim
-
-        telemetry_1 = Telemetry(
-            requests=1,
-            accepts=2,
-            errors=3,
-            lang="python",
-            model_engine="vertex",
-            model_name="code-gecko",
+        expected_event = SnowplowEvent(
+            context=SnowplowEventContext(
+                request_counts=[RequestCount(**rc) for rc in telemetry],
+                prefix_length=len(current_file.get("content_above_cursor", "")),
+                suffix_length=len(current_file.get("content_below_cursor", "")),
+                language=expected_language,
+                user_agent=request_headers.get("User-Agent", ""),
+                gitlab_realm=request_headers.get("X-Gitlab-Realm", ""),
+                gitlab_instance_id=request_headers.get("X-Gitlab-Instance-Id", ""),
+                gitlab_global_user_id=request_headers.get(
+                    "X-Gitlab-Global-User-Id", ""
+                ),
+                gitlab_host_name=request_headers.get("X-Gitlab-Host-Name", ""),
+                gitlab_saas_namespace_ids=list(
+                    CommaSeparatedStrings(
+                        request_headers.get("X-Gitlab-Saas-Namespace-Ids", "")
+                    )
+                ),
+                gitlab_saas_duo_pro_namespace_ids=list(
+                    CommaSeparatedStrings(
+                        request_headers.get("X-Gitlab-Saas-Duo-Pro-Namespace-Ids", "")
+                    )
+                ),
+            )
         )
-        telemetry_2 = Telemetry(
-            requests=4,
-            accepts=5,
-            errors=6,
-            lang="golang",
-            model_engine="vertex",
-            model_name="text-bison",
-        )
 
-        test_telemetry = [telemetry_1, telemetry_2]
-
-        suggestion_request = SuggestionsRequest(
-            current_file=CurrentFile(
-                content_above_cursor="123",
-                content_below_cursor="123456",
-                file_name="foobar.py",
+        model_output = ModelEngineOutput(
+            text="def search",
+            score=0,
+            model=ModelMetadata(name="code-gecko", engine="vertex-ai"),
+            lang_id=LanguageId.PYTHON,
+            metadata=MetadataPromptBuilder(
+                components={
+                    "prefix": MetadataCodeContent(length=10, length_tokens=2),
+                    "suffix": MetadataCodeContent(length=10, length_tokens=2),
+                },
+                experiments=[ExperimentTelemetry(name="truncate_suffix", variant=1)],
             ),
-            telemetry=test_telemetry,
-        )
-        track_snowplow_event(
-            req=mock_request,
-            payload=suggestion_request,
-            snowplow_instrumentator=mock_instrumentator,
+            tokens_consumption_metadata=TokensConsumptionMetadata(
+                input_tokens=0, output_tokens=0
+            ),
         )
 
-        mock_instrumentator.watch.assert_called_once()
-        args = mock_instrumentator.watch.call_args[1]
-        assert len(args) == 11
-        assert len(args["telemetry"]) == 2
-        assert args["telemetry"][0].__dict__ == telemetry_1.__dict__
-        assert args["telemetry"][1].__dict__ == telemetry_2.__dict__
-        assert args["prefix_length"] == 3
-        assert args["suffix_length"] == 6
-        assert args["language"] == "python"
-        assert args["user_agent"] == "vs-code"
-        assert args["gitlab_realm"] == expected_realm
-        assert args["gitlab_instance_id"] == expected_instance_id
-        assert args["gitlab_global_user_id"] == expected_user_id
-        assert args["gitlab_host_name"] == expected_gitlab_host_name
-        assert args["gitlab_saas_namespace_ids"] == expected_gitlab_saas_namespace_ids
-        assert (
-            args["gitlab_saas_duo_pro_namespace_ids"]
-            == expected_gitlab_saas_duo_pro_namespace_ids
+        code_completions_mock = mock.Mock(spec=CodeCompletionsLegacy)
+        code_completions_mock.execute = mock.AsyncMock(return_value=model_output)
+
+        snowplow_instrumentator_mock = mock.Mock(spec=SnowplowInstrumentator)
+
+        snowplow_container_mock = mock.Mock(spec=ContainerTracking)
+        snowplow_container_mock.instrumentator = mock.Mock(
+            return_value=snowplow_instrumentator_mock
         )
+
+        with mock_container.code_suggestions.completions.vertex_legacy.override(
+            code_completions_mock
+        ), mock.patch.object(mock_container, "snowplow", snowplow_container_mock):
+            mock_client.post(
+                "/completions",
+                headers={
+                    "Authorization": "Bearer 12345",
+                    "X-Gitlab-Authentication-Type": "oidc",
+                    **request_headers,
+                },
+                json={
+                    "prompt_version": 1,
+                    "project_path": "gitlab-org/gitlab",
+                    "project_id": 278964,
+                    "current_file": current_file,
+                    "telemetry": telemetry,
+                },
+            )
+
+        snowplow_instrumentator_mock.watch.assert_called_once()
+        args = snowplow_instrumentator_mock.watch.call_args[0]
+        assert len(args) == 1
+        assert args[0] == expected_event
 
 
 class TestCodeGenerations:
+    def cleanup(self):
+        """Ensure Snowplow cache is reset between tests."""
+        yield
+        Snowplow.reset()
+
     @pytest.mark.parametrize(
         (
             "prompt_version",
@@ -827,6 +813,122 @@ class TestCodeGenerations:
         assert response.status_code == 200
         assert response.text == expected_response
         assert response.headers["content-type"] == "text/event-stream; charset=utf-8"
+
+    @pytest.mark.parametrize(
+        (
+            "telemetry",
+            "current_file",
+            "request_headers",
+            "expected_language",
+        ),
+        [
+            (
+                [
+                    {
+                        "model_engine": "vertex",
+                        "model_name": "code-gecko",
+                        "requests": 1,
+                        "accepts": 1,
+                        "errors": 0,
+                        "lang": None,
+                    }
+                ],
+                {
+                    "file_name": "main.py",
+                    "content_above_cursor": "# Create a fast binary search\n",
+                    "content_below_cursor": "\n",
+                },
+                {
+                    "User-Agent": "vs-code",
+                    "X-Gitlab-Instance-Id": "9ebada7a-f5e2-477a-8609-17797fa95cb9",
+                    "X-Gitlab-Global-User-Id": "XTuMnZ6XTWkP3yh0ZwXualmOZvm2Gg/bk9jyfkL7Y6k=",
+                    "X-Gitlab-Host-Name": "gitlab.com",
+                    "X-Gitlab-Saas-Namespace-Ids": "1,2,3",
+                    "X-Gitlab-Saas-Duo-Pro-Namespace-Ids": "4,5,6",
+                    "X-Gitlab-Realm": "saas",
+                },
+                "python",
+            )
+        ],
+    )
+    def test_snowplow_tracking(
+        self,
+        mock_client: TestClient,
+        mock_container: containers.DeclarativeContainer,
+        telemetry: List[Dict[str, Union[str, int, None]]],
+        current_file: Dict[str, str],
+        expected_language: str,
+        request_headers: Dict[str, str],
+    ):
+        expected_event = SnowplowEvent(
+            context=SnowplowEventContext(
+                request_counts=[RequestCount(**rc) for rc in telemetry],
+                prefix_length=len(current_file.get("content_above_cursor", "")),
+                suffix_length=len(current_file.get("content_below_cursor", "")),
+                language=expected_language,
+                user_agent=request_headers.get("User-Agent", ""),
+                gitlab_realm=request_headers.get("X-Gitlab-Realm", ""),
+                gitlab_instance_id=request_headers.get("X-Gitlab-Instance-Id", ""),
+                gitlab_global_user_id=request_headers.get(
+                    "X-Gitlab-Global-User-Id", ""
+                ),
+                gitlab_host_name=request_headers.get("X-Gitlab-Host-Name", ""),
+                gitlab_saas_namespace_ids=list(
+                    CommaSeparatedStrings(
+                        request_headers.get("X-Gitlab-Saas-Namespace-Ids", "")
+                    )
+                ),
+                gitlab_saas_duo_pro_namespace_ids=list(
+                    CommaSeparatedStrings(
+                        request_headers.get("X-Gitlab-Saas-Duo-Pro-Namespace-Ids", "")
+                    )
+                ),
+            )
+        )
+
+        model_output = CodeSuggestionsOutput(
+            text="some code",
+            score=0,
+            model=ModelMetadata(name="some-model", engine="some-engine"),
+            lang_id=LanguageId.PYTHON,
+        )
+
+        code_generations_vertex_mock = mock.Mock(spec=CodeGenerations)
+        code_generations_vertex_mock.execute = mock.AsyncMock(return_value=model_output)
+
+        snowplow_instrumentator_mock = mock.Mock(spec=SnowplowInstrumentator)
+
+        snowplow_container_mock = mock.Mock(spec=ContainerTracking)
+        snowplow_container_mock.instrumentator = mock.Mock(
+            return_value=snowplow_instrumentator_mock
+        )
+
+        with mock_container.code_suggestions.generations.vertex.override(
+            code_generations_vertex_mock
+        ), mock.patch.object(mock_container, "snowplow", snowplow_container_mock):
+            response = mock_client.post(
+                "/code/generations",
+                headers={
+                    "Authorization": "Bearer 12345",
+                    "X-Gitlab-Authentication-Type": "oidc",
+                    **request_headers,
+                },
+                json={
+                    "prompt_version": 1,
+                    "project_path": "gitlab-org/gitlab",
+                    "project_id": 278964,
+                    "current_file": current_file,
+                    "prompt": "some prompt",
+                    "model_provider": "vertex-ai",
+                    "model_name": "code-bison@002",
+                    "telemetry": telemetry,
+                },
+            )
+
+        snowplow_instrumentator_mock.watch.assert_called_once()
+        args = snowplow_instrumentator_mock.watch.call_args[0]
+        assert len(args) == 1
+        assert args[0] == expected_event
 
 
 class TestUnauthorizedScopes:

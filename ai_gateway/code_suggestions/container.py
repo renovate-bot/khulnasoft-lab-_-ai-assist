@@ -15,6 +15,7 @@ from ai_gateway.code_suggestions.processing.pre import TokenizerTokenStrategy
 from ai_gateway.experimentation import experiment_registry_provider
 from ai_gateway.models import KindAnthropicModel, KindVertexTextModel, TextGenBaseModel
 from ai_gateway.tokenizer import init_tokenizer
+from ai_gateway.tracking.instrumentator import SnowplowInstrumentator
 
 __all__ = [
     "ContainerCodeSuggestions",
@@ -25,6 +26,7 @@ class ContainerCodeGenerations(containers.DeclarativeContainer):
     tokenizer = providers.Dependency(instance_of=PreTrainedTokenizerFast)
     vertex_code_bison = providers.Dependency(instance_of=TextGenBaseModel)
     anthropic_claude = providers.Dependency(instance_of=TextGenBaseModel)
+    snowplow_instrumentator = providers.Dependency(instance_of=SnowplowInstrumentator)
 
     vertex = providers.Factory(
         CodeGenerations,
@@ -34,6 +36,7 @@ class ContainerCodeGenerations(containers.DeclarativeContainer):
         tokenization_strategy=providers.Factory(
             TokenizerTokenStrategy, tokenizer=tokenizer
         ),
+        snowplow_instrumentator=snowplow_instrumentator,
     )
 
     # We need to resolve the model based on model name provided in request payload
@@ -47,6 +50,7 @@ class ContainerCodeGenerations(containers.DeclarativeContainer):
         tokenization_strategy=providers.Factory(
             TokenizerTokenStrategy, tokenizer=tokenizer
         ),
+        snowplow_instrumentator=snowplow_instrumentator,
     )
 
     # Default use case with claude.2.0
@@ -60,6 +64,7 @@ class ContainerCodeCompletions(containers.DeclarativeContainer):
     tokenizer = providers.Dependency(instance_of=PreTrainedTokenizerFast)
     vertex_code_gecko = providers.Dependency(instance_of=TextGenBaseModel)
     anthropic_claude = providers.Dependency(instance_of=TextGenBaseModel)
+    snowplow_instrumentator = providers.Dependency(instance_of=SnowplowInstrumentator)
 
     config = providers.Configuration(strict=True)
 
@@ -79,6 +84,7 @@ class ContainerCodeCompletions(containers.DeclarativeContainer):
             PostProcessorCompletions,
             exclude=config.excl_post_proc,
         ).provider,
+        snowplow_instrumentator=snowplow_instrumentator,
     )
 
     anthropic = providers.Factory(
@@ -102,11 +108,14 @@ class ContainerCodeSuggestions(containers.DeclarativeContainer):
 
     tokenizer = providers.Resource(init_tokenizer)
 
+    snowplow = providers.DependenciesContainer()
+
     generations = providers.Container(
         ContainerCodeGenerations,
         tokenizer=tokenizer,
         vertex_code_bison=models.vertex_code_bison,
         anthropic_claude=models.anthropic_claude,
+        snowplow_instrumentator=snowplow.instrumentator,
     )
 
     completions = providers.Container(
@@ -115,4 +124,5 @@ class ContainerCodeSuggestions(containers.DeclarativeContainer):
         vertex_code_gecko=models.vertex_code_gecko,
         anthropic_claude=models.anthropic_claude,
         config=config,
+        snowplow_instrumentator=snowplow.instrumentator,
     )

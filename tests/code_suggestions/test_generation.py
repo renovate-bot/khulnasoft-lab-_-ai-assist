@@ -1,8 +1,9 @@
 from contextlib import contextmanager
 from typing import Any, AsyncIterator
-from unittest.mock import AsyncMock, Mock, patch
+from unittest.mock import AsyncMock, Mock, call, patch
 
 import pytest
+from snowplow_tracker import Snowplow
 
 from ai_gateway.code_suggestions import CodeGenerations, ModelProvider
 from ai_gateway.code_suggestions.processing import LanguageId, TokenStrategyBase
@@ -11,6 +12,11 @@ from ai_gateway.code_suggestions.processing.post.generations import (
     PostProcessorAnthropic,
 )
 from ai_gateway.code_suggestions.processing.pre import PromptBuilderBase
+from ai_gateway.code_suggestions.processing.typing import (
+    MetadataCodeContent,
+    MetadataPromptBuilder,
+    Prompt,
+)
 from ai_gateway.instrumentators import TextGenModelInstrumentator
 from ai_gateway.models import (
     SafetyAttributes,
@@ -18,6 +24,8 @@ from ai_gateway.models import (
     TextGenModelChunk,
     TextGenModelOutput,
 )
+from ai_gateway.tracking.instrumentator import SnowplowInstrumentator
+from ai_gateway.tracking.snowplow import SnowplowEvent
 
 
 class InstrumentorMock(Mock):
@@ -33,14 +41,36 @@ class InstrumentorMock(Mock):
 
 @pytest.mark.asyncio
 class TestCodeGeneration:
+    def cleanup(self):
+        """Ensure Snowplow cache is reset between tests."""
+        yield
+        Snowplow.reset()
+
     @pytest.fixture(scope="class")
     def use_case(self):
         model = Mock(spec=TextGenBaseModel)
         model.MAX_MODEL_LEN = 2048
+        tokenization_strategy_mock = Mock(spec=TokenStrategyBase)
+        tokenization_strategy_mock.estimate_length = Mock(return_value=[1, 2])
+        prompt_builder_mock = Mock(spec=PromptBuilderBase)
+        prompt = Prompt(
+            prefix="prompt",
+            metadata=MetadataPromptBuilder(
+                components={
+                    "prompt": MetadataCodeContent(
+                        length=len("prompt"),
+                        length_tokens=1,
+                    ),
+                }
+            ),
+        )
+        prompt_builder_mock.build = Mock(return_value=prompt)
 
-        use_case = CodeGenerations(model, Mock(spec=TokenStrategyBase))
+        use_case = CodeGenerations(
+            model, tokenization_strategy_mock, Mock(spec=SnowplowInstrumentator)
+        )
         use_case.instrumentator = InstrumentorMock(spec=TextGenModelInstrumentator)
-        use_case.prompt_builder = Mock(spec=PromptBuilderBase)
+        use_case.prompt_builder = prompt_builder_mock
 
         yield use_case
 
@@ -121,3 +151,73 @@ class TestCodeGeneration:
             "",
             stream=True,
         )
+
+    @pytest.mark.parametrize(
+        ("stream", "response_token_length"),
+        [
+            (True, 9),
+            (False, 4),
+        ],
+    )
+    async def test_snowplow_instrumentation(
+        self,
+        use_case: CodeGenerations,
+        stream: bool,
+        response_token_length: int,
+    ):
+        async def _stream_generator(
+            prefix: str, suffix: str, stream: bool
+        ) -> AsyncIterator[TextGenModelChunk]:
+            model_chunks = [
+                TextGenModelChunk(text="hello "),
+                TextGenModelChunk(text="world!"),
+            ]
+
+            for chunk in model_chunks:
+                yield chunk
+
+        expected_event_1 = SnowplowEvent(
+            context=None,
+            action="tokens_per_user_request_prompt",
+            label="code_generation",
+            value=1,
+        )
+
+        expected_event_2 = SnowplowEvent(
+            context=None,
+            action="tokens_per_user_request_response",
+            label="code_generation",
+            value=response_token_length,
+        )
+
+        with patch.object(use_case, "tokenization_strategy") as mock, patch.object(
+            use_case, "snowplow_instrumentator"
+        ) as snowplow_mock:
+            mock.estimate_length = Mock(return_value=[4, 5])
+
+            if stream:
+                use_case.model.generate = AsyncMock(side_effect=_stream_generator)
+            else:
+                use_case.model.generate = AsyncMock(
+                    return_value=TextGenModelOutput(
+                        text="output", score=0, safety_attributes=SafetyAttributes()
+                    )
+                )
+
+            actual = await use_case.execute(
+                prefix="any",
+                file_name="bar.py",
+                editor_lang=LanguageId.PYTHON,
+                model_provider=ModelProvider.ANTHROPIC,
+                stream=stream,
+            )
+
+            if stream:
+                async for _ in actual:
+                    _
+
+            mock.estimate_length.assert_called
+
+            snowplow_mock.watch.assert_has_calls(
+                [call(expected_event_1), call(expected_event_2)]
+            )

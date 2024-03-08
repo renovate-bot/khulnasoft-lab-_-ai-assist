@@ -42,6 +42,7 @@ from ai_gateway.code_suggestions import (
 from ai_gateway.code_suggestions.processing.ops import lang_from_filename
 from ai_gateway.instrumentators.base import TelemetryInstrumentator
 from ai_gateway.models import KindAnthropicModel, KindModelProvider
+from ai_gateway.tracking import RequestCount, SnowplowEvent, SnowplowEventContext
 from ai_gateway.tracking.errors import log_exception
 from ai_gateway.tracking.instrumentator import SnowplowInstrumentator
 
@@ -83,7 +84,9 @@ async def completions(
     ),
 ):
     try:
-        track_snowplow_event(request, payload, snowplow_instrumentator)
+        snowplow_instrumentator.watch(
+            _suggestion_requested_snowplow_event(request, payload)
+        )
     except Exception as e:
         log_exception(e)
 
@@ -156,7 +159,9 @@ async def generations(
     ),
 ):
     try:
-        track_snowplow_event(request, payload, snowplow_instrumentator)
+        snowplow_instrumentator.watch(
+            _suggestion_requested_snowplow_event(request, payload)
+        )
     except Exception as e:
         log_exception(e)
 
@@ -229,11 +234,10 @@ def _suggestion_choices(text: str) -> list:
     return [SuggestionsResponse.Choice(text=text)] if text else []
 
 
-def track_snowplow_event(
+def _suggestion_requested_snowplow_event(
     req: Request,
     payload: SuggestionsRequest,
-    snowplow_instrumentator: SnowplowInstrumentator,
-):
+) -> SnowplowEvent:
     language = lang_from_filename(payload.current_file.file_name) or ""
     if language:
         language = language.name.lower()
@@ -244,26 +248,40 @@ def track_snowplow_event(
     if not gitlab_realm and req.user and req.user.claims:
         gitlab_realm = req.user.claims.gitlab_realm
 
-    snowplow_instrumentator.watch(
-        telemetry=payload.telemetry,
-        prefix_length=len(payload.current_file.content_above_cursor),
-        suffix_length=len(payload.current_file.content_below_cursor),
-        language=language,
-        user_agent=req.headers.get("User-Agent", ""),
-        gitlab_realm=gitlab_realm if gitlab_realm else "",
-        gitlab_instance_id=req.headers.get(X_GITLAB_INSTANCE_ID_HEADER, ""),
-        gitlab_global_user_id=req.headers.get(X_GITLAB_GLOBAL_USER_ID_HEADER, ""),
-        gitlab_host_name=req.headers.get(X_GITLAB_HOST_NAME_HEADER, ""),
-        gitlab_saas_duo_pro_namespace_ids=list(
-            CommaSeparatedStrings(
-                req.headers.get(X_GITLAB_SAAS_DUO_PRO_NAMESPACE_IDS_HEADER, "")
-            )
-        ),
-        gitlab_saas_namespace_ids=list(
-            CommaSeparatedStrings(
-                req.headers.get(X_GITLAB_SAAS_NAMESPACE_IDS_HEADER, "")
-            )
-        ),
+    request_counts = [
+        RequestCount(
+            requests=stats.requests,
+            accepts=stats.accepts,
+            errors=stats.errors,
+            lang=stats.lang,
+            model_engine=stats.model_engine,
+            model_name=stats.model_name,
+        )
+        for stats in payload.telemetry
+    ]
+
+    return SnowplowEvent(
+        context=SnowplowEventContext(
+            request_counts=request_counts,
+            prefix_length=len(payload.current_file.content_above_cursor),
+            suffix_length=len(payload.current_file.content_below_cursor),
+            language=language,
+            user_agent=req.headers.get("User-Agent", ""),
+            gitlab_realm=gitlab_realm if gitlab_realm else "",
+            gitlab_instance_id=req.headers.get(X_GITLAB_INSTANCE_ID_HEADER, ""),
+            gitlab_global_user_id=req.headers.get(X_GITLAB_GLOBAL_USER_ID_HEADER, ""),
+            gitlab_host_name=req.headers.get(X_GITLAB_HOST_NAME_HEADER, ""),
+            gitlab_saas_duo_pro_namespace_ids=list(
+                CommaSeparatedStrings(
+                    req.headers.get(X_GITLAB_SAAS_DUO_PRO_NAMESPACE_IDS_HEADER, "")
+                )
+            ),
+            gitlab_saas_namespace_ids=list(
+                CommaSeparatedStrings(
+                    req.headers.get(X_GITLAB_SAAS_NAMESPACE_IDS_HEADER, "")
+                )
+            ),
+        )
     )
 
 

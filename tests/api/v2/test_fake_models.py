@@ -14,6 +14,7 @@ from ai_gateway.container import ContainerApplication
 from ai_gateway.experimentation import ExperimentRegistry
 from ai_gateway.models import FakePalmTextGenModel
 from ai_gateway.tokenizer import init_tokenizer
+from ai_gateway.tracking.instrumentator import SnowplowInstrumentator
 
 
 @pytest.fixture(scope="class")
@@ -48,6 +49,7 @@ class TestFakeModels:
         code_completions_mock = CodeCompletionsLegacy(
             engine=engine,
             post_processor=PostProcessor,
+            snowplow_instrumentator=mock.Mock(spec=SnowplowInstrumentator),
         )
 
         with mock_container.code_suggestions.completions.vertex_legacy.override(
@@ -84,7 +86,9 @@ class TestFakeModels:
         tokenization_strategy = TokenizerTokenStrategy(init_tokenizer())
 
         code_generations_mock = CodeGenerations(
-            model=FakePalmTextGenModel(), tokenization_strategy=tokenization_strategy
+            model=FakePalmTextGenModel(),
+            tokenization_strategy=tokenization_strategy,
+            snowplow_instrumentator=mock.Mock(spec=SnowplowInstrumentator),
         )
 
         with mock_container.code_suggestions.generations.anthropic_factory.override(

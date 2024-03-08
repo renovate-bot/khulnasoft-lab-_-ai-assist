@@ -29,6 +29,8 @@ from ai_gateway.models import (
     TextGenModelChunk,
     TextGenModelOutput,
 )
+from ai_gateway.tracking.instrumentator import SnowplowInstrumentator
+from ai_gateway.tracking.snowplow import SnowplowEvent
 
 __all__ = ["CodeCompletionsLegacy", "CodeCompletions"]
 
@@ -38,9 +40,11 @@ class CodeCompletionsLegacy:
         self,
         engine: ModelEngineCompletions,
         post_processor: Factory[PostProcessor],
+        snowplow_instrumentator: SnowplowInstrumentator,
     ):
         self.engine = engine
         self.post_processor = post_processor
+        self.instrumentator = snowplow_instrumentator
 
     async def execute(
         self,
@@ -51,6 +55,24 @@ class CodeCompletionsLegacy:
         **_kwargs: Any,
     ) -> ModelEngineOutput:
         response = await self.engine.generate(prefix, suffix, file_name, editor_lang)
+
+        self.instrumentator.watch(
+            SnowplowEvent(
+                context=None,
+                action="tokens_per_user_request_prompt",
+                label="code_completion",
+                value=response.tokens_consumption_metadata.input_tokens,
+            )
+        )
+
+        self.instrumentator.watch(
+            SnowplowEvent(
+                context=None,
+                action="tokens_per_user_request_response",
+                label="code_completion",
+                value=response.tokens_consumption_metadata.output_tokens,
+            )
+        )
 
         if not response.text:
             return response
@@ -72,6 +94,7 @@ class CodeCompletionsLegacy:
             model=response.model,
             lang_id=response.lang_id,
             metadata=response.metadata,
+            tokens_consumption_metadata=response.tokens_consumption_metadata,
         )
 
 
