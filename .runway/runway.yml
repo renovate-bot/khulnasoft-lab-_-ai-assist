@@ -2,7 +2,10 @@ apiVersion: runway/v1.0.0-beta
 kind: RunwayService
 metadata:
   name: ai_gateway
-  owner: code_creation
+  department: eng-dev
+  department_group: eng-dev-create-shared-infra
+  product_category: code_creation
+  owner_email_handle: mnohr
 spec:
   image: "$CI_REGISTRY_IMAGE/model-gateway:${CI_COMMIT_SHORT_SHA}"
   request_timeout: 60
@@ -20,7 +23,7 @@ spec:
   resources:
     startup_cpu_boost: true
     limits:
-      cpu: 2
+      cpu: 2000m
       memory: 8G
   network_policies:
     cloudflare: true
