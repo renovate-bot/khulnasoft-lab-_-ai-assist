@@ -4,6 +4,7 @@ from ai_gateway.models.base import (
     ModelMetadata,
     SafetyAttributes,
     TextGenBaseModel,
+    TextGenModelChunk,
     TextGenModelOutput,
 )
 
@@ -30,8 +31,13 @@ class FakePalmTextGenModel(TextGenBaseModel):
         top_p: float = 0.0,
         top_k: int = 0,
     ) -> Optional[TextGenModelOutput]:
+        text=""
+        if suffix:
+            text = "fake code suggestion from PaLM Text"
+        else:
+            text = "fake code suggestion from PaLM Text\n"
         return TextGenModelOutput(
-            text="fake code suggestion from PaLM Text",
+            text,
             score=0,
             safety_attributes=SafetyAttributes(),
         )

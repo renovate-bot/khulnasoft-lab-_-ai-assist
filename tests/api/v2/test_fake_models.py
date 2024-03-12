@@ -1,3 +1,4 @@
+from typing import AsyncIterator
 from unittest import mock
 
 import pytest
@@ -15,6 +16,8 @@ from ai_gateway.experimentation import ExperimentRegistry
 from ai_gateway.models import FakePalmTextGenModel
 from ai_gateway.tokenizer import init_tokenizer
 from ai_gateway.tracking.instrumentator import SnowplowInstrumentator
+from ai_gateway.code_suggestions.base import CodeSuggestionsChunk
+from ai_gateway.code_suggestions.completions import CodeCompletions
 
 
 @pytest.fixture(scope="class")
@@ -117,4 +120,72 @@ class TestFakeModels:
         assert response.status_code == 200
 
         body = response.json()
-        assert body["choices"][0]["text"] == "fake code suggestion from PaLM Text"
+        assert body["choices"][0]["text"] == "fake code suggestion from PaLM Text\n"
+
+    @pytest.mark.parametrize(
+        ("model_chunks", "expected_response"),
+        [
+            (
+                [
+                    CodeSuggestionsChunk(
+                        text="def search",
+                    ),
+                    CodeSuggestionsChunk(
+                        text=" (query)",
+                    ),
+                ],
+                "def search (query)",
+            ),
+        ],
+    )
+    def test_fake_streaming(
+        self,
+        mock_client: TestClient,
+        mock_container: containers.DeclarativeContainer,
+        model_chunks: list[CodeSuggestionsChunk],
+        expected_response: str,
+    ):
+        async def _stream_generator(
+            prefix, suffix, file_name, editor_lang, stream
+        ) -> AsyncIterator[CodeSuggestionsChunk]:
+            for chunk in model_chunks:
+                yield chunk
+
+        tokenization_strategy = TokenizerTokenStrategy(init_tokenizer())
+
+        code_completions_mock = CodeCompletions(
+            model=FakePalmTextGenModel(),
+            tokenization_strategy=tokenization_strategy,
+        )
+        code_completions_mock.execute = mock.AsyncMock(side_effect=_stream_generator)
+
+        current_file = {
+            "file_name": "main.py",
+            "content_above_cursor": "# Create a fast binary search\n",
+            "content_below_cursor": "\n",
+        }
+        data = {
+            "prompt_version": 1,
+            "project_path": "gitlab-org/gitlab",
+            "project_id": 278964,
+            "model_provider": "anthropic",
+            "current_file": current_file,
+            "stream": True,
+        }
+
+        with mock_container.code_suggestions.completions.anthropic.override(
+            code_completions_mock
+        ):
+            response = mock_client.post(
+                "/completions",
+                headers={
+                    "Authorization": "Bearer 12345",
+                    "X-Gitlab-Authentication-Type": "oidc",
+                },
+                json=data,
+            )
+
+        assert response.status_code == 200
+        assert response.text == expected_response
+        assert response.headers["content-type"] == "text/event-stream; charset=utf-8"
+
