@@ -8,6 +8,8 @@ from fastapi.testclient import TestClient
 from ai_gateway.api.v2 import api_router
 from ai_gateway.auth import User, UserClaims
 from ai_gateway.code_suggestions import CodeCompletionsLegacy, CodeGenerations
+from ai_gateway.code_suggestions.base import CodeSuggestionsChunk
+from ai_gateway.code_suggestions.completions import CodeCompletions
 from ai_gateway.code_suggestions.processing import ModelEngineCompletions
 from ai_gateway.code_suggestions.processing.post.completions import PostProcessor
 from ai_gateway.code_suggestions.processing.pre import TokenizerTokenStrategy
@@ -16,8 +18,6 @@ from ai_gateway.experimentation import ExperimentRegistry
 from ai_gateway.models import FakePalmTextGenModel
 from ai_gateway.tokenizer import init_tokenizer
 from ai_gateway.tracking.instrumentator import SnowplowInstrumentator
-from ai_gateway.code_suggestions.base import CodeSuggestionsChunk
-from ai_gateway.code_suggestions.completions import CodeCompletions
 
 
 @pytest.fixture(scope="class")
@@ -188,4 +188,3 @@ class TestFakeModels:
         assert response.status_code == 200
         assert response.text == expected_response
         assert response.headers["content-type"] == "text/event-stream; charset=utf-8"
-
