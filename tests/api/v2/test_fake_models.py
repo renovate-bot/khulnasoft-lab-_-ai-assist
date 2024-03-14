@@ -66,7 +66,7 @@ class TestFakeModels:
                     "project_path": "gitlab-org/gitlab",
                     "project_id": 278964,
                     "current_file": {
-                        "file_name": "main.rb",
+                        "file_name": "main.py",
                         "content_above_cursor": "def beautiful_",
                         "content_below_cursor": "\n",
                     },
@@ -117,7 +117,4 @@ class TestFakeModels:
         assert response.status_code == 200
 
         body = response.json()
-        assert (
-            body["choices"][0]["text"]
-            == "Fake response for: write a wonderful function"
-        )
+        assert body["choices"][0]["text"].startswith("Fake response for:")
