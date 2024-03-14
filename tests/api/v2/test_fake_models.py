@@ -69,14 +69,17 @@ class TestFakeModels:
                         "file_name": "main.py",
                         "content_above_cursor": "def beautiful_",
                         "content_below_cursor": "\n",
-                    }
+                    },
                 },
             )
 
         assert response.status_code == 200
 
         body = response.json()
-        assert body["choices"][0]["text"] == "Fake response for: # This code has a filename of main.py and is written in Python.\ndef beautiful_"
+        assert (
+            body["choices"][0]["text"]
+            == "Fake response for: # This code has a filename of main.py and is written in Python.\ndef beautiful_"
+        )
 
     def test_fake_generations(
         self, mock_client: TestClient, mock_container: containers.DeclarativeContainer
@@ -117,4 +120,7 @@ class TestFakeModels:
         assert response.status_code == 200
 
         body = response.json()
-        assert body["choices"][0]["text"] == "Fake response for: write a wonderful function"
+        assert (
+            body["choices"][0]["text"]
+            == "Fake response for: write a wonderful function"
+        )
