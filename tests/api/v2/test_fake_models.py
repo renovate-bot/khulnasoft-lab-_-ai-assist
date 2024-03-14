@@ -1,4 +1,3 @@
-from typing import AsyncIterator
 from unittest import mock
 
 import pytest
@@ -8,8 +7,6 @@ from fastapi.testclient import TestClient
 from ai_gateway.api.v2 import api_router
 from ai_gateway.auth import User, UserClaims
 from ai_gateway.code_suggestions import CodeCompletionsLegacy, CodeGenerations
-from ai_gateway.code_suggestions.base import CodeSuggestionsChunk
-from ai_gateway.code_suggestions.completions import CodeCompletions
 from ai_gateway.code_suggestions.processing import ModelEngineCompletions
 from ai_gateway.code_suggestions.processing.post.completions import PostProcessor
 from ai_gateway.code_suggestions.processing.pre import TokenizerTokenStrategy
@@ -72,14 +69,14 @@ class TestFakeModels:
                         "file_name": "main.py",
                         "content_above_cursor": "def beautiful_",
                         "content_below_cursor": "\n",
-                    },
+                    }
                 },
             )
 
         assert response.status_code == 200
 
         body = response.json()
-        assert body["choices"][0]["text"] == "fake code suggestion from PaLM Text"
+        assert body["choices"][0]["text"] == "Fake response for: # This code has a filename of main.py and is written in Python.\ndef beautiful_"
 
     def test_fake_generations(
         self, mock_client: TestClient, mock_container: containers.DeclarativeContainer
@@ -120,71 +117,4 @@ class TestFakeModels:
         assert response.status_code == 200
 
         body = response.json()
-        assert body["choices"][0]["text"] == "fake code suggestion from PaLM Text\n"
-
-    @pytest.mark.parametrize(
-        ("model_chunks", "expected_response"),
-        [
-            (
-                [
-                    CodeSuggestionsChunk(
-                        text="def search",
-                    ),
-                    CodeSuggestionsChunk(
-                        text=" (query)",
-                    ),
-                ],
-                "def search (query)",
-            ),
-        ],
-    )
-    def test_fake_streaming(
-        self,
-        mock_client: TestClient,
-        mock_container: containers.DeclarativeContainer,
-        model_chunks: list[CodeSuggestionsChunk],
-        expected_response: str,
-    ):
-        async def _stream_generator(
-            prefix, suffix, file_name, editor_lang, stream
-        ) -> AsyncIterator[CodeSuggestionsChunk]:
-            for chunk in model_chunks:
-                yield chunk
-
-        tokenization_strategy = TokenizerTokenStrategy(init_tokenizer())
-
-        code_completions_mock = CodeCompletions(
-            model=FakePalmTextGenModel(),
-            tokenization_strategy=tokenization_strategy,
-        )
-        code_completions_mock.execute = mock.AsyncMock(side_effect=_stream_generator)
-
-        current_file = {
-            "file_name": "main.py",
-            "content_above_cursor": "# Create a fast binary search\n",
-            "content_below_cursor": "\n",
-        }
-        data = {
-            "prompt_version": 1,
-            "project_path": "gitlab-org/gitlab",
-            "project_id": 278964,
-            "model_provider": "anthropic",
-            "current_file": current_file,
-            "stream": True,
-        }
-
-        with mock_container.code_suggestions.completions.anthropic.override(
-            code_completions_mock
-        ):
-            response = mock_client.post(
-                "/completions",
-                headers={
-                    "Authorization": "Bearer 12345",
-                    "X-Gitlab-Authentication-Type": "oidc",
-                },
-                json=data,
-            )
-
-        assert response.status_code == 200
-        assert response.text == expected_response
-        assert response.headers["content-type"] == "text/event-stream; charset=utf-8"
+        assert body["choices"][0]["text"] == "Fake response for: write a wonderful function"

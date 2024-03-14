@@ -31,7 +31,7 @@ class FakePalmTextGenModel(TextGenBaseModel):
         top_k: int = 0,
     ) -> Optional[TextGenModelOutput]:
         text = f"Fake response for: {prompt}"
-        
+
         return TextGenModelOutput(
             text,
             score=0,
