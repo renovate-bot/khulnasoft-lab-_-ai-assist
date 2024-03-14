@@ -76,7 +76,7 @@ class TestFakeModels:
         assert response.status_code == 200
 
         body = response.json()
-        assert body["choices"][0]["text"] == "fake code suggestion from PaLM Text"
+        assert body["choices"][0]["text"].startswith("Fake response for:")
 
     def test_fake_generations(
         self, mock_client: TestClient, mock_container: containers.DeclarativeContainer
@@ -117,4 +117,4 @@ class TestFakeModels:
         assert response.status_code == 200
 
         body = response.json()
-        assert body["choices"][0]["text"] == "fake code suggestion from PaLM Text"
+        assert body["choices"][0]["text"].startswith("Fake response for:")
