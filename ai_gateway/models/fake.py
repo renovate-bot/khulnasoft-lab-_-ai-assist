@@ -30,11 +30,8 @@ class FakePalmTextGenModel(TextGenBaseModel):
         top_p: float = 0.0,
         top_k: int = 0,
     ) -> Optional[TextGenModelOutput]:
-        text = ""
-        if suffix:
-            text = "fake code suggestion from PaLM Text"
-        else:
-            text = "fake code suggestion from PaLM Text\n"
+        text = f"Fake response for: {prompt}"
+        
         return TextGenModelOutput(
             text,
             score=0,
