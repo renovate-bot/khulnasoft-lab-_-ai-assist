@@ -4,7 +4,7 @@ from anthropic import AsyncAnthropic
 from dependency_injector import containers, providers
 from google.cloud.aiplatform.gapic import PredictionServiceAsyncClient
 
-from ai_gateway.models.anthropic import AnthropicModel
+from ai_gateway.models.anthropic import AnthropicChatModel, AnthropicModel
 from ai_gateway.models.base import connect_anthropic, grpc_connect_vertex
 from ai_gateway.models.fake import FakePalmTextGenModel
 from ai_gateway.models.vertex_text import (
@@ -98,7 +98,16 @@ class ContainerModels(containers.DeclarativeContainer):
     anthropic_claude = providers.Selector(
         real_or_fake,
         real=providers.Factory(
-            AnthropicModel.from_model_name,
+            AnthropicModel.from_model_name, client=http_client_anthropic
+        ),
+        # TODO: We need to update our fake models to make them generic
+        fake=providers.Factory(FakePalmTextGenModel),
+    )
+
+    anthropic_claude_chat = providers.Selector(
+        real_or_fake,
+        real=providers.Factory(
+            AnthropicChatModel.from_model_name,
             client=http_client_anthropic,
         ),
         # TODO: We need to update our fake models to make them generic
