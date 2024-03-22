@@ -91,4 +91,5 @@ def get_app():
     async def custom_http_exception_handler(request, exc):
         context["http_exception_details"] = str(exc)
         return await http_exception_handler(request, exc)
+
     return app
