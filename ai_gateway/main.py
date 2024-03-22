@@ -5,7 +5,7 @@ from ai_gateway.app import get_config
 def run_app():
     config = get_config()
     uvicorn.run(
-        "ai_gateway.app:get_app",  # Ensure this is the correct import string for your FastAPI app
+        "ai_gateway.app:get_app", 
         host=config.fastapi.api_host,
         port=config.fastapi.api_port,
         log_config=config.fastapi.uvicorn_logger,
