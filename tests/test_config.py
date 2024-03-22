@@ -85,6 +85,7 @@ def test_config_logging(values: dict, expected: ConfigLogging):
                 "AIGW_FASTAPI__DOCS_URL": "docs.test",
                 "AIGW_FASTAPI__OPENAPI_URL": "openapi.test",
                 "AIGW_FASTAPI__REDOC_URL": "redoc.test",
+                "AIGW_FASTAPI__RELOAD": "True"
             },
             ConfigFastApi(
                 api_host="localhost",
@@ -95,6 +96,7 @@ def test_config_logging(values: dict, expected: ConfigLogging):
                 docs_url="docs.test",
                 openapi_url="openapi.test",
                 redoc_url="redoc.test",
+                reload=True,
             ),
         ),
     ],
