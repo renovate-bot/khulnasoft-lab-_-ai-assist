@@ -1,6 +1,7 @@
 import uvicorn
 from ai_gateway.app import get_config
 
+
 def run_app():
     config = get_config()
     uvicorn.run(
@@ -11,6 +12,7 @@ def run_app():
         forwarded_allow_ips="*",
         reload=config.fastapi.reload,
     )
+
 
 if __name__ == "__main__":
     run_app()

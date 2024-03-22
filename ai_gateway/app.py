@@ -29,8 +29,10 @@ config = Config()
 # configure logging
 dictConfig(config.fastapi.uvicorn_logger)
 
+
 def get_config():
     return config
+
 
 def get_app():
     container_application = ContainerApplication()
