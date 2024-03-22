@@ -68,7 +68,7 @@ testpaths = ["tests"]
 filterwarnings = ["error::UserWarning"]
 
 [tool.poetry.scripts]
-ai_gateway = "ai_gateway.app:main"
+ai_gateway = "ai_gateway.main:run_app"
 
 [tool.isort]
 profile = "black"

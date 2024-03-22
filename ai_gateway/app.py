@@ -2,7 +2,6 @@ import asyncio
 import logging
 from logging.config import dictConfig
 
-import uvicorn
 from dotenv import load_dotenv
 from fastapi.exception_handlers import http_exception_handler
 from prometheus_client import start_http_server
@@ -30,8 +29,10 @@ config = Config()
 # configure logging
 dictConfig(config.fastapi.uvicorn_logger)
 
+def get_config():
+    return config
 
-def main():
+def get_app():
     container_application = ContainerApplication()
     container_application.config.from_dict(config.model_dump())
 
@@ -88,16 +89,4 @@ def main():
     async def custom_http_exception_handler(request, exc):
         context["http_exception_details"] = str(exc)
         return await http_exception_handler(request, exc)
-
-    # For now, trust all IPs for proxy headers until https://github.com/encode/uvicorn/pull/1611 is available.
-    uvicorn.run(
-        app,
-        host=config.fastapi.api_host,
-        port=config.fastapi.api_port,
-        log_config=config.fastapi.uvicorn_logger,
-        forwarded_allow_ips="*",
-    )
-
-
-if __name__ == "__main__":
-    main()
+    return app
