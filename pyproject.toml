@@ -24,7 +24,7 @@ fastapi-health = "^0.4.0"
 google-cloud-aiplatform = "^1.36.4"
 structlog = "^24.0.0"
 asgi-correlation-id = "^4.1.0"
-prometheus-fastapi-instrumentator = "^6.0.0"
+prometheus-fastapi-instrumentator = "^7.0.0"
 python-jose = {extras = ["cryptography"], version = "^3.3.0"}
 starlette-context = "^0.3.6"
 google-cloud-profiler = "^4.0.0"
