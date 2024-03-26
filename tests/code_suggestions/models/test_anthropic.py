@@ -34,7 +34,6 @@ from ai_gateway.models import (
     AnthropicAPITimeoutError,
     AnthropicChatModel,
     AnthropicModel,
-    KindAnthropicChatModel,
     KindAnthropicModel,
     Message,
     Role,
@@ -703,7 +702,7 @@ class TestAnthropicChatModel:
     @pytest.mark.asyncio
     async def test_anthropic_model_generate_instrumented(self):
         model = AnthropicChatModel(
-            model_name=KindAnthropicChatModel.CLAUDE_3_HAIKU.value,
+            model_name=KindAnthropicModel.CLAUDE_3_HAIKU.value,
             client=Mock(spec=AsyncAnthropic),
         )
         model.client.messages.create = AsyncMock()
@@ -728,7 +727,7 @@ class TestAnthropicChatModel:
                     message=AMessage(
                         id="msg_01PE3CarfxWEG2taV9AygzH9",
                         content=[],
-                        model=KindAnthropicChatModel.CLAUDE_3_HAIKU.value,
+                        model=KindAnthropicModel.CLAUDE_3_HAIKU.value,
                         role="assistant",
                         stop_reason=None,
                         stop_sequence=None,
@@ -755,7 +754,7 @@ class TestAnthropicChatModel:
                 yield item
 
         model = AnthropicChatModel(
-            model_name=KindAnthropicChatModel.CLAUDE_3_HAIKU.value,
+            model_name=KindAnthropicModel.CLAUDE_3_HAIKU.value,
             client=Mock(spec=AsyncAnthropic),
         )
         model.client.messages.create = AsyncMock(side_effect=mock_stream)
@@ -803,7 +802,7 @@ class TestAnthropicChatModel:
                         message=AMessage(
                             id="msg_01PE3CarfxWEG2taV9AygzH9",
                             content=[],
-                            model=KindAnthropicChatModel.CLAUDE_3_HAIKU,
+                            model=KindAnthropicModel.CLAUDE_3_HAIKU,
                             role="assistant",
                             stop_reason=None,
                             stop_sequence=None,

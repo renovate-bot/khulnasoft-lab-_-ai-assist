@@ -1,8 +1,8 @@
 from time import time
-from typing import AsyncIterator
+from typing import AsyncIterator, Union
 
 import structlog
-from dependency_injector.providers import Factory
+from dependency_injector.providers import FactoryAggregate
 from fastapi import APIRouter, Depends, HTTPException, Request, status
 from starlette.authentication import requires
 
@@ -11,6 +11,7 @@ from ai_gateway.api.v1.chat.typing import (
     ChatRequest,
     ChatResponse,
     ChatResponseMetadata,
+    PromptPayload,
     StreamChatResponse,
 )
 from ai_gateway.async_dependency_resolver import (
@@ -20,9 +21,9 @@ from ai_gateway.models import (
     AnthropicAPIConnectionError,
     AnthropicAPIStatusError,
     AnthropicAPITimeoutError,
-    AnthropicModel,
     KindModelProvider,
     TextGenModelChunk,
+    TextGenModelOutput,
 )
 from ai_gateway.tracking import log_exception
 
@@ -41,25 +42,16 @@ router = APIRouter()
 async def chat(
     request: Request,
     chat_request: ChatRequest,
-    anthropic_claude_factory: Factory[AnthropicModel] = Depends(
+    anthropic_claude_factory: FactoryAggregate = Depends(
         get_chat_anthropic_claude_factory_provider
     ),
 ):
     prompt_component = chat_request.prompt_components[0]
     payload = prompt_component.payload
 
-    anthropic_opts = {"name": payload.model}
-
-    if payload.params:
-        anthropic_opts.update(payload.params.dict())
-
-    model = anthropic_claude_factory(**anthropic_opts)
-
     try:
-        completion = await model.generate(
-            prefix=payload.content,
-            _suffix="",
-            stream=chat_request.stream,
+        completion = await _generate_completion(
+            anthropic_claude_factory, payload, stream=chat_request.stream
         )
 
         if isinstance(completion, AsyncIterator):
@@ -90,6 +82,35 @@ async def chat(
             status_code=status.HTTP_502_BAD_GATEWAY,
             detail="Anthropic API Connection Error.",
         )
+
+
+async def _generate_completion(
+    anthropic_claude_factory: FactoryAggregate,
+    prompt: PromptPayload,
+    stream: bool = False,
+) -> Union[TextGenModelOutput, AsyncIterator[TextGenModelChunk]]:
+    opts = prompt.params.dict() if prompt.params else {}
+
+    if isinstance(prompt.content, str):
+        factory_type = (
+            "llm"  # retrieve `AnthropicModel` from the FactoryAggregate object
+        )
+        opts.update({"prefix": prompt.content, "stream": stream})
+    else:  # otherwise, `list[Message]`
+        factory_type = (
+            "chat"  # retrieve `AnthropicChatModel` from the FactoryAggregate object
+        )
+        opts.update({"messages": prompt.content, "stream": stream})
+
+        # Hack: Anthropic renamed the `max_tokens_to_sample` arg to `max_tokens` for the new Message API
+        if max_tokens := opts.pop("max_tokens_to_sample", None):
+            opts["max_tokens"] = max_tokens
+
+    completion = await anthropic_claude_factory(
+        factory_type, name=prompt.model
+    ).generate(**opts)
+
+    return completion
 
 
 async def _handle_stream(
