@@ -1,9 +1,9 @@
-from typing import Annotated, List, Literal, Optional
+from typing import Annotated, List, Literal, Optional, Union
 
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field, StringConstraints
 
-from ai_gateway.models import KindAnthropicModel, KindModelProvider
+from ai_gateway.models import KindAnthropicModel, KindModelProvider, Message
 
 __all__ = [
     "ChatRequest",
@@ -31,7 +31,10 @@ class AnthropicParams(BaseModel):
 
 
 class PromptPayload(BaseModel):
-    content: Annotated[str, StringConstraints(max_length=400000)]
+    content: Union[
+        Annotated[str, StringConstraints(max_length=400000)],
+        Annotated[list[Message], Field(min_length=1, max_length=10)],
+    ]
     provider: Optional[Literal[KindModelProvider.ANTHROPIC]] = (
         None  # We only support and expect Anthropic for now
     )

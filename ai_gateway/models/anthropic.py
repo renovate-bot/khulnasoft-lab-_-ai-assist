@@ -32,7 +32,6 @@ __all__ = [
     "AnthropicModel",
     "AnthropicChatModel",
     "KindAnthropicModel",
-    "KindAnthropicChatModel",
 ]
 
 log = structlog.stdlib.get_logger("codesuggestions")
@@ -70,10 +69,6 @@ class KindAnthropicModel(str, Enum):
     CLAUDE_INSTANT_1_2 = "claude-instant-1.2"
     CLAUDE_2_0 = "claude-2.0"
     CLAUDE_2_1 = "claude-2.1"
-
-
-class KindAnthropicChatModel(str, Enum):
-    # These models are compatible with Messages API
     CLAUDE_3_OPUS = "claude-3-opus-20240229"
     CLAUDE_3_SONNET = "claude-3-sonnet-20240229"
     CLAUDE_3_HAIKU = "claude-3-haiku-20240307"
@@ -223,7 +218,7 @@ class AnthropicChatModel(ChatModelBase):
         self,
         client: AsyncAnthropic,
         version: str = DEFAULT_VERSION,
-        model_name: str = KindAnthropicChatModel.CLAUDE_3_HAIKU.value,
+        model_name: str = KindAnthropicModel.CLAUDE_3_HAIKU.value,
         **kwargs: Any,
     ):
         client_opts = self._obtain_client_opts(version, **kwargs)
@@ -308,12 +303,12 @@ class AnthropicChatModel(ChatModelBase):
     @classmethod
     def from_model_name(
         cls,
-        name: Union[str, KindAnthropicChatModel],
+        name: Union[str, KindAnthropicModel],
         client: AsyncAnthropic,
         **kwargs: Any,
     ):
         try:
-            kind_model = KindAnthropicChatModel(name)
+            kind_model = KindAnthropicModel(name)
         except ValueError:
             raise ValueError(f"no model found by the name '{name}'")
 
