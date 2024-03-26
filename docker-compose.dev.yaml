@@ -8,6 +8,6 @@ services:
       # Can be created via ./setup.sh
       - .env
     ports:
-      - "${API_EXTERNAL_PORT:-5000}:5000"
+      - "${API_EXTERNAL_PORT:-5001}:${AIGW_FASTAPI__API_PORT}"
       - "${METRICS_EXTERNAL_PORT:-8082}:8082"
     hostname: ai-gateway
