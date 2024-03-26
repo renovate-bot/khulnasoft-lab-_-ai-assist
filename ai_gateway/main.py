@@ -13,6 +13,7 @@ def run_app():
         log_config=config.fastapi.uvicorn_logger,
         forwarded_allow_ips="*",
         reload=config.fastapi.reload,
+        factory=True
     )
 
 
