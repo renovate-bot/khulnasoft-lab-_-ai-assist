@@ -17,7 +17,7 @@ spec:
   liveness_probe:
     path: "/monitoring/healthz"
   scalability:
-    min_instances: 9
+    min_instances: 4
     max_instances: 200
     max_instance_request_concurrency: 40
   resources:
