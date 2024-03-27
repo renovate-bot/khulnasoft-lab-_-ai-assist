@@ -1,8 +1,7 @@
 from fastapi import FastAPI
 
 from ai_gateway.app import get_app, get_config
-from ai_gateway.config import ConfigFastApi
-from ai_gateway.config import Config
+from ai_gateway.config import Config, ConfigFastApi
 
 
 def test_get_config():
