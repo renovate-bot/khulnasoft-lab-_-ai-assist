@@ -33,7 +33,7 @@ class AnthropicParams(BaseModel):
 class PromptPayload(BaseModel):
     content: Union[
         Annotated[str, StringConstraints(max_length=400000)],
-        Annotated[list[Message], Field(min_length=1, max_length=10)],
+        Annotated[list[Message], Field(min_length=1, max_length=100)],
     ]
     provider: Optional[Literal[KindModelProvider.ANTHROPIC]] = (
         None  # We only support and expect Anthropic for now

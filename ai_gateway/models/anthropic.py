@@ -81,7 +81,7 @@ class AnthropicModel(TextGenBaseModel):
     Ref: https://docs.anthropic.com/claude/reference/migrating-from-text-completions-to-messages
     """
 
-    # Ref: https://docs.anthropic.com/claude/reference/selecting-a-model
+    # Ref: https://docs.anthropic.com/claude/docs/models-overview#model-comparison
     MAX_MODEL_LEN = 100_000
 
     # Ref: https://docs.anthropic.com/claude/reference/versioning
@@ -194,8 +194,8 @@ class AnthropicModel(TextGenBaseModel):
 
 
 class AnthropicChatModel(ChatModelBase):
-    # Ref: https://docs.anthropic.com/claude/reference/selecting-a-model
-    MAX_MODEL_LEN = 100_000
+    # Ref: https://docs.anthropic.com/claude/docs/models-overview#model-comparison
+    MAX_MODEL_LEN = 200_000
 
     # Ref: https://docs.anthropic.com/claude/reference/versioning
     DEFAULT_VERSION = "2023-06-01"

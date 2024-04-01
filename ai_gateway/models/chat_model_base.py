@@ -1,8 +1,8 @@
 from abc import ABC, abstractmethod
 from enum import Enum
-from typing import AsyncIterator, Union
+from typing import Annotated, AsyncIterator, Union
 
-from pydantic import BaseModel
+from pydantic import BaseModel, StringConstraints
 
 from ai_gateway.config import Config
 from ai_gateway.instrumentators.model_requests import ModelRequestInstrumentator
@@ -22,7 +22,7 @@ class Role(str, Enum):
 
 class Message(BaseModel):
     role: Role
-    content: str
+    content: Annotated[str, StringConstraints(max_length=400000)]
 
 
 class ChatModelBase(ABC):
