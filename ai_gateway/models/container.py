@@ -4,9 +4,9 @@ from anthropic import AsyncAnthropic
 from dependency_injector import containers, providers
 from google.cloud.aiplatform.gapic import PredictionServiceAsyncClient
 
+from ai_gateway.models import mock
 from ai_gateway.models.anthropic import AnthropicChatModel, AnthropicModel
 from ai_gateway.models.base import connect_anthropic, grpc_connect_vertex
-from ai_gateway.models.fake import FakePalmTextGenModel
 from ai_gateway.models.vertex_text import (
     PalmCodeBisonModel,
     PalmCodeGeckoModel,
@@ -18,14 +18,10 @@ __all__ = [
 ]
 
 
-def _real_or_fake(use_fake: bool) -> str:
-    return "fake" if use_fake else "real"
-
-
 def _init_vertex_grpc_client(
-    endpoint: str, use_fake: bool
+    endpoint: str, mock_model_responses: bool
 ) -> Iterator[Optional[PredictionServiceAsyncClient]]:
-    if use_fake:
+    if mock_model_responses:
         yield None
         return
 
@@ -34,8 +30,10 @@ def _init_vertex_grpc_client(
     client.transport.close()
 
 
-def _init_anthropic_client(use_fake: bool) -> Iterator[Optional[AsyncAnthropic]]:
-    if use_fake:
+def _init_anthropic_client(
+    mock_model_responses: bool,
+) -> Iterator[Optional[AsyncAnthropic]]:
+    if mock_model_responses:
         yield None
         return
 
@@ -50,66 +48,68 @@ class ContainerModels(containers.DeclarativeContainer):
 
     config = providers.Configuration(strict=True)
 
-    real_or_fake = providers.Callable(_real_or_fake, config.use_fake_models)
+    _mock_selector = providers.Callable(
+        lambda mock_model_responses: "mocked" if mock_model_responses else "original",
+        config.mock_model_responses,
+    )
 
     grpc_client_vertex = providers.Resource(
         _init_vertex_grpc_client,
         endpoint=config.vertex_text_model.endpoint,
-        use_fake=config.use_fake_models,
+        mock_model_responses=config.mock_model_responses,
     )
 
     http_client_anthropic = providers.Resource(
-        _init_anthropic_client, use_fake=config.use_fake_models
+        _init_anthropic_client,
+        mock_model_responses=config.mock_model_responses,
     )
 
     vertex_text_bison = providers.Selector(
-        real_or_fake,
-        real=providers.Factory(
+        _mock_selector,
+        original=providers.Factory(
             PalmTextBisonModel.from_model_name,
             client=grpc_client_vertex,
             project=config.vertex_text_model.project,
             location=config.vertex_text_model.location,
         ),
-        fake=providers.Factory(FakePalmTextGenModel),
+        mocked=providers.Factory(mock.LLM),
     )
 
     vertex_code_bison = providers.Selector(
-        real_or_fake,
-        real=providers.Factory(
+        _mock_selector,
+        original=providers.Factory(
             PalmCodeBisonModel.from_model_name,
             client=grpc_client_vertex,
             project=config.vertex_text_model.project,
             location=config.vertex_text_model.location,
         ),
-        fake=providers.Factory(FakePalmTextGenModel),
+        mocked=providers.Factory(mock.LLM),
     )
 
     vertex_code_gecko = providers.Selector(
-        real_or_fake,
-        real=providers.Factory(
+        _mock_selector,
+        original=providers.Factory(
             PalmCodeGeckoModel.from_model_name,
             client=grpc_client_vertex,
             project=config.vertex_text_model.project,
             location=config.vertex_text_model.location,
         ),
-        fake=providers.Factory(FakePalmTextGenModel),
+        mocked=providers.Factory(mock.LLM),
     )
 
     anthropic_claude = providers.Selector(
-        real_or_fake,
-        real=providers.Factory(
+        _mock_selector,
+        original=providers.Factory(
             AnthropicModel.from_model_name, client=http_client_anthropic
         ),
-        # TODO: We need to update our fake models to make them generic
-        fake=providers.Factory(FakePalmTextGenModel),
+        mocked=providers.Factory(mock.LLM),
     )
 
     anthropic_claude_chat = providers.Selector(
-        real_or_fake,
-        real=providers.Factory(
+        _mock_selector,
+        original=providers.Factory(
             AnthropicChatModel.from_model_name,
             client=http_client_anthropic,
         ),
-        # TODO: We need to update our fake models to make them generic
-        fake=providers.Factory(FakePalmTextGenModel),
+        mocked=providers.Factory(mock.ChatModel),
     )

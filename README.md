@@ -112,11 +112,11 @@ value `'None'`.
 1. Start the model-gateway server locally: `poetry run ai_gateway`
 1. Open `http://localhost:5052/docs` in your browser and run any requests to the model
 
-### Faking out AI models
+### Mocking AI model responses
 
-If you do not require real models to run and evaluate inputs, you can fake out these dependencies
-by setting the `USE_FAKE_MODELS` environment variable. This will return a canned response for
-code suggestions, while allowing you to run an otherwise fully functional model gateway.
+If you do not require real models to run and evaluate the input data, you can mock the model responses
+by setting the environment variable `AIGW_MOCK_MODEL_RESPONSES=true`.
+The models will start echoing the given prompts, while allowing you to run a fully functional AI gateway.
 
 This can be useful for testing middleware, request/response interface contracts, logging, and other
 uses cases that do not require an AI model to execute.

@@ -1,7 +1,7 @@
 from typing import Annotated, Optional
 
 from dotenv import find_dotenv
-from pydantic import BaseModel, Field, RootModel
+from pydantic import AliasChoices, BaseModel, Field, RootModel
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 __all__ = [
@@ -17,6 +17,8 @@ __all__ = [
     "ConfigVertexTextModel",
     "ConfigModelConcurrency",
 ]
+
+ENV_PREFIX = "AIGW"
 
 
 class ConfigLogging(BaseModel):
@@ -85,7 +87,7 @@ class ConfigModelConcurrency(RootModel):
 class Config(BaseSettings):
     model_config = SettingsConfigDict(
         env_nested_delimiter="__",
-        env_prefix="AIGW_",
+        env_prefix=f"{ENV_PREFIX}_",
         protected_namespaces=(),
         env_file=find_dotenv(),
         env_file_encoding="utf-8",
@@ -96,7 +98,13 @@ class Config(BaseSettings):
     gitlab_api_url: str = "https://gitlab.com/api/v4/"
     customer_portal_url: str = "https://customers.gitlab.com"
 
-    use_fake_models: bool = False
+    mock_model_responses: bool = Field(
+        validation_alias=AliasChoices(
+            f"{ENV_PREFIX.lower()}_mock_model_responses",
+            f"{ENV_PREFIX.lower()}_use_fake_models",  # Backward compatibility with the GitLab QA tests
+        ),
+        default=False,
+    )
 
     logging: Annotated[ConfigLogging, Field(default_factory=ConfigLogging)]
     fastapi: Annotated[ConfigFastApi, Field(default_factory=ConfigFastApi)]
