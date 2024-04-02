@@ -25,7 +25,7 @@ from ai_gateway.code_suggestions.processing.typing import (
 from ai_gateway.experimentation.base import ExperimentTelemetry
 from ai_gateway.models import ModelMetadata
 from ai_gateway.models.base import TokensConsumptionMetadata
-from ai_gateway.models.chat_model_base import Message, Role
+from ai_gateway.models.base_chat import Message, Role
 from ai_gateway.tracking.container import ContainerTracking
 from ai_gateway.tracking.instrumentator import SnowplowInstrumentator
 from ai_gateway.tracking.snowplow import (

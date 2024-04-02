@@ -14,7 +14,7 @@ from ai_gateway.code_suggestions.processing.post.completions import (
 from ai_gateway.code_suggestions.processing.pre import TokenizerTokenStrategy
 from ai_gateway.experimentation import experiment_registry_provider
 from ai_gateway.models import KindAnthropicModel, KindVertexTextModel, TextGenBaseModel
-from ai_gateway.models.chat_model_base import ChatModelBase
+from ai_gateway.models.base_chat import ChatModelBase
 from ai_gateway.tokenizer import init_tokenizer
 from ai_gateway.tracking.instrumentator import SnowplowInstrumentator
 
