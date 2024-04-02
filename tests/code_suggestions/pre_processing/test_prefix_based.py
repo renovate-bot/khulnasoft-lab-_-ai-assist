@@ -12,7 +12,7 @@ from ai_gateway.code_suggestions.processing.pre import (
     PromptBuilderPrefixBased,
     TokenizerTokenStrategy,
 )
-from ai_gateway.models.chat_model_base import Message, Role
+from ai_gateway.models.base_chat import Message, Role
 from ai_gateway.prompts import PromptTemplate
 
 # This template takes 4 tokens (ignore placeholders)
