@@ -23,7 +23,7 @@ from ai_gateway.models.base import (
     TextGenModelChunk,
     TextGenModelOutput,
 )
-from ai_gateway.models.chat_model_base import ChatModelBase, Message, Role
+from ai_gateway.models.base_chat import ChatModelBase, Message, Role
 
 __all__ = [
     "AnthropicAPIConnectionError",
@@ -183,7 +183,10 @@ class AnthropicModel(TextGenBaseModel):
 
     @classmethod
     def from_model_name(
-        cls, name: Union[str, KindAnthropicModel], client: AsyncAnthropic, **kwargs: Any
+        cls,
+        name: Union[str, KindAnthropicModel],
+        client: AsyncAnthropic,
+        **kwargs: Any,
     ):
         try:
             kind_model = KindAnthropicModel(name)

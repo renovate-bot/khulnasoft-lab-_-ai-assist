@@ -25,29 +25,50 @@ from ai_gateway.config import (
                 "AIGW_GITLAB_URL": "http://gitlab.test",
                 "AIGW_GITLAB_API_URL": "http://api.gitlab.test",
                 "AIGW_CUSTOMER_PORTAL_URL": "http://customer.gitlab.test",
-                "AIGW_USE_FAKE_MODELS": "yes",
+                "AIGW_MOCK_MODEL_RESPONSES": "true",
             },
             Config(
                 gitlab_url="http://gitlab.test",
                 gitlab_api_url="http://api.gitlab.test",
                 customer_portal_url="http://customer.gitlab.test",
-                use_fake_models=True,
+                # pydantic-settings does not allow omitting the prefix if validation_alias is set for the field
+                aigw_mock_model_responses=True,
             ),
         ),
     ],
 )
 def test_config_base(values: dict, expected: Config):
     with mock.patch.dict(os.environ, values, clear=True):
-        config = Config(_env_file=None)
+        config = Config(_env_file=None, _env_prefix="AIGW_")
 
-        keys = [
+        keys = {
             "gitlab_url",
             "gitlab_api_url",
             "customer_portal_url",
-            "use_fake_models",
-        ]
+            "mock_model_responses",
+        }
 
-        assert config.model_dump(include=keys) == expected.model_dump(include=keys)
+        actual = config.model_dump(include=keys)
+        assert actual == expected.model_dump(include=keys)
+        assert len(actual) == len(keys)
+
+
+@pytest.mark.parametrize(
+    ("values", "expected"),
+    [
+        # pydantic-settings does not allow omitting the prefix if validation_alias is set for the field
+        ({"AIGW_MOCK_MODEL_RESPONSES": "true"}, Config(aigw_mock_model_responses=True)),
+        (
+            {"AIGW_USE_FAKE_MODELS": "true"},
+            Config(aigw_mock_model_responses=True),
+        ),
+    ],
+)
+def test_mock_model_responses_b_compatibility(values: dict, expected: Config):
+    with mock.patch.dict(os.environ, values, clear=True):
+        config = Config(_env_file=None)
+
+        assert config.mock_model_responses == expected.mock_model_responses
 
 
 @pytest.mark.parametrize(
