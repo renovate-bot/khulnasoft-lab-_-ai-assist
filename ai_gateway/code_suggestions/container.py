@@ -14,6 +14,7 @@ from ai_gateway.code_suggestions.processing.post.completions import (
 from ai_gateway.code_suggestions.processing.pre import TokenizerTokenStrategy
 from ai_gateway.experimentation import experiment_registry_provider
 from ai_gateway.models import KindAnthropicModel, KindVertexTextModel, TextGenBaseModel
+from ai_gateway.models.chat_model_base import ChatModelBase
 from ai_gateway.tokenizer import init_tokenizer
 from ai_gateway.tracking.instrumentator import SnowplowInstrumentator
 
@@ -26,6 +27,7 @@ class ContainerCodeGenerations(containers.DeclarativeContainer):
     tokenizer = providers.Dependency(instance_of=PreTrainedTokenizerFast)
     vertex_code_bison = providers.Dependency(instance_of=TextGenBaseModel)
     anthropic_claude = providers.Dependency(instance_of=TextGenBaseModel)
+    anthropic_claude_chat = providers.Dependency(instance_of=ChatModelBase)
     snowplow_instrumentator = providers.Dependency(instance_of=SnowplowInstrumentator)
 
     vertex = providers.Factory(
@@ -47,6 +49,15 @@ class ContainerCodeGenerations(containers.DeclarativeContainer):
             anthropic_claude,
             stop_sequences=["</new_code>", anthropic.HUMAN_PROMPT],
         ),
+        tokenization_strategy=providers.Factory(
+            TokenizerTokenStrategy, tokenizer=tokenizer
+        ),
+        snowplow_instrumentator=snowplow_instrumentator,
+    )
+
+    anthropic_chat_factory = providers.Factory(
+        CodeGenerations,
+        model=providers.Factory(anthropic_claude_chat),
         tokenization_strategy=providers.Factory(
             TokenizerTokenStrategy, tokenizer=tokenizer
         ),
@@ -115,6 +126,7 @@ class ContainerCodeSuggestions(containers.DeclarativeContainer):
         tokenizer=tokenizer,
         vertex_code_bison=models.vertex_code_bison,
         anthropic_claude=models.anthropic_claude,
+        anthropic_claude_chat=models.anthropic_claude_chat,
         snowplow_instrumentator=snowplow.instrumentator,
     )
 

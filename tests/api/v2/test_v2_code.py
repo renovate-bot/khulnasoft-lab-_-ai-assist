@@ -25,6 +25,7 @@ from ai_gateway.code_suggestions.processing.typing import (
 from ai_gateway.experimentation.base import ExperimentTelemetry
 from ai_gateway.models import ModelMetadata
 from ai_gateway.models.base import TokensConsumptionMetadata
+from ai_gateway.models.chat_model_base import Message, Role
 from ai_gateway.tracking.container import ContainerTracking
 from ai_gateway.tracking.instrumentator import SnowplowInstrumentator
 from ai_gateway.tracking.snowplow import (
@@ -530,6 +531,7 @@ class TestCodeGenerations:
             "model_output_text",
             "want_vertex_called",
             "want_anthropic_called",
+            "want_anthropic_chat_called",
             "want_vertex_prompt_prepared_called",
             "want_anthropic_prompt_prepared_called",
             "want_status",
@@ -548,6 +550,7 @@ class TestCodeGenerations:
                 False,
                 False,
                 False,
+                False,
                 200,
                 None,
                 [{"text": "foo", "index": 0, "finish_reason": "length"}],
@@ -563,6 +566,7 @@ class TestCodeGenerations:
                 True,
                 False,
                 False,
+                False,
                 200,
                 None,
                 [{"text": "foo", "index": 0, "finish_reason": "length"}],
@@ -575,6 +579,7 @@ class TestCodeGenerations:
                 "code-bison@002",
                 "foo",
                 True,
+                False,
                 False,
                 False,
                 False,
@@ -593,6 +598,7 @@ class TestCodeGenerations:
                 False,
                 False,
                 False,
+                False,
                 200,
                 None,
                 [{"text": "foo", "index": 0, "finish_reason": "length"}],
@@ -608,6 +614,7 @@ class TestCodeGenerations:
                 False,
                 False,
                 False,
+                False,
                 200,
                 None,
                 [],
@@ -620,6 +627,7 @@ class TestCodeGenerations:
                 "code-bison@002",
                 "foo",
                 True,
+                False,
                 False,
                 True,
                 False,
@@ -637,6 +645,7 @@ class TestCodeGenerations:
                 False,
                 True,
                 False,
+                False,
                 True,
                 200,
                 "bar",
@@ -649,6 +658,7 @@ class TestCodeGenerations:
                 "anthropic",
                 "claude-2.0",
                 "foo",
+                False,
                 False,
                 False,
                 False,
@@ -667,11 +677,34 @@ class TestCodeGenerations:
                 False,
                 True,
                 False,
+                False,
                 True,
                 200,
                 "bar",
                 [],
             ),  # v2 empty suggestions from model
+            (
+                3,
+                "foo",
+                [
+                    {"role": "system", "content": "foo"},
+                    {"role": "user", "content": "bar"},
+                ],
+                "anthropic",
+                "claude-3-opus-20240229",
+                "foo",
+                False,
+                False,
+                True,
+                False,
+                True,
+                200,
+                [
+                    Message(role=Role.SYSTEM, content="foo"),
+                    Message(role=Role.USER, content="bar"),
+                ],
+                [{"text": "foo", "index": 0, "finish_reason": "length"}],
+            ),  # v3 with prompt - anthropic
         ],
     )
     def test_non_stream_response(
@@ -686,6 +719,7 @@ class TestCodeGenerations:
         model_output_text,
         want_vertex_called,
         want_anthropic_called,
+        want_anthropic_chat_called,
         want_vertex_prompt_prepared_called,
         want_anthropic_prompt_prepared_called,
         want_status,
@@ -707,10 +741,17 @@ class TestCodeGenerations:
             return_value=model_output
         )
 
+        code_generations_anthropic_chat_mock = mock.Mock(spec=CodeGenerations)
+        code_generations_anthropic_chat_mock.execute = mock.AsyncMock(
+            return_value=model_output
+        )
+
         with mock_container.code_suggestions.generations.vertex.override(
             code_generations_vertex_mock
         ), mock_container.code_suggestions.generations.anthropic_factory.override(
             code_generations_anthropic_mock
+        ), mock_container.code_suggestions.generations.anthropic_chat_factory.override(
+            code_generations_anthropic_chat_mock
         ):
             response = mock_client.post(
                 "/code/generations",
@@ -736,14 +777,23 @@ class TestCodeGenerations:
         assert response.status_code == want_status
         assert code_generations_vertex_mock.execute.called == want_vertex_called
         assert code_generations_anthropic_mock.execute.called == want_anthropic_called
+        assert (
+            code_generations_anthropic_chat_mock.execute.called
+            == want_anthropic_chat_called
+        )
 
         if want_vertex_prompt_prepared_called:
             code_generations_vertex_mock.with_prompt_prepared.assert_called_with(
                 want_prompt
             )
 
-        if want_anthropic_prompt_prepared_called:
+        if want_anthropic_prompt_prepared_called and want_anthropic_called:
             code_generations_anthropic_mock.with_prompt_prepared.assert_called_with(
+                want_prompt
+            )
+
+        if want_anthropic_prompt_prepared_called and want_anthropic_chat_called:
+            code_generations_anthropic_chat_mock.with_prompt_prepared.assert_called_with(
                 want_prompt
             )
 

@@ -54,3 +54,7 @@ async def get_code_suggestions_generations_vertex_provider():
 
 async def get_code_suggestions_generations_anthropic_factory_provider():
     yield get_container_application().code_suggestions.generations.anthropic_factory
+
+
+async def get_code_suggestions_generations_anthropic_chat_factory_provider():
+    yield get_container_application().code_suggestions.generations.anthropic_chat_factory

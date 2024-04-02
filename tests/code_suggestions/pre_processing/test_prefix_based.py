@@ -12,6 +12,7 @@ from ai_gateway.code_suggestions.processing.pre import (
     PromptBuilderPrefixBased,
     TokenizerTokenStrategy,
 )
+from ai_gateway.models.chat_model_base import Message, Role
 from ai_gateway.prompts import PromptTemplate
 
 # This template takes 4 tokens (ignore placeholders)
@@ -204,6 +205,25 @@ class TestPromptBuilderPrefixBased:
                     metadata=MetadataPromptBuilder(
                         components={
                             "prompt": MetadataCodeContent(length=11, length_tokens=3)
+                        }
+                    ),
+                ),
+            ),
+            (
+                [
+                    Message(role=Role.SYSTEM, content="random_text"),
+                    Message(role=Role.USER, content="random_another_text"),
+                ],
+                1,
+                True,
+                Prompt(
+                    prefix=[
+                        Message(role=Role.SYSTEM, content="random_text"),
+                        Message(role=Role.USER, content="random_another_text"),
+                    ],
+                    metadata=MetadataPromptBuilder(
+                        components={
+                            "prompt": MetadataCodeContent(length=30, length_tokens=8)
                         }
                     ),
                 ),

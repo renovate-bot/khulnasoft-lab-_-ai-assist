@@ -55,7 +55,7 @@ class CodeContent(NamedTuple):
 
 
 class Prompt(NamedTuple):
-    prefix: str
+    prefix: str | list
     metadata: MetadataPromptBuilder
     suffix: Optional[str] = None
 

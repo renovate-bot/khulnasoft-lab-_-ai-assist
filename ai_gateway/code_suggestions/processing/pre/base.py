@@ -7,6 +7,7 @@ from ai_gateway.code_suggestions.processing.typing import (
     Prompt,
     TokenStrategyBase,
 )
+from ai_gateway.models import Message
 from ai_gateway.prompts import PromptTemplateBase
 
 __all__ = [
@@ -38,8 +39,14 @@ class PromptBuilderBase(ABC):
 
         return tpl_len
 
-    def wrap(self, prompt: str, ignore_exception: bool = False) -> Prompt:
-        token_length = self.tkn_strategy.estimate_length(prompt)[0]
+    def wrap(
+        self, prompt: str | list[Message], ignore_exception: bool = False
+    ) -> Prompt:
+        if isinstance(prompt, list):
+            prompt_text = "".join(m.content for m in prompt)
+        else:
+            prompt_text = prompt
+        token_length = self.tkn_strategy.estimate_length(prompt_text)[0]
         if token_length > self.total_max_len and not ignore_exception:
             raise ValueError("the prompt size exceeds overall maximum length")
 
@@ -48,7 +55,7 @@ class PromptBuilderBase(ABC):
             metadata=MetadataPromptBuilder(
                 components={
                     "prompt": MetadataCodeContent(
-                        length=len(prompt),
+                        length=len(prompt_text),
                         length_tokens=token_length,
                     ),
                 }
