@@ -16,12 +16,14 @@ from ai_gateway.code_suggestions.processing.post.generations import (
 from ai_gateway.code_suggestions.processing.pre import PromptBuilderPrefixBased
 from ai_gateway.instrumentators import TextGenModelInstrumentator
 from ai_gateway.models import (
+    Message,
     ModelAPICallError,
     ModelAPIError,
     TextGenBaseModel,
     TextGenModelChunk,
     TextGenModelOutput,
 )
+from ai_gateway.models.chat_model_base import ChatModelBase
 from ai_gateway.prompts import PromptTemplate
 from ai_gateway.tracking.instrumentator import SnowplowInstrumentator
 from ai_gateway.tracking.snowplow import SnowplowEvent
@@ -78,7 +80,7 @@ class CodeGenerations:
 
         return prompt
 
-    def with_prompt_prepared(self, prompt: str):
+    def with_prompt_prepared(self, prompt: str | list[Message]):
         self.prompt = self.prompt_builder.wrap(prompt)
 
     async def execute(
@@ -110,9 +112,16 @@ class CodeGenerations:
             try:
                 watch_container.register_lang(lang_id, editor_lang)
 
-                if res := await self.model.generate(
-                    prompt.prefix, "", stream=stream, **kwargs
-                ):
+                if isinstance(self.model, ChatModelBase):
+                    res = await self.model.generate(
+                        prompt.prefix, stream=stream, **kwargs
+                    )
+                else:
+                    res = await self.model.generate(
+                        prompt.prefix, "", stream=stream, **kwargs
+                    )
+
+                if res:
                     if isinstance(res, AsyncIterator):
                         return self._handle_stream(res)
 
