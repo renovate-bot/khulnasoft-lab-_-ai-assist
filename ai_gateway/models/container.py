@@ -1,3 +1,4 @@
+import os
 from typing import Iterator, Optional
 
 from anthropic import AsyncAnthropic
@@ -19,11 +20,16 @@ __all__ = [
 
 
 def _init_vertex_grpc_client(
-    endpoint: str, mock_model_responses: bool
+    endpoint: str, mock_model_responses: bool, json_key: str = ""
 ) -> Iterator[Optional[PredictionServiceAsyncClient]]:
     if mock_model_responses:
         yield None
         return
+
+    if json_key:
+        with open("/tmp/vertex-client.json", "w") as f:
+            f.write(json_key)
+            os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = "/tmp/vertex-client.json"
 
     client = grpc_connect_vertex({"api_endpoint": endpoint})
     yield client
@@ -57,6 +63,7 @@ class ContainerModels(containers.DeclarativeContainer):
         _init_vertex_grpc_client,
         endpoint=config.vertex_text_model.endpoint,
         mock_model_responses=config.mock_model_responses,
+        json_key=config.vertex_text_model.json_key,
     )
 
     http_client_anthropic = providers.Resource(

@@ -75,6 +75,7 @@ class ConfigVertexTextModel(BaseModel):
     project: str = "unreview-poc-390200e5"
     location: str = "us-central1"
     endpoint: str = "us-central1-aiplatform.googleapis.com"
+    json_key: str = ""
 
 
 class ConfigModelConcurrency(RootModel):
