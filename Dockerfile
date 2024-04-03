@@ -44,4 +44,6 @@ COPY ai_gateway/ ai_gateway/
 COPY --from=install-image /app/scripts/bootstrap.py .
 RUN poetry run python bootstrap.py
 
+EXPOSE 5052
+
 CMD ["poetry", "run", "ai_gateway"]
