@@ -66,51 +66,30 @@ Below described the configuration per component
 
 ### API
 
-All parameters for the API are available from `api/config/config.py` which heavily relies on environment variables. An
-overview of all environment variables used and their default value, if you want to deviate you should make them
-available in a `.env`:
+All parameters for the API are available from `api/config/config.py` which heavily relies on environment
+variables. All supported environment variables with default values for development are specified in
+`example.env`.
 
-```shell
-API_EXTERNAL_PORT=5001  # External port for the API used in docker-compose
-METRICS_EXTERNAL_PORT=8082  # External port for the /metrics endpoint used in docker-compose
-AIGW_VERTEX_TEXT_MODEL__PROJECT=ai-enablement-dev-69497ba7
-AIGW_FASTAPI__API_HOST=0.0.0.0
-AIGW_FASTAPI__API_PORT=5000
-AIGW_FASTAPI__METRICS_HOST=0.0.0.0
-AIGW_FASTAPI__METRICS_PORT=8082
-# AIGW_FASTAPI__DOCS_URL=None  # To disable docs on the API endpoint
-# AIGW_FASTAPI__OPENAPI_URL=None  # To disable docs on the API endpoint
-# AIGW_FASTAPI__REDOC_URL=None  # To disable docs on the API endpoint
-# ANTHROPIC_API_KEY="SECRET_KEY_HERE" # To authenticate requests to the Anthropic models API
-AIGW_AUTH__BYPASS_EXTERNAL=False  # Can be used for local development to bypass the GitLab server side check
-AIGW_GITLAB_URL=https://gitlab.com/  # Can be changed to GDK: http://127.0.0.1:3000/
-AIGW_GITLAB_API_URL=https://gitlab.com/api/v4/  # Can be changed to GDK: http://127.0.0.1:3000/api/v4/
-```
-
-Note that the `AIGW_FASTAPI__xxx_URL` values must either be commented out or
-prefaced with a valid route that begins with `/`. `python-dotenv` will
-treat any value as a string, so specifying `None` maps to the Python
-value `'None'`.
+`python-dotenv` will treat any value as a string, so specifying `None` maps to the Python value `'None'`.
 
 ## How to run the server locally
 
 1. Clone project and change to project directory.
 1. Run `mise install` (recommended) or `asdf install`.
    - To install `mise`, see [instruction](https://mise.jdx.dev/getting-started.html).
-1. Create virtualenv and init shell: `poetry shell`
-1. Install dependencies: `poetry install`
+1. Create virtualenv and init shell: `poetry shell`.
+1. Install dependencies: `poetry install`.
 1. Copy the `example.env` file to `.env`: `cp example.env .env`
 1. Update the `.env` file in the root folder with the following variables:
 
    ```shell
-   AIGW_AUTH__BYPASS_EXTERNAL=true
-   AIGW_VERTEX_TEXT_MODEL__PROJECT=ai-enablement-dev-69497ba7
-   ANTHROPIC_API_KEY=<YOUR ACTIVE KEY> # Be sure to update this!
+   ANTHROPIC_API_KEY=<API_KEY>
    ```
-1. You can enable hot reload by setting the `AIGW_FASTAPI__RELOAD` environment variable to `True` in the `.env` file.
-1. Ensure you're authenticated with the `gcloud` CLI by running `gcloud auth application-default login`
-1. Start the model-gateway server locally: `poetry run ai_gateway`
-1. Open `http://localhost:5052/docs` in your browser and run any requests to the model
+
+1. You can enable hot reload by setting the `AIGW_FASTAPI__RELOAD` environment variable to `true` in the `.env` file.
+1. Ensure you're authenticated with the `gcloud` CLI by running `gcloud auth application-default login`.
+1. Start the model-gateway server locally: `poetry run ai_gateway`.
+1. Open `http://localhost:5052/docs` in your browser and run any requests to the model.
 
 ### Mocking AI model responses
 
@@ -123,9 +102,9 @@ uses cases that do not require an AI model to execute.
 
 ### Logging requests and responses during development
 
-AI Gateway workflow includes additional pre- and post-processing steps.
-If you want to log data between different steps for development purposes,
-please update the `.env` file by setting the following variables:
+AI Gateway workflow includes additional pre and post-processing steps. By default, the log level is `INFO` and
+application writes log to `stdout`. If you want to log data between different steps for development purposes
+and to a file, please update the `.env` file by setting the following variables:
 
 ```shell
 AIGW_LOGGING__LEVEL=debug
@@ -139,14 +118,14 @@ When `AIGW_AUTH__BYPASS_EXTERNAL` is true, OIDC provider discovery is skipped.
 To test OIDC, set the following in `.env`:
 
 ```shell
-AIGW_AUTH__BYPASS_EXTERNAL=False
+AIGW_AUTH__BYPASS_EXTERNAL=false
 
 # To test GitLab SaaS instance as OIDC provider
-AIGW_GITLAB_URL="http://127.0.0.1:3000/"
-AIGW_GITLAB_API_URL="http://127.0.0.1:3000/api/v4/"
+AIGW_GITLAB_URL=http://127.0.0.1:3000/
+AIGW_GITLAB_API_URL=http://127.0.0.1:3000/api/v4/
 
 # To test CustomersDot as OIDC provider
-AIGW_CUSTOMER_PORTAL_URL="http://127.0.0.1:5000"
+AIGW_CUSTOMER_PORTAL_URL=http://127.0.0.1:5000
 ```
 
 ## Local development using GDK
