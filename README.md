@@ -158,16 +158,6 @@ Then go to `/admin/application_settings/general`, expand `Account and limit`, an
 You also need to make sure that the group you are allowing, is actually `ultimate` as it's an `ultimate` only feature,
 go to `/admin/groups` select `Edit` on the group you are using, set `Plan` to `Ultimate`.
 
-In GDK you need to enable the feature flags:
-
-```ruby
-rails console
-
-g = Group.find(22)  # id of your root group
-Feature.enable(:ai_assist_api)
-Feature.enable(:ai_assist_flag, g)
-```
-
 ## Authentication
 
 The intended use of this API is to be called from a client such as the
