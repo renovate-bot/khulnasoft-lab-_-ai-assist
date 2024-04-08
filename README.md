@@ -17,7 +17,7 @@ You'll need:
 
 ### Google Cloud SDK
 
-Install and setup cloud sdk by following the [GCP docs](https://cloud.google.com/sdk/docs/install). Post installation, authorize your google account to setup credentials using the command - `gcloud init`.
+Set up a Google Cloud project with access to the Vertex AI API and authenticate to it locally by following [these instructions](https://docs.gitlab.com/ee/development/ai_features/#gcp-vertex).
 
 ## Developing
 
@@ -151,8 +151,16 @@ AIGW_CUSTOMER_PORTAL_URL="http://127.0.0.1:5000"
 
 ## Local development using GDK
 
-You can either run `make develop-local` or `docker-compose -f docker-compose.dev.yaml up --build --remove-orphans` this
-will run the API. If you need to change configuration for a Docker Compose service and add it to `docker-compose.override.yaml`.
+### Prerequisites
+
+Make sure you have credentials for a Google Cloud project (with the Vertex API enabled) located at `~/.config/gcloud/application_default_credentials.json`.
+This should happen automatically when you run `gcloud auth application-default login`. If for any reason this JSON file is at a
+different path, you will need to override the `volumes` configuration by creating or updating a `docker-compose.override.yaml` file.
+
+### Running the API
+
+You can either run `make develop-local` or `docker-compose -f docker-compose.dev.yaml up --build --remove-orphans`.
+If you need to change configuration for a Docker Compose service, you can add it to `docker-compose.override.yaml`.
 Any changes made to services in this file will be merged into the default settings.
 
 Next open the VS Code extension project, and run the development version of the GitLab Workflow extension locally. See [Configuring Development Environment](https://gitlab.com/gitlab-org/gitlab-vscode-extension/-/blob/main/CONTRIBUTING.md#configuring-development-environment) for more information.
@@ -166,10 +174,10 @@ export GITLAB_SIMULATE_SAAS=1
 gdk restart
 ```
 
-Then go to `admin/settings/general/account_and_limit` and enable `Allow use of licensed EE features`.
+Then go to `/admin/application_settings/general`, expand `Account and limit`, and enable `Allow use of licensed EE features`.
 
 You also need to make sure that the group you are allowing, is actually `ultimate` as it's an `ultimate` only feature,
-go to `admin/overview/groups` select `edit` on the group, set `plan` to `ultimate`.
+go to `/admin/groups` select `Edit` on the group you are using, set `Plan` to `Ultimate`.
 
 In GDK you need to enable the feature flags:
 
