@@ -55,9 +55,9 @@ include:
       image: "$CI_REGISTRY_IMAGE/model-gateway:${CI_COMMIT_SHORT_SHA}"
       runway_version: v2.24.3
 
-  - project: 'gitlab-org/quality/pipeline-common'
+  - project: "gitlab-org/quality/pipeline-common"
     file:
-      - '/ci/danger-review.yml'
+      - "/ci/danger-review.yml"
     rules:
       - if: $CI_SERVER_HOST == "gitlab.com"
 
@@ -128,8 +128,7 @@ tests:
   needs:
     - install
   script:
-    - poetry install --with test
-    - poetry run pytest --junitxml=".test-reports/tests.xml" --cov --cov-report term --cov-report xml:.test-reports/coverage.xml
+    - make test-coverage-ci
   coverage: '/(?i)total.*? (100(?:\.0+)?\%|[1-9]?\d(?:\.\d+)?\%)$/'
   artifacts:
     when: always
