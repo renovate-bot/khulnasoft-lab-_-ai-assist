@@ -1,0 +1,21 @@
+lint:
+  extends: .poetry
+  stage: lint
+  script:
+    - make lint
+    - poetry lock --no-update
+    - git diff --exit-code
+
+lint:commit:
+  stage: lint
+  image: registry.hub.docker.com/library/node:alpine
+  needs: []
+  before_script:
+    - apk add --no-cache git
+    - npm install --save-dev @commitlint/config-conventional @commitlint/cli
+    - |
+      echo "module.exports = { extends: ['@commitlint/config-conventional'] };" > commitlint.config.js
+  script:
+    - npx commitlint --from="$CI_MERGE_REQUEST_DIFF_BASE_SHA" --help-url 'https://www.conventionalcommits.org/en'
+  rules:
+    - if: "$CI_MERGE_REQUEST_DIFF_BASE_SHA"

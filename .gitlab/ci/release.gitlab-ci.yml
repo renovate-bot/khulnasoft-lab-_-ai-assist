@@ -1,0 +1,52 @@
+.semantic-release:
+  image: node:20
+  stage: release
+  before_script:
+    - npm install -g semantic-release @semantic-release/gitlab
+
+publish:
+  extends: .semantic-release
+  script:
+    - semantic-release
+  rules:
+    # Only protected branches on the official project
+    - if: $CI_COMMIT_BRANCH && $CI_COMMIT_REF_PROTECTED == 'true' && $CI_PROJECT_PATH == 'gitlab-org/modelops/applied-ml/code-suggestions/ai-assist' && $CI_API_V4_URL == "https://gitlab.com/api/v4"
+      when: manual
+
+publish-dryrun:
+  extends: .semantic-release
+  script:
+    # Overriding the variable that semantic-release runs on.
+    # https://github.com/pvdlg/env-ci/blob/master/services/gitlab.js
+    - git fetch origin refs/merge-requests/$CI_MERGE_REQUEST_IID/merge:$CI_MERGE_REQUEST_TARGET_BRANCH_NAME
+    - git checkout $CI_MERGE_REQUEST_TARGET_BRANCH_NAME
+    - export CI_COMMIT_REF_NAME=$CI_MERGE_REQUEST_TARGET_BRANCH_NAME
+    - unset CI_MERGE_REQUEST_ID
+    # Dry run
+    - semantic-release --dry-run
+  rules:
+    - if: $CI_MERGE_REQUEST_IID && $CI_PROJECT_PATH == 'gitlab-org/modelops/applied-ml/code-suggestions/ai-assist' && $CI_API_V4_URL == "https://gitlab.com/api/v4"
+  needs: []
+
+.docker-release:
+  extends: .docker
+  script:
+    - docker pull "${TARGET_IMAGE}"
+    - docker tag "${TARGET_IMAGE}" "${RELEASE_VERSION}"
+    - docker push "${RELEASE_VERSION}"
+
+release-docker-image:latest:
+  stage: release
+  extends: .docker-release
+  variables:
+    RELEASE_VERSION: "$DOCKER_AI_GATEWAY:latest"
+  rules:
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+
+release-docker-image:tag:
+  stage: release
+  extends: .docker-release
+  variables:
+    RELEASE_VERSION: "$DOCKER_AI_GATEWAY:$CI_COMMIT_TAG"
+  rules:
+    - if: $CI_COMMIT_TAG

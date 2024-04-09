@@ -31,6 +31,8 @@ variables:
   SAST_EXCLUDED_PATHS: "tests, tmp, api"
 
 include:
+  - local: .gitlab/ci/lint.gitlab-ci.yml
+  - local: .gitlab/ci/release.gitlab-ci.yml
   - template: Jobs/Container-Scanning.gitlab-ci.yml
   - template: Jobs/Dependency-Scanning.gitlab-ci.yml
   - template: Jobs/SAST.gitlab-ci.yml
@@ -87,26 +89,6 @@ cache:
     - docker:${DOCKER_VERSION}-dind
   before_script:
     - docker login -u "$CI_REGISTRY_USER" -p "$CI_REGISTRY_PASSWORD" "$CI_REGISTRY"
-
-.docker-release-latest:
-  extends: .docker
-  script:
-    - docker pull "${TARGET_IMAGE}"
-    - |
-      if [ -n "${RELEASED_IMAGE_COMMIT}" ]; then
-        docker tag "${TARGET_IMAGE}" "${RELEASED_IMAGE_COMMIT}"
-        docker push "${RELEASED_IMAGE_COMMIT}"
-      fi
-    - docker tag "${TARGET_IMAGE}" "${RELEASED_IMAGE_LATEST}"
-    - docker push "${RELEASED_IMAGE_LATEST}"
-
-lint:
-  extends: .poetry
-  stage: lint
-  script:
-    - make lint
-    - poetry lock --no-update
-    - git diff --exit-code
 
 install:
   extends: .poetry
@@ -191,11 +173,3 @@ semgrep-sast:
     - if: $CI_COMMIT_BRANCH && $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
     - if: $CI_MERGE_REQUEST_IID
     - if: $CI_COMMIT_TAG
-
-release-docker-model-gateway:
-  stage: release
-  extends: .docker-release-latest
-  variables:
-    RELEASED_IMAGE_LATEST: "$DOCKER_MODEL_GATEWAY:latest"
-  rules:
-    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
