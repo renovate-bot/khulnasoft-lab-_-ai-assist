@@ -19,17 +19,39 @@ You'll need:
 
 Set up a Google Cloud project with access to the Vertex AI API and authenticate to it locally by following [these instructions](https://docs.gitlab.com/ee/development/ai_features/#gcp-vertex).
 
-## Developing
+## Testing
 
-Before submitting merge requests, run lints and tests with the following commands
-from the root of the repository.
+This project uses [Pytest](https://docs.pytest.org/en/stable/) for testing.
+To run the entire test suite, you can use the following command:
 
 ```shell
-# Lint python files
-make lint
-
-# Run tests
 make test
+```
+
+To see test coverage, you can run the following command:
+
+```shell
+make test-coverage
+```
+
+This will run all the tests, output coverage in the terminal and generate an HTML report.
+You can view the HTML report by running:
+
+```shell
+open htmlcov/index.html
+```
+
+## Linting
+
+This project uses the following linting tools:
+
+- [Black](https://black.readthedocs.io/) for code style formatting.
+- [isort](https://pycqa.github.io/isort/) for sorting imports.
+
+To lint the entire projects, you can use the following command:
+
+```shell
+make lint
 ```
 
 There is an [internal recording](https://youtu.be/SXfLOYm4zS4) for GitLab members that provides an overview of this project.
