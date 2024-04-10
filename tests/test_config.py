@@ -238,9 +238,13 @@ def test_config_instrumentator(values: dict, expected: ConfigInstrumentator):
                 "AIGW_VERTEX_TEXT_MODEL__PROJECT": "project",
                 "AIGW_VERTEX_TEXT_MODEL__LOCATION": "location",
                 "AIGW_VERTEX_TEXT_MODEL__ENDPOINT": "endpoint",
+                "AIGW_VERTEX_TEXT_MODEL__JSON_KEY": "secret",
             },
             ConfigVertexTextModel(
-                project="project", location="location", endpoint="endpoint"
+                project="project",
+                location="location",
+                endpoint="endpoint",
+                json_key="secret",
             ),
         ),
     ],
