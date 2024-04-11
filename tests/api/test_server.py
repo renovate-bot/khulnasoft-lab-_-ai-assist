@@ -1,4 +1,5 @@
 import asyncio
+import os
 import socket
 from typing import Iterator, cast
 from unittest.mock import MagicMock
@@ -54,15 +55,17 @@ def container_application():
     return container_app
 
 
-@pytest.fixture(scope="module")
-def fastapi_server_app() -> Iterator[FastAPI]:
-    # Disable authorization for testing purposes
-    config = Config(_env_file=None, auth=ConfigAuth(bypass_external=True))
+@pytest.fixture(scope="session")
+def auth_enabled():
+    return os.environ.get("AIGW_AUTH__BYPASS_EXTERNAL", "False") == "False"
 
+
+@pytest.fixture(scope="session")
+def fastapi_server_app(auth_enabled) -> Iterator[FastAPI]:
+    config = Config(_env_file=None, auth=ConfigAuth(bypass_external=not auth_enabled))
     fast_api_container = ContainerApplication()
     fast_api_container.config.from_dict(config.model_dump())
-
-    yield create_fast_api_server(Config())
+    yield create_fast_api_server(config)
 
 
 @pytest.mark.parametrize("routes_expected", [_ROUTES_V1, _ROUTES_V2, _ROUTES_V3])
@@ -87,6 +90,7 @@ class TestServerRoutes:
     def test_routes_reachable(
         self,
         fastapi_server_app: FastAPI,
+        auth_enabled: bool,
         routes_expected: list,
     ):
         client = TestClient(fastapi_server_app)
@@ -97,11 +101,14 @@ class TestServerRoutes:
 
         for path, method in routes_expected:
             res = client.request(method, path)
-            if method == "POST":
-                # We're checking the route availability only
-                assert res.status_code == 422
+            if auth_enabled:
+                assert res.status_code == 401
             else:
-                assert False
+                if method == "POST":
+                    # We're checking the route availability only
+                    assert res.status_code == 422
+                else:
+                    assert False
 
 
 def test_setup_router():
@@ -154,11 +161,14 @@ async def test_lifespan(config, app, unused_port, monkeypatch):
     assert mock_container_app.return_value.shutdown_resources.called_once()
 
 
-def test_middleware_authentication(fastapi_server_app: FastAPI):
+def test_middleware_authentication(fastapi_server_app: FastAPI, auth_enabled: bool):
     client = TestClient(fastapi_server_app)
 
     response = client.post("/v1/chat/agent")
-    assert response.status_code == 422
+    if auth_enabled:
+        assert response.status_code == 401
+    else:
+        assert response.status_code == 422
 
     response = client.get("/monitoring/healthz")
     assert response.status_code == 200
