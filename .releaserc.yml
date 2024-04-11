@@ -1,0 +1,17 @@
+---
+
+npmPublish: false
+# See https://semantic-release.gitbook.io/semantic-release/usage/configuration#branches.
+branches:
+  - name: main
+  - name: '+([0-9])?(.{+([0-9]),x}).x'
+# See the following links for more information.
+# - https://github.com/semantic-release/semantic-release/blob/master/docs/usage/plugins.md#plugins
+# - https://semantic-release.gitbook.io/semantic-release/extending/plugins-list#official-plugins
+verifyConditions:
+  - "@semantic-release/gitlab"
+prepare: false
+publish:
+  - "@semantic-release/gitlab"
+success: false
+fail: false
