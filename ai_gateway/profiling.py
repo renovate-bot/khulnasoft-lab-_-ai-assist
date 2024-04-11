@@ -3,9 +3,10 @@ import os
 import googlecloudprofiler
 
 from ai_gateway.config import ConfigGoogleCloudProfiler
+from ai_gateway.tracking import log_exception
 
 
-def setup_profiling(google_cloud_profiler: ConfigGoogleCloudProfiler, logger):
+def setup_profiling(google_cloud_profiler: ConfigGoogleCloudProfiler):
     if not google_cloud_profiler.enabled:
         return
 
@@ -21,4 +22,4 @@ def setup_profiling(google_cloud_profiler: ConfigGoogleCloudProfiler, logger):
             period_ms=google_cloud_profiler.period_ms,
         )
     except (ValueError, NotImplementedError) as exc:
-        logger.error("failed to setup Google Cloud Profiler: %s", exc)
+        log_exception(exc)
