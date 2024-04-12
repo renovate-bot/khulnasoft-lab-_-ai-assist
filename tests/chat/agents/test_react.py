@@ -127,7 +127,7 @@ class TestReActAgent:
             "question",
             "chat_history",
             "agent_scratchpad",
-            "current_resource",
+            "resource",
             "expected_action",
         ),
         [
@@ -195,7 +195,7 @@ class TestReActAgent:
         question: str,
         chat_history: list[str] | str,
         agent_scratchpad: list[AgentStep],
-        current_resource: Resource | None,
+        resource: Resource | None,
         expected_action: ReActAgentAction | ReActAgentFinalAnswer,
     ):
         def _model_generate(*args, **kwargs):
@@ -210,14 +210,16 @@ class TestReActAgent:
         prompt = prompt_registry.get_chat_prompt(
             "react",
             tools=GitLabToolkit().get_tools(),
-            current_resource=current_resource,
+            resource_type=resource.type if resource else None,
         )
 
         model.generate = AsyncMock(side_effect=_model_generate)
         agent = ReActAgent(prompt=prompt, model=model)
         agent.agent_scratchpad.extend(agent_scratchpad)
 
-        inputs = ReActAgentInputs(question=question, chat_history=chat_history)
+        inputs = ReActAgentInputs(
+            question=question, chat_history=chat_history, resource=resource
+        )
         actual_action = await agent.invoke(inputs)
 
         chat_history_formatted = chat_history_plain_text_renderer(inputs)
@@ -229,13 +231,21 @@ class TestReActAgent:
             question=question,
             chat_history=chat_history_formatted,
             agent_scratchpad=agent_scratchpad_formatted,
+            resource_content=resource.content if resource else "",
         )
         messages = {message.role: message for message in messages}
 
         model.generate.assert_called_once_with(
             list(messages.values()), stream=False, stop_sequence=["Observation:"]
         )
+
         assert chat_history_formatted in messages[Role.SYSTEM].content
+        assert resource.content in messages[Role.SYSTEM].content if resource else True
+        assert (
+            "{resource_content}" not in messages[Role.SYSTEM].content
+            if not resource
+            else True
+        )
         assert question in messages[Role.USER].content
         assert agent_scratchpad_formatted in messages[Role.ASSISTANT].content
         assert actual_action == expected_action

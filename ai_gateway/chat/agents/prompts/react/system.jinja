@@ -2,21 +2,21 @@
 
 {% include "react/system_base.jinja" %}
 
-{%- if current_resource and current_resource.type == "issue" -%}
+{%- if resource_type|default("none") == "issue" -%}
 The user is currently on a page that shows an issue which has a description, comments, etc.
 Which the user might reference for example as "current", "this" or "that".
 
 Here is additional data in <resource></resource> tags about the resource the user is working with:
 <resource>
-{{ current_resource.content }}
+{resource_content}
 </resource>
-{%- elif current_resource and current_resource.type == "epic" -%}
+{%- elif resource_type|default("none") == "epic" -%}
 The user is currently on a page that shows an epic which has a description, comments, etc.
 Which the user might reference for example as "current", "this" or "that".
 
 Here is additional data in <resource></resource> tags about the resource the user is working with:
 <resource>
-{{ current_resource.content }}
+{resource_content}
 </resource>
 {%- endif -%}
 
