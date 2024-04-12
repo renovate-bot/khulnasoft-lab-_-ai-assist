@@ -1,0 +1,32 @@
+apiVersion: runway/v1.0.0-beta
+kind: RunwayService
+metadata:
+  name: ai_gateway
+  department: eng-dev
+  department_group: eng-dev-create-shared-infra
+  product_category: code_creation
+  owner_email_handle: mnohr
+spec:
+  image: "$CI_REGISTRY_IMAGE/model-gateway:${CI_COMMIT_SHORT_SHA}"
+  request_timeout: 60
+  observability:
+    scrape_targets:
+      - "localhost:8082"
+  startup_probe:
+    path: "/monitoring/healthz"
+    initial_delay_seconds: 20
+    period_seconds: 10
+    failure_threshold: 24
+  liveness_probe:
+    path: "/monitoring/healthz"
+  scalability:
+    min_instances: 4
+    max_instances: 200
+    max_instance_request_concurrency: 40
+  resources:
+    startup_cpu_boost: true
+    limits:
+      cpu: 2000m
+      memory: 8G
+  network_policies:
+    cloudflare: true
