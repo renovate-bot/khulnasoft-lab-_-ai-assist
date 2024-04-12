@@ -185,4 +185,4 @@ def test_middleware_log_request(fastapi_server_app: FastAPI, caplog):
     with caplog.at_level("INFO"):
         client.get("/metrics")
         log_messages = [record.message for record in caplog.records]
-        assert all("Incoming request" not in msg for msg in log_messages)
+        assert all("HTTP Request" not in msg for msg in log_messages)
