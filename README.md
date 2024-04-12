@@ -45,14 +45,32 @@ open htmlcov/index.html
 
 This project uses the following linting tools:
 
-- [Black](https://black.readthedocs.io/) for code style formatting.
-- [isort](https://pycqa.github.io/isort/) for sorting imports.
+- [Black](https://black.readthedocs.io/): Enforces a consistent code style.
+- [isort](https://pycqa.github.io/isort/): Organizes and sorts imports.
+- [pylint](https://pylint.pycqa.org): Analyzes code for potential errors and style issues.
+- [mypy](https://mypy-lang.org): Performs static type checking.
 
 To lint the entire projects, you can use the following command:
 
 ```shell
 make lint
 ```
+
+We are incrementally rolling out `mypy` static type checker to the project
+([issue](https://gitlab.com/gitlab-org/modelops/applied-ml/code-suggestions/ai-assist/-/issues/246)).
+To show outstanding `mypy` warnings, you can use the following command:
+
+```shell
+make check-mypy TODO=true
+```
+
+To fix linting errors, you can use the following command:
+
+```shell
+make format
+```
+
+The `format` command only addresses `black` and `isort` issues.
 
 There is an [internal recording](https://youtu.be/SXfLOYm4zS4) for GitLab members that provides an overview of this project.
 
