@@ -55,7 +55,7 @@ include:
     inputs:
       runway_service_id: ai-gateway
       image: "$CI_REGISTRY_IMAGE/model-gateway:${CI_COMMIT_SHORT_SHA}"
-      runway_version: v2.27.2
+      runway_version: v2.28.0
 
   - project: "gitlab-org/quality/pipeline-common"
     file:
