@@ -1,3 +1,4 @@
+# https://gitlab-com.gitlab.io/gl-infra/platform/runway/runwayctl/manifest.schema.html
 apiVersion: runway/v1.0.0-beta
 kind: RunwayService
 metadata:
