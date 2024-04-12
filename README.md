@@ -117,7 +117,8 @@ variables. All supported environment variables with default values for developme
 1. Clone project and change to project directory.
 1. Run `mise install` (recommended) or `asdf install`.
    - To install `mise`, see [instruction](https://mise.jdx.dev/getting-started.html).
-1. Create virtualenv and init shell: `poetry shell`.
+1. Init shell: `poetry shell`.
+1. [Activate virtualenv](#how-to-manually-activate-the-virtualenv).
 1. Install dependencies: `poetry install`.
 1. Copy the `example.env` file to `.env`: `cp example.env .env`
 1. Update the `.env` file in the root folder with the following variables:
@@ -167,6 +168,14 @@ AIGW_GITLAB_API_URL=http://127.0.0.1:3000/api/v4/
 # To test CustomersDot as OIDC provider
 AIGW_CUSTOMER_PORTAL_URL=http://127.0.0.1:5000
 ```
+
+### How to manually activate the virtualenv
+
+- `poetry shell` or `poetry install` should create the virtualenv environment. 
+- To activate virtualenv, use command: `. ./.venv/bin/activate`. 
+- To deactivate your virtualenv, use command: `deactivate`. 
+- To list virtualenvs, use `poetry env list`. 
+- To remove virtualenv, use `poetry env remove [name of virtualenv]`.
 
 ## Local development using GDK
 
