@@ -180,9 +180,11 @@ def test_middleware_log_request(fastapi_server_app: FastAPI, caplog):
     with caplog.at_level("INFO"):
         client.post("/v1/chat/agent")
         log_messages = [record.message for record in caplog.records]
-        assert any("HTTP Request" in msg for msg in log_messages)
+        assert any("correlation_id" in msg for msg in log_messages)
+
+    caplog.clear()
 
     with caplog.at_level("INFO"):
-        client.get("/metrics")
+        client.post("/monitoring/healthz")
         log_messages = [record.message for record in caplog.records]
-        assert all("HTTP Request" not in msg for msg in log_messages)
+        assert all("correlation_id" not in msg for msg in log_messages)
