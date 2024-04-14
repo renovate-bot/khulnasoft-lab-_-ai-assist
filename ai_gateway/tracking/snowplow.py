@@ -62,8 +62,8 @@ class SnowplowEvent:
     context: Optional[SnowplowEventContext] = None
     category: str = "code_suggestions"
     action: str = "suggestion_requested"
-    label: str = None
-    value: int = None
+    label: Optional[str] = None
+    value: Optional[int] = None
 
 
 class Client(ABC):

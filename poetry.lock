@@ -763,28 +763,26 @@ uritemplate = ">=3.0.1,<5"
 
 [[package]]
 name = "google-auth"
-version = "2.19.1"
+version = "2.29.0"
 description = "Google Authentication Library"
 optional = false
-python-versions = ">=3.6"
+python-versions = ">=3.7"
 files = [
-    {file = "google-auth-2.19.1.tar.gz", hash = "sha256:a9cfa88b3e16196845e64a3658eb953992129d13ac7337b064c6546f77c17183"},
-    {file = "google_auth-2.19.1-py2.py3-none-any.whl", hash = "sha256:ea165e014c7cbd496558796b627c271aa8c18b4cba79dc1cc962b24c5efdfb85"},
+    {file = "google-auth-2.29.0.tar.gz", hash = "sha256:672dff332d073227550ffc7457868ac4218d6c500b155fe6cc17d2b13602c360"},
+    {file = "google_auth-2.29.0-py2.py3-none-any.whl", hash = "sha256:d452ad095688cd52bae0ad6fafe027f6a6d6f560e810fec20914e17a09526415"},
 ]
 
 [package.dependencies]
 cachetools = ">=2.0.0,<6.0"
 pyasn1-modules = ">=0.2.1"
 rsa = ">=3.1.4,<5"
-six = ">=1.9.0"
-urllib3 = "<2.0"
 
 [package.extras]
-aiohttp = ["aiohttp (>=3.6.2,<4.0.0dev)", "requests (>=2.20.0,<3.0.0dev)"]
+aiohttp = ["aiohttp (>=3.6.2,<4.0.0.dev0)", "requests (>=2.20.0,<3.0.0.dev0)"]
 enterprise-cert = ["cryptography (==36.0.2)", "pyopenssl (==22.0.0)"]
 pyopenssl = ["cryptography (>=38.0.3)", "pyopenssl (>=20.0.0)"]
 reauth = ["pyu2f (>=0.1.5)"]
-requests = ["requests (>=2.20.0,<3.0.0dev)"]
+requests = ["requests (>=2.20.0,<3.0.0.dev0)"]
 
 [[package]]
 name = "google-auth-httplib2"
@@ -2978,6 +2976,42 @@ files = [
 tree-sitter = "*"
 
 [[package]]
+name = "types-protobuf"
+version = "4.25.0.20240410"
+description = "Typing stubs for protobuf"
+optional = false
+python-versions = ">=3.8"
+files = [
+    {file = "types-protobuf-4.25.0.20240410.tar.gz", hash = "sha256:86576c2e7e691b8b75f4cabec430f7405edef411b5d191e847c91307935b1b38"},
+    {file = "types_protobuf-4.25.0.20240410-py3-none-any.whl", hash = "sha256:335b2e8cf9f39c233dbf0f977a2a4fbc2c0bac720225c544cc1412a67ab1e1d3"},
+]
+
+[[package]]
+name = "types-pyyaml"
+version = "6.0.12.20240311"
+description = "Typing stubs for PyYAML"
+optional = false
+python-versions = ">=3.8"
+files = [
+    {file = "types-PyYAML-6.0.12.20240311.tar.gz", hash = "sha256:a9e0f0f88dc835739b0c1ca51ee90d04ca2a897a71af79de9aec5f38cb0a5342"},
+    {file = "types_PyYAML-6.0.12.20240311-py3-none-any.whl", hash = "sha256:b845b06a1c7e54b8e5b4c683043de0d9caf205e7434b3edc678ff2411979b8f6"},
+]
+
+[[package]]
+name = "types-requests"
+version = "2.31.0.20240406"
+description = "Typing stubs for requests"
+optional = false
+python-versions = ">=3.8"
+files = [
+    {file = "types-requests-2.31.0.20240406.tar.gz", hash = "sha256:4428df33c5503945c74b3f42e82b181e86ec7b724620419a2966e2de604ce1a1"},
+    {file = "types_requests-2.31.0.20240406-py3-none-any.whl", hash = "sha256:6216cdac377c6b9a040ac1c0404f7284bd13199c0e1bb235f4324627e8898cf5"},
+]
+
+[package.dependencies]
+urllib3 = ">=2"
+
+[[package]]
 name = "typing-extensions"
 version = "4.8.0"
 description = "Backported and Experimental Type Hints for Python 3.8+"
@@ -3001,19 +3035,20 @@ files = [
 
 [[package]]
 name = "urllib3"
-version = "1.26.16"
+version = "2.2.1"
 description = "HTTP library with thread-safe connection pooling, file post, and more."
 optional = false
-python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*, !=3.4.*, !=3.5.*"
+python-versions = ">=3.8"
 files = [
-    {file = "urllib3-1.26.16-py2.py3-none-any.whl", hash = "sha256:8d36afa7616d8ab714608411b4a3b13e58f463aee519024578e062e141dce20f"},
-    {file = "urllib3-1.26.16.tar.gz", hash = "sha256:8f135f6502756bde6b2a9b28989df5fbe87c9970cecaa69041edcce7f0589b14"},
+    {file = "urllib3-2.2.1-py3-none-any.whl", hash = "sha256:450b20ec296a467077128bff42b73080516e71b56ff59a60a02bef2232c4fa9d"},
+    {file = "urllib3-2.2.1.tar.gz", hash = "sha256:d0570876c61ab9e520d776c38acbbb5b05a776d3f9ff98a5c8fd5162a444cf19"},
 ]
 
 [package.extras]
-brotli = ["brotli (>=1.0.9)", "brotlicffi (>=0.8.0)", "brotlipy (>=0.6.0)"]
-secure = ["certifi", "cryptography (>=1.3.4)", "idna (>=2.0.0)", "ipaddress", "pyOpenSSL (>=0.14)", "urllib3-secure-extra"]
-socks = ["PySocks (>=1.5.6,!=1.5.7,<2.0)"]
+brotli = ["brotli (>=1.0.9)", "brotlicffi (>=0.8.0)"]
+h2 = ["h2 (>=4,<5)"]
+socks = ["pysocks (>=1.5.6,!=1.5.7,<2.0)"]
+zstd = ["zstandard (>=0.18.0)"]
 
 [[package]]
 name = "uvicorn"
@@ -3201,4 +3236,4 @@ files = [
 [metadata]
 lock-version = "2.0"
 python-versions = "~3.10.0"
-content-hash = "8c532a58bc86c3cc7b712c8869402675feeb294eb9ad2751211659aabf573b8c"
+content-hash = "0fb08090b87479f01d3dc909ee68884f05069eeb0fecd939b3185da6da459fc0"

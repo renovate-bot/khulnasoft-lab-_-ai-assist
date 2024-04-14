@@ -169,6 +169,8 @@ class DetectorBasicAuthSecrets(BaseDetector):
     kind = DetectorKind.SECRET
 
     def _get_detected_from_secret(self, content: str, secret: PotentialSecret):
+        if secret.secret_value is None:
+            raise ValueError("Secret value is None")
         start = content.index(f":{secret.secret_value}@") + 1
         end = start + len(secret.secret_value)
 
@@ -207,6 +209,8 @@ class DetectorTokenSecrets(BaseDetector):
     def _get_detected_from_secret(
         self, content: str, secret: PotentialSecret
     ) -> Detected:
+        if secret.secret_value is None:
+            raise ValueError("Secret value cannot be None")
         start = content.index(secret.secret_value)
         end = start + len(secret.secret_value)
 

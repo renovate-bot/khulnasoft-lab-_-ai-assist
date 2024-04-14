@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import List, Optional
 
 from tree_sitter import Node
 
@@ -14,7 +14,7 @@ from ai_gateway.code_suggestions.processing.ops import LanguageId
 
 
 class BaseImportVisitor(BaseVisitor):
-    _TARGET_SYMBOLS = []
+    _TARGET_SYMBOLS: List[str] = []
 
     def __init__(self):
         self._imports = []

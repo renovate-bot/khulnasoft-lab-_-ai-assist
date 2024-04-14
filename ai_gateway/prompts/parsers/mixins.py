@@ -6,7 +6,7 @@ __all__ = ["RubyParserMixin"]
 class RubyParserMixin:
     def is_import(self, node: Node) -> bool:
         if len(node.children) != 2:
-            return
+            return False
 
         first, second = node.children
         first_text = first.text.decode("utf-8", errors="ignore")

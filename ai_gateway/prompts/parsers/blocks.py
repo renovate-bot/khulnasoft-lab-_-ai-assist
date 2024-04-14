@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import List, Optional
 
 from tree_sitter import Node
 
@@ -11,7 +11,7 @@ class MinAllowedBlockVisitor(BaseVisitor):
     def __init__(self, target_point: Point, min_block_size: int = 2):
         self.target_point = target_point
         self.min_block_size = min_block_size
-        self.visited_nodes = []
+        self.visited_nodes: List[Node] = []
 
     def _visit_node(self, node: Node):
         if self._is_block_candidate(node) and self._is_point_included(node):
@@ -32,6 +32,7 @@ class MinAllowedBlockVisitor(BaseVisitor):
     def _is_block_candidate(self, node: Node) -> bool:
         if node.end_point[0] - node.start_point[0] + 1 >= self.min_block_size:
             return True
+        return False
 
     @property
     def block(self) -> Optional[Node]:

@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import NamedTuple
+from typing import List, NamedTuple
 
 from tree_sitter import Node
 
@@ -28,7 +28,7 @@ class CodeContext(NamedTuple):
 
 
 class BaseVisitor(ABC):
-    _TARGET_SYMBOLS = []
+    _TARGET_SYMBOLS: List[str] = []
 
     @abstractmethod
     def _visit_node(self, node: Node):
