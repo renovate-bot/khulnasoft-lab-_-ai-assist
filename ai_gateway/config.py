@@ -107,8 +107,12 @@ class Config(BaseSettings):
         default=False,
     )
 
-    logging: Annotated[ConfigLogging, Field(default_factory=ConfigLogging)] = ConfigLogging()
-    fastapi: Annotated[ConfigFastApi, Field(default_factory=ConfigFastApi)] = ConfigFastApi()
+    logging: Annotated[ConfigLogging, Field(default_factory=ConfigLogging)] = (
+        ConfigLogging()
+    )
+    fastapi: Annotated[ConfigFastApi, Field(default_factory=ConfigFastApi)] = (
+        ConfigFastApi()
+    )
     auth: Annotated[ConfigAuth, Field(default_factory=ConfigAuth)] = ConfigAuth()
     google_cloud_profiler: Annotated[
         ConfigGoogleCloudProfiler, Field(default_factory=ConfigGoogleCloudProfiler)
@@ -117,7 +121,9 @@ class Config(BaseSettings):
         ConfigInstrumentator, Field(default_factory=ConfigInstrumentator)
     ] = ConfigInstrumentator()
     f: Annotated[FFlags, Field(default_factory=FFlags)] = FFlags()
-    snowplow: Annotated[ConfigSnowplow, Field(default_factory=ConfigSnowplow)] = ConfigSnowplow()
+    snowplow: Annotated[ConfigSnowplow, Field(default_factory=ConfigSnowplow)] = (
+        ConfigSnowplow()
+    )
     vertex_text_model: Annotated[
         ConfigVertexTextModel, Field(default_factory=ConfigVertexTextModel)
     ] = ConfigVertexTextModel()

@@ -1,7 +1,7 @@
 import logging
 import time
 import traceback
-from typing import Optional, Tuple, List
+from typing import Optional, Tuple
 
 import structlog
 from asgi_correlation_id.context import correlation_id
@@ -14,13 +14,13 @@ from starlette.authentication import (
     BaseUser,
     HTTPConnection,
 )
+from starlette.datastructures import Headers
 from starlette.middleware import Middleware
 from starlette.middleware.authentication import (
     AuthenticationBackend,
     AuthenticationMiddleware,
 )
 from starlette.middleware.base import BaseHTTPMiddleware, Request
-from starlette.datastructures import Headers
 from starlette.responses import JSONResponse
 from starlette_context import context
 from uvicorn.protocols.utils import get_path_with_query_string
