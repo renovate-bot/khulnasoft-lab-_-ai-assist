@@ -1,7 +1,7 @@
 import logging
 import time
 import traceback
-from typing import Optional, Tuple
+from typing import Optional, Tuple, List
 
 import structlog
 from asgi_correlation_id.context import correlation_id
@@ -20,6 +20,7 @@ from starlette.middleware.authentication import (
     AuthenticationMiddleware,
 )
 from starlette.middleware.base import BaseHTTPMiddleware, Request
+from starlette.datastructures import Headers
 from starlette.responses import JSONResponse
 from starlette_context import context
 from uvicorn.protocols.utils import get_path_with_query_string
@@ -194,7 +195,7 @@ class MiddlewareAuthentication(Middleware):
             """
 
             if self.path_resolver.skip_path(conn.url.path):
-                return
+                return None
 
             if self.bypass_auth:
                 log.critical("Auth is disabled, all users allowed")
@@ -292,7 +293,7 @@ class MiddlewareModelTelemetry(Middleware):
                 log_exception(e)
                 return await call_next(request)
 
-        def _missing_header(self, headers: list) -> bool:
+        def _missing_header(self, headers: Headers) -> bool:
             return any(
                 value is None
                 for value in [

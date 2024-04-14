@@ -61,7 +61,7 @@ class FFlagsCodeSuggestions(BaseModel):
 class FFlags(BaseSettings):
     code_suggestions: Annotated[
         FFlagsCodeSuggestions, Field(default_factory=FFlagsCodeSuggestions)
-    ]
+    ] = FFlagsCodeSuggestions()
 
 
 class ConfigSnowplow(BaseModel):
