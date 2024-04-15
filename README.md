@@ -28,6 +28,12 @@ To run the entire test suite, you can use the following command:
 make test
 ```
 
+To run the tests in watch mode, use the following command:
+
+```shell
+make test-watch
+```
+
 To see test coverage, you can run the following command:
 
 ```shell
