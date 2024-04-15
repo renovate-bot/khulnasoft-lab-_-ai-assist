@@ -2,6 +2,7 @@ from typing import Any, AsyncIterator, Type
 from unittest import mock
 from unittest.mock import AsyncMock, patch
 
+import pydantic
 import pytest
 from fastapi.testclient import TestClient
 from structlog.testing import capture_logs
@@ -22,6 +23,10 @@ from ai_gateway.models import (
     TextGenModelChunk,
     TextGenModelOutput,
 )
+
+pydantic_version = pydantic.__version__
+major_version, minor_version, _ = pydantic_version.split(".")
+pydantic_major_minor_version = f"{major_version}.{minor_version}"
 
 
 @pytest.fixture(scope="class")
@@ -470,14 +475,14 @@ class TestAgentInvalidRequestMissingFields:
                     "loc": ["body", "prompt_components", 0, "metadata", "version"],
                     "msg": "Field required",
                     "input": {"source": "gitlab-rails-sm"},
-                    "url": "https://errors.pydantic.dev/2.6/v/missing",
+                    "url": f"https://errors.pydantic.dev/{pydantic_major_minor_version}/v/missing",
                 },
                 {
                     "type": "missing",
                     "loc": ["body", "prompt_components", 0, "payload", "content"],
                     "msg": "Field required",
                     "input": {"provider": "anthropic", "model": "claude-2.0"},
-                    "url": "https://errors.pydantic.dev/2.6/v/missing",
+                    "url": f"https://errors.pydantic.dev/{pydantic_major_minor_version}/v/missing",
                 },
             ]
         }
@@ -556,7 +561,7 @@ class TestAgentInvalidRequestManyPromptComponents:
                         },
                     ],
                     "ctx": {"field_type": "List", "max_length": 1, "actual_length": 2},
-                    "url": "https://errors.pydantic.dev/2.6/v/too_long",
+                    "url": f"https://errors.pydantic.dev/{pydantic_major_minor_version}/v/too_long",
                 }
             ]
         }
