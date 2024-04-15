@@ -220,7 +220,7 @@ class TestReActAgent:
         inputs = ReActAgentInputs(
             question=question, chat_history=chat_history, resource=resource
         )
-        actual_action = await agent.invoke(inputs)
+        actual_action = await agent.invoke(inputs=inputs)
 
         chat_history_formatted = chat_history_plain_text_renderer(inputs)
         agent_scratchpad_formatted = agent_scratchpad_plain_text_renderer(
@@ -236,7 +236,7 @@ class TestReActAgent:
         messages = {message.role: message for message in messages}
 
         model.generate.assert_called_once_with(
-            list(messages.values()), stream=False, stop_sequence=["Observation:"]
+            list(messages.values()), stream=False, stop_sequences=["Observation:"]
         )
 
         assert chat_history_formatted in messages[Role.SYSTEM].content
