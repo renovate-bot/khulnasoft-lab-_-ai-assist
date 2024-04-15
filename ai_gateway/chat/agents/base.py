@@ -11,7 +11,7 @@ __all__ = [
     "AgentFinalAnswer",
     "AgentStep",
     "BaseParser",
-    "BaseMultiStepAgent",
+    "BaseSingleActionAgent",
 ]
 
 
@@ -44,7 +44,7 @@ class BaseParser(ABC, Generic[_TypeParserOutput]):
         pass
 
 
-class BaseMultiStepAgent(ABC, BaseModel, Generic[TypeAgentInputs, TypeAgentAction]):
+class BaseSingleActionAgent(ABC, BaseModel, Generic[TypeAgentInputs, TypeAgentAction]):
     agent_scratchpad: list[AgentStep[TypeAgentAction]] = Field(
         default_factory=lambda: []
     )

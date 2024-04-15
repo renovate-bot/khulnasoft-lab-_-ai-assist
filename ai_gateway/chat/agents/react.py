@@ -7,8 +7,8 @@ from ai_gateway.chat.agents.base import (
     AgentFinalAnswer,
     AgentStep,
     AgentToolAction,
-    BaseMultiStepAgent,
     BaseParser,
+    BaseSingleActionAgent,
 )
 from ai_gateway.chat.agents.utils import convert_prompt_to_messages
 from ai_gateway.chat.prompts import ChatPrompt
@@ -127,7 +127,7 @@ def agent_scratchpad_plain_text_renderer(
     return "\n".join(steps)
 
 
-class ReActAgent(BaseMultiStepAgent):
+class ReActAgent(BaseSingleActionAgent):
     model_config = ConfigDict(protected_namespaces=(), arbitrary_types_allowed=True)
 
     # TODO: Validate whether the prompt has all the required placeholders specified in `ReActAgentInputs`.

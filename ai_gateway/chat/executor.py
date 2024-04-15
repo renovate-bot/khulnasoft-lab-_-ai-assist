@@ -2,7 +2,7 @@ from typing import Generic, Protocol, Sequence
 
 from ai_gateway.chat.agents import (
     AgentStep,
-    BaseMultiStepAgent,
+    BaseSingleActionAgent,
     TypeAgentAction,
     TypeAgentInputs,
 )
@@ -20,7 +20,7 @@ class TypeAgentFactory(Protocol[TypeAgentInputs]):
         *,
         tools: Sequence[BaseTool],
         agent_inputs: TypeAgentInputs,
-    ) -> BaseMultiStepAgent: ...
+    ) -> BaseSingleActionAgent: ...
 
 
 class GLAgentRemoteExecutor(Generic[TypeAgentInputs, TypeAgentAction]):
