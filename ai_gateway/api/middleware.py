@@ -46,6 +46,7 @@ X_GITLAB_GLOBAL_USER_ID_HEADER = "X-Gitlab-Global-User-Id"
 X_GITLAB_HOST_NAME_HEADER = "X-Gitlab-Host-Name"
 X_GITLAB_SAAS_NAMESPACE_IDS_HEADER = "X-Gitlab-Saas-Namespace-Ids"
 X_GITLAB_SAAS_DUO_PRO_NAMESPACE_IDS_HEADER = "X-Gitlab-Saas-Duo-Pro-Namespace-Ids"
+X_GITLAB_MODEL_GATEWAY_REQUEST_SENT_AT = "X-Gitlab-Rails-Send-Start"
 
 
 class _PathResolver:
@@ -103,6 +104,14 @@ class MiddlewareLogRequest(Middleware):
 
             start_time_total = time.perf_counter()
             start_time_cpu = time.process_time()
+            # duration_request represents latency added by sending request from Rails to AI gateway
+            try:
+                wait_duration = time.time() - float(
+                    request.headers.get(X_GITLAB_MODEL_GATEWAY_REQUEST_SENT_AT)
+                )
+            except (ValueError, TypeError):
+                wait_duration = -1
+
             # If the call_next raises an error, we still want to return our own 500 response,
             # so we can add headers to it (process time, request ID...)
             response = Response(status_code=500)
@@ -136,6 +145,7 @@ class MiddlewareLogRequest(Middleware):
                     client_ip=client_host,
                     client_port=client_port,
                     duration_s=elapsed_time,
+                    duration_request=wait_duration,
                     cpu_s=cpu_time,
                     user_agent=request.headers.get("User-Agent"),
                     gitlab_instance_id=request.headers.get(X_GITLAB_INSTANCE_ID_HEADER),

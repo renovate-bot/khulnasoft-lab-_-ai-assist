@@ -57,6 +57,7 @@ expected_log_keys = [
     "gitlab_host_name",
     "gitlab_saas_namespace_ids",
     "gitlab_saas_duo_pro_namespace_ids",
+    "duration_request",
 ]
 
 invalid_authentication_token_type_error = {

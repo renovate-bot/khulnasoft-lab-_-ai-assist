@@ -1,3 +1,4 @@
+import time
 from typing import AsyncIterator, Dict, List, Union
 from unittest import mock
 
@@ -6,6 +7,7 @@ from dependency_injector import containers
 from fastapi.testclient import TestClient
 from snowplow_tracker import Snowplow
 from starlette.datastructures import CommaSeparatedStrings
+from structlog.testing import capture_logs
 
 from ai_gateway.api.v2 import api_router
 from ai_gateway.auth import User, UserClaims
@@ -320,6 +322,135 @@ class TestCodeCompletions:
             stream=False,
             **code_completions_kwargs,
         )
+
+    @pytest.mark.parametrize(
+        ("prompt_version", "model_output", "expected_response"),
+        [
+            # non-empty suggestions from model
+            (
+                1,
+                CodeSuggestionsOutput(
+                    text="def search",
+                    score=0,
+                    model=ModelMetadata(name="claude-instant-1.2", engine="anthropic"),
+                    lang_id=LanguageId.PYTHON,
+                    metadata=CodeSuggestionsOutput.Metadata(
+                        experiments=[],
+                    ),
+                ),
+                {
+                    "id": "id",
+                    "model": {
+                        "engine": "anthropic",
+                        "name": "claude-instant-1.2",
+                        "lang": "python",
+                    },
+                    "object": "text_completion",
+                    "created": 1695182638,
+                    "choices": [
+                        {
+                            "text": "def search",
+                            "index": 0,
+                            "finish_reason": "length",
+                        }
+                    ],
+                },
+            )
+        ],
+    )
+    def test_request_latency(
+        self,
+        prompt_version: int,
+        mock_client: TestClient,
+        mock_container: containers.DeclarativeContainer,
+        model_output: CodeSuggestionsOutput,
+        expected_response: dict,
+    ):
+        code_completions_mock = mock.Mock(spec=CodeCompletions)
+        code_completions_mock.execute = mock.AsyncMock(return_value=model_output)
+
+        current_file = {
+            "file_name": "main.py",
+            "content_above_cursor": "# Create a fast binary search\n",
+            "content_below_cursor": "\n",
+        }
+        data = {
+            "prompt_version": prompt_version,
+            "project_path": "gitlab-org/gitlab",
+            "project_id": 278964,
+            "model_provider": "anthropic",
+            "current_file": current_file,
+        }
+
+        code_completions_kwargs = {}
+        if prompt_version == 2:
+            data.update(
+                {
+                    "prompt": current_file["content_above_cursor"],
+                }
+            )
+            code_completions_kwargs.update(
+                {"raw_prompt": current_file["content_above_cursor"]}
+            )
+
+        # get valid duration
+        with mock_container.code_suggestions.completions.anthropic.override(
+            code_completions_mock
+        ):
+            with capture_logs() as cap_logs:
+                response = mock_client.post(
+                    "/completions",
+                    headers={
+                        "Authorization": "Bearer 12345",
+                        "X-Gitlab-Authentication-Type": "oidc",
+                        "X-Gitlab-Rails-Send-Start": str(time.time() - 1),
+                    },
+                    json=data,
+                )
+                assert response.status_code == 200
+                assert len(cap_logs) == 3
+                assert cap_logs[-1]["status_code"] == 200
+                assert cap_logs[-1]["method"] == "POST"
+                assert cap_logs[-1]["duration_request"] >= 1
+
+        # -1 in duration_request indicates invalid X-Gitlab-Rails-Send-Start header
+        with mock_container.code_suggestions.completions.anthropic.override(
+            code_completions_mock
+        ):
+            with capture_logs() as cap_logs:
+                response = mock_client.post(
+                    "/completions",
+                    headers={
+                        "Authorization": "Bearer 12345",
+                        "X-Gitlab-Authentication-Type": "oidc",
+                        "X-Gitlab-Rails-Send-Start": "invalid epoch time",
+                    },
+                    json=data,
+                )
+                assert response.status_code == 200
+                assert len(cap_logs) == 3
+                assert cap_logs[-1]["status_code"] == 200
+                assert cap_logs[-1]["method"] == "POST"
+                assert cap_logs[-1]["duration_request"] == -1
+
+        # -1 in duration_request indicates missing X-Gitlab-Rails-Send-Start header
+        with mock_container.code_suggestions.completions.anthropic.override(
+            code_completions_mock
+        ):
+            with capture_logs() as cap_logs:
+                response = mock_client.post(
+                    "/completions",
+                    headers={
+                        "Authorization": "Bearer 12345",
+                        "X-Gitlab-Authentication-Type": "oidc",
+                    },
+                    json=data,
+                )
+                assert response.status_code == 200
+                assert len(cap_logs) == 3
+                assert cap_logs[-1]["status_code"] == 200
+                assert cap_logs[-1]["method"] == "POST"
+                assert cap_logs[-1]["duration_request"] == -1
 
     @pytest.mark.parametrize(
         ("model_chunks", "expected_response"),
