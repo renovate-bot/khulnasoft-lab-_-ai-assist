@@ -6,10 +6,10 @@ import pytest
 from ai_gateway.chat.agents import AgentStep
 from ai_gateway.chat.agents.react import (
     ReActAgent,
-    ReActAgentAction,
     ReActAgentFinalAnswer,
     ReActAgentInputs,
     ReActAgentMessage,
+    ReActAgentToolAction,
     ReActPlainTextParser,
     agent_scratchpad_plain_text_renderer,
     chat_history_plain_text_renderer,
@@ -44,13 +44,13 @@ def test_chat_history_plain_text_renderer(inputs: ReActAgentInputs, expected: st
         (
             [
                 AgentStep(
-                    action=ReActAgentAction(
+                    action=ReActAgentToolAction(
                         tool="tool1", tool_input="tool_input1", thought="thought1"
                     ),
                     observation="observation1",
                 ),
                 AgentStep(
-                    action=ReActAgentAction(
+                    action=ReActAgentToolAction(
                         tool="tool2", tool_input="tool_input2", thought="thought2"
                     ),
                     observation="observation2",
@@ -89,7 +89,7 @@ class TestReActPlainTextParser:
         [
             (
                 "thought1\nAction: tool1\nAction Input: tool_input1\n",
-                ReActAgentAction(
+                ReActAgentToolAction(
                     thought="thought1",
                     log="Thought: thought1\nAction: tool1\nAction Input: tool_input1\n",
                     tool="tool1",
@@ -136,7 +136,7 @@ class TestReActAgent:
                 "",
                 [],
                 Resource(type="epic", content="epic title and description"),
-                ReActAgentAction(
+                ReActAgentToolAction(
                     thought="I'm thinking...",
                     tool="ci_issue_reader",
                     tool_input="random input",
@@ -148,7 +148,7 @@ class TestReActAgent:
                 ["User: what's the description of this issue", "AI: PoC ReAct"],
                 [],
                 Resource(type="issue", content="issue title and description"),
-                ReActAgentAction(
+                ReActAgentToolAction(
                     thought="I'm thinking...",
                     tool="ci_issue_reader",
                     tool_input="random input",
@@ -160,7 +160,7 @@ class TestReActAgent:
                 ["User: what's the description of this issue", "AI: PoC ReAct"],
                 [],
                 None,
-                ReActAgentAction(
+                ReActAgentToolAction(
                     thought="I'm thinking...",
                     tool="ci_issue_reader",
                     tool_input="random input",
@@ -172,7 +172,7 @@ class TestReActAgent:
                 "User: what's the description of this issue\nAI: PoC ReAct",
                 [
                     AgentStep(
-                        action=ReActAgentAction(
+                        action=ReActAgentToolAction(
                             thought="thought",
                             tool="ci_issue_reader",
                             tool_input="random input",
@@ -196,7 +196,7 @@ class TestReActAgent:
         chat_history: list[str] | str,
         agent_scratchpad: list[AgentStep],
         resource: Resource | None,
-        expected_action: ReActAgentAction | ReActAgentFinalAnswer,
+        expected_action: ReActAgentToolAction | ReActAgentFinalAnswer,
     ):
         def _model_generate(*args, **kwargs):
             text = expected_action.log[

@@ -4,9 +4,9 @@ from typing import Any, Callable, Optional
 from pydantic import BaseModel, ConfigDict, Field
 
 from ai_gateway.chat.agents.base import (
-    AgentAction,
     AgentFinalAnswer,
     AgentStep,
+    AgentToolAction,
     BaseMultiStepAgent,
     BaseParser,
 )
@@ -16,9 +16,10 @@ from ai_gateway.chat.typing import Resource
 from ai_gateway.models import ChatModelBase
 
 __all__ = [
+    "TypeReActAgentAction",
     "ReActAgentInputs",
     "ReActAgentMessage",
-    "ReActAgentAction",
+    "ReActAgentToolAction",
     "ReActAgentFinalAnswer",
     "ReActPlainTextParser",
     "chat_history_plain_text_renderer",
@@ -37,7 +38,7 @@ class ReActAgentMessage(BaseModel):
     thought: str
 
 
-class ReActAgentAction(AgentAction, ReActAgentMessage):
+class ReActAgentToolAction(AgentToolAction, ReActAgentMessage):
     pass
 
 
@@ -45,7 +46,7 @@ class ReActAgentFinalAnswer(AgentFinalAnswer, ReActAgentMessage):
     pass
 
 
-ReActAgentOut = ReActAgentAction | ReActAgentFinalAnswer
+TypeReActAgentAction = ReActAgentToolAction | ReActAgentFinalAnswer
 
 
 class ReActPlainTextParser(BaseParser):
@@ -67,19 +68,19 @@ class ReActPlainTextParser(BaseParser):
 
         return None
 
-    def _parse_agent_action(self, message: str) -> Optional[ReActAgentAction]:
+    def _parse_agent_action(self, message: str) -> Optional[ReActAgentToolAction]:
         match_action = self.re_action.search(message)
         match_action_input = self.re_action_input.search(message)
         match_thought = self.re_thought.search(message)
 
         if match_action and match_action_input:
-            return ReActAgentAction(
+            return ReActAgentToolAction(
                 tool=match_action.group(1),
                 tool_input=match_action_input.group(1),
                 thought=match_thought.group(1) if match_thought else "",
             )
 
-    def parse(self, text: str) -> ReActAgentOut:
+    def parse(self, text: str) -> TypeReActAgentAction:
         text = f"Thought: {text}"
         message = f"<message>{text}</message>"
 
@@ -103,7 +104,7 @@ def chat_history_plain_text_renderer(inputs: ReActAgentInputs) -> str:
 
 
 def agent_scratchpad_plain_text_renderer(
-    scratchpad: list[AgentStep[ReActAgentOut]],
+    scratchpad: list[AgentStep[TypeReActAgentAction]],
 ) -> str:
     tpl = (
         "Thought: {thought}\n"
@@ -120,7 +121,7 @@ def agent_scratchpad_plain_text_renderer(
             observation=pad.observation,
         )
         for pad in scratchpad
-        if isinstance(pad.action, ReActAgentAction)
+        if isinstance(pad.action, ReActAgentToolAction)
     ]
 
     return "\n".join(steps)
@@ -139,9 +140,11 @@ class ReActAgent(BaseMultiStepAgent):
     render_agent_scratchpad: Callable[[list[AgentStep]], str] = (
         agent_scratchpad_plain_text_renderer
     )
-    model_kwargs: dict[str, Any] = {"stop_sequence": ["Observation:"]}
+    model_kwargs: dict[str, Any] = {"stop_sequences": ["Observation:"]}
 
-    async def invoke(self, inputs: ReActAgentInputs, **kwargs: Any) -> ReActAgentOut:
+    async def invoke(
+        self, *, inputs: ReActAgentInputs, **kwargs: Any
+    ) -> TypeReActAgentAction:
         messages = convert_prompt_to_messages(
             self.prompt,
             question=inputs.question,

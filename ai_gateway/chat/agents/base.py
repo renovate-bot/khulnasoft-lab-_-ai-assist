@@ -4,8 +4,10 @@ from typing import Any, Generic, Optional, TypeVar
 from pydantic import BaseModel, Field
 
 __all__ = [
+    "TypeAgentAction",
+    "TypeAgentInputs",
     "AgentMessage",
-    "AgentAction",
+    "AgentToolAction",
     "AgentFinalAnswer",
     "AgentStep",
     "BaseParser",
@@ -17,7 +19,7 @@ class AgentMessage(BaseModel):
     log: Optional[str] = None
 
 
-class AgentAction(AgentMessage):
+class AgentToolAction(AgentMessage):
     tool: str
     tool_input: str
 
@@ -26,25 +28,29 @@ class AgentFinalAnswer(AgentMessage):
     text: str
 
 
-_U = TypeVar("_U", bound=AgentAction | AgentFinalAnswer)
-_T = TypeVar("_T")
-_P = TypeVar("_P")
+TypeAgentAction = TypeVar("TypeAgentAction", bound=AgentToolAction | AgentFinalAnswer)
+TypeAgentInputs = TypeVar("TypeAgentInputs")
+_TypeParserOutput = TypeVar("_TypeParserOutput")
 
 
-class AgentStep(BaseModel, Generic[_U]):
-    action: _U
+class AgentStep(BaseModel, Generic[TypeAgentAction]):
+    action: TypeAgentAction
     observation: str
 
 
-class BaseParser(ABC, Generic[_P]):
+class BaseParser(ABC, Generic[_TypeParserOutput]):
     @abstractmethod
-    def parse(self, text: str) -> _P:
+    def parse(self, text: str) -> _TypeParserOutput:
         pass
 
 
-class BaseMultiStepAgent(ABC, BaseModel, Generic[_T, _U]):
-    agent_scratchpad: list[AgentStep[_U]] = Field(default_factory=lambda: [])
+class BaseMultiStepAgent(ABC, BaseModel, Generic[TypeAgentInputs, TypeAgentAction]):
+    agent_scratchpad: list[AgentStep[TypeAgentAction]] = Field(
+        default_factory=lambda: []
+    )
 
     @abstractmethod
-    async def invoke(self, inputs: _T, **kwargs: Any) -> _U:
+    async def invoke(
+        self, *, inputs: TypeAgentInputs, **kwargs: Any
+    ) -> TypeAgentAction:
         pass
