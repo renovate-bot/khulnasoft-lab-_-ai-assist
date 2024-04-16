@@ -35,8 +35,10 @@ log = structlog.stdlib.get_logger("codesuggestions")
 class VertexAPIConnectionError(ModelAPIError):
     @classmethod
     def from_exception(cls, ex: GoogleAPIError):
-        cls.code = -1
-        message = f"Vertex Model API error: {ex.message.lower().strip('.')}"
+        message = f"Vertex Model API error: {type(ex).__name__}"
+
+        if hasattr(ex, "message"):
+            message = f"{message} {ex.message}"
 
         return cls(message, errors=(ex,))
 
@@ -45,7 +47,7 @@ class VertexAPIStatusError(ModelAPICallError):
     @classmethod
     def from_exception(cls, ex: GoogleAPICallError):
         cls.code = ex.code
-        message = f"Vertex Model API error: {ex.message.lower().strip('.')}"
+        message = f"Vertex Model API error: {type(ex).__name__} {ex.message}"
 
         return cls(message, errors=(ex,), details=ex.details)
 

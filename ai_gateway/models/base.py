@@ -45,7 +45,7 @@ class ModelAPIError(Exception):
         message = self.message
 
         if self.details:
-            message = f"{message} {', '.join(self.details)}"
+            message = f"{message} {self.details}"
 
         return message
 
