@@ -51,9 +51,9 @@ class TestVertexAPIStatusError:
                     ],
                 ),
                 "403 Vertex Model API error: PermissionDenied Permission denied on resource project abc "
-                '[reason: "CONSUMER_INVALID"\n'
-                'metadata {\n  key: "consumer"\n  value: "projects/uknown-project-id"\n}\n'
-                'metadata {\n  key: "service"\n  value: "aiplatform.googleapis.com"\n}\n]',
+                "[reason: \"CONSUMER_INVALID\"\n"
+                "metadata {\n  key: \"service\"\n  value: \"aiplatform.googleapis.com\"\n}\n"
+                "metadata {\n  key: \"consumer\"\n  value: \"projects/uknown-project-id\"\n}\n]",
             ),
             (
                 InternalServerError(message="Something went wrong"),
