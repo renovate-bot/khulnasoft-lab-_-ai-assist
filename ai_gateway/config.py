@@ -61,7 +61,7 @@ class FFlagsCodeSuggestions(BaseModel):
 class FFlags(BaseSettings):
     code_suggestions: Annotated[
         FFlagsCodeSuggestions, Field(default_factory=FFlagsCodeSuggestions)
-    ]
+    ] = FFlagsCodeSuggestions()
 
 
 class ConfigSnowplow(BaseModel):
@@ -107,20 +107,26 @@ class Config(BaseSettings):
         default=False,
     )
 
-    logging: Annotated[ConfigLogging, Field(default_factory=ConfigLogging)]
-    fastapi: Annotated[ConfigFastApi, Field(default_factory=ConfigFastApi)]
-    auth: Annotated[ConfigAuth, Field(default_factory=ConfigAuth)]
+    logging: Annotated[ConfigLogging, Field(default_factory=ConfigLogging)] = (
+        ConfigLogging()
+    )
+    fastapi: Annotated[ConfigFastApi, Field(default_factory=ConfigFastApi)] = (
+        ConfigFastApi()
+    )
+    auth: Annotated[ConfigAuth, Field(default_factory=ConfigAuth)] = ConfigAuth()
     google_cloud_profiler: Annotated[
         ConfigGoogleCloudProfiler, Field(default_factory=ConfigGoogleCloudProfiler)
-    ]
+    ] = ConfigGoogleCloudProfiler()
     instrumentator: Annotated[
         ConfigInstrumentator, Field(default_factory=ConfigInstrumentator)
-    ]
-    f: Annotated[FFlags, Field(default_factory=FFlags)]
-    snowplow: Annotated[ConfigSnowplow, Field(default_factory=ConfigSnowplow)]
+    ] = ConfigInstrumentator()
+    f: Annotated[FFlags, Field(default_factory=FFlags)] = FFlags()
+    snowplow: Annotated[ConfigSnowplow, Field(default_factory=ConfigSnowplow)] = (
+        ConfigSnowplow()
+    )
     vertex_text_model: Annotated[
         ConfigVertexTextModel, Field(default_factory=ConfigVertexTextModel)
-    ]
+    ] = ConfigVertexTextModel()
     model_engine_concurrency_limits: Annotated[
         ConfigModelConcurrency, Field(default_factory=ConfigModelConcurrency)
-    ]
+    ] = ConfigModelConcurrency()

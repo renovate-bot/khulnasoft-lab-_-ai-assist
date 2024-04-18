@@ -1,3 +1,5 @@
+from typing import List
+
 import pytest
 from tree_sitter import Node
 
@@ -90,7 +92,7 @@ class StubLimitedDepthVisitor(BaseVisitor):
 
 class StubLimitedNodeTraversalVisitor(BaseVisitor):
     def __init__(self, symbol: str):
-        self.visited_nodes = []
+        self.visited_nodes: List[type] = []
         self.symbol = symbol
         self._stop_node_traversal = False
 

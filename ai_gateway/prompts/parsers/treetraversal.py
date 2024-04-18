@@ -1,5 +1,5 @@
 from collections import deque
-from typing import Callable, Union
+from typing import Callable, Deque, Union
 
 from tree_sitter import Node, Tree
 
@@ -13,14 +13,14 @@ __all__ = [
 def tree_bfs(node: Node, visitor: Union[Callable, BaseVisitor], max_depth: int = 0):
     depth = 0
     q1 = deque([*node.children])
-    q2 = deque()
+    q2: Deque[Node] = deque()
 
     while q1:
         node = q1.popleft()
-        if isinstance(visitor, Callable):
-            visitor(depth, node)
-        else:
+        if isinstance(visitor, BaseVisitor):
             visitor.visit(node)
+        elif callable(visitor):
+            visitor(depth, node)
 
         # add the next level nodes to the queue
         q2.extend(node.children)

@@ -136,7 +136,7 @@ class PalmCodeGenBaseModel(TextGenBaseModel):
 
         instance = json_format.ParseDict(input_data, struct_pb2.Value())
         instances = [instance]
-        parameters_dict = {
+        parameters_dict: dict[str, Union[float, int, Sequence[str]]] = {
             "temperature": temperature,
             "maxOutputTokens": max_output_tokens,
             "topP": top_p,
@@ -191,6 +191,7 @@ class PalmCodeGenBaseModel(TextGenBaseModel):
                     ),
                 ),
             )
+        return None
 
     @property
     def metadata(self) -> ModelMetadata:

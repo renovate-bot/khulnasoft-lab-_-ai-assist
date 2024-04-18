@@ -14,6 +14,7 @@ from starlette.authentication import (
     BaseUser,
     HTTPConnection,
 )
+from starlette.datastructures import Headers
 from starlette.middleware import Middleware
 from starlette.middleware.authentication import (
     AuthenticationBackend,
@@ -194,7 +195,7 @@ class MiddlewareAuthentication(Middleware):
             """
 
             if self.path_resolver.skip_path(conn.url.path):
-                return
+                return None
 
             if self.bypass_auth:
                 log.critical("Auth is disabled, all users allowed")
@@ -292,7 +293,7 @@ class MiddlewareModelTelemetry(Middleware):
                 log_exception(e)
                 return await call_next(request)
 
-        def _missing_header(self, headers: list) -> bool:
+        def _missing_header(self, headers: Headers) -> bool:
             return any(
                 value is None
                 for value in [

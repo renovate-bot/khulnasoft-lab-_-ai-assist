@@ -39,7 +39,7 @@ from ai_gateway.config import (
 )
 def test_config_base(values: dict, expected: Config):
     with mock.patch.dict(os.environ, values, clear=True):
-        config = Config(_env_file=None, _env_prefix="AIGW_")
+        config = Config(_env_file=None, _env_prefix="AIGW_")  # type: ignore[call-arg]
 
         keys = {
             "gitlab_url",
@@ -66,7 +66,7 @@ def test_config_base(values: dict, expected: Config):
 )
 def test_mock_model_responses_b_compatibility(values: dict, expected: Config):
     with mock.patch.dict(os.environ, values, clear=True):
-        config = Config(_env_file=None)
+        config = Config(_env_file=None)  # type: ignore[call-arg]
 
         assert config.mock_model_responses == expected.mock_model_responses
 
@@ -87,7 +87,7 @@ def test_mock_model_responses_b_compatibility(values: dict, expected: Config):
 )
 def test_config_logging(values: dict, expected: ConfigLogging):
     with mock.patch.dict(os.environ, values, clear=True):
-        config = Config(_env_file=None)
+        config = Config(_env_file=None)  # type: ignore[call-arg]
 
         assert config.logging == expected
 
@@ -124,7 +124,7 @@ def test_config_logging(values: dict, expected: ConfigLogging):
 )
 def test_config_fastapi(values: dict, expected: ConfigFastApi):
     with mock.patch.dict(os.environ, values, clear=True):
-        config = Config(_env_file=None)
+        config = Config(_env_file=None)  # type: ignore[call-arg]
 
         assert config.fastapi == expected
 
@@ -138,7 +138,7 @@ def test_config_fastapi(values: dict, expected: ConfigFastApi):
 )
 def test_config_auth(values: dict, expected: ConfigAuth):
     with mock.patch.dict(os.environ, values, clear=True):
-        config = Config(_env_file=None)
+        config = Config(_env_file=None)  # type: ignore[call-arg]
 
         assert config.auth == expected
 
@@ -161,7 +161,7 @@ def test_config_google_cloud_profiler(
     values: dict, expected: ConfigGoogleCloudProfiler
 ):
     with mock.patch.dict(os.environ, values, clear=True):
-        config = Config(_env_file=None)
+        config = Config(_env_file=None)  # type: ignore[call-arg]
 
         assert config.google_cloud_profiler == expected
 
@@ -178,7 +178,7 @@ def test_config_google_cloud_profiler(
 )
 def test_config_f_flags_code_suggestions(values: dict, expected: FFlagsCodeSuggestions):
     with mock.patch.dict(os.environ, values, clear=True):
-        config = Config(_env_file=None)
+        config = Config(_env_file=None)  # type: ignore[call-arg]
 
         assert config.f.code_suggestions == expected
 
@@ -202,7 +202,7 @@ def test_config_f_flags_code_suggestions(values: dict, expected: FFlagsCodeSugge
 )
 def test_config_snowplow(values: dict, expected: ConfigSnowplow):
     with mock.patch.dict(os.environ, values, clear=True):
-        config = Config(_env_file=None)
+        config = Config(_env_file=None)  # type: ignore[call-arg]
 
         assert config.snowplow == expected
 
@@ -224,7 +224,7 @@ def test_config_snowplow(values: dict, expected: ConfigSnowplow):
 )
 def test_config_instrumentator(values: dict, expected: ConfigInstrumentator):
     with mock.patch.dict(os.environ, values, clear=True):
-        config = Config(_env_file=None)
+        config = Config(_env_file=None)  # type: ignore[call-arg]
 
         assert config.instrumentator == expected
 
@@ -251,7 +251,7 @@ def test_config_instrumentator(values: dict, expected: ConfigInstrumentator):
 )
 def test_config_vertex_text_model(values: dict, expected: ConfigVertexTextModel):
     with mock.patch.dict(os.environ, values, clear=True):
-        config = Config(_env_file=None)
+        config = Config(_env_file=None)  # type: ignore[call-arg]
 
         assert config.vertex_text_model == expected
 
@@ -268,6 +268,6 @@ def test_config_vertex_text_model(values: dict, expected: ConfigVertexTextModel)
 )
 def test_config_model_concurrency(values: dict, expected: ConfigModelConcurrency):
     with mock.patch.dict(os.environ, values, clear=True):
-        config = Config(_env_file=None)
+        config = Config(_env_file=None)  # type: ignore[call-arg]
 
         assert config.model_engine_concurrency_limits == expected

@@ -55,7 +55,7 @@ class CodeParser(BaseCodeParser):
     def count_symbols(self) -> dict:
         visitor = CounterVisitorFactory.from_language_id(self.lang_id)
         if visitor is None:
-            return []
+            return {}
 
         self._visit_nodes(visitor)
         counts = visitor.counts

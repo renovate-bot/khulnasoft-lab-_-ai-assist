@@ -37,10 +37,11 @@ class Experiment:
 
 
 class ExperimentRegistry:
-    def __init__(self, experiments: Optional[list[Experiment]] = []):
-        self.experiments = dict()
-        for exp in experiments:
-            self._add_experiment(exp)
+    def __init__(self, experiments: Optional[list[Experiment]] = None):
+        self.experiments: dict[str, Experiment] = {}
+        if experiments is not None:
+            for exp in experiments:
+                self._add_experiment(exp)
 
     def _add_experiment(self, experiment: Experiment):
         log.info(

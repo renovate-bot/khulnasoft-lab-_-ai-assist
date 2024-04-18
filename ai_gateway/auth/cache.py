@@ -21,7 +21,7 @@ class BaseAuthCache(ABC):
         self.expiry_seconds = expiry_seconds
 
     @abstractmethod
-    def set(self, k: str, val: str, exp: datetime):
+    def set(self, k: str, val: User, exp: datetime):
         pass
 
     @abstractmethod
