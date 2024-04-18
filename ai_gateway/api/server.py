@@ -32,7 +32,7 @@ def create_fast_api_server(
     telemetry_middleware: MiddlewareModelTelemetry = Provide[
         ContainerApplication.fastapi.telemetry_middleware
     ],
-):
+) -> FastAPI:
     context_middleware = Middleware(RawContextMiddleware)
     cors_middleware = Middleware(
         CORSMiddleware,
