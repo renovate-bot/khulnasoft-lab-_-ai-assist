@@ -148,7 +148,9 @@ async def test_lifespan(config, app, unused_port, monkeypatch):
 
     config.fastapi.metrics_port = unused_port
 
-    async with server.lifespan(app, config):
+    app.extra = {"extra": {"config": config}}
+
+    async with server.lifespan(app):
         mock_container_app.assert_called_once()
         assert mock_container_app.return_value.config.from_dict.called_once_with(
             config.model_dump()

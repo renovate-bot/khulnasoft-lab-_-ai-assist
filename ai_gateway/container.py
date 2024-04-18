@@ -55,5 +55,3 @@ class ContainerApplication(containers.DeclarativeContainer):
         ContainerChat,
         models=pkg_models,
     )
-
-    snowplow = providers.Container(ContainerTracking, config=config.snowplow)

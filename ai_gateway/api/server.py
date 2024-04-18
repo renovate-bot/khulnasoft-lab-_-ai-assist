@@ -33,7 +33,8 @@ _PROBS_ENDPOINTS = ["/monitoring/healthz", "/metrics"]
 
 
 @asynccontextmanager
-async def lifespan(app: FastAPI, config: Config):
+async def lifespan(app: FastAPI):
+    config = app.extra["extra"]["config"]
     container_application = ContainerApplication()
     container_application.config.from_dict(config.model_dump())
     container_application.init_resources()
@@ -64,11 +65,6 @@ async def lifespan(app: FastAPI, config: Config):
 
 def create_fast_api_server(config: Config):
 
-    @asynccontextmanager
-    async def start_lifespan(app: FastAPI):
-        async with lifespan(app, config):
-            yield
-
     fastapi_app = FastAPI(
         title="GitLab Code Suggestions",
         description="GitLab Code Suggestions API to serve code completion predictions",
@@ -76,7 +72,7 @@ def create_fast_api_server(config: Config):
         docs_url=config.fastapi.docs_url,
         redoc_url=config.fastapi.redoc_url,
         swagger_ui_parameters={"defaultModelsExpandDepth": -1},
-        lifespan=start_lifespan,
+        lifespan=lifespan,
         middleware=[
             Middleware(RawContextMiddleware),
             Middleware(
@@ -98,6 +94,7 @@ def create_fast_api_server(config: Config):
             ),
             MiddlewareModelTelemetry(skip_endpoints=_PROBS_ENDPOINTS),
         ],
+        extra={"config": config},
     )
 
     setup_router(fastapi_app)
