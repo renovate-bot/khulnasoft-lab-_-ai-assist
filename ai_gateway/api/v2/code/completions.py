@@ -31,6 +31,7 @@ from ai_gateway.async_dependency_resolver import (
     get_code_suggestions_completions_vertex_legacy_provider,
     get_code_suggestions_generations_anthropic_chat_factory_provider,
     get_code_suggestions_generations_anthropic_factory_provider,
+    get_code_suggestions_generations_openai_compatible_factory_provider,
     get_code_suggestions_generations_vertex_provider,
     get_snowplow_instrumentator,
 )
@@ -159,6 +160,9 @@ async def generations(
     generations_anthropic_chat_factory: Factory[CodeGenerations] = Depends(
         get_code_suggestions_generations_anthropic_chat_factory_provider
     ),
+    generations_openai_compatible_factory: Factory[CodeGenerations] = Depends(
+        get_code_suggestions_generations_openai_compatible_factory_provider
+    ),
     snowplow_instrumentator: SnowplowInstrumentator = Depends(
         get_snowplow_instrumentator
     ),
@@ -190,6 +194,11 @@ async def generations(
                 payload,
                 generations_anthropic_factory,
             )
+    elif payload.model_provider == KindModelProvider.OPENAI_COMPATIBLE:
+        code_generations = generations_openai_compatible_factory(
+            model__name=payload.model_name,
+            model__stop=["</new_code>"],
+        )
     else:
         code_generations = generations_vertex_factory()
 
