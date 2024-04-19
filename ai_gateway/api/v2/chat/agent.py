@@ -28,7 +28,7 @@ async def get_gl_agent_remote_executor():
 
 
 @router.post("/agent", response_model=AgentResponse, status_code=status.HTTP_200_OK)
-@requires("duo_chat_experimental")
+@requires("duo_chat")
 @feature_category("duo_chat")
 async def chat(
     request: Request,
