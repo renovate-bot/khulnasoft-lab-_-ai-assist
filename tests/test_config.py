@@ -239,6 +239,7 @@ def test_config_instrumentator(values: dict, expected: ConfigInstrumentator):
                 "AIGW_VERTEX_TEXT_MODEL__LOCATION": "location",
                 "AIGW_VERTEX_TEXT_MODEL__ENDPOINT": "endpoint",
                 "AIGW_VERTEX_TEXT_MODEL__JSON_KEY": "secret",
+                "RUNWAY_REGION": "test-case1",  # ignored
             },
             ConfigVertexTextModel(
                 project="project",
@@ -250,6 +251,36 @@ def test_config_instrumentator(values: dict, expected: ConfigInstrumentator):
     ],
 )
 def test_config_vertex_text_model(values: dict, expected: ConfigVertexTextModel):
+    with mock.patch.dict(os.environ, values, clear=True):
+        config = Config(_env_file=None)
+
+        assert config.vertex_text_model == expected
+
+
+@pytest.mark.parametrize(
+    ("values", "expected"),
+    [
+        ({}, ConfigVertexTextModel()),
+        (
+            {
+                "AIGW_VERTEX_TEXT_MODEL__PROJECT": "project",
+                # "AIGW_VERTEX_TEXT_MODEL__LOCATION": None,
+                # "AIGW_VERTEX_TEXT_MODEL__ENDPOINT": None,
+                "AIGW_VERTEX_TEXT_MODEL__JSON_KEY": "secret",
+                "RUNWAY_REGION": "test-case1",
+            },
+            ConfigVertexTextModel(
+                project="project",
+                location="test-case1",
+                endpoint="test-case1-aiplatform.googleapis.com",
+                json_key="secret",
+            ),
+        ),
+    ],
+)
+def test_config_vertex_text_model_runway_region(
+    values: dict, expected: ConfigVertexTextModel
+):
     with mock.patch.dict(os.environ, values, clear=True):
         config = Config(_env_file=None)
 

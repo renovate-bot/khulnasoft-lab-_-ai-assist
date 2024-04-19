@@ -1,3 +1,4 @@
+import os
 from typing import Annotated, Optional
 
 from dotenv import find_dotenv
@@ -71,10 +72,32 @@ class ConfigSnowplow(BaseModel):
     thread_count: Optional[int] = 1
 
 
+def runwayRegion(default: str = "us-central1") -> str:
+    """
+    Reads the GCP region from the environment.
+    Returns the default argument when not configured.
+    """
+    region = os.getenv("RUNWAY_REGION")
+    if region is None:
+        return default
+
+    return region
+
+
+def defaultEndpoint() -> str:
+    """
+    Returns the default endpoint for Vertex AI.
+
+    This code assumes that the Runway region (i.e. Cloud Run region) is the same as the Vertex AI region.
+    To support other Cloud Run regions, this code will need to be updated to map to a nearby Vertex AI region instead.
+    """
+    return runwayRegion() + "-aiplatform.googleapis.com"
+
+
 class ConfigVertexTextModel(BaseModel):
     project: str = "unreview-poc-390200e5"
-    location: str = "us-central1"
-    endpoint: str = "us-central1-aiplatform.googleapis.com"
+    location: str = Field(default_factory=runwayRegion)
+    endpoint: str = Field(default_factory=defaultEndpoint)
     json_key: str = ""
 
 

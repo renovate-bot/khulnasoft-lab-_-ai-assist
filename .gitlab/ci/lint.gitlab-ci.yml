@@ -5,6 +5,13 @@ lint:
     - make lint
     - poetry lock --no-update
     - git diff --exit-code
+  after_script:
+    - |
+      # Hint for fixing issues
+      MAGENTA=$(printf '\e[35m')
+      BOLD=$(printf '\e[1m')
+      RESET=$(printf '\e[0m')
+      echo "${MAGENTA}Run ${BOLD}make format${RESET}${MAGENTA} to fix formatting issues.${RESET}"
 
 lint:commit:
   stage: lint
