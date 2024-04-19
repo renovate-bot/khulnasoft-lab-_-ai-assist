@@ -37,11 +37,15 @@ class ReActAgentAction(BaseModel):
     step: AgentToolAction | AgentFinalAnswer
 
 
-class AgentRequest(BaseModel):
-    question: str
+class AgentRequestOptions(BaseModel):
     chat_history: str | list[str]
     agent_scratchpad: ReActAgentScratchpad = Field(discriminator="agent_type")
     context: Optional[Context] = None
+
+
+class AgentRequest(BaseModel):
+    prompt: str
+    options: AgentRequestOptions
 
 
 class AgentResponse(BaseModel):

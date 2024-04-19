@@ -38,9 +38,9 @@ async def chat(
     ] = Depends(get_gl_agent_remote_executor),
 ):
     inputs = ReActAgentInputs(
-        question=agent_request.question,
-        chat_history=agent_request.chat_history,
-        context=agent_request.context,
+        question=agent_request.prompt,
+        chat_history=agent_request.options.chat_history,
+        context=agent_request.options.context,
     )
 
     scratchpad = [
@@ -52,7 +52,7 @@ async def chat(
             ),
             observation=step.observation,
         )
-        for step in agent_request.agent_scratchpad.steps
+        for step in agent_request.options.agent_scratchpad.steps
     ]
 
     action = await gl_agent_remote_executor.invoke(inputs=inputs, scratchpad=scratchpad)
