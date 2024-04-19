@@ -1,6 +1,7 @@
 from logging.config import dictConfig
 
 from dotenv import load_dotenv
+from fastapi import FastAPI
 
 from ai_gateway.api import create_fast_api_server
 from ai_gateway.config import Config
@@ -19,6 +20,6 @@ def get_config() -> Config:
     return config
 
 
-def get_app():
+def get_app() -> FastAPI:
     app = create_fast_api_server(config)
     return app
