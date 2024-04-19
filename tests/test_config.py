@@ -282,7 +282,7 @@ def test_config_vertex_text_model_runway_region(
     values: dict, expected: ConfigVertexTextModel
 ):
     with mock.patch.dict(os.environ, values, clear=True):
-        config = Config(_env_file=None)
+        config = Config(_env_file=None)  # type: ignore[call-arg]
 
         assert config.vertex_text_model == expected
 
