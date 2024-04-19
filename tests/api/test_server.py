@@ -8,8 +8,14 @@ import pytest
 from fastapi import FastAPI
 from fastapi.routing import APIRoute
 from fastapi.testclient import TestClient
+from starlette.exceptions import HTTPException as StarletteHTTPException
+from starlette.requests import Request
 
 from ai_gateway.api import create_fast_api_server, server
+from ai_gateway.api.server import (
+    custom_http_exception_handler,
+    setup_custom_exception_handlers,
+)
 from ai_gateway.config import Config, ConfigAuth
 from ai_gateway.container import ContainerApplication
 
@@ -190,3 +196,30 @@ def test_middleware_log_request(fastapi_server_app: FastAPI, caplog):
         client.post("/monitoring/healthz")
         log_messages = [record.message for record in caplog.records]
         assert all("correlation_id" not in msg for msg in log_messages)
+
+
+@pytest.mark.asyncio
+async def test_custom_http_exception_handler(app):
+    @app.get("/test")
+    async def test_route():
+        raise StarletteHTTPException(status_code=400, detail="Test Exception")
+
+    setup_custom_exception_handlers(app)
+
+    client = TestClient(app)
+    response = client.get("/test")
+
+    assert response.status_code == 400
+    assert response.json() == {"detail": "Test Exception"}
+
+
+@pytest.mark.asyncio
+async def test_setup_custom_exception_handlers(app, monkeypatch):
+    mock_add_exception_handler = MagicMock()
+    monkeypatch.setattr(app, "add_exception_handler", mock_add_exception_handler)
+
+    await setup_custom_exception_handlers(app)
+
+    mock_add_exception_handler.assert_called_once_with(
+        StarletteHTTPException, custom_http_exception_handler
+    )

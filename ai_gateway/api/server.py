@@ -3,10 +3,14 @@ import logging
 from contextlib import asynccontextmanager
 
 from fastapi import APIRouter, FastAPI
+from fastapi.exception_handlers import http_exception_handler
 from fastapi.middleware.cors import CORSMiddleware
 from prometheus_client import start_http_server
 from prometheus_fastapi_instrumentator import Instrumentator, metrics
+from starlette.exceptions import HTTPException as StarletteHTTPException
 from starlette.middleware import Middleware
+from starlette.requests import Request
+from starlette_context import context
 from starlette_context.middleware import RawContextMiddleware
 
 from ai_gateway.api.middleware import (
@@ -29,7 +33,7 @@ __all__ = [
     "create_fast_api_server",
 ]
 
-_PROBS_ENDPOINTS = ["/monitoring/healthz", "/metrics"]
+_SKIP_ENDPOINTS = ["/monitoring/healthz", "/metrics"]
 
 
 @asynccontextmanager
@@ -81,7 +85,7 @@ def create_fast_api_server(config: Config):
                 allow_methods=["POST"],
                 allow_headers=["*"],
             ),
-            MiddlewareLogRequest(skip_endpoints=_PROBS_ENDPOINTS),
+            MiddlewareLogRequest(skip_endpoints=_SKIP_ENDPOINTS),
             MiddlewareAuthentication(
                 GitLabOidcProvider(
                     oidc_providers={
@@ -90,19 +94,29 @@ def create_fast_api_server(config: Config):
                     }
                 ),
                 bypass_auth=config.auth.bypass_external,
-                skip_endpoints=_PROBS_ENDPOINTS,
+                skip_endpoints=_SKIP_ENDPOINTS,
             ),
-            MiddlewareModelTelemetry(skip_endpoints=_PROBS_ENDPOINTS),
+            MiddlewareModelTelemetry(skip_endpoints=_SKIP_ENDPOINTS),
         ],
         extra={"config": config},
     )
 
+    setup_custom_exception_handlers(fastapi_app)
     setup_router(fastapi_app)
     setup_logging(fastapi_app, config.logging)
     setup_prometheus_fastapi_instrumentator(fastapi_app)
     setup_profiling(config.google_cloud_profiler)
 
     return fastapi_app
+
+
+async def custom_http_exception_handler(request: Request, exc: StarletteHTTPException):
+    context["http_exception_details"] = str(exc)
+    return await http_exception_handler(request, exc)
+
+
+async def setup_custom_exception_handlers(app: FastAPI):
+    app.add_exception_handler(StarletteHTTPException, custom_http_exception_handler)
 
 
 def setup_router(app: FastAPI):
@@ -121,7 +135,7 @@ def setup_prometheus_fastapi_instrumentator(app: FastAPI):
         should_ignore_untemplated=True,
         should_respect_env_var=False,
         should_instrument_requests_inprogress=False,
-        excluded_handlers=_PROBS_ENDPOINTS,
+        excluded_handlers=_SKIP_ENDPOINTS,
     )
     instrumentator.add(
         metrics.latency(
