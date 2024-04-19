@@ -4,7 +4,7 @@ from pathlib import Path
 
 import structlog
 from asgi_correlation_id import CorrelationIdMiddleware
-from starlette.types import ASGIApp
+from fastapi import FastAPI
 from structlog.types import EventDict, Processor
 
 from ai_gateway.config import ConfigLogging
@@ -42,7 +42,7 @@ def add_custom_keys(_, __, event_dict: EventDict) -> EventDict:
     return event_dict
 
 
-def setup_logging(app: ASGIApp, logging_config: ConfigLogging):
+def setup_logging(app: FastAPI, logging_config: ConfigLogging):
     app.add_middleware(CorrelationIdMiddleware, validator=None)
 
     timestamper = structlog.processors.TimeStamper(fmt="iso")
@@ -95,6 +95,7 @@ def setup_logging(app: ASGIApp, logging_config: ConfigLogging):
         ],
     )
 
+    handler: logging.Handler
     if logging_config.to_file:
         file = Path(logging_config.to_file).resolve()
         handler = logging.FileHandler(filename=str(file), mode="a")

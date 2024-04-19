@@ -32,7 +32,7 @@ from ai_gateway.config import (
                 gitlab_api_url="http://api.gitlab.test",
                 customer_portal_url="http://customer.gitlab.test",
                 # pydantic-settings does not allow omitting the prefix if validation_alias is set for the field
-                aigw_mock_model_responses=True,
+                aigw_mock_model_responses=True,  # type: ignore[call-arg]
             ),
         ),
     ],
@@ -57,10 +57,10 @@ def test_config_base(values: dict, expected: Config):
     ("values", "expected"),
     [
         # pydantic-settings does not allow omitting the prefix if validation_alias is set for the field
-        ({"AIGW_MOCK_MODEL_RESPONSES": "true"}, Config(aigw_mock_model_responses=True)),
+        ({"AIGW_MOCK_MODEL_RESPONSES": "true"}, Config(aigw_mock_model_responses=True)),  # type: ignore[call-arg]
         (
             {"AIGW_USE_FAKE_MODELS": "true"},
-            Config(aigw_mock_model_responses=True),
+            Config(aigw_mock_model_responses=True),  # type: ignore[call-arg]
         ),
     ],
 )

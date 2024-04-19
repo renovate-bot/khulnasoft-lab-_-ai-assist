@@ -3,6 +3,7 @@ import logging
 from logging.config import dictConfig
 
 from dotenv import load_dotenv
+from fastapi import FastAPI
 from fastapi.exception_handlers import http_exception_handler
 from prometheus_client import start_http_server
 from prometheus_fastapi_instrumentator import Instrumentator, metrics
@@ -30,11 +31,11 @@ config = Config()
 dictConfig(config.fastapi.uvicorn_logger)
 
 
-def get_config():
+def get_config() -> Config:
     return config
 
 
-def get_app():
+def get_app() -> FastAPI:
     container_application = ContainerApplication()
     container_application.config.from_dict(config.model_dump())
 
