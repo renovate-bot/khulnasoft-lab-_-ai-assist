@@ -2,7 +2,7 @@ from typing import Literal, Optional
 
 from pydantic import BaseModel, Field
 
-from ai_gateway.chat.typing import Resource
+from ai_gateway.chat.typing import Context
 
 __all__ = [
     "ReActAgentScratchpad",
@@ -41,7 +41,7 @@ class AgentRequest(BaseModel):
     question: str
     chat_history: str | list[str]
     agent_scratchpad: ReActAgentScratchpad = Field(discriminator="agent_type")
-    resource: Optional[Resource] = None
+    context: Optional[Context] = None
 
 
 class AgentResponse(BaseModel):

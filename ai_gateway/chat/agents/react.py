@@ -12,7 +12,7 @@ from ai_gateway.chat.agents.base import (
 )
 from ai_gateway.chat.agents.utils import convert_prompt_to_messages
 from ai_gateway.chat.prompts import ChatPrompt
-from ai_gateway.chat.typing import Resource
+from ai_gateway.chat.typing import Context
 from ai_gateway.models import ChatModelBase
 
 __all__ = [
@@ -31,7 +31,7 @@ __all__ = [
 class ReActAgentInputs(BaseModel):
     question: str
     chat_history: str | list[str]
-    resource: Optional[Resource] = None
+    context: Optional[Context] = None
 
 
 class ReActAgentMessage(BaseModel):
@@ -150,7 +150,7 @@ class ReActAgent(BaseSingleActionAgent):
             question=inputs.question,
             chat_history=self.render_chat_history(inputs),
             agent_scratchpad=self.render_agent_scratchpad(self.agent_scratchpad),
-            resource_content=inputs.resource.content if inputs.resource else "",
+            context_content=inputs.context.content if inputs.context else "",
         )
 
         model_kwargs = {**self.model_kwargs, **kwargs}

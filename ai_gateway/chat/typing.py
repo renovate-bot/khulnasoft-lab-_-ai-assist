@@ -2,9 +2,9 @@ from typing import Literal
 
 from pydantic import BaseModel
 
-__all__ = ["Resource"]
+__all__ = ["Context"]
 
 
-class Resource(BaseModel, frozen=True):
+class Context(BaseModel, frozen=True):
     type: Literal["issue", "epic"]
     content: str

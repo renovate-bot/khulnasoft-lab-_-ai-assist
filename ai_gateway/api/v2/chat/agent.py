@@ -40,7 +40,7 @@ async def chat(
     inputs = ReActAgentInputs(
         question=agent_request.question,
         chat_history=agent_request.chat_history,
-        resource=agent_request.resource,
+        context=agent_request.context,
     )
 
     scratchpad = [

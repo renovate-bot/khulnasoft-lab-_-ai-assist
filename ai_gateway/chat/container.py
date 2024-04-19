@@ -24,8 +24,8 @@ def _react_agent_factory(
             prompt=prompt_registry.get_chat_prompt(
                 "react",
                 tools=tools,
-                resource_type=(
-                    agent_inputs.resource.type if agent_inputs.resource else None
+                context_type=(
+                    agent_inputs.context.type if agent_inputs.context else None
                 ),
             ),
             model=model,

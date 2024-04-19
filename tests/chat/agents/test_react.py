@@ -17,7 +17,7 @@ from ai_gateway.chat.agents.react import (
 from ai_gateway.chat.agents.utils import convert_prompt_to_messages
 from ai_gateway.chat.prompts import LocalPromptRegistry
 from ai_gateway.chat.tools.gitlab import GitLabToolkit
-from ai_gateway.chat.typing import Resource
+from ai_gateway.chat.typing import Context
 from ai_gateway.models import ChatModelBase, Role, SafetyAttributes, TextGenModelOutput
 
 
@@ -127,7 +127,7 @@ class TestReActAgent:
             "question",
             "chat_history",
             "agent_scratchpad",
-            "resource",
+            "context",
             "expected_action",
         ),
         [
@@ -135,7 +135,7 @@ class TestReActAgent:
                 "What's the title of this epic?",
                 "",
                 [],
-                Resource(type="epic", content="epic title and description"),
+                Context(type="epic", content="epic title and description"),
                 ReActAgentToolAction(
                     thought="I'm thinking...",
                     tool="ci_issue_reader",
@@ -147,7 +147,7 @@ class TestReActAgent:
                 "What's the title of this issue?",
                 ["User: what's the description of this issue", "AI: PoC ReAct"],
                 [],
-                Resource(type="issue", content="issue title and description"),
+                Context(type="issue", content="issue title and description"),
                 ReActAgentToolAction(
                     thought="I'm thinking...",
                     tool="ci_issue_reader",
@@ -195,7 +195,7 @@ class TestReActAgent:
         question: str,
         chat_history: list[str] | str,
         agent_scratchpad: list[AgentStep],
-        resource: Resource | None,
+        context: Context | None,
         expected_action: ReActAgentToolAction | ReActAgentFinalAnswer,
     ):
         def _model_generate(*args, **kwargs):
@@ -210,7 +210,7 @@ class TestReActAgent:
         prompt = prompt_registry.get_chat_prompt(
             "react",
             tools=GitLabToolkit().get_tools(),
-            resource_type=resource.type if resource else None,
+            context_type=context.type if context else None,
         )
 
         model.generate = AsyncMock(side_effect=_model_generate)
@@ -218,7 +218,7 @@ class TestReActAgent:
         agent.agent_scratchpad.extend(agent_scratchpad)
 
         inputs = ReActAgentInputs(
-            question=question, chat_history=chat_history, resource=resource
+            question=question, chat_history=chat_history, context=context
         )
         actual_action = await agent.invoke(inputs=inputs)
 
@@ -231,7 +231,7 @@ class TestReActAgent:
             question=question,
             chat_history=chat_history_formatted,
             agent_scratchpad=agent_scratchpad_formatted,
-            resource_content=resource.content if resource else "",
+            context_content=context.content if context else "",
         )
         messages = {message.role: message for message in messages}
 
@@ -240,10 +240,10 @@ class TestReActAgent:
         )
 
         assert chat_history_formatted in messages[Role.SYSTEM].content
-        assert resource.content in messages[Role.SYSTEM].content if resource else True
+        assert context.content in messages[Role.SYSTEM].content if context else True
         assert (
-            "{resource_content}" not in messages[Role.SYSTEM].content
-            if not resource
+            "{context_content}" not in messages[Role.SYSTEM].content
+            if not context
             else True
         )
         assert question in messages[Role.USER].content
