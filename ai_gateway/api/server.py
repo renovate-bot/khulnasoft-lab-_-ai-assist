@@ -115,7 +115,7 @@ async def custom_http_exception_handler(request: Request, exc: StarletteHTTPExce
     return await http_exception_handler(request, exc)
 
 
-async def setup_custom_exception_handlers(app: FastAPI):
+def setup_custom_exception_handlers(app: FastAPI):
     app.add_exception_handler(StarletteHTTPException, custom_http_exception_handler)
 
 
