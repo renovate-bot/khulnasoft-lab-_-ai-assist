@@ -2,7 +2,7 @@ import asyncio
 import os
 import socket
 from typing import Iterator, cast
-from unittest.mock import MagicMock
+from unittest.mock import MagicMock, patch
 
 import pytest
 from fastapi import FastAPI
@@ -198,28 +198,32 @@ def test_middleware_log_request(fastapi_server_app: FastAPI, caplog):
         assert all("correlation_id" not in msg for msg in log_messages)
 
 
-@pytest.mark.asyncio
-async def test_custom_http_exception_handler(app):
+def test_setup_custom_exception_handlers(app, monkeypatch):
+    mock_add_exception_handler = MagicMock()
+    monkeypatch.setattr(app, "add_exception_handler", mock_add_exception_handler)
+
+    setup_custom_exception_handlers(app)
+
+    mock_add_exception_handler.assert_called_once_with(
+        StarletteHTTPException, custom_http_exception_handler
+    )
+
+
+def test_custom_http_exception_handler(app):
     @app.get("/test")
-    async def test_route():
+    def test_route():
         raise StarletteHTTPException(status_code=400, detail="Test Exception")
 
     setup_custom_exception_handlers(app)
 
     client = TestClient(app)
-    response = client.get("/test")
+
+    with patch("ai_gateway.api.server.context") as mock_context:
+        response = client.get("/test")
+
+        mock_context.__setitem__.assert_called_once_with(
+            "http_exception_details", "400: Test Exception"
+        )
 
     assert response.status_code == 400
     assert response.json() == {"detail": "Test Exception"}
-
-
-@pytest.mark.asyncio
-async def test_setup_custom_exception_handlers(app, monkeypatch):
-    mock_add_exception_handler = MagicMock()
-    monkeypatch.setattr(app, "add_exception_handler", mock_add_exception_handler)
-
-    await setup_custom_exception_handlers(app)
-
-    mock_add_exception_handler.assert_called_once_with(
-        StarletteHTTPException, custom_http_exception_handler
-    )
