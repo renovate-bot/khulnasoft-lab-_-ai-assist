@@ -4,10 +4,7 @@ import typing
 from starlette_context import context
 
 # TODO: Validate that these categories exist in https://gitlab.com/gitlab-com/www-gitlab-com/raw/master/data/stages.yml.
-_FEATURE_CATEGORIES = [
-    "code_suggestions",
-    "duo_chat",
-]
+_FEATURE_CATEGORIES = ["code_suggestions", "duo_chat", "ai_abstraction_layer"]
 
 _CONTEXT_KEY = "meta.feature_category"
 _UNKNOWN_FEATURE_CATEGORY = "unknown"

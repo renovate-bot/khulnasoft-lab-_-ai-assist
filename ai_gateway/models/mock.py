@@ -1,7 +1,9 @@
 import json
 import re
 from typing import Any, AsyncIterator, Callable, Optional, TypeVar
+from unittest.mock import AsyncMock
 
+import httpx
 from anthropic.types import Message
 
 from ai_gateway.models.base import (
@@ -15,6 +17,7 @@ from ai_gateway.models.base_chat import ChatModelBase
 
 __all__ = [
     "AsyncStream",
+    "AsyncClient",
     "LLM",
     "ChatModel",
 ]
@@ -38,6 +41,19 @@ class AsyncStream(AsyncIterator[_T]):
             self.callback_finish()
 
         raise StopAsyncIteration
+
+
+class AsyncClient(AsyncMock):
+    async def send(self, *args, **kwargs):
+        return httpx.Response(
+            status_code=200,
+            headers={
+                "Content-Type": "application/json",
+                "date": "2024",
+                "transfer-encoding": "chunked",
+            },
+            json={"response": "mocked"},
+        )
 
 
 class LLM(TextGenBaseModel):
