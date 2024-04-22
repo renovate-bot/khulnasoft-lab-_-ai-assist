@@ -1,8 +1,6 @@
 from dependency_injector import containers, providers
 from py_grpc_prometheus.prometheus_client_interceptor import PromClientInterceptor
 
-from ai_gateway.api import middleware
-from ai_gateway.auth import GitLabOidcProvider
 from ai_gateway.chat.container import ContainerChat
 from ai_gateway.code_suggestions.container import ContainerCodeSuggestions
 from ai_gateway.models.container import ContainerModels
@@ -13,40 +11,6 @@ __all__ = [
 ]
 
 from ai_gateway.x_ray.container import ContainerXRay
-
-_PROBS_ENDPOINTS = ["/monitoring/healthz"]
-_METRICS_ENDPOINTS = ["/metrics"]
-
-
-class ContainerFastApi(containers.DeclarativeContainer):
-    config = providers.Configuration(strict=True)
-
-    oidc_provider = providers.Singleton(
-        GitLabOidcProvider,
-        oidc_providers=providers.Dict(
-            {
-                "Gitlab": config.gitlab_url,
-                "CustomersDot": config.customer_portal_url,
-            }
-        ),
-    )
-
-    auth_middleware = providers.Factory(
-        middleware.MiddlewareAuthentication,
-        oidc_provider,
-        bypass_auth=config.auth.bypass_external,
-        skip_endpoints=_PROBS_ENDPOINTS + _METRICS_ENDPOINTS,
-    )
-
-    log_middleware = providers.Factory(
-        middleware.MiddlewareLogRequest,
-        skip_endpoints=_METRICS_ENDPOINTS,
-    )
-
-    telemetry_middleware = providers.Factory(
-        middleware.MiddlewareModelTelemetry,
-        skip_endpoints=_PROBS_ENDPOINTS + _METRICS_ENDPOINTS,
-    )
 
 
 class ContainerApplication(containers.DeclarativeContainer):
@@ -90,9 +54,4 @@ class ContainerApplication(containers.DeclarativeContainer):
     chat = providers.Container(
         ContainerChat,
         models=pkg_models,
-    )
-
-    fastapi = providers.Container(
-        ContainerFastApi,
-        config=config,
     )
