@@ -142,6 +142,7 @@ def setup_prometheus_fastapi_instrumentator(app: FastAPI):
             should_include_handler=True,
             should_include_method=True,
             should_include_status=True,
+            should_exclude_streaming_duration=True,
             buckets=(0.5, 1, 2.5, 5, 10, 30, 60),
         )
     )
