@@ -177,10 +177,10 @@ AIGW_CUSTOMER_PORTAL_URL=http://127.0.0.1:5000
 
 ### How to manually activate the virtualenv
 
-- `poetry shell` or `poetry install` should create the virtualenv environment. 
-- To activate virtualenv, use command: `. ./.venv/bin/activate`. 
-- To deactivate your virtualenv, use command: `deactivate`. 
-- To list virtualenvs, use `poetry env list`. 
+- `poetry shell` or `poetry install` should create the virtualenv environment.
+- To activate virtualenv, use command: `. ./.venv/bin/activate`.
+- To deactivate your virtualenv, use command: `deactivate`.
+- To list virtualenvs, use `poetry env list`.
 - To remove virtualenv, use `poetry env remove [name of virtualenv]`.
 
 ## Local development using GDK
