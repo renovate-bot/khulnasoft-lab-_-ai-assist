@@ -129,3 +129,8 @@ test-coverage: install-test-deps
 test-coverage-ci: install-test-deps
 	@echo "Running tests with coverage on CI..."
 	@poetry run pytest --cov=ai_gateway --cov=lints --cov-report term --cov-report xml:.test-reports/coverage.xml --junitxml=".test-reports/tests.xml"
+
+.PHONY: ingest
+ingest:
+	@echo "Running data ingestion and refreshing for search APIs..."
+	@$(ROOT_DIR)/scripts/ingest/gitlab-docs/run.sh
