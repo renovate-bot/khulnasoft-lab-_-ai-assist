@@ -40,4 +40,5 @@ async def libraries(
 
     except (AnthropicAPIConnectionError, AnthropicAPIStatusError) as ex:
         log_exception(ex)
+        raise
     return XRayResponse(response="")
