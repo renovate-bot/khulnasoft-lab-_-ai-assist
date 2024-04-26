@@ -2,6 +2,7 @@ import asyncio
 import os
 import socket
 from typing import Iterator, cast
+from unittest import mock
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -14,10 +15,12 @@ from starlette.requests import Request
 from ai_gateway.api import create_fast_api_server, server
 from ai_gateway.api.server import (
     custom_http_exception_handler,
+    model_api_exception_handler,
     setup_custom_exception_handlers,
 )
 from ai_gateway.config import Config, ConfigAuth
 from ai_gateway.container import ContainerApplication
+from ai_gateway.models import ModelAPIError
 
 _ROUTES_V1 = [
     ("/v1/chat/agent", ["POST"]),
@@ -204,9 +207,10 @@ def test_setup_custom_exception_handlers(app, monkeypatch):
 
     setup_custom_exception_handlers(app)
 
-    mock_add_exception_handler.assert_called_once_with(
-        StarletteHTTPException, custom_http_exception_handler
-    )
+    assert mock_add_exception_handler.mock_calls == [
+        mock.call(StarletteHTTPException, custom_http_exception_handler),
+        mock.call(ModelAPIError, model_api_exception_handler),
+    ]
 
 
 def test_custom_http_exception_handler(app):
@@ -227,3 +231,17 @@ def test_custom_http_exception_handler(app):
 
     assert response.status_code == 400
     assert response.json() == {"detail": "Test Exception"}
+
+
+def test_model_exception_handler(app):
+    @app.get("/test")
+    def test_route():
+        raise ModelAPIError("model call failed")
+
+    setup_custom_exception_handlers(app)
+
+    client = TestClient(app)
+    response = client.get("/test")
+
+    assert response.status_code == 503
+    assert response.json() == {"detail": "Inference failed"}

@@ -26,6 +26,7 @@ from ai_gateway.auth import GitLabOidcProvider
 from ai_gateway.config import Config
 from ai_gateway.container import ContainerApplication
 from ai_gateway.instrumentators.threads import monitor_threads
+from ai_gateway.models import ModelAPIError
 from ai_gateway.profiling import setup_profiling
 from ai_gateway.structured_logging import setup_logging
 
@@ -115,8 +116,17 @@ async def custom_http_exception_handler(request: Request, exc: StarletteHTTPExce
     return await http_exception_handler(request, exc)
 
 
+async def model_api_exception_handler(request: Request, exc: ModelAPIError):
+    wrapped_exception = StarletteHTTPException(
+        status_code=503,
+        detail="Inference failed",
+    )
+    return await http_exception_handler(request, wrapped_exception)
+
+
 def setup_custom_exception_handlers(app: FastAPI):
     app.add_exception_handler(StarletteHTTPException, custom_http_exception_handler)
+    app.add_exception_handler(ModelAPIError, model_api_exception_handler)
 
 
 def setup_router(app: FastAPI):
