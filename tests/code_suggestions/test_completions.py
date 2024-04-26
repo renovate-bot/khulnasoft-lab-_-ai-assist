@@ -492,7 +492,7 @@ class TestCodeCompletions:
             ),
         ],
     )
-    async def test_execute_caught_exception(
+    async def test_execute_processed_exception(
         self,
         use_case: CodeCompletions,
         prefix: str,
@@ -510,7 +510,8 @@ class TestCodeCompletions:
 
         use_case.model.generate = AsyncMock(side_effect=_side_effect)
 
-        _ = await use_case.execute(prefix, suffix, file_name, editor_lang)
+        with pytest.raises(model_exception_type) as exc:
+            _ = await use_case.execute(prefix, suffix, file_name, editor_lang)
 
         code = (
             model_exception_type.code if hasattr(model_exception_type, "code") else -1

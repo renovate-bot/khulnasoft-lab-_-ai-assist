@@ -158,9 +158,11 @@ class CodeCompletions:
                     return self._handle_sync(res, lang_id, watch_container)
             except ModelAPICallError as ex:
                 watch_container.register_model_exception(str(ex), ex.code)
+                raise
             except ModelAPIError as ex:
                 # TODO: https://gitlab.com/gitlab-org/modelops/applied-ml/code-suggestions/ai-assist/-/issues/294
                 watch_container.register_model_exception(str(ex), -1)
+                raise
 
         return CodeSuggestionsOutput(
             text="",

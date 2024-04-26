@@ -16,6 +16,7 @@ from ai_gateway.code_suggestions.processing import (
 from ai_gateway.code_suggestions.processing.pre import TokenizerTokenStrategy
 from ai_gateway.experimentation import ExperimentRegistry
 from ai_gateway.models import (
+    ModelAPIError,
     ModelMetadata,
     PalmCodeGenBaseModel,
     SafetyAttributes,
@@ -201,6 +202,11 @@ def _side_effect_with_status_exception(
         raise VertexAPIStatusError("status exception")
 
     return _fn
+
+
+@contextmanager
+def does_not_raise():
+    yield
 
 
 @pytest.mark.asyncio
@@ -587,11 +593,14 @@ async def test_model_engine_palm(
         experiment_registry=ExperimentRegistry(),
     )
     engine.instrumentator = MockInstrumentor()
-    completion = await engine.generate(prefix, suffix, file_name, editor_language)
 
-    assert completion.text == expected_completion
-    assert completion.model == _model_metadata
-    assert completion.lang_id == language
+    if successful_predict:
+        raises_expectation = does_not_raise()
+    else:
+        raises_expectation = pytest.raises(ModelAPIError)
+
+    with raises_expectation:
+        completion = await engine.generate(prefix, suffix, file_name, editor_language)
 
     if prompt_builder_metadata:
         max_imports_len = int(
@@ -640,6 +649,9 @@ async def test_model_engine_palm(
     if successful_predict:
         watcher.register_model_output_length.assert_called_with(model_output)
         watcher.register_model_score.assert_called_with(-1)
+        assert completion.text == expected_completion
+        assert completion.model == _model_metadata
+        assert completion.lang_id == language
     else:
         watcher.register_model_output_length.assert_not_called()
         watcher.register_model_score.assert_not_called()

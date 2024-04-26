@@ -257,6 +257,7 @@ class ModelEngineCompletions(ModelEngineBase):
                     )
             except (VertexAPIConnectionError, VertexAPIStatusError) as ex:
                 watch_container.register_model_exception(str(ex), ex.code)
+                raise
 
         return empty_output
 
