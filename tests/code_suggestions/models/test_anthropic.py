@@ -780,6 +780,7 @@ class TestAnthropicChatModel:
                 _ = [item async for item in r]
 
             mock_watch.assert_called_once_with(stream=True)
+            watcher.register_error.assert_called_once()
             watcher.finish.assert_called_once()
 
     @pytest.mark.asyncio
