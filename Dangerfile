@@ -5,5 +5,5 @@ Gitlab::Dangerfiles.for_project(self, 'ai-gateway') do |dangerfiles|
   dangerfiles.import_plugins
 
   # Import a defined set of danger rules
-  dangerfiles.import_dangerfiles(only: %w[maintainer_roulette type_label subtype_label z_retry_link])
+  dangerfiles.import_dangerfiles(only: %w[roulette type_label subtype_label z_retry_link])
 end
