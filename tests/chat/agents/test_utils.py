@@ -1,25 +1,28 @@
 import pytest
 
+from ai_gateway.agents import Agent
 from ai_gateway.chat.agents.utils import convert_prompt_to_messages
-from ai_gateway.chat.prompts import ChatPrompt
 from ai_gateway.models import Message, Role
 
 
 @pytest.mark.parametrize(
-    ("prompt", "prompt_kwargs", "expected"),
+    ("agent", "prompt_kwargs", "expected"),
     [
         (
-            ChatPrompt(user="user prompt"),
+            Agent(name="Test", prompt_templates={"user": "user prompt"}),
             {},
             [Message(role=Role.USER, content="user prompt")],
         ),
         (
-            ChatPrompt(user="user prompt {text}"),
+            Agent(name="Test", prompt_templates={"user": "user prompt {{text}}"}),
             {"text": "!"},
             [Message(role=Role.USER, content="user prompt !")],
         ),
         (
-            ChatPrompt(system="system prompt", user="user prompt"),
+            Agent(
+                name="Test",
+                prompt_templates={"system": "system prompt", "user": "user prompt"},
+            ),
             {},
             [
                 Message(role=Role.SYSTEM, content="system prompt"),
@@ -27,8 +30,13 @@ from ai_gateway.models import Message, Role
             ],
         ),
         (
-            ChatPrompt(
-                system="system prompt", user="user prompt", assistant="assistant prompt"
+            Agent(
+                name="Test",
+                prompt_templates={
+                    "system": "system prompt",
+                    "user": "user prompt",
+                    "assistant": "assistant prompt",
+                },
             ),
             {},
             [
@@ -38,10 +46,13 @@ from ai_gateway.models import Message, Role
             ],
         ),
         (
-            ChatPrompt(
-                system="system prompt",
-                user="user prompt {text}",
-                assistant="assistant prompt",
+            Agent(
+                name="Test",
+                prompt_templates={
+                    "system": "system prompt",
+                    "user": "user prompt {{text}}",
+                    "assistant": "assistant prompt",
+                },
             ),
             {"text": "!"},
             [
@@ -51,10 +62,13 @@ from ai_gateway.models import Message, Role
             ],
         ),
         (
-            ChatPrompt(
-                system="system prompt {text}",
-                user="user prompt {text}",
-                assistant="assistant prompt {text}",
+            Agent(
+                name="Test",
+                prompt_templates={
+                    "system": "system prompt {{text}}",
+                    "user": "user prompt {{text}}",
+                    "assistant": "assistant prompt {{text}}",
+                },
             ),
             {"text": "!"},
             [
@@ -66,7 +80,7 @@ from ai_gateway.models import Message, Role
     ],
 )
 def test_convert_prompt_to_messages(
-    prompt: ChatPrompt, prompt_kwargs: dict, expected: list[Message]
+    agent: Agent, prompt_kwargs: dict, expected: list[Message]
 ):
-    actual = convert_prompt_to_messages(prompt, **prompt_kwargs)
+    actual = convert_prompt_to_messages(agent, **prompt_kwargs)
     assert actual == expected

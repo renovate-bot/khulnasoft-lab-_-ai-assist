@@ -1,6 +1,6 @@
 from typing import Any
 
-from ai_gateway.chat.prompts import ChatPrompt
+from ai_gateway.agents import Agent
 from ai_gateway.models import Message, Role
 
 __all__ = [
@@ -8,16 +8,13 @@ __all__ = [
 ]
 
 
-def convert_prompt_to_messages(prompt: ChatPrompt, **kwargs: Any) -> list[Message]:
+def convert_prompt_to_messages(agent: Agent, **kwargs: Any) -> list[Message]:
     messages = []
-    for role, content in [
-        (Role.SYSTEM, prompt.system),
-        (Role.USER, prompt.user),
-        (Role.ASSISTANT, prompt.assistant),
-    ]:
+    for role in Role:
+        content = agent.prompt(role, **kwargs)
         if content is None:
             continue
 
-        messages.append(Message(role=role, content=content.format(**kwargs)))
+        messages.append(Message(role=role, content=content))
 
     return messages
