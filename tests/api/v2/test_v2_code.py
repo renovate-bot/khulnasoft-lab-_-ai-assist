@@ -665,6 +665,7 @@ class TestCodeGenerations:
             "want_anthropic_chat_called",
             "want_vertex_prompt_prepared_called",
             "want_anthropic_prompt_prepared_called",
+            "want_litellm_called",
             "want_status",
             "want_prompt",
             "want_choices",
@@ -678,6 +679,7 @@ class TestCodeGenerations:
                 "code-bison@002",
                 "foo",
                 True,
+                False,
                 False,
                 False,
                 False,
@@ -698,6 +700,7 @@ class TestCodeGenerations:
                 False,
                 False,
                 False,
+                False,
                 200,
                 None,
                 [{"text": "foo", "index": 0, "finish_reason": "length"}],
@@ -710,6 +713,7 @@ class TestCodeGenerations:
                 "code-bison@002",
                 "foo",
                 True,
+                False,
                 False,
                 False,
                 False,
@@ -730,6 +734,7 @@ class TestCodeGenerations:
                 False,
                 False,
                 False,
+                False,
                 200,
                 None,
                 [{"text": "foo", "index": 0, "finish_reason": "length"}],
@@ -742,6 +747,7 @@ class TestCodeGenerations:
                 "code-bison@002",
                 "",
                 True,
+                False,
                 False,
                 False,
                 False,
@@ -762,6 +768,7 @@ class TestCodeGenerations:
                 False,
                 True,
                 False,
+                False,
                 200,
                 "bar",
                 [{"text": "foo", "index": 0, "finish_reason": "length"}],
@@ -778,6 +785,7 @@ class TestCodeGenerations:
                 False,
                 False,
                 True,
+                False,
                 200,
                 "bar",
                 [{"text": "foo", "index": 0, "finish_reason": "length"}],
@@ -789,6 +797,7 @@ class TestCodeGenerations:
                 "anthropic",
                 "claude-2.0",
                 "foo",
+                False,
                 False,
                 False,
                 False,
@@ -810,6 +819,7 @@ class TestCodeGenerations:
                 False,
                 False,
                 True,
+                False,
                 200,
                 "bar",
                 [],
@@ -829,6 +839,7 @@ class TestCodeGenerations:
                 True,
                 False,
                 True,
+                False,
                 200,
                 [
                     Message(role=Role.SYSTEM, content="foo"),
@@ -836,6 +847,29 @@ class TestCodeGenerations:
                 ],
                 [{"text": "foo", "index": 0, "finish_reason": "length"}],
             ),  # v3 with prompt - anthropic
+            (
+                3,
+                "foo",
+                [
+                    {"role": "system", "content": "foo"},
+                    {"role": "user", "content": "bar"},
+                ],
+                "litellm",
+                "mistral",
+                "foo",
+                False,
+                False,
+                False,
+                False,
+                False,
+                True,
+                200,
+                [
+                    Message(role=Role.SYSTEM, content="foo"),
+                    Message(role=Role.USER, content="bar"),
+                ],
+                [{"text": "foo", "index": 0, "finish_reason": "length"}],
+            ),  # v3 with prompt - litellm
         ],
     )
     def test_non_stream_response(
@@ -853,6 +887,7 @@ class TestCodeGenerations:
         want_anthropic_chat_called,
         want_vertex_prompt_prepared_called,
         want_anthropic_prompt_prepared_called,
+        want_litellm_called,
         want_status,
         want_prompt,
         want_choices,
@@ -877,12 +912,19 @@ class TestCodeGenerations:
             return_value=model_output
         )
 
+        code_generations_litellm_mock = mock.Mock(spec=CodeGenerations)
+        code_generations_litellm_mock.execute = mock.AsyncMock(
+            return_value=model_output
+        )
+
         with mock_container.code_suggestions.generations.vertex.override(
             code_generations_vertex_mock
         ), mock_container.code_suggestions.generations.anthropic_factory.override(
             code_generations_anthropic_mock
         ), mock_container.code_suggestions.generations.anthropic_chat_factory.override(
             code_generations_anthropic_chat_mock
+        ), mock_container.code_suggestions.generations.litellm_factory.override(
+            code_generations_litellm_mock
         ):
             response = mock_client.post(
                 "/code/generations",
@@ -908,6 +950,7 @@ class TestCodeGenerations:
         assert response.status_code == want_status
         assert code_generations_vertex_mock.execute.called == want_vertex_called
         assert code_generations_anthropic_mock.execute.called == want_anthropic_called
+        assert code_generations_litellm_mock.execute.called == want_litellm_called
         assert (
             code_generations_anthropic_chat_mock.execute.called
             == want_anthropic_chat_called

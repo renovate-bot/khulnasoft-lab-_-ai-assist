@@ -28,7 +28,7 @@ class ContainerCodeGenerations(containers.DeclarativeContainer):
     vertex_code_bison = providers.Dependency(instance_of=TextGenBaseModel)
     anthropic_claude = providers.Dependency(instance_of=TextGenBaseModel)
     anthropic_claude_chat = providers.Dependency(instance_of=ChatModelBase)
-    openai_compatible = providers.Dependency(instance_of=ChatModelBase)
+    llmlite = providers.Dependency(instance_of=ChatModelBase)
     snowplow_instrumentator = providers.Dependency(instance_of=SnowplowInstrumentator)
 
     vertex = providers.Factory(
@@ -65,9 +65,9 @@ class ContainerCodeGenerations(containers.DeclarativeContainer):
         snowplow_instrumentator=snowplow_instrumentator,
     )
 
-    openai_compatible_factory = providers.Factory(
+    litellm_factory = providers.Factory(
         CodeGenerations,
-        model=providers.Factory(openai_compatible),
+        model=providers.Factory(llmlite),
         tokenization_strategy=providers.Factory(
             TokenizerTokenStrategy, tokenizer=tokenizer
         ),
@@ -137,7 +137,7 @@ class ContainerCodeSuggestions(containers.DeclarativeContainer):
         vertex_code_bison=models.vertex_code_bison,
         anthropic_claude=models.anthropic_claude,
         anthropic_claude_chat=models.anthropic_claude_chat,
-        openai_compatible=models.openai_compatible,
+        llmlite=models.llmlite,
         snowplow_instrumentator=snowplow.instrumentator,
     )
 

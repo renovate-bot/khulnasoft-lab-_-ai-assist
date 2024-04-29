@@ -48,6 +48,7 @@ class SuggestionsRequest(BaseModel):
     project_id: Optional[int] = None
     current_file: CurrentFile
     model_provider: Optional[KindModelProvider] = None
+    model_endpoint: Optional[str] = None
     model_name: Optional[
         Annotated[str, StringConstraints(strip_whitespace=True, max_length=50)]
     ] = None

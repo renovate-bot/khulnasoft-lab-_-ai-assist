@@ -31,7 +31,7 @@ from ai_gateway.async_dependency_resolver import (
     get_code_suggestions_completions_vertex_legacy_provider,
     get_code_suggestions_generations_anthropic_chat_factory_provider,
     get_code_suggestions_generations_anthropic_factory_provider,
-    get_code_suggestions_generations_openai_compatible_factory_provider,
+    get_code_suggestions_generations_litellm_factory_provider,
     get_code_suggestions_generations_vertex_provider,
     get_snowplow_instrumentator,
 )
@@ -160,8 +160,8 @@ async def generations(
     generations_anthropic_chat_factory: Factory[CodeGenerations] = Depends(
         get_code_suggestions_generations_anthropic_chat_factory_provider
     ),
-    generations_openai_compatible_factory: Factory[CodeGenerations] = Depends(
-        get_code_suggestions_generations_openai_compatible_factory_provider
+    generations_litellm_factory: Factory[CodeGenerations] = Depends(
+        get_code_suggestions_generations_litellm_factory_provider
     ),
     snowplow_instrumentator: SnowplowInstrumentator = Depends(
         get_snowplow_instrumentator
@@ -181,6 +181,7 @@ async def generations(
         suffix=payload.current_file.content_below_cursor,
         current_file_name=payload.current_file.file_name,
         stream=payload.stream,
+        endpoint=payload.model_endpoint,
     )
 
     if payload.model_provider == KindModelProvider.ANTHROPIC:
@@ -194,10 +195,10 @@ async def generations(
                 payload,
                 generations_anthropic_factory,
             )
-    elif payload.model_provider == KindModelProvider.OPENAI_COMPATIBLE:
-        code_generations = generations_openai_compatible_factory(
+    elif payload.model_provider == KindModelProvider.LITELLM:
+        code_generations = generations_litellm_factory(
             model__name=payload.model_name,
-            model__stop=["</new_code>"],
+            model__endpoint=payload.model_endpoint,
         )
     else:
         code_generations = generations_vertex_factory()

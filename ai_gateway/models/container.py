@@ -4,16 +4,11 @@ from typing import Iterator, Optional
 from anthropic import AsyncAnthropic
 from dependency_injector import containers, providers
 from google.cloud.aiplatform.gapic import PredictionServiceAsyncClient
-from openai import AsyncOpenAI
 
 from ai_gateway.models import mock
 from ai_gateway.models.anthropic import AnthropicChatModel, AnthropicModel
-from ai_gateway.models.base import (
-    connect_anthropic,
-    connect_openai,
-    grpc_connect_vertex,
-)
-from ai_gateway.models.openai_compatible import OpenAiCompatibleModel
+from ai_gateway.models.base import connect_anthropic, grpc_connect_vertex
+from ai_gateway.models.litellm import LiteLlmChatModel
 from ai_gateway.models.vertex_text import (
     PalmCodeBisonModel,
     PalmCodeGeckoModel,
@@ -54,18 +49,6 @@ def _init_anthropic_client(
     client.close()
 
 
-def _init_openai_client(
-    mock_model_responses: bool,
-) -> Iterator[Optional[AsyncOpenAI]]:
-    if mock_model_responses:
-        yield None
-        return
-
-    client = connect_openai()
-    yield client
-    client.close()
-
-
 class ContainerModels(containers.DeclarativeContainer):
     # We need to resolve the model based on the model name provided by the upstream container.
     # Hence, `VertexTextBaseModel.from_model_name` and `AnthropicModel.from_model_name` are only partially applied here.
@@ -86,11 +69,6 @@ class ContainerModels(containers.DeclarativeContainer):
 
     http_client_anthropic = providers.Resource(
         _init_anthropic_client,
-        mock_model_responses=config.mock_model_responses,
-    )
-
-    http_client_openai = providers.Resource(
-        _init_openai_client,
         mock_model_responses=config.mock_model_responses,
     )
 
@@ -144,11 +122,10 @@ class ContainerModels(containers.DeclarativeContainer):
         mocked=providers.Factory(mock.ChatModel),
     )
 
-    openai_compatible = providers.Selector(
+    llmlite = providers.Selector(
         _mock_selector,
         original=providers.Factory(
-            OpenAiCompatibleModel.from_model_name,
-            client=http_client_openai,
+            LiteLlmChatModel.from_model_name,
         ),
         mocked=providers.Factory(mock.ChatModel),
     )

@@ -60,5 +60,5 @@ async def get_code_suggestions_generations_anthropic_chat_factory_provider():
     yield get_container_application().code_suggestions.generations.anthropic_chat_factory
 
 
-async def get_code_suggestions_generations_openai_compatible_factory_provider():
-    yield get_container_application().code_suggestions.generations.openai_compatible_factory
+async def get_code_suggestions_generations_litellm_factory_provider():
+    yield get_container_application().code_suggestions.generations.litellm_factory

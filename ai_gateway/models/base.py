@@ -4,7 +4,6 @@ from typing import Any, AsyncIterator, NamedTuple, Optional, Union
 
 from anthropic import AsyncAnthropic
 from google.cloud.aiplatform.gapic import PredictionServiceAsyncClient
-from openai import AsyncOpenAI
 from pydantic import BaseModel
 
 from ai_gateway.config import Config
@@ -34,7 +33,7 @@ __all__ = [
 class KindModelProvider(str, Enum):
     ANTHROPIC = "anthropic"
     VERTEX_AI = "vertex-ai"
-    OPENAI_COMPATIBLE = "openai-compatible"
+    LITELLM = "litellm"
 
 
 class ModelAPIError(Exception):
@@ -145,7 +144,3 @@ def grpc_connect_vertex(client_options: dict) -> PredictionServiceAsyncClient:
 
 def connect_anthropic(**kwargs: Any) -> AsyncAnthropic:
     return AsyncAnthropic(**kwargs)
-
-
-def connect_openai(**kwargs: Any) -> AsyncOpenAI:
-    return AsyncOpenAI(**kwargs, api_key="TEST")
