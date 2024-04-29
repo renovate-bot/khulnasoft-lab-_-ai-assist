@@ -25,6 +25,12 @@ def tpl_codegen_dir() -> Path:
 
 
 @pytest.fixture
+def tpl_duo_chat_dirs() -> dict[str, Path]:
+    prompts_dir = Path(__file__).parent / "ai_gateway" / "chat" / "agents" / "prompts"
+    return {f.parts[-1]: f for f in prompts_dir.iterdir() if f.is_dir()}
+
+
+@pytest.fixture
 def text_gen_base_model():
     model = Mock(spec=TextGenBaseModel)
     model.MAX_MODEL_LEN = 1_000
