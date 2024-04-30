@@ -279,7 +279,11 @@ class AnthropicChatModel(ChatModelBase):
                 raise AnthropicAPIConnectionError.from_exception(ex)
 
             if stream:
-                return self._handle_stream(suggestion, lambda: watcher.finish())
+                return self._handle_stream(
+                    suggestion,
+                    lambda: watcher.finish(),
+                    lambda: watcher.register_error(),
+                )
 
         return TextGenModelOutput(
             text=suggestion.content[0].text,
@@ -289,7 +293,7 @@ class AnthropicChatModel(ChatModelBase):
         )
 
     async def _handle_stream(
-        self, response: AsyncStream, after_callback: Callable
+        self, response: AsyncStream, after_callback: Callable, error_callback: Callable
     ) -> AsyncIterator[TextGenModelChunk]:
         try:
             async for event in response:
@@ -300,6 +304,9 @@ class AnthropicChatModel(ChatModelBase):
                     yield TextGenModelChunk(text=event.delta.text)
                 else:
                     continue
+        except Exception:
+            error_callback()
+            raise
         finally:
             after_callback()
 
