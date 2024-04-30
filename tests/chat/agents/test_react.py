@@ -3,6 +3,7 @@ from unittest.mock import AsyncMock, Mock
 
 import pytest
 
+from ai_gateway.agents import LocalAgentRegistry
 from ai_gateway.chat.agents import AgentStep
 from ai_gateway.chat.agents.react import (
     ReActAgent,
@@ -15,15 +16,14 @@ from ai_gateway.chat.agents.react import (
     chat_history_plain_text_renderer,
 )
 from ai_gateway.chat.agents.utils import convert_prompt_to_messages
-from ai_gateway.chat.prompts import LocalPromptRegistry
 from ai_gateway.chat.tools.gitlab import GitLabToolkit
 from ai_gateway.chat.typing import Context
 from ai_gateway.models import ChatModelBase, Role, SafetyAttributes, TextGenModelOutput
 
 
 @pytest.fixture
-def prompt_registry(tpl_duo_chat_dirs: dict[str, Path]) -> LocalPromptRegistry:
-    return LocalPromptRegistry.from_resources(tpl_duo_chat_dirs)
+def agent_registry() -> LocalAgentRegistry:
+    return LocalAgentRegistry()
 
 
 @pytest.mark.parametrize(
@@ -191,7 +191,7 @@ class TestReActAgent:
     )
     async def test_success(
         self,
-        prompt_registry: LocalPromptRegistry,
+        agent_registry: LocalAgentRegistry,
         question: str,
         chat_history: list[str] | str,
         agent_scratchpad: list[AgentStep],
@@ -207,19 +207,16 @@ class TestReActAgent:
             )
 
         model = Mock(spec=ChatModelBase)
-        prompt = prompt_registry.get_chat_prompt(
-            "react",
-            tools=GitLabToolkit().get_tools(),
-            context_type=context.type if context else None,
-        )
-
-        model.generate = AsyncMock(side_effect=_model_generate)
-        agent = ReActAgent(prompt=prompt, model=model)
-        agent.agent_scratchpad.extend(agent_scratchpad)
-
+        base_agent = agent_registry.get("chat", "react")
         inputs = ReActAgentInputs(
             question=question, chat_history=chat_history, context=context
         )
+
+        model.generate = AsyncMock(side_effect=_model_generate)
+
+        tools = GitLabToolkit().get_tools()
+        agent = ReActAgent(agent=base_agent, model=model, inputs=inputs, tools=tools)
+        agent.agent_scratchpad.extend(agent_scratchpad)
         actual_action = await agent.invoke(inputs=inputs)
 
         chat_history_formatted = chat_history_plain_text_renderer(inputs)
@@ -227,7 +224,9 @@ class TestReActAgent:
             agent_scratchpad
         )
         messages = convert_prompt_to_messages(
-            prompt,
+            base_agent,
+            tools=tools,
+            context_type=(inputs.context.type if inputs.context else None),
             question=question,
             chat_history=chat_history_formatted,
             agent_scratchpad=agent_scratchpad_formatted,

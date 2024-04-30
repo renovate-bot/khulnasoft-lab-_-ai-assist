@@ -1,11 +1,10 @@
-from pathlib import Path
 from typing import Sequence
 
 from dependency_injector import containers, providers
 
+from ai_gateway.agents import BaseAgentRegistry, LocalAgentRegistry
 from ai_gateway.chat.agents.react import ReActAgent, ReActAgentInputs
 from ai_gateway.chat.executor import GLAgentRemoteExecutor, TypeAgentFactory
-from ai_gateway.chat.prompts import BasePromptRegistry, LocalPromptRegistry
 from ai_gateway.chat.tools import BaseTool
 from ai_gateway.chat.tools.gitlab import GitLabToolkit
 from ai_gateway.models import ChatModelBase, KindAnthropicModel
@@ -17,17 +16,13 @@ __all__ = [
 
 def _react_agent_factory(
     model: ChatModelBase,
-    prompt_registry: BasePromptRegistry,
+    agent_registry: BaseAgentRegistry,
 ) -> TypeAgentFactory[ReActAgentInputs]:
     def _fn(tools: Sequence[BaseTool], agent_inputs: ReActAgentInputs) -> ReActAgent:
         return ReActAgent(
-            prompt=prompt_registry.get_chat_prompt(
-                "react",
-                tools=tools,
-                context_type=(
-                    agent_inputs.context.type if agent_inputs.context else None
-                ),
-            ),
+            agent=agent_registry.get("chat", "react"),
+            tools=tools,
+            inputs=agent_inputs,
             model=model,
         )
 
@@ -42,17 +37,14 @@ class ContainerChat(containers.DeclarativeContainer):
     _anthropic_claude_llm_factory = providers.Factory(models.anthropic_claude)
     _anthropic_claude_chat_factory = providers.Factory(models.anthropic_claude_chat)
 
-    _local_prompt_registry = providers.Singleton(
-        LocalPromptRegistry.from_resources,
-        mapping={"react": Path(__file__).parent / "agents" / "prompts" / "react"},
-    )
+    _local_prompt_registry = providers.Singleton(LocalAgentRegistry)
 
     _react_agent_factory = providers.Factory(
         _react_agent_factory,
         model=providers.Factory(
             models.anthropic_claude_chat, name=KindAnthropicModel.CLAUDE_3_SONNET
         ),
-        prompt_registry=_local_prompt_registry,
+        agent_registry=_local_prompt_registry,
     )
 
     # We need to resolve the model based on model name provided in request payload

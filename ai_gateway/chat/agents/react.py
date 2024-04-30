@@ -1,8 +1,9 @@
 import re
-from typing import Any, Callable, Optional
+from typing import Any, Callable, Optional, Sequence
 
 from pydantic import BaseModel, ConfigDict, Field
 
+from ai_gateway.agents import Agent
 from ai_gateway.chat.agents.base import (
     AgentFinalAnswer,
     AgentStep,
@@ -11,7 +12,7 @@ from ai_gateway.chat.agents.base import (
     BaseSingleActionAgent,
 )
 from ai_gateway.chat.agents.utils import convert_prompt_to_messages
-from ai_gateway.chat.prompts import ChatPrompt
+from ai_gateway.chat.tools import BaseTool
 from ai_gateway.chat.typing import Context
 from ai_gateway.models import ChatModelBase
 
@@ -130,8 +131,10 @@ def agent_scratchpad_plain_text_renderer(
 class ReActAgent(BaseSingleActionAgent):
     model_config = ConfigDict(protected_namespaces=(), arbitrary_types_allowed=True)
 
-    # TODO: Validate whether the prompt has all the required placeholders specified in `ReActAgentInputs`.
-    prompt: ChatPrompt
+    # TODO: Validate whether the agent's prompts have all the required placeholders specified in `ReActAgentInputs`.
+    agent: Agent
+    tools: Sequence[BaseTool]
+    inputs: ReActAgentInputs
     model: ChatModelBase
     parser: BaseParser = Field(default_factory=ReActPlainTextParser)
     render_chat_history: Callable[[ReActAgentInputs], str] = (
@@ -146,7 +149,9 @@ class ReActAgent(BaseSingleActionAgent):
         self, *, inputs: ReActAgentInputs, **kwargs: Any
     ) -> TypeReActAgentAction:
         messages = convert_prompt_to_messages(
-            self.prompt,
+            self.agent,
+            tools=self.tools,
+            context_type=self.inputs.context.type if self.inputs.context else None,
             question=inputs.question,
             chat_history=self.render_chat_history(inputs),
             agent_scratchpad=self.render_agent_scratchpad(self.agent_scratchpad),
