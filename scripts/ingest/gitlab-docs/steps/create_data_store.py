@@ -4,6 +4,10 @@ from google.api_core.exceptions import AlreadyExists
 from google.cloud import discoveryengine_v1 as discoveryengine
 from google.cloud.discoveryengine_v1.types import IndustryVertical
 
+if os.environ.get("INGEST_DRY_RUN") == "true":
+    print("INFO: Dry Run mode. Skipped.")
+    exit(0)
+
 project_id = os.environ["GCP_PROJECT_NAME"]
 data_store_id = os.environ["DATA_STORE_ID"]
 bigquery_dataset = os.environ["BIGQUERY_DATASET_ID"]

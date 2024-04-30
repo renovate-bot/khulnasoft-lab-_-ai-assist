@@ -43,7 +43,8 @@ As a result, the search app `gitlab-docs-17-0` is connected to the data store `g
 A few notes:
 
 - Vertex AI Search was renamed to Agent Builder.
-- This process is performed every day 03:00 AM UTC to refresh the data store.
+- In AI Gateway project, CI/CD scheduled pipeline runs the ingestion to `ai-enablement-dev-69497ba7` GCP project 03:00 AM UTC every day.
+  See `ingest:dev` job in the pipelines.
 
 ### Run locally
 
@@ -66,6 +67,22 @@ export GITLAB_DOCS_JSONL_EXPORT_PATH="/tmp/gitlab-org/gitlab/docs.jsonl"
 export GITLAB_DOCS_WEB_ROOT_URL="https://gitlab.com/help"
 
 make ingest
+```
+
+or use docker image:
+
+```shell
+docker run \
+    -e 'GCP_PROJECT_NAME=ai-enablement-dev-69497ba7' \
+    -e 'SEARCH_APP_NAME=gitlab-docs' \
+    -e 'GITLAB_DOCS_REPO=https://gitlab.com/gitlab-org/gitlab.git' \
+    -e 'GITLAB_DOCS_REPO_REF=master' \
+    -e 'GITLAB_DOCS_CLONE_DIR=/tmp/gitlab-org/gitlab' \
+    -e 'GITLAB_DOCS_JSONL_EXPORT_PATH=/tmp/gitlab-org/gitlab/docs.jsonl' \
+    -e 'GITLAB_DOCS_WEB_ROOT_URL=https://gitlab.com/help' \
+    -e 'GOOGLE_APPLICATION_CREDENTIALS=/gcloud-config/application_default_credentials.json' \
+    -v "$HOME/.config/gcloud/application_default_credentials.json:/gcloud-config/application_default_credentials.json" \
+    registry.gitlab.com/gitlab-org/modelops/applied-ml/code-suggestions/ai-assist/ingest:<SHA>
 ```
 
 ### Test search app in GCP console

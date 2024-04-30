@@ -1,0 +1,51 @@
+.ingest-base:
+  image: $INGEST_IMAGE
+  variables:
+    SEARCH_APP_NAME: "gitlab-docs"
+    GITLAB_DOCS_REPO: "https://gitlab.com/gitlab-org/gitlab.git"
+    GITLAB_DOCS_REPO_REF: "master"
+    GITLAB_DOCS_CLONE_DIR: "/tmp/gitlab-org/gitlab"
+    GITLAB_DOCS_JSONL_EXPORT_PATH: "/tmp/gitlab-org/gitlab/docs.jsonl"
+    GITLAB_DOCS_WEB_ROOT_URL: "https://gitlab.com/help"
+  needs: [build:ingest-image]
+
+# OpenID Connect with GCP Workload Identity Federation
+# See https://gitlab.com/gitlab-org/modelops/applied-ml/code-suggestions/ai-assist/-/blob/main/docs/connect_to_gcp_in_ci.md
+.oidc-base:
+  id_tokens:
+    GITLAB_OIDC_TOKEN:
+      aud: https://gitlab.com
+  before_script:
+    - echo ${GITLAB_OIDC_TOKEN} > .ci_job_jwt_file
+    - gcloud iam workload-identity-pools create-cred-config "${WORKLOAD_IDENTITY_PROVIDER}"
+      --service-account="${SERVICE_ACCOUNT}"
+      --output-file=.gcp_temp_cred.json
+      --credential-source-file=`pwd`/.ci_job_jwt_file
+    - gcloud auth login --cred-file=`pwd`/.gcp_temp_cred.json
+    - gcloud config set project ${GCP_PROJECT_NAME}
+    - export GOOGLE_APPLICATION_CREDENTIALS=`pwd`/.gcp_temp_cred.json
+
+ingest:dev:
+  stage: ingest
+  extends: [.ingest-base, .oidc-base]
+  variables:
+    GCP_PROJECT_NAME: $INGEST_GCP_PROJECT_NAME
+    WORKLOAD_IDENTITY_PROVIDER: $INGEST_WORKLOAD_IDENTITY_PROVIDER
+    SERVICE_ACCOUNT: $INGEST_SERVICE_ACCOUNT
+  script:
+    - cd /app && make ingest
+  environment: ingest/dev
+  rules:
+    - if: $CI_COMMIT_BRANCH != $CI_DEFAULT_BRANCH
+      when: never
+    - if: $CI_PIPELINE_SOURCE == "schedule" && $SCHEDULE_TYPE == "ingest"
+
+ingest:dry-run:
+  stage: ingest
+  extends: [.ingest-base]
+  variables:
+    GCP_PROJECT_NAME: dummy
+  script:
+    - cd /app && make ingest INGEST_DRY_RUN=true
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
