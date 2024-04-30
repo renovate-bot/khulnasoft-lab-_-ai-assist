@@ -308,6 +308,18 @@ For more information and assistance, please check out:
 
 Access to AI Gateway is subjected to rate limiting defined as part of https://gitlab.com/gitlab-com/gl-infra/scalability/-/issues/2719#note_1780449328.
 
+## Multiple worker processes
+
+By default, the AI Gateway runs a single process to handle HTTP
+requests. To increase throughput, you may want to spawn multiple
+workers. To do this, there are a number of environment variables that
+need to be set:
+
+- `WEB_CONCURRENCY`: The [number of worker processes](https://www.uvicorn.org/deployment/) to run (1 is default).
+
+- `PROMETHEUS_MULTIPROC_DIR`: This is needed to support scraping of [Prometheus metrics](https://prometheus.github.io/client_python/multiprocess/) from a single endpoint.
+This directory holds the metrics from the processes and should be cleared before the application starts.
+
 ## How to become a project maintainer
 
 See [Maintainership](docs/maintainership.md).
