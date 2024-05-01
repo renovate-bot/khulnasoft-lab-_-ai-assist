@@ -918,6 +918,23 @@ google-auth = ">=1.25.0,<3.0dev"
 grpc = ["grpcio (>=1.38.0,<2.0dev)", "grpcio-status (>=1.38.0,<2.0.dev0)"]
 
 [[package]]
+name = "google-cloud-discoveryengine"
+version = "0.11.11"
+description = "Google Cloud Discoveryengine API client library"
+optional = false
+python-versions = ">=3.7"
+files = [
+    {file = "google-cloud-discoveryengine-0.11.11.tar.gz", hash = "sha256:d5bca887f957b7ccce3601f0111ca808101c7d4eebf5b18bd9a17f8982336095"},
+    {file = "google_cloud_discoveryengine-0.11.11-py3-none-any.whl", hash = "sha256:1269a70a2df1f7b7daa993485bcc7ae3211173aa7cfc3fab0225588287e47a3b"},
+]
+
+[package.dependencies]
+google-api-core = {version = ">=1.34.1,<2.0.dev0 || >=2.11.dev0,<3.0.0dev", extras = ["grpc"]}
+google-auth = ">=2.14.1,<2.24.0 || >2.24.0,<2.25.0 || >2.25.0,<3.0.0dev"
+proto-plus = ">=1.22.3,<2.0.0dev"
+protobuf = ">=3.19.5,<3.20.0 || >3.20.0,<3.20.1 || >3.20.1,<4.21.0 || >4.21.0,<4.21.1 || >4.21.1,<4.21.2 || >4.21.2,<4.21.3 || >4.21.3,<4.21.4 || >4.21.4,<4.21.5 || >4.21.5,<5.0.0dev"
+
+[[package]]
 name = "google-cloud-profiler"
 version = "4.1.0"
 description = "Google Cloud Profiler Python Agent"
@@ -3469,4 +3486,4 @@ files = [
 [metadata]
 lock-version = "2.0"
 python-versions = "~3.10.0"
-content-hash = "7c484773a82110f5bfc1acd97f87c625f88e80281d339f74fe9f44f413ac7752"
+content-hash = "a5987c797f5ac0962098745760be53d42477b0ba93c00e4f1ede6cd8a2871d2c"
