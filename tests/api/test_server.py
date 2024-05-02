@@ -21,6 +21,7 @@ from ai_gateway.api.server import (
 from ai_gateway.config import Config, ConfigAuth
 from ai_gateway.container import ContainerApplication
 from ai_gateway.models import ModelAPIError
+from ai_gateway.structured_logging import setup_logging
 
 _ROUTES_V1 = [
     ("/v1/chat/agent", ["POST"]),
@@ -74,6 +75,7 @@ def fastapi_server_app(auth_enabled) -> Iterator[FastAPI]:
     config = Config(_env_file=None, auth=ConfigAuth(bypass_external=not auth_enabled))
     fast_api_container = ContainerApplication()
     fast_api_container.config.from_dict(config.model_dump())
+    setup_logging(config.logging)
     yield create_fast_api_server(config)
 
 

@@ -42,9 +42,11 @@ def add_custom_keys(_, __, event_dict: EventDict) -> EventDict:
     return event_dict
 
 
-def setup_logging(app: FastAPI, logging_config: ConfigLogging):
+def setup_app_logging(app: FastAPI):
     app.add_middleware(CorrelationIdMiddleware, validator=None)
 
+
+def setup_logging(logging_config: ConfigLogging):
     timestamper = structlog.processors.TimeStamper(fmt="iso")
 
     shared_processors: list[Processor] = [

@@ -1,11 +1,9 @@
 import asyncio
-import logging
 from contextlib import asynccontextmanager
 
 from fastapi import APIRouter, FastAPI
 from fastapi.exception_handlers import http_exception_handler
 from fastapi.middleware.cors import CORSMiddleware
-from prometheus_client import start_http_server
 from prometheus_fastapi_instrumentator import Instrumentator, metrics
 from starlette.exceptions import HTTPException as StarletteHTTPException
 from starlette.middleware import Middleware
@@ -28,7 +26,7 @@ from ai_gateway.container import ContainerApplication
 from ai_gateway.instrumentators.threads import monitor_threads
 from ai_gateway.models import ModelAPIError
 from ai_gateway.profiling import setup_profiling
-from ai_gateway.structured_logging import setup_logging
+from ai_gateway.structured_logging import setup_app_logging
 
 __all__ = [
     "create_fast_api_server",
@@ -51,17 +49,6 @@ async def lifespan(app: FastAPI):
                 loop, interval=config.instrumentator.thread_monitoring_interval
             )
         )
-
-    # https://github.com/trallnag/prometheus-fastapi-instrumentator/issues/10
-    log = logging.getLogger("uvicorn.error")
-    log.info(
-        "Metrics HTTP server running on http://%s:%d",
-        config.fastapi.metrics_host,
-        config.fastapi.metrics_port,
-    )
-    start_http_server(
-        addr=config.fastapi.metrics_host, port=config.fastapi.metrics_port
-    )
 
     yield
 
@@ -104,7 +91,7 @@ def create_fast_api_server(config: Config):
 
     setup_custom_exception_handlers(fastapi_app)
     setup_router(fastapi_app)
-    setup_logging(fastapi_app, config.logging)
+    setup_app_logging(fastapi_app)
     setup_prometheus_fastapi_instrumentator(fastapi_app)
     setup_profiling(config.google_cloud_profiler)
 
