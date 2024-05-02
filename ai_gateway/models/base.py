@@ -33,6 +33,7 @@ __all__ = [
 class KindModelProvider(str, Enum):
     ANTHROPIC = "anthropic"
     VERTEX_AI = "vertex-ai"
+    LITELLM = "litellm"
 
 
 class ModelAPIError(Exception):
