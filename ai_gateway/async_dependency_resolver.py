@@ -32,6 +32,10 @@ async def get_chat_anthropic_claude_factory_provider():
     yield get_container_application().chat.anthropic_claude_factory
 
 
+async def get_vertex_search_factory_provider():
+    yield get_container_application().searches.vertex_search
+
+
 async def get_x_ray_anthropic_claude():
     yield get_container_application().x_ray.anthropic_claude()
 

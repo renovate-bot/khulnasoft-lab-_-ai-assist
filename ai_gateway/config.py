@@ -97,6 +97,10 @@ class ConfigVertexTextModel(BaseModel):
     json_key: str = ""
 
 
+class ConfigVertexSearch(BaseModel):
+    project: str = ""
+
+
 class ConfigModelConcurrency(RootModel):
     root: dict[str, dict[str, int]] = {}
 
@@ -146,6 +150,9 @@ class Config(BaseSettings):
     vertex_text_model: Annotated[
         ConfigVertexTextModel, Field(default_factory=ConfigVertexTextModel)
     ] = ConfigVertexTextModel()
+    vertex_search: Annotated[
+        ConfigVertexSearch, Field(default_factory=ConfigVertexSearch)
+    ]
     model_engine_concurrency_limits: Annotated[
         ConfigModelConcurrency, Field(default_factory=ConfigModelConcurrency)
     ] = ConfigModelConcurrency()
