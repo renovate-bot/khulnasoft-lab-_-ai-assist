@@ -34,6 +34,7 @@ class TestModelRequestInstrumentator:
                 model_name="claude",
                 error="no",
                 streaming="no",
+                feature_category="unknown",
             ),
             mock.call().inc(),
         ]
@@ -43,6 +44,7 @@ class TestModelRequestInstrumentator:
                 model_name="claude",
                 error="no",
                 streaming="no",
+                feature_category="unknown",
             ),
             mock.call().observe(1),
         ]
@@ -81,6 +83,7 @@ class TestModelRequestInstrumentator:
                 model_name="claude",
                 error="yes",
                 streaming="no",
+                feature_category="unknown",
             ),
             mock.call().inc(),
         ]
@@ -90,6 +93,7 @@ class TestModelRequestInstrumentator:
                 model_name="claude",
                 error="yes",
                 streaming="no",
+                feature_category="unknown",
             ),
             mock.call().observe(1),
         ]
@@ -140,6 +144,7 @@ class TestModelRequestInstrumentator:
                     model_name="claude",
                     error="no",
                     streaming="yes",
+                    feature_category="unknown",
                 ),
                 mock.call().inc(),
             ]
@@ -149,6 +154,7 @@ class TestModelRequestInstrumentator:
                     model_name="claude",
                     error="no",
                     streaming="yes",
+                    feature_category="unknown",
                 ),
                 mock.call().observe(1),
             ]
