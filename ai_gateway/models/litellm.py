@@ -73,7 +73,11 @@ class LiteLlmChatModel(ChatModelBase):
             )
 
             if stream:
-                return self._handle_stream(suggestion, lambda: watcher.finish())
+                return self._handle_stream(
+                    suggestion,
+                    lambda: watcher.finish(),
+                    lambda: watcher.register_error(),
+                )
 
         return TextGenModelOutput(
             text=suggestion.choices[0].message.content,
@@ -83,11 +87,17 @@ class LiteLlmChatModel(ChatModelBase):
         )
 
     async def _handle_stream(
-        self, response: CustomStreamWrapper, after_callback: Callable
+        self,
+        response: CustomStreamWrapper,
+        after_callback: Callable,
+        error_callback: Callable,
     ) -> AsyncIterator[TextGenModelChunk]:
         try:
             async for chunk in response:
                 yield TextGenModelChunk(text=(chunk.choices[0].delta.content or ""))
+        except Exception:
+            error_callback()
+            raise
         finally:
             after_callback()
 
