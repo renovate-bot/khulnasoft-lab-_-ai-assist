@@ -1,6 +1,6 @@
 from typing import Any
 
-from ai_gateway.agents import Agent
+from ai_gateway.agents.base import Agent
 from ai_gateway.models import Message, Role
 
 __all__ = [

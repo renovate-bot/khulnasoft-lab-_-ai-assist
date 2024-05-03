@@ -1,9 +1,9 @@
-from pathlib import Path
+from typing import Dict
 from unittest.mock import AsyncMock, Mock
 
 import pytest
 
-from ai_gateway.agents import LocalAgentRegistry
+from ai_gateway.agents.base import Agent
 from ai_gateway.chat.agents import AgentStep
 from ai_gateway.chat.agents.react import (
     ReActAgent,
@@ -22,8 +22,22 @@ from ai_gateway.models import ChatModelBase, Role, SafetyAttributes, TextGenMode
 
 
 @pytest.fixture
-def agent_registry() -> LocalAgentRegistry:
-    return LocalAgentRegistry()
+def prompt_templates() -> Dict[str, str]:
+    return {
+        "system": """
+{{chat_history}}
+
+You are a DevSecOps Assistant named 'GitLab Duo Chat' created by GitLab.
+
+<resource>
+{{context_content}}
+</resource>
+
+Begin!
+""",
+        "user": "{{question}}",
+        "assistant": "{{agent_scratchpad}}",
+    }
 
 
 @pytest.mark.parametrize(
@@ -191,7 +205,7 @@ class TestReActAgent:
     )
     async def test_success(
         self,
-        agent_registry: LocalAgentRegistry,
+        prompt_templates: Dict[str, str],
         question: str,
         chat_history: list[str] | str,
         agent_scratchpad: list[AgentStep],
@@ -207,7 +221,7 @@ class TestReActAgent:
             )
 
         model = Mock(spec=ChatModelBase)
-        base_agent = agent_registry.get("chat", "react")
+        base_agent = Agent(name="test", model=model, prompt_templates=prompt_templates)
         inputs = ReActAgentInputs(
             question=question, chat_history=chat_history, context=context
         )

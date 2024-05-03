@@ -1,5 +1,6 @@
 ---
 name: Claude 3 ReAct Chat agent
+model: claude-3-sonnet-20240229
 prompt_templates:
   system: |
     {{chat_history}}

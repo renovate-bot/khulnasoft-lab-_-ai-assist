@@ -1,6 +1,7 @@
 from dependency_injector import containers, providers
 from py_grpc_prometheus.prometheus_client_interceptor import PromClientInterceptor
 
+from ai_gateway.agents.container import ContainerAgents
 from ai_gateway.chat.container import ContainerChat
 from ai_gateway.code_suggestions.container import ContainerCodeSuggestions
 from ai_gateway.models.container import ContainerModels
@@ -51,7 +52,9 @@ class ContainerApplication(containers.DeclarativeContainer):
         ContainerXRay,
         models=pkg_models,
     )
+    agents = providers.Container(ContainerAgents, models=pkg_models)
     chat = providers.Container(
         ContainerChat,
+        agents=agents,
         models=pkg_models,
     )
