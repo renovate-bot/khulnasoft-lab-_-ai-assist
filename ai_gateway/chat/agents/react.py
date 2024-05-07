@@ -3,7 +3,7 @@ from typing import Any, Callable, Optional, Sequence
 
 from pydantic import BaseModel, ConfigDict, Field
 
-from ai_gateway.agents import Agent
+from ai_gateway.agents.base import Agent
 from ai_gateway.chat.agents.base import (
     AgentFinalAnswer,
     AgentStep,
@@ -14,7 +14,6 @@ from ai_gateway.chat.agents.base import (
 from ai_gateway.chat.agents.utils import convert_prompt_to_messages
 from ai_gateway.chat.tools import BaseTool
 from ai_gateway.chat.typing import Context
-from ai_gateway.models import ChatModelBase
 
 __all__ = [
     "TypeReActAgentAction",
@@ -135,7 +134,6 @@ class ReActAgent(BaseSingleActionAgent):
     agent: Agent
     tools: Sequence[BaseTool]
     inputs: ReActAgentInputs
-    model: ChatModelBase
     parser: BaseParser = Field(default_factory=ReActPlainTextParser)
     render_chat_history: Callable[[ReActAgentInputs], str] = (
         chat_history_plain_text_renderer
@@ -159,7 +157,9 @@ class ReActAgent(BaseSingleActionAgent):
         )
 
         model_kwargs = {**self.model_kwargs, **kwargs}
-        response = await self.model.generate(messages, stream=False, **model_kwargs)
+        response = await self.agent.model.generate(
+            messages, stream=False, **model_kwargs
+        )
         parsed_action = self.parser.parse(response.text)
 
         return parsed_action

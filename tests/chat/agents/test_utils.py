@@ -1,6 +1,6 @@
 import pytest
 
-from ai_gateway.agents import Agent
+from ai_gateway.agents.base import Agent
 from ai_gateway.chat.agents.utils import convert_prompt_to_messages
 from ai_gateway.models import Message, Role
 
@@ -9,18 +9,23 @@ from ai_gateway.models import Message, Role
     ("agent", "prompt_kwargs", "expected"),
     [
         (
-            Agent(name="Test", prompt_templates={"user": "user prompt"}),
+            Agent(name="Test", model=None, prompt_templates={"user": "user prompt"}),
             {},
             [Message(role=Role.USER, content="user prompt")],
         ),
         (
-            Agent(name="Test", prompt_templates={"user": "user prompt {{text}}"}),
+            Agent(
+                name="Test",
+                model=None,
+                prompt_templates={"user": "user prompt {{text}}"},
+            ),
             {"text": "!"},
             [Message(role=Role.USER, content="user prompt !")],
         ),
         (
             Agent(
                 name="Test",
+                model=None,
                 prompt_templates={"system": "system prompt", "user": "user prompt"},
             ),
             {},
@@ -32,6 +37,7 @@ from ai_gateway.models import Message, Role
         (
             Agent(
                 name="Test",
+                model=None,
                 prompt_templates={
                     "system": "system prompt",
                     "user": "user prompt",
@@ -48,6 +54,7 @@ from ai_gateway.models import Message, Role
         (
             Agent(
                 name="Test",
+                model=None,
                 prompt_templates={
                     "system": "system prompt",
                     "user": "user prompt {{text}}",
@@ -64,6 +71,7 @@ from ai_gateway.models import Message, Role
         (
             Agent(
                 name="Test",
+                model=None,
                 prompt_templates={
                     "system": "system prompt {{text}}",
                     "user": "user prompt {{text}}",

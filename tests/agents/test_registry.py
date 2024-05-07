@@ -3,19 +3,18 @@ from pathlib import Path
 from typing import Any
 from unittest.mock import mock_open, patch
 
-import pytest
-from jinja2 import BaseLoader, Environment
-
 from ai_gateway import agents
-from ai_gateway.agents import LocalAgentRegistry
+from ai_gateway.agents.registry import LocalAgentRegistry
+from ai_gateway.models.base import connect_anthropic
 
 
 class TestLocalAgentRegistry:
     def test_get(self):
-        registry = LocalAgentRegistry()
+        registry = LocalAgentRegistry(client=connect_anthropic())
         agent_yml = """
 ---
 name: Test agent
+model: claude-3-haiku-20240307
 prompt_templates:
   foo: Template1
   bar: Template2
@@ -27,4 +26,5 @@ prompt_templates:
                 Path(agents.__file__).parent / "chat" / "test.yml", "r"
             )
             assert agent.name == "Test agent"
+            assert agent.model.metadata.name == "claude-3-haiku-20240307"
             assert agent.prompt_templates == {"foo": "Template1", "bar": "Template2"}

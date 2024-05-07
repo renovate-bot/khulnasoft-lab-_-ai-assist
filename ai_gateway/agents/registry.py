@@ -3,8 +3,10 @@ from functools import lru_cache
 from pathlib import Path
 
 import yaml
+from anthropic import AsyncAnthropic
 
-from ai_gateway.agents import Agent
+from ai_gateway.agents.base import Agent
+from ai_gateway.models.anthropic import AnthropicChatModel
 
 __all__ = ["BaseAgentRegistry", "LocalAgentRegistry"]
 
@@ -16,7 +18,9 @@ class BaseAgentRegistry(ABC):
 
 
 class LocalAgentRegistry(BaseAgentRegistry):
-    def __init__(self):
+    # TODO: Generalize to models from any provider
+    def __init__(self, client: AsyncAnthropic):
+        self.client = client
         self.base_path = Path(__file__).parent
 
     @lru_cache
@@ -26,5 +30,8 @@ class LocalAgentRegistry(BaseAgentRegistry):
 
         return Agent(
             name=agent_definition["name"],
+            model=AnthropicChatModel.from_model_name(
+                agent_definition["model"], client=self.client
+            ),
             prompt_templates=agent_definition["prompt_templates"],
         )
