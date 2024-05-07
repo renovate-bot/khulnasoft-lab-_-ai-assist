@@ -9,6 +9,9 @@ _FEATURE_CATEGORIES = [
     "duo_chat",
 ]
 
+_CONTEXT_KEY = "meta.feature_category"
+_UNKNOWN_FEATURE_CATEGORY = "unknown"
+
 
 def feature_category(name: str):
     if name not in _FEATURE_CATEGORIES:
@@ -17,9 +20,16 @@ def feature_category(name: str):
     def decorator(func: typing.Callable) -> typing.Callable:
         @functools.wraps(func)
         async def wrapper(*args: typing.Any, **kwargs: typing.Any) -> typing.Any:
-            context["meta.feature_category"] = name
+            context[_CONTEXT_KEY] = name
             return await func(*args, **kwargs)
 
         return wrapper
 
     return decorator
+
+
+def get_feature_category() -> str:
+    if context.exists():
+        return context.get(_CONTEXT_KEY, _UNKNOWN_FEATURE_CATEGORY)
+    else:
+        return _UNKNOWN_FEATURE_CATEGORY
