@@ -13,6 +13,7 @@ spec:
     - us-east4
     - asia-northeast3
     - europe-west2
+    - europe-west3
   request_timeout: 60
   observability:
     scrape_targets:
