@@ -14,7 +14,7 @@ SERVICE_ACCOUNT_NAME="ai-gateway-sa-example"
 PROJECT_ID="<gcp-project-id>"
 
 gcloud iam service-accounts create "${SERVICE_ACCOUNT_NAME}" \
-    --project "${PROJECT_ID}"
+  --project "${PROJECT_ID}"
 ```
 
 Create a workload identity pool:
@@ -24,9 +24,9 @@ POOL_ID="gitlab-ai-gateway"
 POOL_DESCRIPTION="AI Gateway"
 
 gcloud iam workload-identity-pools create "${POOL_ID}" \
-    --project="${PROJECT_ID}" \
-    --location="global" \
-    --display-name="${POOL_DESCRIPTION}"
+  --project="${PROJECT_ID}" \
+  --location="global" \
+  --display-name="${POOL_DESCRIPTION}"
 ```
 
 Create a provider in the workload identity pool:
@@ -70,7 +70,7 @@ gcloud projects add-iam-policy-binding ${PROJECT_ID} \
   --role="roles/discoveryengine.admin"
 ```
 
-Get the workload identity provider ID. This value will be specified in `WORKLOAD_IDENTITY_PROVIDER` in .gitlab-ci.yml:
+Get the workload identity provider ID. This value will be specified in `WORKLOAD_IDENTITY_PROVIDER` in `.gitlab-ci.yml`:
 
 ```shell
 gcloud iam workload-identity-pools providers describe "${PROVIDER_ID}" \
@@ -80,7 +80,7 @@ gcloud iam workload-identity-pools providers describe "${PROVIDER_ID}" \
   --format="value(name)"
 ```
 
-Get the service account name. This value will be specified in `SERVICE_ACCOUNT` in .gitlab-ci.yml:
+Get the service account name. This value will be specified in `SERVICE_ACCOUNT` in `.gitlab-ci.yml`:
 
 ```shell
 echo "${SERVICE_ACCOUNT_NAME}@${PROJECT_ID}.iam.gserviceaccount.com"
@@ -88,26 +88,25 @@ echo "${SERVICE_ACCOUNT_NAME}@${PROJECT_ID}.iam.gserviceaccount.com"
 
 ## .gitlab-ci.yml
 
-You can use the service account created in the previous section in .gitlab-ci.yml:
+You can use the service account created in the previous section in `.gitlab-ci.yml`:
 
 ```yaml
 job:
-   id_tokens:
-      GITLAB_OIDC_TOKEN:
-         aud: https://gitlab.com
-   variables:
-      WORKLOAD_IDENTITY_PROVIDER: <fetched-above>
-      SERVICE_ACCOUNT: <fetched-above>
-      GCP_PROJECT_NAME: <gcp-project-id>
-   before_script:
-      - echo ${GITLAB_OIDC_TOKEN} > .ci_job_jwt_file
-      - gcloud iam workload-identity-pools create-cred-config "${WORKLOAD_IDENTITY_PROVIDER}"
-         --service-account="${SERVICE_ACCOUNT}"
-         --output-file=.gcp_temp_cred.json
-         --credential-source-file=`pwd`/.ci_job_jwt_file
-      - gcloud auth login --cred-file=`pwd`/.gcp_temp_cred.json
-      - gcloud config set project ${GCP_PROJECT_NAME}
-      - export GOOGLE_APPLICATION_CREDENTIALS=`pwd`/.gcp_temp_cred.json
+  id_tokens:
+    GITLAB_OIDC_TOKEN:
+      aud: https://gitlab.com
+  variables:
+    WORKLOAD_IDENTITY_PROVIDER: <fetched-above>
+    SERVICE_ACCOUNT: <fetched-above>
+    GCP_PROJECT_NAME: <gcp-project-id>
+  before_script:
+    - echo ${GITLAB_OIDC_TOKEN} > .ci_job_jwt_file
+    - gcloud iam workload-identity-pools create-cred-config "${WORKLOAD_IDENTITY_PROVIDER}"
+      --service-account="${SERVICE_ACCOUNT}" --output-file=.gcp_temp_cred.json
+      --credential-source-file=`pwd`/.ci_job_jwt_file
+    - gcloud auth login --cred-file=`pwd`/.gcp_temp_cred.json
+    - gcloud config set project ${GCP_PROJECT_NAME}
+    - export GOOGLE_APPLICATION_CREDENTIALS=`pwd`/.gcp_temp_cred.json
 ```
 
 See `ingest.gitlab-ci.yml` for example.
