@@ -6,8 +6,8 @@ from google.protobuf.json_format import MessageToDict
 
 from ai_gateway.searches.container import (
     VertexAISearch,
-    convert_version,
-    get_data_store_id,
+    _convert_version,
+    _get_data_store_id,
 )
 
 
@@ -32,8 +32,6 @@ def mock_search_service_client(mock_search_response):
         mock.search = Mock(return_value=mock_search_response)
         yield mock
 
-
-# Test the VertexAISearch class
 
 
 @pytest.mark.parametrize(
@@ -71,8 +69,6 @@ def test_vertex_ai_search(
     )
 
 
-# Test the convert_version function
-
 
 @pytest.mark.parametrize(
     "version, expected_output",
@@ -82,10 +78,8 @@ def test_vertex_ai_search(
     ],
 )
 def test_convert_version(version, expected_output):
-    assert convert_version(version) == expected_output
+    assert _convert_version(version) == expected_output
 
-
-# Test the get_data_store_id function
 
 
 @pytest.mark.parametrize(
@@ -96,4 +90,4 @@ def test_convert_version(version, expected_output):
     ],
 )
 def test_get_data_store_id(gl_version, expected_data_store_id):
-    assert get_data_store_id(gl_version) == expected_data_store_id
+    assert _get_data_store_id(gl_version) == expected_data_store_id

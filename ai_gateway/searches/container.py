@@ -20,7 +20,7 @@ def _init_vertex_search_service_client() -> (
     client.transport.close()
 
 
-def convert_version(version):
+def _convert_version(version: str) -> str | None:
     # Regex to match the major and minor version numbers
     match = re.match(r"^(\d+)\.(\d+)", version)
     if match:
@@ -31,8 +31,8 @@ def convert_version(version):
         return None  # or raise an exception or handle as appropriate
 
 
-def get_data_store_id(gl_version: str) -> Optional[str]:
-    data_store_version = convert_version(gl_version)
+def _get_data_store_id(gl_version: str) -> Optional[str]:
+    data_store_version = _convert_version(gl_version)
 
     if data_store_version is None:
         return None
@@ -57,7 +57,7 @@ class VertexAISearch:
         gl_version: str,
         **kwargs: Any,
     ) -> dict:
-        data_store_id = get_data_store_id(gl_version)
+        data_store_id = _get_data_store_id(gl_version)
 
         # The full resource name of the search engine serving config
         # e.g. projects/{project_id}/locations/{location}/dataStores/{data_store_id}/servingConfigs/{serving_config_id}
