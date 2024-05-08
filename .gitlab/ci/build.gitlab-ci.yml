@@ -1,0 +1,7 @@
+build:ingest-image:
+  stage: build
+  extends:
+    - .kaniko_base
+  variables:
+    KANIKO_BUILD_FILE: scripts/ingest/Dockerfile
+    KANIKO_DESTINATION: "${INGEST_IMAGE}"
