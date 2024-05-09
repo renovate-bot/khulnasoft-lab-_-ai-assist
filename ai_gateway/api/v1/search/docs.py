@@ -50,10 +50,7 @@ async def docs(
         response = searcher.search(**search_params)
     except ValueError as error:
         log_exception(ex)
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail=error.msg
-        )
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=error.msg)
 
     results = []
     if "results" in response:
