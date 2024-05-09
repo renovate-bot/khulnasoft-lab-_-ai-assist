@@ -19,7 +19,7 @@ module Gitlab
           def parse_and_split(content, source_name, source_type)
             items = []
             md5sum = ::OpenSSL::Digest::SHA256.hexdigest(content)
-            content, metadata, url = parse_content_and_metadata(content, md5sum, source_name, source_type)
+            content, metadata = parse_content_and_metadata(content, md5sum, source_name, source_type)
 
             split_by_newline_positions(content) do |text|
               next if text.nil?
@@ -27,8 +27,7 @@ module Gitlab
 
               items << {
                 content: text,
-                metadata: metadata,
-                url: url
+                metadata: metadata
               }
             end
             items
@@ -48,9 +47,9 @@ module Gitlab
             metadata['md5sum'] = md5sum
             metadata['source'] = source_name
             metadata['source_type'] = source_type
-            url = url(source_name, source_type)
+            metadata['source_url'] = url(source_name, source_type)
 
-            [content, metadata, url]
+            [content, metadata]
           end
 
           def split_by_newline_positions(content)

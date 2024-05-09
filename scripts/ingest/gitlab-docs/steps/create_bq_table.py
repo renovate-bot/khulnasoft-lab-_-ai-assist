@@ -33,7 +33,6 @@ def run():
     table.schema = (
         bigquery.SchemaField("content", "STRING"),
         bigquery.SchemaField("metadata", "JSON"),
-        bigquery.SchemaField("url", "STRING"),
     )
     result = client.create_table(table)
     print(result)

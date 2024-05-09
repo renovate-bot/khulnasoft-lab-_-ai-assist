@@ -6,7 +6,7 @@ puts "clone dir: #{ENV['GITLAB_DOCS_CLONE_DIR']}"
 
 DOC_DIR = ENV['GITLAB_DOCS_CLONE_DIR']
 ROOT_URL = ENV.fetch('GITLAB_DOCS_WEB_ROOT_URL')
-METADATA_KEYS = %w{title md5sum source source_type}
+METADATA_KEYS = %w[title md5sum source source_type source_url].freeze
 
 require 'json'
 require_relative "base_content_parser"

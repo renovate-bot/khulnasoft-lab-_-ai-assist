@@ -5,6 +5,7 @@ from ai_gateway.agents.container import ContainerAgents
 from ai_gateway.chat.container import ContainerChat
 from ai_gateway.code_suggestions.container import ContainerCodeSuggestions
 from ai_gateway.models.container import ContainerModels
+from ai_gateway.searches.container import ContainerSearches
 from ai_gateway.tracking.container import ContainerTracking
 
 __all__ = [
@@ -19,6 +20,7 @@ class ContainerApplication(containers.DeclarativeContainer):
         modules=[
             "ai_gateway.api.v1.x_ray.libraries",
             "ai_gateway.api.v1.chat.agent",
+            "ai_gateway.api.v1.search.docs",
             "ai_gateway.api.v2.code.completions",
             "ai_gateway.api.v3.code.completions",
             "ai_gateway.api.server",
@@ -34,6 +36,11 @@ class ContainerApplication(containers.DeclarativeContainer):
         enable_client_handling_time_histogram=True,
         enable_client_stream_receive_time_histogram=True,
         enable_client_stream_send_time_histogram=True,
+    )
+
+    searches = providers.Container(
+        ContainerSearches,
+        config=config,
     )
 
     snowplow = providers.Container(ContainerTracking, config=config.snowplow)
