@@ -1,10 +1,13 @@
 import re
 from typing import Any
 
+from google.api_core.exceptions import GoogleAPIError
 from google.cloud import discoveryengine as discoveryengine
 from google.protobuf.json_format import MessageToDict
 
-__all__ = ["VertexAISearch"]
+from ai_gateway.models import ModelAPIError
+
+__all__ = ["VertexAISearch", "VertexAPISearchError"]
 
 SEARCH_APP_NAME = "gitlab-docs"
 
@@ -24,6 +27,21 @@ def _get_data_store_id(gl_version: str) -> str:
     data_store_version = _convert_version(gl_version)
 
     return f"{SEARCH_APP_NAME}-{data_store_version}"
+
+
+# TODO: Both Vertex Model API and Search API use the same error hierachy under the hood via
+# google-api-core (https://googleapis.dev/python/google-api-core/latest/). We would need to
+# extract ModelAPIError to a common module that can be shared between /searches and /models
+# module.
+class VertexAPISearchError(ModelAPIError):
+    @classmethod
+    def from_exception(cls, ex: GoogleAPIError):
+        message = f"Vertex Search API error: {type(ex).__name__}"
+
+        if hasattr(ex, "message"):
+            message = f"{message} {ex.message}"
+
+        return cls(message, errors=(ex,))
 
 
 class VertexAISearch:
@@ -69,6 +87,9 @@ class VertexAISearch:
             **kwargs,
         )
 
-        response = self.client.search(request)
+        try:
+            response = self.client.search(request)
+        except GoogleAPIError as ex:
+            raise VertexAPISearchError.from_exception(ex)
 
         return MessageToDict(response._pb)

@@ -14,7 +14,7 @@ from ai_gateway.api.v1.search.typing import (
     SearchResult,
 )
 from ai_gateway.async_dependency_resolver import get_vertex_search_factory_provider
-from ai_gateway.searches.container import VertexAISearch
+from ai_gateway.searches import VertexAISearch, VertexAPISearchError
 from ai_gateway.tracking import log_exception
 
 __all__ = [
@@ -49,9 +49,15 @@ async def docs(
 
     try:
         response = searcher.search(**search_params)
-    except ValueError as error:
-        log_exception(error)
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=error.msg)
+    except ValueError as ex:
+        log_exception(ex)
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(ex))
+    except VertexAPISearchError as ex:
+        log_exception(ex)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERRROR,
+            detail="Vertex API Search Error.",
+        )
 
     results = []
     if "results" in response:
