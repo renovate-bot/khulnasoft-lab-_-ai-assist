@@ -14,7 +14,7 @@ from ai_gateway.api.v1.search.typing import (
 )
 from ai_gateway.auth import User, UserClaims
 from ai_gateway.container import ContainerApplication
-from ai_gateway.searches import VertexAISearch
+from ai_gateway.searches.search import VertexAISearch
 
 
 @pytest.fixture(scope="class")

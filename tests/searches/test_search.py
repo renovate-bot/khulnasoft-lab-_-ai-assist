@@ -2,9 +2,8 @@ from unittest.mock import Mock, patch
 
 import pytest
 from google.cloud import discoveryengine as discoveryengine
-from google.protobuf.json_format import MessageToDict
 
-from ai_gateway.searches.container import (
+from ai_gateway.searches.search import (
     VertexAISearch,
     _convert_version,
     _get_data_store_id,
@@ -33,7 +32,6 @@ def mock_search_service_client(mock_search_response):
         yield mock
 
 
-
 @pytest.mark.parametrize(
     "gl_version, expected_data_store_id",
     [
@@ -53,7 +51,7 @@ def test_vertex_ai_search(
 
     vertex_search = VertexAISearch(mock_search_service_client, project)
 
-    with patch("ai_gateway.searches.container.MessageToDict") as return_mock:
+    with patch("ai_gateway.searches.search.MessageToDict") as return_mock:
         result = vertex_search.search(query, gl_version)
         return_mock.assert_called_once_with(mock_search_response._pb)
         assert result == return_mock.return_value
@@ -69,7 +67,6 @@ def test_vertex_ai_search(
     )
 
 
-
 @pytest.mark.parametrize(
     "version, expected_output",
     [
@@ -79,7 +76,6 @@ def test_vertex_ai_search(
 )
 def test_convert_version(version, expected_output):
     assert _convert_version(version) == expected_output
-
 
 
 @pytest.mark.parametrize(
