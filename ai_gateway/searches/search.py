@@ -1,5 +1,5 @@
 import re
-from typing import Any, Optional
+from typing import Any
 
 from google.cloud import discoveryengine as discoveryengine
 from google.protobuf.json_format import MessageToDict
@@ -9,7 +9,7 @@ __all__ = ["VertexAISearch"]
 SEARCH_APP_NAME = "gitlab-docs"
 
 
-def _convert_version(version: str) -> str | None:
+def _convert_version(version: str) -> str:
     # Regex to match the major and minor version numbers
     match = re.match(r"^(\d+)\.(\d+)", version)
     if match:
@@ -17,16 +17,13 @@ def _convert_version(version: str) -> str | None:
         major, minor = match.groups()
         return f"{major}-{minor}"
     else:
-        return None  # or raise an exception or handle as appropriate
+        raise ValueError(f"Invalid version: {version}")
 
 
-def _get_data_store_id(gl_version: str) -> Optional[str]:
+def _get_data_store_id(gl_version: str) -> str:
     data_store_version = _convert_version(gl_version)
 
-    if data_store_version is None:
-        return None
-    else:
-        return f"{SEARCH_APP_NAME}-{data_store_version}"
+    return f"{SEARCH_APP_NAME}-{data_store_version}"
 
 
 class VertexAISearch:

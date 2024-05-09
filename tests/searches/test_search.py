@@ -3,11 +3,7 @@ from unittest.mock import Mock, patch
 import pytest
 from google.cloud import discoveryengine as discoveryengine
 
-from ai_gateway.searches.search import (
-    VertexAISearch,
-    _convert_version,
-    _get_data_store_id,
-)
+from ai_gateway.searches.search import VertexAISearch
 
 
 @pytest.fixture
@@ -36,7 +32,7 @@ def mock_search_service_client(mock_search_response):
     "gl_version, expected_data_store_id",
     [
         ("1.2.3", "gitlab-docs-1-2"),
-        ("10.11.12", "gitlab-docs-10-11"),
+        ("10.11.12-pre", "gitlab-docs-10-11"),
     ],
 )
 def test_vertex_ai_search(
@@ -67,23 +63,16 @@ def test_vertex_ai_search(
     )
 
 
-@pytest.mark.parametrize(
-    "version, expected_output",
-    [
-        ("1.2", "1-2"),
-        ("invalid_version", None),
-    ],
-)
-def test_convert_version(version, expected_output):
-    assert _convert_version(version) == expected_output
+def test_invalid_version(
+    mock_search_service_client,
+):
+    project = "test-project"
+    query = "test query"
+    gl_version = "invalid version"
+    vertex_search = VertexAISearch(mock_search_service_client, project)
 
+    with pytest.raises(ValueError):
+        vertex_search.search(query, gl_version)
 
-@pytest.mark.parametrize(
-    "gl_version, expected_data_store_id",
-    [
-        ("1.2.3", "gitlab-docs-1-2"),
-        ("invalid_version", None),
-    ],
-)
-def test_get_data_store_id(gl_version, expected_data_store_id):
-    assert _get_data_store_id(gl_version) == expected_data_store_id
+    mock_search_service_client.serving_config_path.assert_not_called
+    mock_search_service_client.search.assert_not_called
