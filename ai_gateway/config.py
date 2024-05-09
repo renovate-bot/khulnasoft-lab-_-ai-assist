@@ -152,7 +152,7 @@ class Config(BaseSettings):
     ] = ConfigVertexTextModel()
     vertex_search: Annotated[
         ConfigVertexSearch, Field(default_factory=ConfigVertexSearch)
-    ]
+    ] = ConfigVertexSearch()
     model_engine_concurrency_limits: Annotated[
         ConfigModelConcurrency, Field(default_factory=ConfigModelConcurrency)
     ] = ConfigModelConcurrency()
