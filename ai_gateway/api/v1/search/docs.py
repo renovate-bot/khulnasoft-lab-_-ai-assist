@@ -2,7 +2,7 @@ from time import time
 
 import structlog
 from dependency_injector.providers import Factory
-from fastapi import APIRouter, Depends, Request, status
+from fastapi import APIRouter, Depends, HTTPException, Request, status
 from starlette.authentication import requires
 
 from ai_gateway.api.feature_category import feature_category
@@ -15,6 +15,7 @@ from ai_gateway.api.v1.search.typing import (
 )
 from ai_gateway.async_dependency_resolver import get_vertex_search_factory_provider
 from ai_gateway.searches.container import VertexAISearch
+from ai_gateway.tracking import log_exception
 
 __all__ = [
     "router",
@@ -49,7 +50,7 @@ async def docs(
     try:
         response = searcher.search(**search_params)
     except ValueError as error:
-        log_exception(ex)
+        log_exception(error)
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=error.msg)
 
     results = []
