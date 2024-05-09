@@ -55,7 +55,7 @@ async def docs(
     except VertexAPISearchError as ex:
         log_exception(ex)
         raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERRROR,
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Vertex API Search Error.",
         )
 
