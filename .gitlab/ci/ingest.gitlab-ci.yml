@@ -40,6 +40,22 @@ ingest:dev:
       when: never
     - if: $CI_PIPELINE_SOURCE == "schedule" && $SCHEDULE_TYPE == "ingest"
 
+ingest:prod:
+  stage: ingest
+  extends: [.ingest-base, .oidc-base]
+  variables:
+    GCP_PROJECT_NAME: $INGEST_GCP_PROJECT_NAME
+    WORKLOAD_IDENTITY_PROVIDER: $INGEST_WORKLOAD_IDENTITY_PROVIDER
+    SERVICE_ACCOUNT: $INGEST_SERVICE_ACCOUNT
+  script:
+    - cd /app && make ingest
+  environment: ingest/prod
+  needs: [ingest:dev]
+  rules:
+    - if: $CI_COMMIT_BRANCH != $CI_DEFAULT_BRANCH
+      when: never
+    - if: $CI_PIPELINE_SOURCE == "schedule" && $SCHEDULE_TYPE == "ingest"
+
 ingest:dry-run:
   stage: ingest
   extends: [.ingest-base]
