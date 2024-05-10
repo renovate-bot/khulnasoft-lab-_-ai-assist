@@ -75,6 +75,9 @@ class ModelRequestInstrumentator:
             INFERENCE_COUNTER.labels(**detail_labels).inc()
             INFERENCE_DURATION_S.labels(**detail_labels).observe(duration)
 
+        async def afinish(self):
+            self.finish()
+
         def _detail_labels(self) -> dict[str, str]:
 
             detail_labels = {

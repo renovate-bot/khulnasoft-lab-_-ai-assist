@@ -1,9 +1,13 @@
 import os
 from unittest.mock import AsyncMock, Mock, patch
 
+import httpx
 import pytest
 
-from ai_gateway.models.container import _init_vertex_grpc_client
+from ai_gateway.models.container import (
+    _init_anthropic_proxy_client,
+    _init_vertex_grpc_client,
+)
 
 
 @pytest.mark.parametrize(
@@ -49,3 +53,30 @@ def test_init_vertex_grpc_client(args, expected_init, expected_key_to_file):
                 os.environ["GOOGLE_APPLICATION_CREDENTIALS"]
                 == "/tmp/vertex-client.json"
             )
+
+
+@pytest.mark.parametrize(
+    ("args", "expected_init"),
+    [
+        (
+            {"mock_model_responses": False},
+            True,
+        ),
+        (
+            {"mock_model_responses": True},
+            False,
+        ),
+    ],
+)
+@pytest.mark.asyncio
+async def test_anthropic_proxy_client(args, expected_init):
+    with patch("httpx.AsyncClient") as mock_httpx_client:
+        await _init_anthropic_proxy_client(**args).__anext__()
+
+        if expected_init:
+            mock_httpx_client.assert_called_once_with(
+                base_url="https://api.anthropic.com/",
+                timeout=httpx.Timeout(timeout=60.0),
+            )
+        else:
+            mock_httpx_client.assert_not_called()

@@ -66,3 +66,12 @@ async def get_code_suggestions_generations_anthropic_chat_factory_provider():
 
 async def get_code_suggestions_generations_litellm_factory_provider():
     yield get_container_application().code_suggestions.generations.litellm_factory
+
+
+@inject
+async def get_anthropic_proxy_client(
+    anthropic_proxy_client=Provide[
+        ContainerApplication.pkg_models.anthropic_proxy_client
+    ],
+):
+    return anthropic_proxy_client

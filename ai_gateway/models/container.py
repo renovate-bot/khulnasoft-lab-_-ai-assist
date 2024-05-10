@@ -1,10 +1,12 @@
 import os
 from typing import Iterator, Optional
 
+import httpx
 from anthropic import AsyncAnthropic
 from dependency_injector import containers, providers
 from google.cloud.aiplatform.gapic import PredictionServiceAsyncClient
 
+from ai_gateway.config import ConfigModelConcurrency
 from ai_gateway.models import mock
 from ai_gateway.models.anthropic import AnthropicChatModel, AnthropicModel
 from ai_gateway.models.base import connect_anthropic, grpc_connect_vertex
@@ -14,6 +16,7 @@ from ai_gateway.models.vertex_text import (
     PalmCodeGeckoModel,
     PalmTextBisonModel,
 )
+from ai_gateway.proxy.clients import AnthropicProxyClient
 
 __all__ = [
     "ContainerModels",
@@ -49,6 +52,20 @@ def _init_anthropic_client(
     client.close()
 
 
+async def _init_anthropic_proxy_client(
+    mock_model_responses: bool,
+):
+    if mock_model_responses:
+        yield mock.AsyncClient()
+        return
+
+    client = httpx.AsyncClient(
+        base_url="https://api.anthropic.com/", timeout=httpx.Timeout(timeout=60.0)
+    )
+    yield client
+    await client.aclose()
+
+
 class ContainerModels(containers.DeclarativeContainer):
     # We need to resolve the model based on the model name provided by the upstream container.
     # Hence, `VertexTextBaseModel.from_model_name` and `AnthropicModel.from_model_name` are only partially applied here.
@@ -69,6 +86,11 @@ class ContainerModels(containers.DeclarativeContainer):
 
     http_client_anthropic = providers.Resource(
         _init_anthropic_client,
+        mock_model_responses=config.mock_model_responses,
+    )
+
+    http_client_anthropic_proxy = providers.Resource(
+        _init_anthropic_proxy_client,
         mock_model_responses=config.mock_model_responses,
     )
 
@@ -128,4 +150,12 @@ class ContainerModels(containers.DeclarativeContainer):
             LiteLlmChatModel.from_model_name,
         ),
         mocked=providers.Factory(mock.ChatModel),
+    )
+
+    anthropic_proxy_client = providers.Factory(
+        AnthropicProxyClient,
+        client=http_client_anthropic_proxy,
+        concurrency_limit=providers.Factory(
+            ConfigModelConcurrency, config.model_engine_concurrency_limits
+        ),
     )
