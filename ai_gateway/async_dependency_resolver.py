@@ -75,3 +75,12 @@ async def get_anthropic_proxy_client(
     ],
 ):
     return anthropic_proxy_client
+
+
+@inject
+async def get_vertex_ai_proxy_client(
+    vertex_ai_proxy_client=Provide[
+        ContainerApplication.pkg_models.vertex_ai_proxy_client
+    ],
+):
+    return vertex_ai_proxy_client

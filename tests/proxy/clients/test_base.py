@@ -27,10 +27,10 @@ class TestProxyClient(BaseProxyClient):
     def _allowed_upstream_models(self):
         return ["model1", "model2"]
 
-    def _extract_model_name(self, json_body):
+    def _extract_model_name(self, upstream_path, json_body):
         return json_body.get("model")
 
-    def _extract_stream_flag(self, json_body):
+    def _extract_stream_flag(self, upstream_path, json_body):
         return json_body.get("stream", False)
 
     def _update_headers_to_upstream(self, headers):
