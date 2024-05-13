@@ -19,20 +19,20 @@ class BaseProxyClient(ABC):
         self.concurrency_limit = concurrency_limit
 
     async def proxy(self, request: fastapi.Request) -> fastapi.Response:
-        upstream_path = self._extract_upstream_path(request.url.path)
+        upstream_path = self._extract_upstream_path(request.url.__str__())
         json_body = await self._extract_json_body(request)
-        model_name = self._extract_model_name(json_body)
+        model_name = self._extract_model_name(upstream_path, json_body)
 
         if model_name not in self._allowed_upstream_models():
             raise fastapi.HTTPException(status_code=400, detail="Unsupported model")
 
-        stream = self._extract_stream_flag(json_body)
+        stream = self._extract_stream_flag(upstream_path, json_body)
         headers_to_upstream = self._create_headers_to_upstream(request.headers)
         self._update_headers_to_upstream(headers_to_upstream)
 
         request_to_upstream = self.client.build_request(
             request.method,
-            httpx.URL(path=upstream_path),
+            httpx.URL(upstream_path),
             headers=headers_to_upstream,
             json=json_body,
         )
@@ -97,12 +97,12 @@ class BaseProxyClient(ABC):
         pass
 
     @abstractmethod
-    def _extract_model_name(self, json_body: typing.Any) -> str:
+    def _extract_model_name(self, upstream_path: str, json_body: typing.Any) -> str:
         """Extract model name from the request."""
         pass
 
     @abstractmethod
-    def _extract_stream_flag(self, json_body: typing.Any) -> bool:
+    def _extract_stream_flag(self, upstream_path: str, json_body: typing.Any) -> bool:
         """Extract stream flag from the request."""
         pass
 

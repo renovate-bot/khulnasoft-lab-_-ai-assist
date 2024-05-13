@@ -3,6 +3,7 @@ import re
 from typing import Any, AsyncIterator, Callable, Optional, TypeVar
 from unittest.mock import AsyncMock
 
+import fastapi
 import httpx
 from anthropic.types import Message
 
@@ -53,6 +54,15 @@ class AsyncClient(AsyncMock):
                 "transfer-encoding": "chunked",
             },
             json={"response": "mocked"},
+        )
+
+
+class ProxyClient(AsyncMock):
+    async def proxy(self, *args, **kwargs):
+        return fastapi.Response(
+            content=json.dumps({"response": "mocked"}).encode("utf-8"),
+            status_code=200,
+            headers={"Content-Type": "application/json"},
         )
 
 

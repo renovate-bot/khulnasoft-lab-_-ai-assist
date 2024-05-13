@@ -41,7 +41,7 @@ class AnthropicProxyClient(BaseProxyClient):
     def _upstream_service(self):
         return KindModelProvider.ANTHROPIC.value
 
-    def _extract_model_name(self, json_body: typing.Any) -> str:
+    def _extract_model_name(self, upstream_path: str, json_body: typing.Any) -> str:
         try:
             return json_body["model"]
         except KeyError:
@@ -49,7 +49,7 @@ class AnthropicProxyClient(BaseProxyClient):
                 status_code=400, detail="Failed to extract model name"
             )
 
-    def _extract_stream_flag(self, json_body: typing.Any) -> bool:
+    def _extract_stream_flag(self, upstream_path: str, json_body: typing.Any) -> bool:
         return json_body.get("stream", False)
 
     def _update_headers_to_upstream(self, headers_to_upstream: typing.Any) -> None:

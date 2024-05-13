@@ -89,9 +89,16 @@ class CodeGeckoModelInput(ModelInput):
 class KindVertexTextModel(str, Enum):
     # Avoid using model versions that only specify the major version number
     # similar to `KindAnthropicModel`.
+    CODE_BISON = "code-bison"
     CODE_BISON_002 = "code-bison@002"
+    CODE_GECKO = "code-gecko"
     CODE_GECKO_002 = "code-gecko@002"
+    TEXT_BISON = "text-bison"
     TEXT_BISON_002 = "text-bison@002"
+    CHAT_BISON = "chat-bison"
+    CODECHAT_BISON = "codechat-bison"
+    TEXTEMBEDDING_GECKO = "textembedding-gecko"
+    TEXTEMBEDDING_GECKO_003 = "textembedding-gecko@003"
 
 
 class PalmCodeGenBaseModel(TextGenBaseModel):

@@ -16,7 +16,7 @@ from ai_gateway.models.vertex_text import (
     PalmCodeGeckoModel,
     PalmTextBisonModel,
 )
-from ai_gateway.proxy.clients import AnthropicProxyClient
+from ai_gateway.proxy.clients import AnthropicProxyClient, VertexAIProxyClient
 
 __all__ = [
     "ContainerModels",
@@ -66,6 +66,22 @@ async def _init_anthropic_proxy_client(
     await client.aclose()
 
 
+async def _init_vertex_ai_proxy_client(
+    mock_model_responses: bool,
+    endpoint: str,
+):
+    if mock_model_responses:
+        yield None
+        return
+
+    client = httpx.AsyncClient(
+        base_url=f"https://{endpoint}/",
+        timeout=httpx.Timeout(timeout=60.0),
+    )
+    yield client
+    await client.aclose()
+
+
 class ContainerModels(containers.DeclarativeContainer):
     # We need to resolve the model based on the model name provided by the upstream container.
     # Hence, `VertexTextBaseModel.from_model_name` and `AnthropicModel.from_model_name` are only partially applied here.
@@ -92,6 +108,12 @@ class ContainerModels(containers.DeclarativeContainer):
     http_client_anthropic_proxy = providers.Resource(
         _init_anthropic_proxy_client,
         mock_model_responses=config.mock_model_responses,
+    )
+
+    http_client_vertex_ai_proxy = providers.Resource(
+        _init_vertex_ai_proxy_client,
+        mock_model_responses=config.mock_model_responses,
+        endpoint=config.vertex_text_model.endpoint,
     )
 
     vertex_text_bison = providers.Selector(
@@ -158,4 +180,18 @@ class ContainerModels(containers.DeclarativeContainer):
         concurrency_limit=providers.Factory(
             ConfigModelConcurrency, config.model_engine_concurrency_limits
         ),
+    )
+
+    vertex_ai_proxy_client = providers.Selector(
+        _mock_selector,
+        original=providers.Factory(
+            VertexAIProxyClient,
+            client=http_client_vertex_ai_proxy,
+            project=config.vertex_text_model.project,
+            location=config.vertex_text_model.location,
+            concurrency_limit=providers.Factory(
+                ConfigModelConcurrency, config.model_engine_concurrency_limits
+            ),
+        ),
+        mocked=providers.Factory(mock.ProxyClient),
     )
