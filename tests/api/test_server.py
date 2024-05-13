@@ -17,8 +17,9 @@ from ai_gateway.api.server import (
     custom_http_exception_handler,
     model_api_exception_handler,
     setup_custom_exception_handlers,
+    setup_gcp_service_account,
 )
-from ai_gateway.config import Config, ConfigAuth
+from ai_gateway.config import Config, ConfigAuth, ConfigGoogleCloudPlatform
 from ai_gateway.container import ContainerApplication
 from ai_gateway.models import ModelAPIError
 from ai_gateway.structured_logging import setup_logging
@@ -247,3 +248,37 @@ def test_model_exception_handler(app):
 
     assert response.status_code == 503
     assert response.json() == {"detail": "Inference failed"}
+
+
+@pytest.mark.parametrize(
+    ("service_account_json_key", "should_create_cred_file"),
+    [
+        (
+            "",
+            False,
+        ),
+        (
+            '{ "type": "service_account" }',
+            True,
+        ),
+    ],
+)
+def test_setup_gcp_service_account(service_account_json_key, should_create_cred_file):
+    config = MagicMock(Config)
+    google_cloud_platform = ConfigGoogleCloudPlatform
+    config.google_cloud_platform = google_cloud_platform
+    google_cloud_platform.service_account_json_key = service_account_json_key
+    setup_gcp_service_account(config=config)
+
+    if should_create_cred_file:
+        with open("/tmp/gcp-service-account.json", "r") as f:
+            assert f.read() == service_account_json_key
+        assert (
+            os.environ["GOOGLE_APPLICATION_CREDENTIALS"]
+            == "/tmp/gcp-service-account.json"
+        )
+        # Cleanup
+        os.remove("/tmp/gcp-service-account.json")
+        del os.environ["GOOGLE_APPLICATION_CREDENTIALS"]
+    else:
+        assert os.path.exists("/tmp/gcp-service-account.json") == False

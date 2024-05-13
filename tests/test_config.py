@@ -7,11 +7,13 @@ from ai_gateway.config import (
     Config,
     ConfigAuth,
     ConfigFastApi,
+    ConfigGoogleCloudPlatform,
     ConfigGoogleCloudProfiler,
     ConfigInstrumentator,
     ConfigLogging,
     ConfigModelConcurrency,
     ConfigSnowplow,
+    ConfigVertexSearch,
     ConfigVertexTextModel,
     FFlagsCodeSuggestions,
 )
@@ -230,6 +232,86 @@ def test_config_instrumentator(values: dict, expected: ConfigInstrumentator):
 
 
 @pytest.mark.parametrize(
+    (
+        "values",
+        "expected_google_cloud_platform",
+        "expected_vertex_text_model",
+        "expected_vertex_search",
+    ),
+    [
+        (
+            {},
+            ConfigGoogleCloudPlatform(),
+            ConfigVertexTextModel(),
+            ConfigVertexSearch(),
+        ),
+        (
+            {
+                "AIGW_GOOGLE_CLOUD_PLATFORM__PROJECT": "global-project",
+                "AIGW_GOOGLE_CLOUD_PLATFORM__SERVICE_ACCOUNT_JSON_KEY": "global-secret",
+            },
+            ConfigGoogleCloudPlatform(
+                project="global-project",
+                service_account_json_key="global-secret",
+            ),
+            ConfigVertexTextModel(
+                project="global-project",
+                service_account_json_key="global-secret",
+            ),
+            ConfigVertexSearch(
+                project="global-project",
+                service_account_json_key="global-secret",
+            ),
+        ),
+        (
+            {
+                "AIGW_GOOGLE_CLOUD_PLATFORM__PROJECT": "global-project",
+                "AIGW_VERTEX_TEXT_MODEL__PROJECT": "specific-project-1",
+                "AIGW_VERTEX_SEARCH__PROJECT": "specific-project-2",
+            },
+            ConfigGoogleCloudPlatform(
+                project="global-project",
+            ),
+            ConfigVertexTextModel(
+                project="specific-project-1",
+            ),
+            ConfigVertexSearch(
+                project="specific-project-2",
+            ),
+        ),
+        (
+            {
+                "AIGW_GOOGLE_CLOUD_PLATFORM__PROJECT": "global-project",
+                "AIGW_VERTEX_TEXT_MODEL__PROJECT": "",
+                "AIGW_VERTEX_SEARCH__PROJECT": "",
+            },
+            ConfigGoogleCloudPlatform(
+                project="global-project",
+            ),
+            ConfigVertexTextModel(
+                project="",
+            ),
+            ConfigVertexSearch(
+                project="",
+            ),
+        ),
+    ],
+)
+def test_config_google_cloud_platform(
+    values: dict,
+    expected_google_cloud_platform: ConfigGoogleCloudPlatform,
+    expected_vertex_text_model: ConfigVertexTextModel,
+    expected_vertex_search: ConfigVertexSearch,
+):
+    with mock.patch.dict(os.environ, values, clear=True):
+        config = Config(_env_file=None)  # type: ignore[call-arg]
+
+        assert config.google_cloud_platform == expected_google_cloud_platform
+        assert config.vertex_text_model == expected_vertex_text_model
+        assert config.vertex_search == expected_vertex_search
+
+
+@pytest.mark.parametrize(
     ("values", "expected"),
     [
         ({}, ConfigVertexTextModel()),
@@ -238,27 +320,23 @@ def test_config_instrumentator(values: dict, expected: ConfigInstrumentator):
                 "AIGW_VERTEX_TEXT_MODEL__PROJECT": "project",
                 "AIGW_VERTEX_TEXT_MODEL__LOCATION": "location",
                 "AIGW_VERTEX_TEXT_MODEL__ENDPOINT": "endpoint",
-                "AIGW_VERTEX_TEXT_MODEL__JSON_KEY": "secret",
                 "RUNWAY_REGION": "test-case1",  # ignored
             },
             ConfigVertexTextModel(
                 project="project",
                 location="location",
                 endpoint="endpoint",
-                json_key="secret",
             ),
         ),
         (
             {
                 "AIGW_VERTEX_TEXT_MODEL__PROJECT": "project",
-                "AIGW_VERTEX_TEXT_MODEL__JSON_KEY": "secret",
                 "RUNWAY_REGION": "test-case1",
             },
             ConfigVertexTextModel(
                 project="project",
                 location="test-case1",
                 endpoint="test-case1-aiplatform.googleapis.com",
-                json_key="secret",
             ),
         ),
     ],
