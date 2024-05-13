@@ -1,4 +1,4 @@
-from typing import Generic, Protocol, Sequence
+from typing import AsyncIterator, Generic, Protocol, Sequence
 
 from ai_gateway.chat.agents import (
     AgentStep,
@@ -39,9 +39,29 @@ class GLAgentRemoteExecutor(Generic[TypeAgentInputs, TypeAgentAction]):
         inputs: TypeAgentInputs,
         scratchpad: Sequence[AgentStep[TypeAgentAction]],
     ) -> TypeAgentAction:
-        agent = self.agent_factory(tools=self.tools, agent_inputs=inputs)
-        agent.agent_scratchpad.extend(scratchpad)
-
+        agent = self._build_agent(inputs=inputs, scratchpad=scratchpad)
         action = await agent.invoke(inputs=inputs)
 
         return action
+
+    async def stream(
+        self,
+        *,
+        inputs: TypeAgentInputs,
+        scratchpad: Sequence[AgentStep[TypeAgentAction]],
+    ) -> AsyncIterator[TypeAgentAction]:
+        agent = self._build_agent(inputs=inputs, scratchpad=scratchpad)
+
+        async for action in agent.stream(inputs=inputs):
+            yield action
+
+    def _build_agent(
+        self,
+        *,
+        inputs: TypeAgentInputs,
+        scratchpad: Sequence[AgentStep[TypeAgentAction]],
+    ) -> BaseSingleActionAgent:
+        agent = self.agent_factory(tools=self.tools, agent_inputs=inputs)
+        agent.agent_scratchpad.extend(scratchpad)
+
+        return agent
