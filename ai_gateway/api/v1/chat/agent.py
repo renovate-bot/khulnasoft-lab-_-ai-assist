@@ -17,6 +17,7 @@ from ai_gateway.api.v1.chat.typing import (
 from ai_gateway.async_dependency_resolver import (
     get_chat_anthropic_claude_factory_provider,
 )
+from ai_gateway.gitlab_features import GitLabFeatureCategory, GitLabUnitPrimitive
 from ai_gateway.models import (
     AnthropicAPIConnectionError,
     AnthropicAPIStatusError,
@@ -37,8 +38,8 @@ router = APIRouter()
 
 
 @router.post("/agent", response_model=ChatResponse, status_code=status.HTTP_200_OK)
-@requires("duo_chat")
-@feature_category("duo_chat")
+@requires(GitLabUnitPrimitive.DUO_CHAT)
+@feature_category(GitLabFeatureCategory.DUO_CHAT)
 async def chat(
     request: Request,
     chat_request: ChatRequest,

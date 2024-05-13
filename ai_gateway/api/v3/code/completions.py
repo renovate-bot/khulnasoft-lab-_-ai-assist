@@ -26,6 +26,7 @@ from ai_gateway.code_suggestions import (
     ModelProvider,
 )
 from ai_gateway.container import ContainerApplication
+from ai_gateway.gitlab_features import GitLabFeatureCategory, GitLabUnitPrimitive
 from ai_gateway.models import KindModelProvider
 
 __all__ = [
@@ -39,8 +40,8 @@ router = APIRouter()
 
 
 @router.post("/completions")
-@requires("code_suggestions")
-@feature_category("code_suggestions")
+@requires(GitLabUnitPrimitive.CODE_SUGGESTIONS)
+@feature_category(GitLabFeatureCategory.CODE_SUGGESTIONS)
 async def completions(
     request: Request,
     payload: CompletionRequest,
