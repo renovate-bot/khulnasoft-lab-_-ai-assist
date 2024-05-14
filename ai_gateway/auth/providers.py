@@ -46,6 +46,7 @@ class GitLabOidcProvider(AuthProvider):
 
         is_allowed = False
         gitlab_realm = ""
+        subject = ""
         scopes = []
 
         try:
@@ -53,6 +54,7 @@ class GitLabOidcProvider(AuthProvider):
                 token, jwks, audience=self.AUDIENCE, algorithms=[self.ALGORITHM]
             )
             gitlab_realm = jwt_claims.get("gitlab_realm", "")
+            subject = jwt_claims.get("sub", "")
             scopes = jwt_claims.get("scopes", [])
             is_allowed = True
         except JWTError as err:
@@ -61,8 +63,7 @@ class GitLabOidcProvider(AuthProvider):
         return User(
             authenticated=is_allowed,
             claims=UserClaims(
-                gitlab_realm=gitlab_realm,
-                scopes=scopes,
+                gitlab_realm=gitlab_realm, scopes=scopes, subject=subject
             ),
         )
 

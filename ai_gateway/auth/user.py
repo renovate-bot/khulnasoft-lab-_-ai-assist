@@ -9,6 +9,7 @@ __all__ = [
 class UserClaims(NamedTuple):
     gitlab_realm: str = ""
     scopes: list = []
+    subject: str = ""
 
 
 class User(NamedTuple):

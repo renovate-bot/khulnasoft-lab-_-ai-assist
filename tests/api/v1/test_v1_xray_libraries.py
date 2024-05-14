@@ -18,7 +18,9 @@ def fast_api_router():
 def auth_user():
     return User(
         authenticated=True,
-        claims=UserClaims(scopes=["code_suggestions"]),
+        claims=UserClaims(
+            scopes=["code_suggestions"], subject="1234", gitlab_realm="self-managed"
+        ),
     )
 
 
@@ -64,6 +66,8 @@ class TestXRayLibraries:
                 headers={
                     "Authorization": "Bearer 12345",
                     "X-Gitlab-Authentication-Type": "oidc",
+                    "X-GitLab-Instance-Id": "1234",
+                    "X-GitLab-Realm": "self-managed",
                 },
                 json={
                     "prompt_components": [
@@ -96,7 +100,11 @@ class TestUnauthorizedScopes:
     def auth_user(self):
         return User(
             authenticated=True,
-            claims=UserClaims(scopes=["unauthorized_scope"]),
+            claims=UserClaims(
+                scopes=["unauthorized_scope"],
+                subject="1234",
+                gitlab_realm="self-managed",
+            ),
         )
 
     @pytest.mark.parametrize("path", ["/x-ray/libraries"])
@@ -109,6 +117,8 @@ class TestUnauthorizedScopes:
                 headers={
                     "Authorization": "Bearer 12345",
                     "X-Gitlab-Authentication-Type": "oidc",
+                    "X-GitLab-Instance-Id": "1234",
+                    "X-GitLab-Realm": "self-managed",
                 },
                 json={
                     "prompt_components": [

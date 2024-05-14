@@ -46,7 +46,9 @@ def fast_api_router():
 def auth_user():
     return User(
         authenticated=True,
-        claims=UserClaims(scopes=["code_suggestions"]),
+        claims=UserClaims(
+            scopes=["code_suggestions"], subject="1234", gitlab_realm="self-managed"
+        ),
     )
 
 
@@ -150,6 +152,8 @@ class TestCodeCompletions:
                 headers={
                     "Authorization": "Bearer 12345",
                     "X-Gitlab-Authentication-Type": "oidc",
+                    "X-GitLab-Instance-Id": "1234",
+                    "X-GitLab-Realm": "self-managed",
                 },
                 json={
                     "prompt_version": 1,
@@ -303,6 +307,8 @@ class TestCodeCompletions:
                 headers={
                     "Authorization": "Bearer 12345",
                     "X-Gitlab-Authentication-Type": "oidc",
+                    "X-GitLab-Instance-Id": "1234",
+                    "X-GitLab-Realm": "self-managed",
                 },
                 json=data,
             )
@@ -404,6 +410,8 @@ class TestCodeCompletions:
                         "Authorization": "Bearer 12345",
                         "X-Gitlab-Authentication-Type": "oidc",
                         "X-Gitlab-Rails-Send-Start": str(time.time() - 1),
+                        "X-GitLab-Instance-Id": "1234",
+                        "X-GitLab-Realm": "self-managed",
                     },
                     json=data,
                 )
@@ -424,6 +432,8 @@ class TestCodeCompletions:
                         "Authorization": "Bearer 12345",
                         "X-Gitlab-Authentication-Type": "oidc",
                         "X-Gitlab-Rails-Send-Start": "invalid epoch time",
+                        "X-GitLab-Instance-Id": "1234",
+                        "X-GitLab-Realm": "self-managed",
                     },
                     json=data,
                 )
@@ -443,6 +453,8 @@ class TestCodeCompletions:
                     headers={
                         "Authorization": "Bearer 12345",
                         "X-Gitlab-Authentication-Type": "oidc",
+                        "X-GitLab-Instance-Id": "1234",
+                        "X-GitLab-Realm": "self-managed",
                     },
                     json=data,
                 )
@@ -506,6 +518,8 @@ class TestCodeCompletions:
                 headers={
                     "Authorization": "Bearer 12345",
                     "X-Gitlab-Authentication-Type": "oidc",
+                    "X-GitLab-Instance-Id": "1234",
+                    "X-GitLab-Realm": "self-managed",
                 },
                 json=data,
             )
@@ -548,12 +562,12 @@ class TestCodeCompletions:
                 },
                 {
                     "User-Agent": "vs-code",
-                    "X-Gitlab-Instance-Id": "9ebada7a-f5e2-477a-8609-17797fa95cb9",
+                    "X-Gitlab-Instance-Id": "1234",
                     "X-Gitlab-Global-User-Id": "XTuMnZ6XTWkP3yh0ZwXualmOZvm2Gg/bk9jyfkL7Y6k=",
                     "X-Gitlab-Host-Name": "gitlab.com",
                     "X-Gitlab-Saas-Namespace-Ids": "1,2,3",
                     "X-Gitlab-Saas-Duo-Pro-Namespace-Ids": "4,5,6",
-                    "X-Gitlab-Realm": "saas",
+                    "X-Gitlab-Realm": "self-managed",
                 },
                 "python",
             )
@@ -629,6 +643,8 @@ class TestCodeCompletions:
                 headers={
                     "Authorization": "Bearer 12345",
                     "X-Gitlab-Authentication-Type": "oidc",
+                    "X-GitLab-Instance-Id": "1234",
+                    "X-GitLab-Realm": "self-managed",
                     **request_headers,
                 },
                 json={
@@ -931,6 +947,8 @@ class TestCodeGenerations:
                 headers={
                     "Authorization": "Bearer 12345",
                     "X-Gitlab-Authentication-Type": "oidc",
+                    "X-GitLab-Instance-Id": "1234",
+                    "X-GitLab-Realm": "self-managed",
                 },
                 json={
                     "prompt_version": prompt_version,
@@ -1019,6 +1037,8 @@ class TestCodeGenerations:
                 headers={
                     "Authorization": "Bearer 12345",
                     "X-Gitlab-Authentication-Type": "oidc",
+                    "X-GitLab-Instance-Id": "1234",
+                    "X-GitLab-Realm": "self-managed",
                 },
                 json={
                     "prompt_version": 2,
@@ -1064,12 +1084,12 @@ class TestCodeGenerations:
                 },
                 {
                     "User-Agent": "vs-code",
-                    "X-Gitlab-Instance-Id": "9ebada7a-f5e2-477a-8609-17797fa95cb9",
+                    "X-Gitlab-Instance-Id": "1234",
                     "X-Gitlab-Global-User-Id": "XTuMnZ6XTWkP3yh0ZwXualmOZvm2Gg/bk9jyfkL7Y6k=",
                     "X-Gitlab-Host-Name": "gitlab.com",
                     "X-Gitlab-Saas-Namespace-Ids": "1,2,3",
                     "X-Gitlab-Saas-Duo-Pro-Namespace-Ids": "4,5,6",
-                    "X-Gitlab-Realm": "saas",
+                    "X-Gitlab-Realm": "self-managed",
                 },
                 "python",
             )
@@ -1160,7 +1180,11 @@ class TestUnauthorizedScopes:
     def auth_user(self):
         return User(
             authenticated=True,
-            claims=UserClaims(scopes=["unauthorized_scope"]),
+            claims=UserClaims(
+                scopes=["unauthorized_scope"],
+                subject="1234",
+                gitlab_realm="self-managed",
+            ),
         )
 
     @pytest.mark.parametrize("path", ["/completions", "/code/generations"])
@@ -1170,6 +1194,8 @@ class TestUnauthorizedScopes:
             headers={
                 "Authorization": "Bearer 12345",
                 "X-Gitlab-Authentication-Type": "oidc",
+                "X-GitLab-Instance-Id": "1234",
+                "X-GitLab-Realm": "self-managed",
             },
             json={
                 "prompt_version": 1,
