@@ -20,7 +20,6 @@ def auth_user():
         claims=UserClaims(
             scopes=[
                 GitLabUnitPrimitive.EXPLAIN_VULNERABILITY,
-                GitLabUnitPrimitive.VERTEX_AI_PROXY,
             ]
         ),
     )
