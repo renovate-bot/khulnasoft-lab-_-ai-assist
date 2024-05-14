@@ -13,17 +13,17 @@ def access_token() -> str:
     See https://google-auth.readthedocs.io/en/latest/user-guide.html#application-default-credentials
     """
 
-    token, created_at = _fetch_access_token_from_adr()
+    token, created_at = _fetch_access_token_from_adc()
 
     if time.time() - created_at > TOKEN_TTL:
-        _fetch_access_token_from_adr.cache_clear()
-        token, _ = _fetch_access_token_from_adr()
+        _fetch_access_token_from_adc.cache_clear()
+        token, _ = _fetch_access_token_from_adc()
 
     return token
 
 
 @lru_cache(maxsize=1)
-def _fetch_access_token_from_adr() -> tuple[str, float]:
+def _fetch_access_token_from_adc() -> tuple[str, float]:
     creds, _ = google.auth.default()
     auth_req = google.auth.transport.requests.Request()
     creds.refresh(auth_req)
