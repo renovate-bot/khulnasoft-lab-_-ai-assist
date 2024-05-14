@@ -12,30 +12,19 @@ from ai_gateway.models.container import (
 
 
 @pytest.mark.parametrize(
-    ("args", "expected_init", "expected_key_to_file"),
+    ("args", "expected_init"),
     [
         (
-            {"endpoint": "test", "json_key": "", "mock_model_responses": False},
-            True,
-            False,
-        ),
-        (
-            {
-                "endpoint": "test",
-                "json_key": '{ "type": "service_account" }',
-                "mock_model_responses": False,
-            },
-            True,
+            {"endpoint": "test", "mock_model_responses": False},
             True,
         ),
         (
-            {"endpoint": "test", "json_key": "", "mock_model_responses": True},
-            False,
+            {"endpoint": "test", "mock_model_responses": True},
             False,
         ),
     ],
 )
-def test_init_vertex_grpc_client(args, expected_init, expected_key_to_file):
+def test_init_vertex_grpc_client(args, expected_init):
     with patch(
         # "google.cloud.aiplatform.gapic.PredictionServiceAsyncClient"
         "ai_gateway.models.container.grpc_connect_vertex"
@@ -46,15 +35,6 @@ def test_init_vertex_grpc_client(args, expected_init, expected_key_to_file):
             mock_grpc_client.assert_called_once_with({"api_endpoint": args["endpoint"]})
         else:
             mock_grpc_client.assert_not_called()
-
-        if expected_key_to_file:
-            with open("/tmp/vertex-client.json", "r") as f:
-                assert f.read() == args["json_key"]
-            assert (
-                os.environ["GOOGLE_APPLICATION_CREDENTIALS"]
-                == "/tmp/vertex-client.json"
-            )
-            del os.environ["GOOGLE_APPLICATION_CREDENTIALS"]  # Cleanup
 
 
 @pytest.mark.parametrize(

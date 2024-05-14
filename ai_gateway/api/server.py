@@ -1,4 +1,5 @@
 import asyncio
+import os
 from contextlib import asynccontextmanager
 
 from fastapi import APIRouter, FastAPI
@@ -94,6 +95,7 @@ def create_fast_api_server(config: Config):
     setup_app_logging(fastapi_app)
     setup_prometheus_fastapi_instrumentator(fastapi_app)
     setup_profiling(config.google_cloud_profiler)
+    setup_gcp_service_account(config)
 
     return fastapi_app
 
@@ -144,3 +146,17 @@ def setup_prometheus_fastapi_instrumentator(app: FastAPI):
         )
     )
     instrumentator.instrument(app)
+
+
+def setup_gcp_service_account(config: Config):
+    """
+    Inject service account credential from the `AIGW_GOOGLE_CLOUD_PLATFORM__SERVICE_ACCOUNT_JSON_KEY` environment variable.
+    This method should only be used for testing purpose such as CI/CD pipelines.
+    For production environment, we don't use this method but use Application Default Credentials (ADC) authentication instead.
+    """
+    if config.google_cloud_platform.service_account_json_key:
+        with open("/tmp/gcp-service-account.json", "w") as f:
+            f.write(config.google_cloud_platform.service_account_json_key)
+            os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = (
+                "/tmp/gcp-service-account.json"
+            )

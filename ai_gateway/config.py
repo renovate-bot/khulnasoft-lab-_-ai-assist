@@ -90,15 +90,18 @@ def _build_endpoint() -> str:
     return f"{_build_location()}-aiplatform.googleapis.com"
 
 
-class ConfigVertexTextModel(BaseModel):
-    project: str = "unreview-poc-390200e5"
+class ConfigGoogleCloudPlatform(BaseModel):
+    project: str = ""
+    service_account_json_key: str = ""
+
+
+class ConfigVertexTextModel(ConfigGoogleCloudPlatform):
     location: str = Field(default_factory=_build_location)
     endpoint: str = Field(default_factory=_build_endpoint)
-    json_key: str = ""
 
 
-class ConfigVertexSearch(BaseModel):
-    project: str = ""
+class ConfigVertexSearch(ConfigGoogleCloudPlatform):
+    pass
 
 
 class ConfigModelConcurrency(RootModel):
@@ -147,6 +150,9 @@ class Config(BaseSettings):
     snowplow: Annotated[ConfigSnowplow, Field(default_factory=ConfigSnowplow)] = (
         ConfigSnowplow()
     )
+    google_cloud_platform: Annotated[
+        ConfigGoogleCloudPlatform, Field(default_factory=ConfigGoogleCloudPlatform)
+    ] = ConfigGoogleCloudPlatform()
     vertex_text_model: Annotated[
         ConfigVertexTextModel, Field(default_factory=ConfigVertexTextModel)
     ] = ConfigVertexTextModel()
@@ -156,3 +162,25 @@ class Config(BaseSettings):
     model_engine_concurrency_limits: Annotated[
         ConfigModelConcurrency, Field(default_factory=ConfigModelConcurrency)
     ] = ConfigModelConcurrency()
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        self._apply_global_configs(
+            parent=self.google_cloud_platform,
+            children=[self.vertex_text_model, self.vertex_search],
+        )
+
+    def _apply_global_configs(self, parent: BaseModel, children: list[BaseModel]):
+        """Set a parent config to child configs if the field value is not specified"""
+        for field in parent.model_fields_set:
+            parent_value = getattr(parent, field)
+
+            if not parent_value:
+                continue
+
+            for child in children:
+                if field in child.model_fields_set:
+                    continue
+
+                setattr(child, field, parent_value)
