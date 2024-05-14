@@ -38,7 +38,9 @@ def fast_api_router():
 def auth_user():
     return User(
         authenticated=True,
-        claims=UserClaims(scopes=["duo_chat"]),
+        claims=UserClaims(
+            scopes=["duo_chat"], subject="1234", gitlab_realm="self-managed"
+        ),
     )
 
 
@@ -253,6 +255,8 @@ class TestAgentSuccessfulRequest:
             headers={
                 "Authorization": "Bearer 12345",
                 "X-Gitlab-Authentication-Type": "oidc",
+                "X-GitLab-Instance-Id": "1234",
+                "X-GitLab-Realm": "self-managed",
             },
             json=request_body,
         )
@@ -301,6 +305,8 @@ class TestAgentSuccessfulStream:
             headers={
                 "Authorization": "Bearer 12345",
                 "X-Gitlab-Authentication-Type": "oidc",
+                "X-GitLab-Instance-Id": "1234",
+                "X-GitLab-Realm": "self-managed",
             },
             json={
                 "prompt_components": [
@@ -349,6 +355,8 @@ class TestAgentUnsupportedProvider:
             headers={
                 "Authorization": "Bearer 12345",
                 "X-Gitlab-Authentication-Type": "oidc",
+                "X-GitLab-Instance-Id": "1234",
+                "X-GitLab-Realm": "self-managed",
             },
             json={
                 "prompt_components": [
@@ -378,6 +386,8 @@ class TestAgentUnsupportedModel:
             headers={
                 "Authorization": "Bearer 12345",
                 "X-Gitlab-Authentication-Type": "oidc",
+                "X-GitLab-Instance-Id": "1234",
+                "X-GitLab-Realm": "self-managed",
             },
             json={
                 "prompt_components": [
@@ -405,7 +415,11 @@ class TestAnthropicInvalidScope:
     def auth_user(self):
         return User(
             authenticated=True,
-            claims=UserClaims(scopes=["unauthorized_scope"]),
+            claims=UserClaims(
+                scopes=["unauthorized_scope"],
+                subject="1234",
+                gitlab_realm="self-managed",
+            ),
         )
 
     def test_invalid_scope(
@@ -418,6 +432,8 @@ class TestAnthropicInvalidScope:
             headers={
                 "Authorization": "Bearer 12345",
                 "X-Gitlab-Authentication-Type": "oidc",
+                "X-GitLab-Instance-Id": "1234",
+                "X-GitLab-Realm": "self-managed",
             },
             json={
                 "prompt_components": [
@@ -452,6 +468,8 @@ class TestAgentInvalidRequestMissingFields:
             headers={
                 "Authorization": "Bearer 12345",
                 "X-Gitlab-Authentication-Type": "oidc",
+                "X-GitLab-Instance-Id": "1234",
+                "X-GitLab-Realm": "self-managed",
             },
             json={
                 "prompt_components": [
@@ -499,6 +517,8 @@ class TestAgentInvalidRequestManyPromptComponents:
             headers={
                 "Authorization": "Bearer 12345",
                 "X-Gitlab-Authentication-Type": "oidc",
+                "X-GitLab-Instance-Id": "1234",
+                "X-GitLab-Realm": "self-managed",
             },
             json={
                 "prompt_components": [
@@ -609,6 +629,8 @@ class TestAgentUnsuccessfulAnthropicRequest:
                 headers={
                     "Authorization": "Bearer 12345",
                     "X-Gitlab-Authentication-Type": "oidc",
+                    "X-GitLab-Instance-Id": "1234",
+                    "X-GitLab-Realm": "self-managed",
                 },
                 json={
                     "prompt_components": [

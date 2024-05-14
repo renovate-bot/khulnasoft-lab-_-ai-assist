@@ -112,12 +112,18 @@ invalid_authentication_token_type_error = {
             {
                 "Authorization": "Bearer 12345",
                 "X-Gitlab-Authentication-Type": "oidc",
+                "X-GitLab-Instance-Id": "1234",
+                "X-GitLab-Realm": "self-managed",
             },
             None,
             200,
             User(
                 authenticated=True,
-                claims=UserClaims(scopes=["feature1", "feature3"]),
+                claims=UserClaims(
+                    scopes=["feature1", "feature3"],
+                    subject="1234",
+                    gitlab_realm="self-managed",
+                ),
             ),
             {
                 "authenticated": True,
@@ -130,12 +136,18 @@ invalid_authentication_token_type_error = {
             {
                 "Authorization": "Bearer 12345",
                 "X-Gitlab-Authentication-Type": "oidc",
+                "X-GitLab-Instance-Id": "1234",
+                "X-GitLab-Realm": "self-managed",
             },
             None,
             200,
             User(
                 authenticated=True,
-                claims=UserClaims(scopes=["feature2", "feature3"]),
+                claims=UserClaims(
+                    scopes=["feature2", "feature3"],
+                    subject="1234",
+                    gitlab_realm="self-managed",
+                ),
             ),
             {
                 "authenticated": True,
@@ -148,6 +160,8 @@ invalid_authentication_token_type_error = {
             {
                 "Authorization": "Bearer 12345",
                 "X-Gitlab-Authentication-Type": "oidc",
+                "X-GitLab-Instance-Id": "1234",
+                "X-GitLab-Realm": "self-managed",
             },
             None,
             200,
@@ -155,6 +169,8 @@ invalid_authentication_token_type_error = {
                 authenticated=True,
                 claims=UserClaims(
                     scopes=["feature1", "feature2", "feature3"],
+                    subject="1234",
+                    gitlab_realm="self-managed",
                 ),
             ),
             {
@@ -169,12 +185,14 @@ invalid_authentication_token_type_error = {
             {
                 "Authorization": "Bearer 12345",
                 "X-Gitlab-Authentication-Type": "oidc",
+                "X-GitLab-Instance-Id": "1234",
+                "X-GitLab-Realm": "self-managed",
             },
             None,
             403,
             User(
                 authenticated=True,
-                claims=UserClaims(),
+                claims=UserClaims(subject="1234", gitlab_realm="self-managed"),
             ),
             {"detail": "Forbidden"},
             ["auth_duration_s"],
@@ -184,12 +202,16 @@ invalid_authentication_token_type_error = {
             {
                 "Authorization": "Bearer 12345",
                 "X-Gitlab-Authentication-Type": "oidc",
+                "X-GitLab-Instance-Id": "1234",
+                "X-GitLab-Realm": "self-managed",
             },
             None,
             403,
             User(
                 authenticated=True,
-                claims=UserClaims(scopes=["feature1"]),
+                claims=UserClaims(
+                    scopes=["feature1"], subject="1234", gitlab_realm="self-managed"
+                ),
             ),
             {"detail": "Forbidden"},
             ["auth_duration_s"],
@@ -199,12 +221,16 @@ invalid_authentication_token_type_error = {
             {
                 "Authorization": "Bearer 12345",
                 "X-Gitlab-Authentication-Type": "oidc",
+                "X-GitLab-Instance-Id": "1234",
+                "X-GitLab-Realm": "self-managed",
             },
             None,
             403,
             User(
                 authenticated=True,
-                claims=UserClaims(scopes=["feature3"]),
+                claims=UserClaims(
+                    scopes=["feature3"], subject="1234", gitlab_realm="self-managed"
+                ),
             ),
             {"detail": "Forbidden"},
             ["auth_duration_s"],
@@ -214,12 +240,18 @@ invalid_authentication_token_type_error = {
             {
                 "Authorization": "Bearer 12345",
                 "X-Gitlab-Authentication-Type": "oidc",
+                "X-GitLab-Instance-Id": "1234",
+                "X-GitLab-Realm": "self-managed",
             },
             None,
             403,
             User(
                 authenticated=True,
-                claims=UserClaims(scopes=["unsupported_scope"]),
+                claims=UserClaims(
+                    scopes=["unsupported_scope"],
+                    subject="1234",
+                    gitlab_realm="self-managed",
+                ),
             ),
             {"detail": "Forbidden"},
             ["auth_duration_s"],
@@ -229,15 +261,84 @@ invalid_authentication_token_type_error = {
             {
                 "Authorization": "Bearer 12345",
                 "X-Gitlab-Authentication-Type": "oidc",
+                "X-GitLab-Instance-Id": "1234",
+                "X-GitLab-Realm": "self-managed",
             },
             None,
             401,
             User(
                 authenticated=False,
-                claims=UserClaims(scopes=["feature1", "feature3"]),
+                claims=UserClaims(
+                    scopes=["feature1", "feature3"],
+                    subject="1234",
+                    gitlab_realm="self-managed",
+                ),
             ),
             {"error": "Forbidden by auth provider"},
             ["auth_duration_s", "auth_error_details"],
+        ),
+        (
+            {
+                "Authorization": "Bearer 12345",
+                "X-Gitlab-Authentication-Type": "oidc",
+                "X-GitLab-Instance-Id": "mismatch",
+                "X-GitLab-Realm": "self-managed",
+            },
+            None,
+            401,
+            User(
+                authenticated=True,
+                claims=UserClaims(
+                    scopes=["feature1", "feature3"],
+                    subject="1234",
+                    gitlab_realm="self-managed",
+                ),
+            ),
+            {"error": "Header mismatch 'X-Gitlab-Instance-Id'"},
+            ["auth_duration_s", "auth_error_details"],
+        ),
+        (
+            {
+                "Authorization": "Bearer 12345",
+                "X-Gitlab-Authentication-Type": "oidc",
+                "X-GitLab-Instance-Id": "1234",
+                "X-GitLab-Realm": "saas",
+            },
+            None,
+            401,
+            User(
+                authenticated=True,
+                claims=UserClaims(
+                    scopes=["feature1", "feature3"],
+                    subject="1234",
+                    gitlab_realm="self-managed",
+                ),
+            ),
+            {"error": "Header mismatch 'X-Gitlab-Realm'"},
+            ["auth_duration_s", "auth_error_details"],
+        ),
+        (
+            # If JWT claim doesn't contain a value, the value header check is skipped
+            {
+                "Authorization": "Bearer 12345",
+                "X-Gitlab-Authentication-Type": "oidc",
+                "X-GitLab-Instance-Id": "mismatch",
+                "X-GitLab-Realm": "self-managed",
+            },
+            None,
+            200,
+            User(
+                authenticated=True,
+                claims=UserClaims(
+                    scopes=["feature1", "feature3"], gitlab_realm="self-managed"
+                ),
+            ),
+            {
+                "authenticated": True,
+                "is_debug": False,
+                "scopes": ["feature1", "feature3"],
+            },
+            ["auth_duration_s"],
         ),
     ],
 )

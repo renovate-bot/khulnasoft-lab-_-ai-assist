@@ -221,6 +221,7 @@ class MiddlewareAuthentication(Middleware):
                 raise AuthenticationError("Invalid authorization header")
 
             authenticated, claims = self.authenticate_with_token(conn.headers, token)
+            self._validate_headers(claims, conn.headers)
 
             return AuthCredentials(claims.scopes), GitLabUser(
                 authenticated, claims=claims
@@ -251,6 +252,17 @@ class MiddlewareAuthentication(Middleware):
             raise AuthenticationError(
                 "Invalid authentication token type - only OIDC is supported"
             )
+
+        def _validate_headers(self, claims, headers):
+            claim_header_mapping = {
+                "gitlab_realm": X_GITLAB_REALM_HEADER,
+                "subject": X_GITLAB_INSTANCE_ID_HEADER,
+            }
+
+            for claim, header in claim_header_mapping.items():
+                claim_val = getattr(claims, claim)
+                if claim_val and claim_val != headers.get(header):
+                    raise AuthenticationError(f"Header mismatch '{header}'")
 
     @staticmethod
     def on_auth_error(_: Request, e: Exception):
