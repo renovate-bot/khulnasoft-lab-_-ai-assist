@@ -1,5 +1,5 @@
 import json
-from unittest.mock import ANY
+from unittest.mock import ANY, patch
 
 import fastapi
 import pytest
@@ -26,15 +26,18 @@ async def test_valid_proxy_request(
         "parameters": {"temperature": 0.2, "maxOutputTokens": 64},
     }
 
-    response = await proxy_client.proxy(
-        request_factory(
-            request_url="http://0.0.0.0:5052/v1/proxy/vertex-ai/v1/projects/PROJECT/locations/LOCATION/publishers/google/models/code-gecko:predict",
-            request_body=json.dumps(request_params).encode("utf-8"),
-            request_headers={
-                "content-type": "application/json",
-            },
+    with patch("ai_gateway.proxy.clients.vertex_ai.access_token") as mock_access_token:
+        response = await proxy_client.proxy(
+            request_factory(
+                request_url="http://0.0.0.0:5052/v1/proxy/vertex-ai/v1/projects/PROJECT/locations/LOCATION/publishers/google/models/code-gecko:predict",
+                request_body=json.dumps(request_params).encode("utf-8"),
+                request_headers={
+                    "content-type": "application/json",
+                },
+            )
         )
-    )
+
+        mock_access_token.assert_called_once()
 
     assert isinstance(response, fastapi.Response)
     assert response.status_code == 200
@@ -106,7 +109,15 @@ async def test_request_url(
         with pytest.raises(fastapi.HTTPException, match=expected_error):
             await proxy_client.proxy(request_factory(request_url=request_url))
     else:
-        response = await proxy_client.proxy(request_factory(request_url=request_url))
+        with patch(
+            "ai_gateway.proxy.clients.vertex_ai.access_token"
+        ) as mock_access_token:
+            response = await proxy_client.proxy(
+                request_factory(request_url=request_url)
+            )
+
+            mock_access_token.assert_called_once()
+
         assert response.status_code == 200
 
         async_client.build_request.assert_called_once_with(
