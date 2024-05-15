@@ -7,7 +7,7 @@ from ai_gateway.auth.gcp import access_token
 
 class TestAccessToken(unittest.TestCase):
     def test_access_token_new_token(self):
-        with patch("ai_gateway.auth.gcp._fetch_access_token_from_adr") as mock_fetch:
+        with patch("ai_gateway.auth.gcp._fetch_access_token_from_adc") as mock_fetch:
             mock_fetch.return_value = ("new_token", time.time())
 
             token = access_token()
@@ -16,7 +16,7 @@ class TestAccessToken(unittest.TestCase):
             assert token == "new_token"
 
     def test_access_token_expired_token(self):
-        with patch("ai_gateway.auth.gcp._fetch_access_token_from_adr") as mock_fetch:
+        with patch("ai_gateway.auth.gcp._fetch_access_token_from_adc") as mock_fetch:
             created_at = time.time() - 3600  # an hour ago
             mock_fetch.return_value = ("expired_token", created_at)
 
