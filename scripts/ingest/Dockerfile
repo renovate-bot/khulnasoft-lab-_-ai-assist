@@ -1,4 +1,4 @@
-FROM ubuntu:22.04
+FROM ubuntu:24.04
 
 ENV DEBIAN_FRONTEND=noninteractive
 
@@ -22,10 +22,16 @@ ENV LC_ALL C.UTF-8
 WORKDIR /app
 
 # Install runtime via .tool-versions of asdf
-ENV PATH="$PATH:/root/.asdf/bin:/root/.asdf/shims"
+ENV PATH="/root/.asdf/bin:/root/.asdf/shims:$PATH"
 COPY .tool-versions /app/.tool-versions
 RUN git clone https://github.com/asdf-vm/asdf.git ~/.asdf --branch v0.14.0
+
+# Set up Python first since gcloud is not yet compatible with Python 3.12:
+# https://issuetracker.google.com/issues/303737178?pli=1
 RUN asdf plugin-add python
+RUN asdf install python
+RUN ln -sf /root/.asdf/shims/python /root/.asdf/shims/python3
+
 RUN asdf plugin-add poetry https://github.com/asdf-community/asdf-poetry.git
 RUN asdf plugin-add ruby https://github.com/asdf-vm/asdf-ruby.git
 RUN asdf plugin-add gcloud https://github.com/jthegedus/asdf-gcloud
