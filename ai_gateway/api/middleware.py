@@ -45,6 +45,7 @@ X_GITLAB_REALM_HEADER = "X-Gitlab-Realm"
 X_GITLAB_INSTANCE_ID_HEADER = "X-Gitlab-Instance-Id"
 X_GITLAB_GLOBAL_USER_ID_HEADER = "X-Gitlab-Global-User-Id"
 X_GITLAB_HOST_NAME_HEADER = "X-Gitlab-Host-Name"
+X_GITLAB_VERSION_HEADER = "X-Gitlab-Version"
 X_GITLAB_SAAS_NAMESPACE_IDS_HEADER = "X-Gitlab-Saas-Namespace-Ids"
 X_GITLAB_SAAS_DUO_PRO_NAMESPACE_IDS_HEADER = "X-Gitlab-Saas-Duo-Pro-Namespace-Ids"
 X_GITLAB_MODEL_GATEWAY_REQUEST_SENT_AT = "X-Gitlab-Rails-Send-Start"
@@ -154,6 +155,7 @@ class MiddlewareLogRequest(Middleware):
                         X_GITLAB_GLOBAL_USER_ID_HEADER
                     ),
                     gitlab_host_name=request.headers.get(X_GITLAB_HOST_NAME_HEADER),
+                    gitlab_version=request.headers.get(X_GITLAB_VERSION_HEADER),
                     gitlab_saas_duo_pro_namespace_ids=request.headers.get(
                         X_GITLAB_SAAS_DUO_PRO_NAMESPACE_IDS_HEADER
                     ),
