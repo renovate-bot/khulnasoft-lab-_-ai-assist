@@ -138,6 +138,16 @@ variables. All supported environment variables with default values for developme
 1. Start the model-gateway server locally: `poetry run ai_gateway`.
 1. Open `http://localhost:5052/docs` in your browser and run any requests to the model.
 
+### Troubleshooting
+
+If `gcloud` setup fails with `ModuleNotFoundError: No module named 'imp'`, during `asdf install` run:
+
+```sh
+export CLOUDSDK_PYTHON=$(which python3.11)
+```
+
+Then, try again. For more details, refer to [this StackOverflow post](https://stackoverflow.com/questions/77316716/gcloud-modulenotfounderror-no-module-named-imp).
+
 ### Mocking AI model responses
 
 If you do not require real models to run and evaluate the input data, you can mock the model responses
