@@ -14,6 +14,7 @@ from ai_gateway.api.v1.search.typing import (
     SearchResult,
 )
 from ai_gateway.async_dependency_resolver import get_vertex_search_factory_provider
+from ai_gateway.gitlab_features import GitLabFeatureCategory, GitLabUnitPrimitive
 from ai_gateway.searches import VertexAISearch, VertexAPISearchError
 from ai_gateway.tracking import log_exception
 
@@ -29,8 +30,8 @@ router = APIRouter()
 @router.post(
     "/gitlab-docs", response_model=SearchResponse, status_code=status.HTTP_200_OK
 )
-@requires("documentation_search")
-@feature_category("duo_chat")
+@requires(GitLabUnitPrimitive.DOCUMENTATION_SEARCH)
+@feature_category(GitLabFeatureCategory.DUO_CHAT)
 async def docs(
     request: Request,
     search_request: SearchRequest,

@@ -43,6 +43,7 @@ from ai_gateway.code_suggestions import (
     CodeSuggestionsChunk,
 )
 from ai_gateway.code_suggestions.processing.ops import lang_from_filename
+from ai_gateway.gitlab_features import GitLabFeatureCategory, GitLabUnitPrimitive
 from ai_gateway.instrumentators.base import TelemetryInstrumentator
 from ai_gateway.models import KindAnthropicModel, KindModelProvider
 from ai_gateway.tracking import RequestCount, SnowplowEvent, SnowplowEventContext
@@ -71,8 +72,8 @@ GenerationsRequestWithVersion = Annotated[
 
 @router.post("/completions")
 @router.post("/code/completions")
-@requires("code_suggestions")
-@feature_category("code_suggestions")
+@requires(GitLabUnitPrimitive.CODE_SUGGESTIONS)
+@feature_category(GitLabFeatureCategory.CODE_SUGGESTIONS)
 async def completions(
     request: Request,
     payload: CompletionsRequestWithVersion,
@@ -146,8 +147,8 @@ async def completions(
 
 
 @router.post("/code/generations")
-@requires("code_suggestions")
-@feature_category("code_suggestions")
+@requires(GitLabUnitPrimitive.CODE_SUGGESTIONS)
+@feature_category(GitLabFeatureCategory.CODE_SUGGESTIONS)
 async def generations(
     request: Request,
     payload: GenerationsRequestWithVersion,

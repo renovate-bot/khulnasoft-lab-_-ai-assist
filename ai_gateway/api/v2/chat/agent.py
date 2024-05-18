@@ -15,6 +15,7 @@ from ai_gateway.chat.agents.react import (
     TypeReActAgentAction,
 )
 from ai_gateway.chat.executor import GLAgentRemoteExecutor
+from ai_gateway.gitlab_features import GitLabFeatureCategory, GitLabUnitPrimitive
 
 __all__ = [
     "router",
@@ -31,8 +32,8 @@ async def get_gl_agent_remote_executor():
 
 
 @router.post("/agent")
-@requires("duo_chat")
-@feature_category("duo_chat")
+@requires(GitLabUnitPrimitive.DUO_CHAT)
+@feature_category(GitLabFeatureCategory.DUO_CHAT)
 async def chat(
     request: Request,
     agent_request: AgentRequest,

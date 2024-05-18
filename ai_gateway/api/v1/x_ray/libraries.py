@@ -5,6 +5,7 @@ from starlette.authentication import requires
 from ai_gateway.api.feature_category import feature_category
 from ai_gateway.api.v1.x_ray.typing import XRayRequest, XRayResponse
 from ai_gateway.async_dependency_resolver import get_x_ray_anthropic_claude
+from ai_gateway.gitlab_features import GitLabFeatureCategory, GitLabUnitPrimitive
 from ai_gateway.models import AnthropicModel
 
 __all__ = [
@@ -17,8 +18,8 @@ router = APIRouter()
 
 
 @router.post("/libraries", response_model=XRayResponse)
-@requires("code_suggestions")
-@feature_category("code_suggestions")
+@requires(GitLabUnitPrimitive.CODE_SUGGESTIONS)
+@feature_category(GitLabFeatureCategory.CODE_SUGGESTIONS)
 async def libraries(
     request: Request,
     payload: XRayRequest,

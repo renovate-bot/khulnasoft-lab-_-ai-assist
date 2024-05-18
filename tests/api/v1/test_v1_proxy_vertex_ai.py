@@ -5,6 +5,7 @@ import pytest
 from ai_gateway.api.v1 import api_router
 from ai_gateway.auth import User, UserClaims
 from ai_gateway.container import ContainerApplication
+from ai_gateway.gitlab_features import GitLabUnitPrimitive
 
 
 @pytest.fixture(scope="class")
@@ -16,7 +17,12 @@ def fast_api_router():
 def auth_user():
     return User(
         authenticated=True,
-        claims=UserClaims(scopes=["vertex_ai_proxy"]),
+        claims=UserClaims(
+            scopes=[
+                GitLabUnitPrimitive.EXPLAIN_VULNERABILITY,
+                GitLabUnitPrimitive.VERTEX_AI_PROXY,
+            ]
+        ),
     )
 
 
@@ -35,6 +41,7 @@ class TestProxyVertexAI:
                 headers={
                     "Authorization": "Bearer 12345",
                     "X-Gitlab-Authentication-Type": "oidc",
+                    "X-Gitlab-Unit-Primitive": GitLabUnitPrimitive.EXPLAIN_VULNERABILITY,
                 },
                 json={
                     "model": "claude-3-opus-20240229",

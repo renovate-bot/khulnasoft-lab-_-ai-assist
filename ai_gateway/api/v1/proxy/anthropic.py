@@ -2,8 +2,12 @@ import structlog
 from fastapi import APIRouter, Depends, Request
 from starlette.authentication import requires
 
-from ai_gateway.api.feature_category import feature_category
+from ai_gateway.api.feature_category import feature_categories
 from ai_gateway.async_dependency_resolver import get_anthropic_proxy_client
+from ai_gateway.gitlab_features import (
+    FEATURE_CATEGORIES_FOR_PROXY_ENDPOINTS,
+    GitLabUnitPrimitive,
+)
 from ai_gateway.models.base import KindModelProvider
 from ai_gateway.proxy.clients import AnthropicProxyClient
 
@@ -17,8 +21,8 @@ router = APIRouter()
 
 
 @router.post(f"/{KindModelProvider.ANTHROPIC.value}" + "/{path:path}")
-@requires("anthropic_proxy")
-@feature_category("ai_abstraction_layer")
+@requires(GitLabUnitPrimitive.ANTHROPIC_PROXY)
+@feature_categories(FEATURE_CATEGORIES_FOR_PROXY_ENDPOINTS)
 async def anthropic(
     request: Request,
     anthropic_proxy_client: AnthropicProxyClient = Depends(get_anthropic_proxy_client),
