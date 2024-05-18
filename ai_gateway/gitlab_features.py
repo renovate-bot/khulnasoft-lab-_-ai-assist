@@ -15,7 +15,6 @@ class GitLabFeatureCategory(str, Enum):
 # Make sure these unit primitives are defined in `ee/config/cloud_connector/access_data.yml`
 class GitLabUnitPrimitive(str, Enum):
     ANALYZE_CI_JOB_FAILURE = "analyze_ci_job_failure"
-    ANTHROPIC_PROXY = "anthropic_proxy"
     CODE_SUGGESTIONS = "code_suggestions"
     DOCUMENTATION_SEARCH = "documentation_search"
     DUO_CHAT = "duo_chat"
@@ -31,7 +30,6 @@ class GitLabUnitPrimitive(str, Enum):
     SUMMARIZE_NEW_MERGE_REQUEST = "summarize_new_merge_request"
     SUMMARIZE_REVIEW = "summarize_review"
     SUMMARIZE_SUBMITTED_REVIEW = "summarize_submitted_review"
-    VERTEX_AI_PROXY = "vertex_ai_proxy"
 
 
 FEATURE_CATEGORIES_FOR_PROXY_ENDPOINTS = {
@@ -51,3 +49,7 @@ FEATURE_CATEGORIES_FOR_PROXY_ENDPOINTS = {
     GitLabUnitPrimitive.SUMMARIZE_REVIEW: GitLabFeatureCategory.AI_ABSTRACTION_LAYER,
     GitLabUnitPrimitive.SUMMARIZE_SUBMITTED_REVIEW: GitLabFeatureCategory.CODE_REVIEW_WORKFLOW,
 }
+
+
+def unit_primitives_for_proxy_endpoints() -> list[GitLabUnitPrimitive]:
+    return list(FEATURE_CATEGORIES_FOR_PROXY_ENDPOINTS.keys())

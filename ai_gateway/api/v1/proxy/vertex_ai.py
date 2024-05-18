@@ -1,12 +1,12 @@
 import structlog
 from fastapi import APIRouter, Depends, Request
-from starlette.authentication import requires
 
 from ai_gateway.api.feature_category import feature_categories
 from ai_gateway.async_dependency_resolver import get_vertex_ai_proxy_client
+from ai_gateway.auth.authentication import requires
 from ai_gateway.gitlab_features import (
     FEATURE_CATEGORIES_FOR_PROXY_ENDPOINTS,
-    GitLabUnitPrimitive,
+    unit_primitives_for_proxy_endpoints,
 )
 from ai_gateway.models.base import KindModelProvider
 from ai_gateway.proxy.clients import VertexAIProxyClient
@@ -21,7 +21,7 @@ router = APIRouter()
 
 
 @router.post(f"/{KindModelProvider.VERTEX_AI.value}" + "/{path:path}")
-@requires(GitLabUnitPrimitive.VERTEX_AI_PROXY)
+@requires("|".join(unit_primitives_for_proxy_endpoints()))
 @feature_categories(FEATURE_CATEGORIES_FOR_PROXY_ENDPOINTS)
 async def vertex_ai(
     request: Request,
