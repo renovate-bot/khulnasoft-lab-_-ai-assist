@@ -1,7 +1,7 @@
 import json
 import re
 from typing import Any, AsyncIterator, Callable, Optional, TypeVar
-from unittest.mock import AsyncMock
+from unittest.mock import AsyncMock, Mock
 
 import fastapi
 import httpx
@@ -64,6 +64,11 @@ class ProxyClient(AsyncMock):
             status_code=200,
             headers={"Content-Type": "application/json"},
         )
+
+
+class SearchClient(Mock):
+    def search(self, *args, **kwargs):
+        return {}
 
 
 class LLM(TextGenBaseModel):
