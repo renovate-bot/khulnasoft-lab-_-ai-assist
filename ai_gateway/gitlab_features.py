@@ -53,7 +53,3 @@ FEATURE_CATEGORIES_FOR_PROXY_ENDPOINTS = {
     GitLabUnitPrimitive.SUMMARIZE_REVIEW: GitLabFeatureCategory.CODE_REVIEW_WORKFLOW,
     GitLabUnitPrimitive.SUMMARIZE_SUBMITTED_REVIEW: GitLabFeatureCategory.CODE_REVIEW_WORKFLOW,
 }
-
-
-def unit_primitives_for_proxy_endpoints() -> list[GitLabUnitPrimitive]:
-    return list(FEATURE_CATEGORIES_FOR_PROXY_ENDPOINTS.keys())

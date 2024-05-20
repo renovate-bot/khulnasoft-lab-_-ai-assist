@@ -11,7 +11,6 @@ from pydantic import ValidationError
 from starlette.authentication import (
     AuthCredentials,
     AuthenticationError,
-    BaseUser,
     HTTPConnection,
 )
 from starlette.datastructures import Headers
@@ -27,11 +26,11 @@ from uvicorn.protocols.utils import get_path_with_query_string
 
 from ai_gateway.api.timing import timing
 from ai_gateway.auth import AuthProvider, UserClaims
+from ai_gateway.auth.user import GitLabUser
 from ai_gateway.instrumentators.base import Telemetry, TelemetryInstrumentator
 from ai_gateway.tracking.errors import log_exception
 
 __all__ = [
-    "GitLabUser",
     "MiddlewareLogRequest",
     "MiddlewareAuthentication",
     "MiddlewareModelTelemetry",
@@ -63,30 +62,6 @@ class _PathResolver:
 
     def skip_path(self, path: str) -> bool:
         return path in self.endpoints
-
-
-class GitLabUser(BaseUser):
-    def __init__(
-        self,
-        authenticated: bool,
-        is_debug: bool = False,
-        claims: Optional[UserClaims] = None,
-    ):
-        self._authenticated = authenticated
-        self._is_debug = is_debug
-        self._claims = claims
-
-    @property
-    def claims(self) -> Optional[UserClaims]:
-        return self._claims
-
-    @property
-    def is_debug(self) -> bool:
-        return self._is_debug
-
-    @property
-    def is_authenticated(self) -> bool:
-        return self._authenticated
 
 
 class MiddlewareLogRequest(Middleware):
