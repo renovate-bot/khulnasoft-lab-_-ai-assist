@@ -47,7 +47,7 @@ class VertexAPISearchError(ModelAPIError):
 class VertexAISearch:
     def __init__(
         self,
-        client: discoveryengine.SearchServiceClient,
+        client: discoveryengine.SearchServiceAsyncClient,
         project: str,
         *args: Any,
         **kwargs: Any,
@@ -55,7 +55,7 @@ class VertexAISearch:
         self.client = client
         self.project = project
 
-    def search(
+    async def search(
         self,
         query: str,
         gl_version: str,
@@ -88,7 +88,7 @@ class VertexAISearch:
         )
 
         try:
-            response = self.client.search(request)
+            response = await self.client.search(request)
         except GoogleAPIError as ex:
             raise VertexAPISearchError.from_exception(ex)
 

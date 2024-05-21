@@ -1,4 +1,4 @@
-from unittest.mock import Mock, patch
+from unittest.mock import AsyncMock, Mock, patch
 
 import pytest
 from google.cloud import discoveryengine as discoveryengine
@@ -22,12 +22,13 @@ def mock_search_request():
 @pytest.fixture
 def mock_search_service_client(mock_search_response):
     with patch(
-        "ai_gateway.searches.container.discoveryengine.SearchServiceClient"
+        "ai_gateway.searches.container.discoveryengine.SearchServiceAsyncClient"
     ) as mock:
-        mock.search = Mock(return_value=mock_search_response)
+        mock.search = AsyncMock(return_value=mock_search_response)
         yield mock
 
 
+@pytest.mark.asyncio
 @pytest.mark.parametrize(
     "gl_version, expected_data_store_id",
     [
@@ -35,7 +36,7 @@ def mock_search_service_client(mock_search_response):
         ("10.11.12-pre", "gitlab-docs-10-11"),
     ],
 )
-def test_vertex_ai_search(
+async def test_vertex_ai_search(
     mock_search_service_client,
     mock_search_request,
     mock_search_response,
@@ -48,7 +49,7 @@ def test_vertex_ai_search(
     vertex_search = VertexAISearch(mock_search_service_client, project)
 
     with patch("ai_gateway.searches.search.MessageToDict") as return_mock:
-        result = vertex_search.search(query, gl_version)
+        result = await vertex_search.search(query, gl_version)
         return_mock.assert_called_once_with(mock_search_response._pb)
         assert result == return_mock.return_value
 
@@ -63,7 +64,8 @@ def test_vertex_ai_search(
     )
 
 
-def test_invalid_version(
+@pytest.mark.asyncio
+async def test_invalid_version(
     mock_search_service_client,
 ):
     project = "test-project"
@@ -72,7 +74,7 @@ def test_invalid_version(
     vertex_search = VertexAISearch(mock_search_service_client, project)
 
     with pytest.raises(ValueError):
-        vertex_search.search(query, gl_version)
+        await vertex_search.search(query, gl_version)
 
     mock_search_service_client.serving_config_path.assert_not_called
     mock_search_service_client.search.assert_not_called

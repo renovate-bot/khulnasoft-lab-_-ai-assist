@@ -1,7 +1,7 @@
 import json
 import re
 from typing import Any, AsyncIterator, Callable, Optional, TypeVar
-from unittest.mock import AsyncMock, Mock
+from unittest.mock import AsyncMock
 
 import fastapi
 import httpx
@@ -66,8 +66,8 @@ class ProxyClient(AsyncMock):
         )
 
 
-class SearchClient(Mock):
-    def search(self, *args, **kwargs):
+class SearchClient(AsyncMock):
+    async def search(self, *args, **kwargs):
         return {}
 
 

@@ -49,7 +49,7 @@ async def docs(
     searcher = vertex_search_factory()
 
     try:
-        response = searcher.search(**search_params)
+        response = await searcher.search(**search_params)
     except ValueError as ex:
         log_exception(ex)
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(ex))
