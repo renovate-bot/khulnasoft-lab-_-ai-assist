@@ -77,7 +77,9 @@ def _build_location(default: str = "us-central1") -> str:
     Reads the GCP region from the environment.
     Returns the default argument when not configured.
     """
+    # pylint: disable=direct-environment-variable-reference
     return os.getenv("RUNWAY_REGION", default)
+    # pylint: enable=direct-environment-variable-reference
 
 
 def _build_endpoint() -> str:

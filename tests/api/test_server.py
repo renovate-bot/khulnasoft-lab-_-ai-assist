@@ -68,7 +68,9 @@ def container_application():
 
 @pytest.fixture(scope="session")
 def auth_enabled():
+    # pylint: disable=direct-environment-variable-reference
     return os.environ.get("AIGW_AUTH__BYPASS_EXTERNAL", "False") == "False"
+    # pylint: enable=direct-environment-variable-reference
 
 
 @pytest.fixture(scope="session")
@@ -271,6 +273,7 @@ def test_setup_gcp_service_account(service_account_json_key, should_create_cred_
     setup_gcp_service_account(config=config)
 
     if should_create_cred_file:
+        # pylint: disable=direct-environment-variable-reference
         with open("/tmp/gcp-service-account.json", "r") as f:
             assert f.read() == service_account_json_key
         assert (
@@ -280,5 +283,6 @@ def test_setup_gcp_service_account(service_account_json_key, should_create_cred_
         # Cleanup
         os.remove("/tmp/gcp-service-account.json")
         del os.environ["GOOGLE_APPLICATION_CREDENTIALS"]
+        # pylint: enable=direct-environment-variable-reference
     else:
         assert os.path.exists("/tmp/gcp-service-account.json") == False

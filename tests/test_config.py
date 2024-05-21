@@ -18,6 +18,8 @@ from ai_gateway.config import (
     FFlagsCodeSuggestions,
 )
 
+# pylint: disable=direct-environment-variable-reference
+
 
 @pytest.mark.parametrize(
     ("values", "expected"),
@@ -363,3 +365,6 @@ def test_config_model_concurrency(values: dict, expected: ConfigModelConcurrency
         config = Config(_env_file=None)  # type: ignore[call-arg]
 
         assert config.model_engine_concurrency_limits == expected
+
+
+# pylint: enable=direct-environment-variable-reference

@@ -23,9 +23,11 @@ def start_metrics_server(config: Config):
 
     registry = REGISTRY
 
+    # pylint: disable=direct-environment-variable-reference
     if "PROMETHEUS_MULTIPROC_DIR" in os.environ:
         registry = CollectorRegistry()
         multiprocess.MultiProcessCollector(registry)
+    # pylint: enable=direct-environment-variable-reference
 
     start_http_server(
         addr=config.fastapi.metrics_host,
