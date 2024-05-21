@@ -80,7 +80,7 @@ async def test_success(
     search_results: dict,
 ):
     mock_llm_model = mock.Mock(spec=VertexAISearch)
-    mock_llm_model.search = mock.Mock(return_value=search_results)
+    mock_llm_model.search = mock.AsyncMock(return_value=search_results)
 
     container = ContainerApplication()
     with container.searches.vertex_search.override(mock_llm_model):

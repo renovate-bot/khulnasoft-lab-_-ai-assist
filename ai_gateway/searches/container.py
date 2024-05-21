@@ -12,12 +12,12 @@ __all__ = ["ContainerSearches"]
 
 def _init_vertex_search_service_client(
     mock_model_responses: bool,
-) -> Iterator[Optional[discoveryengine.SearchServiceClient]]:
+) -> Iterator[Optional[discoveryengine.SearchServiceAsyncClient]]:
     if mock_model_responses:
         yield None
         return
 
-    client = discoveryengine.SearchServiceClient()
+    client = discoveryengine.SearchServiceAsyncClient()
     yield client
     client.transport.close()
 
