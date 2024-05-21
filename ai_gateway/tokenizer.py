@@ -10,6 +10,8 @@ def init_tokenizer() -> PreTrainedTokenizerFast:
     tokenizer = AutoTokenizer.from_pretrained("Salesforce/codegen2-16B", use_fast=True)
 
     # Disable parallelism to avoid deadlocks
+    # pylint: disable=direct-environment-variable-reference
     os.environ["TOKENIZERS_PARALLELISM"] = "false"
+    # pylint: enable=direct-environment-variable-reference
 
     return tokenizer

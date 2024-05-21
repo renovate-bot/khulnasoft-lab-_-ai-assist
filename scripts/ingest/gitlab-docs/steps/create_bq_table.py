@@ -4,17 +4,21 @@ from typing import Any
 
 from google.cloud import bigquery
 
+# pylint: disable=direct-environment-variable-reference
 if os.environ.get("INGEST_DRY_RUN") == "true":
     print("INFO: Dry Run mode. Skipped.")
     exit(0)
 
 client = bigquery.Client(project=os.environ["GCP_PROJECT_NAME"])
+# pylint: enable=direct-environment-variable-reference
 
 
 def _read_jsonl() -> list[Any]:
     rows = []
+    # pylint: disable=direct-environment-variable-reference
     with open(os.environ["GITLAB_DOCS_JSONL_EXPORT_PATH"], "r") as json_file:
         json_list = list(json_file)
+    # pylint: enable=direct-environment-variable-reference
 
     for json_str in json_list:
         rows.append(json.loads(json_str))
@@ -23,8 +27,10 @@ def _read_jsonl() -> list[Any]:
 
 
 def run():
+    # pylint: disable=direct-environment-variable-reference
     client.create_dataset(os.environ["BIGQUERY_DATASET_ID"], exists_ok=True)
     table_name = os.environ["BIGQUERY_TABLE_ID"]
+    # pylint: enable=direct-environment-variable-reference
     print("Creating table " + table_name)
 
     # Create the table

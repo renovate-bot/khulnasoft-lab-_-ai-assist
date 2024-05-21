@@ -106,17 +106,9 @@ In that directory, the following artifacts can be of interest:
 This project utilizes middleware to provide additional mechanisms that are not strictly feature-related including authorization and logging.
 Middlewares are hosted at `ai_gateway/api/middleware.py` and interact with the `context` global variable that represents the API request.
 
-## Configuration
+## Application settings
 
-Below described the configuration per component
-
-### API
-
-All parameters for the API are available from `api/config/config.py` which heavily relies on environment
-variables. All supported environment variables with default values for development are specified in
-`example.env`.
-
-`python-dotenv` will treat any value as a string, so specifying `None` maps to the Python value `'None'`.
+See [Application settings doc](./docs/application_settings.md)
 
 ## How to run the server locally
 

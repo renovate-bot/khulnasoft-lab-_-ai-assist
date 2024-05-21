@@ -15,7 +15,7 @@ def setup_profiling(google_cloud_profiler: ConfigGoogleCloudProfiler):
     try:
         googlecloudprofiler.start(
             service="ai-gateway",
-            service_version=os.environ.get(
+            service_version=os.environ.get(  # pylint: disable=direct-environment-variable-reference
                 "K_REVISION", "1.0.0"
             ),  # https://cloud.google.com/run/docs/container-contract#services-env-vars
             verbose=google_cloud_profiler.verbose,

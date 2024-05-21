@@ -84,13 +84,15 @@ profile = "black"
 py-version = "3.10"
 jobs = 0
 load-plugins = [
-    "lints.unsafe_dependency_resolution"
+    "lints.unsafe_dependency_resolution",
+    "lints.direct_environment_variable_reference",
 ]
 
 [tool.pylint.messages_control]
 disable = "all"
 enable = [
-  "unsafe-dependency-resolution"
+  "unsafe-dependency-resolution",
+  "direct-environment-variable-reference",
 ]
 
 [tool.pylint.reports]
