@@ -11,6 +11,7 @@ spec:
   image: "$CI_REGISTRY_IMAGE/model-gateway:${CI_COMMIT_SHORT_SHA}"
   regions:
     - us-east4
+    - asia-northeast1
     - asia-northeast3
     - europe-west2
     - europe-west3
