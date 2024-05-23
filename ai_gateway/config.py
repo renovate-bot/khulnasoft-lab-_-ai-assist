@@ -103,7 +103,7 @@ class ConfigVertexTextModel(ConfigGoogleCloudPlatform):
 
 
 class ConfigVertexSearch(ConfigGoogleCloudPlatform):
-    pass
+    fallback_datastore_version: str = ""
 
 
 class ConfigModelConcurrency(RootModel):

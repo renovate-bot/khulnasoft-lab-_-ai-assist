@@ -353,6 +353,38 @@ def test_config_vertex_text_model(values: dict, expected: ConfigVertexTextModel)
 @pytest.mark.parametrize(
     ("values", "expected"),
     [
+        ({}, ConfigVertexSearch()),
+        (
+            {
+                "AIGW_VERTEX_SEARCH__PROJECT": "project",
+            },
+            ConfigVertexSearch(
+                project="project",
+                fallback_datastore_version="",
+            ),
+        ),
+        (
+            {
+                "AIGW_VERTEX_SEARCH__PROJECT": "project",
+                "AIGW_VERTEX_SEARCH__FALLBACK_DATASTORE_VERSION": "17.0",
+            },
+            ConfigVertexSearch(
+                project="project",
+                fallback_datastore_version="17.0",
+            ),
+        ),
+    ],
+)
+def test_config_vertex_search(values: dict, expected: ConfigVertexSearch):
+    with mock.patch.dict(os.environ, values, clear=True):
+        config = Config(_env_file=None)  # type: ignore[call-arg]
+
+        assert config.vertex_search == expected
+
+
+@pytest.mark.parametrize(
+    ("values", "expected"),
+    [
         ({}, ConfigModelConcurrency()),
         (
             {"AIGW_MODEL_ENGINE_CONCURRENCY_LIMITS": '{"engine": {"model": 10}}'},

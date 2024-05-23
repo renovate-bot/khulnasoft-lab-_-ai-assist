@@ -1,13 +1,14 @@
 import re
 from typing import Any
 
-from google.api_core.exceptions import GoogleAPIError
+from google.api_core.exceptions import GoogleAPIError, NotFound
 from google.cloud import discoveryengine as discoveryengine
 from google.protobuf.json_format import MessageToDict
 
 from ai_gateway.models import ModelAPIError
+from ai_gateway.tracking import log_exception
 
-__all__ = ["VertexAISearch", "VertexAPISearchError"]
+__all__ = ["VertexAISearch", "VertexAPISearchError", "DataStoreNotFound"]
 
 SEARCH_APP_NAME = "gitlab-docs"
 
@@ -44,16 +45,39 @@ class VertexAPISearchError(ModelAPIError):
         return cls(message, errors=(ex,))
 
 
+class DataStoreNotFound(Exception):
+    def __init__(self, message="", input=""):
+        super().__init__(message)
+        self.input = input
+
+
 class VertexAISearch:
     def __init__(
         self,
         client: discoveryengine.SearchServiceAsyncClient,
         project: str,
+        fallback_datastore_version: str,
         *args: Any,
         **kwargs: Any,
     ):
         self.client = client
         self.project = project
+        self.fallback_datastore_version = fallback_datastore_version
+
+    async def search_with_retry(self, *args, **kwargs):
+        try:
+            return await self.search(*args, **kwargs)
+        except DataStoreNotFound as ex:
+            log_exception(ex, extra={"input": ex.input})
+
+        # Retry with the fallback datastore version
+        kwargs["gl_version"] = self.fallback_datastore_version
+
+        try:
+            return await self.search(*args, **kwargs)
+        except DataStoreNotFound as ex:
+            log_exception(ex, extra={"input": ex.input})
+            raise
 
     async def search(
         self,
@@ -61,7 +85,10 @@ class VertexAISearch:
         gl_version: str,
         **kwargs: Any,
     ) -> dict:
-        data_store_id = _get_data_store_id(gl_version)
+        try:
+            data_store_id = _get_data_store_id(gl_version)
+        except ValueError as ex:
+            raise DataStoreNotFound(str(ex), input=gl_version)
 
         # The full resource name of the search engine serving config
         # e.g. projects/{project_id}/locations/{location}/dataStores/{data_store_id}/servingConfigs/{serving_config_id}
@@ -89,6 +116,8 @@ class VertexAISearch:
 
         try:
             response = await self.client.search(request)
+        except NotFound:
+            raise DataStoreNotFound("Data store not found", input=data_store_id)
         except GoogleAPIError as ex:
             raise VertexAPISearchError.from_exception(ex)
 
