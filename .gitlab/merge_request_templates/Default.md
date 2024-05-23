@@ -14,8 +14,7 @@ Example below:
 1. Check out to this merge request's branch.
 1. Ensure a local Docker image built successfully.
    ```shell
-   docker buildx build --platform linux/amd64 \
-     -t ai-gateway:dev .
+   docker build --platform linux/amd64 -t ai-gateway:dev .
    ```
 1. Run a local service on Docker.
    ```shell
