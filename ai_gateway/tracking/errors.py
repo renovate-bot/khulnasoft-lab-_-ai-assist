@@ -20,10 +20,12 @@ def log_exception(ex: Exception, extra: dict = {}) -> None:
         Additional metadata for the exception.
     """
     status_code = getattr(ex, "code", None)
+    exception_class = type(ex).__name__
 
     log.error(
         str(ex),
         status_code=status_code,
+        exception_class=exception_class,
         backtrace=traceback.format_exc(),
         correlation_id=correlation_id.get(),
         extra=extra,

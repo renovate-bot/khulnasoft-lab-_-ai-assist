@@ -21,6 +21,7 @@ def test_log_exception(mock_traceback, mock_correlation_id):
     assert cap_logs[0]["backtrace"] == "dummy backtrace"
     assert cap_logs[0]["correlation_id"] == "123"
     assert cap_logs[0]["status_code"] == None
+    assert cap_logs[0]["exception_class"] == "Exception"
 
 
 @patch("ai_gateway.tracking.errors.correlation_id")
@@ -43,3 +44,4 @@ def test_log_exception_with_code(mock_traceback, mock_correlation_id):
     assert cap_logs[0]["backtrace"] == "dummy backtrace with status code"
     assert cap_logs[0]["correlation_id"] == "123"
     assert cap_logs[0]["status_code"] == 400
+    assert cap_logs[0]["exception_class"] == "AnthropicAPIStatusError"

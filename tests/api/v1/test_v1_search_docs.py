@@ -80,7 +80,7 @@ async def test_success(
     search_results: dict,
 ):
     mock_llm_model = mock.Mock(spec=VertexAISearch)
-    mock_llm_model.search = mock.AsyncMock(return_value=search_results)
+    mock_llm_model.search_with_retry = mock.AsyncMock(return_value=search_results)
 
     container = ContainerApplication()
     with container.searches.vertex_search.override(mock_llm_model):
@@ -129,7 +129,7 @@ async def test_success(
 
     assert response.json() == expected_response.dict()
 
-    mock_llm_model.search.assert_called_once_with(
+    mock_llm_model.search_with_retry.assert_called_once_with(
         query=request_body["payload"]["query"],
         gl_version=request_body["metadata"]["version"],
     )

@@ -15,7 +15,7 @@ from ai_gateway.api.v1.search.typing import (
 )
 from ai_gateway.async_dependency_resolver import get_vertex_search_factory_provider
 from ai_gateway.gitlab_features import GitLabFeatureCategory, GitLabUnitPrimitive
-from ai_gateway.searches import VertexAISearch, VertexAPISearchError
+from ai_gateway.searches import DataStoreNotFound, VertexAISearch, VertexAPISearchError
 from ai_gateway.tracking import log_exception
 
 __all__ = [
@@ -49,10 +49,11 @@ async def docs(
     searcher = vertex_search_factory()
 
     try:
-        response = await searcher.search(**search_params)
-    except ValueError as ex:
-        log_exception(ex)
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(ex))
+        response = await searcher.search_with_retry(**search_params)
+    except DataStoreNotFound:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST, detail="Data store not found."
+        )
     except VertexAPISearchError as ex:
         log_exception(ex)
         raise HTTPException(

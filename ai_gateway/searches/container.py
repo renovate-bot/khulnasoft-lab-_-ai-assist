@@ -41,6 +41,7 @@ class ContainerSearches(containers.DeclarativeContainer):
             VertexAISearch,
             client=grpc_client_vertex,
             project=config.vertex_search.project,
+            fallback_datastore_version=config.vertex_search.fallback_datastore_version,
         ),
         mocked=providers.Factory(mock.SearchClient),
     )
