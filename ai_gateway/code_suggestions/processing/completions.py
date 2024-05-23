@@ -169,6 +169,7 @@ class _PromptBuilder(PromptBuilderBase):
 class ModelEngineCompletions(ModelEngineBase):
     MAX_TOKENS_IMPORTS_PERCENT = 0.12  # about 245 tokens for code-gecko
     MAX_TOKENS_SUFFIX_PERCENT = 0.07  # about 126 tokens for code-gecko, if "imports" takes up all the available space
+    MAX_TOKENS_CONTEXT_PERCENT = 0.5  # about 1024 tokens for code-gecko
 
     def __init__(
         self,
@@ -189,7 +190,9 @@ class ModelEngineCompletions(ModelEngineBase):
         stream: bool = False,
         **kwargs: Any,
     ) -> ModelEngineOutput:
-        prompt = await self._build_prompt(prefix, file_name, suffix, lang_id)
+        prompt = await self._build_prompt(
+            prefix, file_name, suffix, lang_id, kwargs.get("code_context")
+        )
 
         empty_output = ModelEngineOutput(
             text="",
@@ -267,6 +270,7 @@ class ModelEngineCompletions(ModelEngineBase):
         file_name: str,
         suffix: str,
         lang_id: Optional[LanguageId] = None,
+        code_context: Optional[list] = None,
     ) -> Prompt:
         imports = await self._get_imports(prefix, lang_id)
         prompt_len_imports_max = int(
@@ -306,6 +310,24 @@ class ModelEngineCompletions(ModelEngineBase):
         prompt_builder.add_extra_info(
             imports, prompt_len_imports, extra_info_name="imports"
         )
+
+        # Add code context
+        if code_context:
+            prompt_context_imports_max = int(
+                self.model.MAX_MODEL_LEN * self.MAX_TOKENS_CONTEXT_PERCENT
+            )
+            code_context_info = self._to_code_info(
+                code_context, lang_id, as_comments=False
+            )
+            code_context_len = min(
+                code_context_info.total_length_tokens, prompt_context_imports_max
+            )
+            prompt_builder.add_extra_info(
+                code_context_info,
+                code_context_len,
+                extra_info_name="code_context",
+            )
+
         prompt = prompt_builder.build()
 
         return prompt

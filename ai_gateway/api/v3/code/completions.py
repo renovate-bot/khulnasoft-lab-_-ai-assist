@@ -8,6 +8,7 @@ from fastapi import APIRouter, Request
 
 from ai_gateway.api.feature_category import feature_category
 from ai_gateway.api.v3.code.typing import (
+    CodeContextPayload,
     CodeEditorComponents,
     CompletionRequest,
     CompletionResponse,
@@ -47,10 +48,20 @@ async def completions(
     payload: CompletionRequest,
 ):
     component = payload.prompt_components[0]
+    code_context = [
+        component.payload.content
+        for component in payload.prompt_components
+        if component.type == CodeEditorComponents.CONTEXT
+    ] or None
+
     if component.type == CodeEditorComponents.COMPLETION:
-        return await code_completion(payload=component.payload)
+        return await code_completion(
+            payload=component.payload, code_context=code_context
+        )
     if component.type == CodeEditorComponents.GENERATION:
-        return await code_generation(payload=component.payload)
+        return await code_generation(
+            payload=component.payload, code_context=code_context
+        )
 
 
 @inject
@@ -62,6 +73,7 @@ async def code_completion(
     completions_anthropic_factory: Factory[CodeCompletions] = Provide[
         ContainerApplication.code_suggestions.completions.anthropic.provider
     ],
+    code_context: list[CodeContextPayload] = None,
 ):
     if payload.model_provider == ModelProvider.ANTHROPIC:
         engine = completions_anthropic_factory()
@@ -74,6 +86,7 @@ async def code_completion(
         file_name=payload.file_name,
         editor_lang=payload.language_identifier,
         stream=payload.stream,
+        code_context=code_context,
     )
 
     if isinstance(suggestion, AsyncIterator):
@@ -101,6 +114,7 @@ async def code_generation(
     generations_anthropic_factory: Factory[CodeGenerations] = Provide[
         ContainerApplication.code_suggestions.generations.anthropic_default.provider
     ],
+    code_context: list[CodeContextPayload] = None,
 ):
     if payload.model_provider == KindModelProvider.ANTHROPIC:
         engine = generations_anthropic_factory()

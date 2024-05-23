@@ -69,6 +69,7 @@ TEST_SUFFIX = "some suffix"
                 0.95,
                 40,
                 ["\n\n"],
+                None,
             ],
         ),
         (
@@ -83,6 +84,7 @@ TEST_SUFFIX = "some suffix"
                 0.95,
                 40,
                 ["\n\n"],
+                None,
             ],
         ),
     ],
