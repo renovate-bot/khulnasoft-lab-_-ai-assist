@@ -34,28 +34,28 @@ TEST_SUFFIX = "some suffix"
             TEST_PREFIX,
             TEST_SUFFIX,
             "some output",
-            [TextBisonModelInput(TEST_PREFIX), 0.2, 32, 0.95, 40, None],
+            [TextBisonModelInput(TEST_PREFIX), 0.2, 32, 0.95, 40, 1, None],
         ),
         (
             PalmTextBisonModel,
             "",
             TEST_SUFFIX,
             "",
-            [TextBisonModelInput(""), 0.2, 32, 0.95, 40, None],
+            [TextBisonModelInput(""), 0.2, 32, 0.95, 40, 1, None],
         ),
         (
             PalmCodeBisonModel,
             TEST_PREFIX,
             TEST_SUFFIX,
             "some output",
-            [CodeBisonModelInput(TEST_PREFIX), 0.2, 2048, 0.95, 40, None],
+            [CodeBisonModelInput(TEST_PREFIX), 0.2, 2048, 0.95, 40, 1, None],
         ),
         (
             PalmCodeBisonModel,
             "",
             TEST_SUFFIX,
             "",
-            [CodeBisonModelInput(""), 0.2, 2048, 0.95, 40, None],
+            [CodeBisonModelInput(""), 0.2, 2048, 0.95, 40, 1, None],
         ),
         (
             PalmCodeGeckoModel,
@@ -68,6 +68,7 @@ TEST_SUFFIX = "some suffix"
                 64,
                 0.95,
                 40,
+                1,
                 ["\n\n"],
                 None,
             ],
@@ -83,6 +84,7 @@ TEST_SUFFIX = "some suffix"
                 64,
                 0.95,
                 40,
+                1,
                 ["\n\n"],
                 None,
             ],
@@ -360,4 +362,4 @@ async def test_palm_model_safety_attributes(
 
     model_output = await palm_model.generate("# bomberman", "")
 
-    assert model_output.safety_attributes == expected_safety_attributes
+    assert model_output[0].safety_attributes == expected_safety_attributes

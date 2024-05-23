@@ -54,7 +54,7 @@ class CodeCompletionsLegacy:
         editor_lang: str,
         **kwargs: Any,
     ) -> ModelEngineOutput:
-        response = await self.engine.generate(
+        responses = await self.engine.generate(
             prefix, suffix, file_name, editor_lang, **kwargs
         )
 
@@ -63,41 +63,49 @@ class CodeCompletionsLegacy:
                 context=None,
                 action="tokens_per_user_request_prompt",
                 label="code_completion",
-                value=response.tokens_consumption_metadata.input_tokens,
+                value=responses[0].tokens_consumption_metadata.input_tokens,
             )
         )
+
+        outputs = []
+        output_tokens = 0
+        for response in responses:
+            output_tokens += response.tokens_consumption_metadata.output_tokens
+            if not response.text:
+                outputs.append(response)
+                break
+
+            with benchmark(
+                metric_key=KnownMetrics.POST_PROCESSING_DURATION,
+                labels={
+                    "model_engine": self.engine.model.metadata.engine,
+                    "model_name": self.engine.model.metadata.name,
+                },
+            ):
+                processed_completion = await self.post_processor(
+                    prefix, suffix=suffix, lang_id=response.lang_id
+                ).process(response.text)
+
+            outputs.append(
+                ModelEngineOutput(
+                    text=processed_completion,
+                    score=response.score,
+                    model=response.model,
+                    lang_id=response.lang_id,
+                    metadata=response.metadata,
+                    tokens_consumption_metadata=response.tokens_consumption_metadata,
+                )
+            )
 
         self.instrumentator.watch(
             SnowplowEvent(
                 context=None,
                 action="tokens_per_user_request_response",
                 label="code_completion",
-                value=response.tokens_consumption_metadata.output_tokens,
+                value=output_tokens,
             )
         )
-
-        if not response.text:
-            return response
-
-        with benchmark(
-            metric_key=KnownMetrics.POST_PROCESSING_DURATION,
-            labels={
-                "model_engine": self.engine.model.metadata.engine,
-                "model_name": self.engine.model.metadata.name,
-            },
-        ):
-            processed_completion = await self.post_processor(
-                prefix, suffix=suffix, lang_id=response.lang_id
-            ).process(response.text)
-
-        return ModelEngineOutput(
-            text=processed_completion,
-            score=response.score,
-            model=response.model,
-            lang_id=response.lang_id,
-            metadata=response.metadata,
-            tokens_consumption_metadata=response.tokens_consumption_metadata,
-        )
+        return outputs
 
 
 class CodeCompletions:

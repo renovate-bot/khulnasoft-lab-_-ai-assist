@@ -176,6 +176,7 @@ third-party model provider.
 | `current_file.language_identifier`  | string | no       | The language identifier defined from editor (max_len: **255**). This overrides language detected from file name. | `python`                  |
 | `current_file.content_above_cursor` | string | yes      | The content above cursor (max_len: **100,000**).                                                                 | `import numpy as np`      |
 | `current_file.content_below_cursor` | string | yes      | The content below cursor (max_len: **100,000**).                                                                 | `def __main__:\n`         |
+| `choices_count`                     | int    | no       | The number of code completion choices to return (max_len: **4**). Only applies for `vertex-ai`. Does not support streaming.        | `2`                                   |
 | `telemetry`                         | array  | no       | The list of telemetry data from previous request (max_len: **10**).                                              |                           |
 | `telemetry.model_engine`            | string | no       | The model engine used for completions (max_len: **50**).                                                         | `vertex-ai`               |
 | `telemetry.model_name`              | string | no       | The model name used for completions (max_len: **50**).                                                           | `code-gecko`              |
@@ -201,7 +202,8 @@ curl --request POST \
       "file_name": "test.py",
       "content_above_cursor": "def is_even(n: int) ->",
       "content_below_cursor": ""
-    }
+    },
+    "choices_count": 2,
     "telemetry": [
       {
         "model_engine": "vertex-ai",
@@ -244,6 +246,11 @@ Example response:
       "text": " bool:\n    return n % 2 == 0\n\n\ndef is_odd",
       "index": 0,
       "finish_reason": "length"
+    },
+    {
+      "text": " bool:\n    return n % 2 == 0\n\n\ndef is_number_odd",
+      "index": 0,
+      "finish_reason": "length"
     }
   ]
 }
@@ -251,8 +258,7 @@ Example response:
 
 ##### V2 Prompt
 
-This accepts prebuilt `prompt` and forwards it directly to third-party provider.
-This only supports `anthropic` model provider.
+This accepts prebuilt `prompt` and forwards it directly to third-party provider. Prebuilt `prompt`s only supports `anthropic` model provider.
 
 | Attribute                           | Type   | Required | Description                                                                    | Example                              |
 | ----------------------------------- | ------ | -------- | ------------------------------------------------------------------------------ | ------------------------------------ |
@@ -265,6 +271,7 @@ This only supports `anthropic` model provider.
 | `current_file.content_above_cursor` | string | yes      | The content above cursor (max_len: **100,000**)                                | `import numpy as np`                 |
 | `current_file.content_below_cursor` | string | yes      | The content below cursor (max_len: **100,000**)                                | `def __main__:\n`                    |
 | `prompt`                            | string | yes      | The content of a prebuilt prompt                                               | `Human: You are a code assistant...` |
+| `choices_count`                     | int    | no       | The number of code completion choices to return (max_len: **4**). Only applies for `vertex-ai`. Does not support streaming. **Note:** The response may return a number of choices less than the `choices_count` as we drop suggestions with low scores.      | `2`                                   |
 | `telemetry`                         | array  | no       | The list of telemetry data from previous request (max_len: **10**)             |                                      |
 | `telemetry.model_engine`            | string | no       | The model engine used for completions (max_len: **50**)                        | `vertex-ai`                          |
 | `telemetry.model_name`              | string | no       | The model name used for completions (max_len: **50**)                          | `code-gecko`                         |
@@ -284,6 +291,7 @@ curl --request POST \
   --header 'Content-Type: application/json' \
   --data-raw '{
     "prompt_version": 2,
+    "choices_count": 0,
     "project_path": "gitlab-org/gitlab-shell",
     "project_id": 33191677,
     "model_provider": "anthropic",

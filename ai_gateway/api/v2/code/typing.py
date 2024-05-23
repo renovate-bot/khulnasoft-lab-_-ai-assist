@@ -55,6 +55,7 @@ class SuggestionsRequest(BaseModel):
 
     telemetry: Annotated[List[Telemetry], Field(max_length=10)] = []
     stream: Optional[bool] = False
+    choices_count: Optional[int] = 0
 
 
 class CompletionsRequest(SuggestionsRequest):
