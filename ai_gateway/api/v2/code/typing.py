@@ -38,6 +38,12 @@ class CurrentFile(BaseModel):
     content_below_cursor: Annotated[str, StringConstraints(max_length=100000)]
 
 
+class CodeContextPayload(BaseModel):
+    type: Annotated[str, StringConstraints(max_length=1024)]
+    name: Annotated[str, StringConstraints(max_length=1024)]
+    content: Annotated[str, StringConstraints(max_length=100000)]
+
+
 class SuggestionsRequest(BaseModel):
     # Opt out protected namespace "model_" (https://github.com/pydantic/pydantic/issues/6322).
     model_config = ConfigDict(protected_namespaces=())
@@ -56,6 +62,7 @@ class SuggestionsRequest(BaseModel):
     telemetry: Annotated[List[Telemetry], Field(max_length=10)] = []
     stream: Optional[bool] = False
     choices_count: Optional[int] = 0
+    context: Annotated[List[CodeContextPayload], Field(max_length=100)] = []
 
 
 class CompletionsRequest(SuggestionsRequest):
