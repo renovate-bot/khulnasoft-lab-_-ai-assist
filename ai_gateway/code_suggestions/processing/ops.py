@@ -289,7 +289,7 @@ def find_common_lines(
 
     # The 0th row and column always contain zero values to simplify
     # the LCS algorithm implementation
-    L = np.zeros((len_source + 1, len_target + 1), dtype=int)
+    l_matrix = np.zeros((len_source + 1, len_target + 1), dtype=int)
 
     # Tabulated implementation for the LCS problem.
     # Complexity: O(len_source*len_target)
@@ -297,20 +297,22 @@ def find_common_lines(
     for i in range(len_source + 1):
         for j in range(len_target + 1):
             if i == 0 or j == 0:
-                L[i, j] = 0
+                l_matrix[i, j] = 0
             elif comparison_func(source[i - 1], target[j - 1]):
                 # Optimization: start groups of size larger than `1` with `2`, otherwise start with `1`
                 # Goal: when getting the maximum over the rows, we need to take larger groups into account first
-                prev_match = L[i - 1, j - 1]
-                L[i - 1, j - 1] = prev_match + 1 if prev_match == 1 else prev_match
+                prev_match = l_matrix[i - 1, j - 1]
+                l_matrix[i - 1, j - 1] = (
+                    prev_match + 1 if prev_match == 1 else prev_match
+                )
 
                 # The LCS step according to the tabulated implementation
-                L[i, j] = L[i - 1, j - 1] + 1
+                l_matrix[i, j] = l_matrix[i - 1, j - 1] + 1
             else:
-                L[i, j] = 0
+                l_matrix[i, j] = 0
 
     # Get the line numbers with the max value, the length of the 1D array equals to `len_source+1`
-    target_max = L.argmax(axis=0)
+    target_max = l_matrix.argmax(axis=0)
 
     # Collect only those lines that match `source`.
     # Note: since we padded the L matrix with zeros, we need to trim the array when getting the indices

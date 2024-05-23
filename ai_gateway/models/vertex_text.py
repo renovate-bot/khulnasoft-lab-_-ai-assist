@@ -185,9 +185,9 @@ class PalmCodeGenBaseModel(TextGenBaseModel):
             except GoogleAPIError as ex:
                 raise VertexAPIConnectionError.from_exception(ex)
 
-        textGenModelOutputs = []
+        text_gen_model_outputs = []
         for prediction in predictions:
-            textGenModelOutputs.append(
+            text_gen_model_outputs.append(
                 TextGenModelOutput(
                     text=prediction.get("content"),
                     score=prediction.get("score"),
@@ -204,7 +204,7 @@ class PalmCodeGenBaseModel(TextGenBaseModel):
                     ),
                 )
             )
-        return textGenModelOutputs
+        return text_gen_model_outputs
 
     @property
     def metadata(self) -> ModelMetadata:
