@@ -138,6 +138,7 @@ class TestEditorContentCompletion:
             file_name=payload["file_name"],
             editor_lang=payload["language_identifier"],
             stream=False,
+            code_context=None,
         )
 
     @pytest.mark.parametrize(
@@ -283,7 +284,7 @@ class TestEditorContentCompletion:
         expected_response: str,
     ):
         async def _stream_generator(
-            prefix, suffix, file_name, editor_lang, stream
+            prefix, suffix, file_name, editor_lang, stream, code_context
         ) -> AsyncIterator[CodeSuggestionsChunk]:
             for chunk in model_chunks:
                 yield chunk
@@ -334,6 +335,7 @@ class TestEditorContentCompletion:
             file_name=payload["file_name"],
             editor_lang=payload["language_identifier"],
             stream=True,
+            code_context=None,
         )
 
 
@@ -808,15 +810,8 @@ class TestIncomingRequest:
                                 "content_below_cursor": "",
                             },
                         },
-                        {
-                            "type": "code_editor_completion",
-                            "payload": {
-                                "file_name": "test",
-                                "content_above_cursor": "def hello_world():",
-                                "content_below_cursor": "",
-                            },
-                        },
-                    ],
+                    ]
+                    * 101,
                 },
                 422,
             ),

@@ -20,6 +20,7 @@ __all__ = [
 class CodeEditorComponents(str, Enum):
     COMPLETION = "code_editor_completion"
     GENERATION = "code_editor_generation"
+    CONTEXT = "code_context"
 
 
 class MetadataBase(BaseModel):
@@ -63,14 +64,27 @@ class CodeEditorGeneration(BaseModel):
     metadata: Optional[MetadataBase] = None
 
 
+class CodeContextPayload(BaseModel):
+    type: Annotated[str, StringConstraints(max_length=1024)]
+    name: Annotated[str, StringConstraints(max_length=1024)]
+    content: Annotated[str, StringConstraints(max_length=100000)]
+
+
+class CodeContext(BaseModel):
+    type: Literal[CodeEditorComponents.CONTEXT]
+    payload: CodeContextPayload
+    metadata: Optional[MetadataBase] = None
+
+
 PromptComponent = Annotated[
-    Union[CodeEditorCompletion, CodeEditorGeneration], Body(discriminator="type")
+    Union[CodeEditorCompletion, CodeEditorGeneration, CodeContext],
+    Body(discriminator="type"),
 ]
 
 
 class CompletionRequest(BaseModel):
     prompt_components: Annotated[
-        List[PromptComponent], Field(min_length=1, max_length=1)
+        List[PromptComponent], Field(min_length=1, max_length=100)
     ]
 
 

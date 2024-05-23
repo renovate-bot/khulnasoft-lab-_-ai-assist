@@ -52,9 +52,11 @@ class CodeCompletionsLegacy:
         suffix: str,
         file_name: str,
         editor_lang: str,
-        **_kwargs: Any,
+        **kwargs: Any,
     ) -> ModelEngineOutput:
-        response = await self.engine.generate(prefix, suffix, file_name, editor_lang)
+        response = await self.engine.generate(
+            prefix, suffix, file_name, editor_lang, **kwargs
+        )
 
         self.instrumentator.watch(
             SnowplowEvent(

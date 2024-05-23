@@ -705,8 +705,10 @@ export default App;
         "suffix",
         "file_name",
         "lang_id",
+        "code_context",
         "expected_imports",
         "expected_functions",
+        "expected_context",
     ),
     [
         (
@@ -723,8 +725,10 @@ def fib(n: int) -> int:
 """,
             "temp.py",
             ops.LanguageId.PYTHON,
+            ["import pytest"],
             ["import numpy as np"],
             ["def hello_world() -> int:", "# def fib(n: int) -> int:"],
+            ["import pytest"],
         ),
         (
             """
@@ -746,6 +750,7 @@ def fib(n: int) -> int:
 """,
             "temp.py",
             ops.LanguageId.PYTHON,
+            [],
             ["import numpy as np"],
             [
                 """def _side_effect_with_invalid_arg_exception(
@@ -754,13 +759,16 @@ def fib(n: int) -> int:
 """,
                 "# def fib(n: int) -> int:",
             ],
+            [],
         ),
         (
             JAVASCRIPT_SOURCE_SAMPLE[:50],
             JAVASCRIPT_SOURCE_SAMPLE[50:],
             "app.js",
             ops.LanguageId.JS,
+            [],
             ['import React, { useState } from "react"'],
+            [],
             [],
         ),
     ],
@@ -772,8 +780,10 @@ async def test_prompt_building_model_engine_palm(
     suffix: str,
     file_name: str,
     lang_id: ops.LanguageId,
+    code_context: list[str],
     expected_imports: list[str],
     expected_functions: list[str],
+    expected_context: list[str],
 ):
     engine = ModelEngineCompletions(
         model=text_gen_base_model,
@@ -781,7 +791,11 @@ async def test_prompt_building_model_engine_palm(
         experiment_registry=ExperimentRegistry(),
     )
     prompt = await engine._build_prompt(
-        prefix=prefix, file_name=file_name, suffix=suffix, lang_id=lang_id
+        prefix=prefix,
+        file_name=file_name,
+        suffix=suffix,
+        lang_id=lang_id,
+        code_context=code_context,
     )
 
     for expected_import in expected_imports:
@@ -789,3 +803,6 @@ async def test_prompt_building_model_engine_palm(
 
     for expected_function in expected_functions:
         assert expected_function in prompt.prefix
+
+    for expected_context in expected_context:
+        assert expected_context in prompt.prefix

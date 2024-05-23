@@ -133,6 +133,7 @@ class PalmCodeGenBaseModel(TextGenBaseModel):
         top_p: float,
         top_k: int,
         stop_sequences: Optional[Sequence[str]] = None,
+        code_context: Optional[Sequence[str]] = None,
     ) -> Optional[TextGenModelOutput]:
         if not input.is_valid():
             return TextGenModelOutput(
@@ -347,6 +348,7 @@ class PalmCodeGeckoModel(PalmCodeGenBaseModel):
         top_p: float = 0.95,
         top_k: int = 40,
         stop_sequences: Optional[Sequence[str]] = None,
+        code_context: Optional[list[str]] = None,
     ) -> Optional[TextGenModelOutput]:
         model_input = CodeGeckoModelInput(prompt, suffix)
 
@@ -360,6 +362,7 @@ class PalmCodeGeckoModel(PalmCodeGenBaseModel):
             top_p,
             top_k,
             stop_sequences,
+            code_context,
         )
 
         return res
