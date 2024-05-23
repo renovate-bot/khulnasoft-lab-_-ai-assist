@@ -80,21 +80,23 @@ class TestCodeCompletionsLegacy:
         expected_language_id: LanguageId,
         expected_output: str,
     ):
-        engine_response = ModelEngineOutput(
-            text=engine_response_text,
-            score=0,
-            model=ModelMetadata(name="code-gecko", engine="vertex-ai"),
-            lang_id=expected_language_id,
-            metadata=MetadataPromptBuilder(
-                components={
-                    "prefix": MetadataCodeContent(length=10, length_tokens=2),
-                    "suffix": MetadataCodeContent(length=10, length_tokens=2),
-                },
-            ),
-            tokens_consumption_metadata=TokensConsumptionMetadata(
-                input_tokens=1, output_tokens=2
-            ),
-        )
+        engine_response = [
+            ModelEngineOutput(
+                text=engine_response_text,
+                score=0,
+                model=ModelMetadata(name="code-gecko", engine="vertex-ai"),
+                lang_id=expected_language_id,
+                metadata=MetadataPromptBuilder(
+                    components={
+                        "prefix": MetadataCodeContent(length=10, length_tokens=2),
+                        "suffix": MetadataCodeContent(length=10, length_tokens=2),
+                    },
+                ),
+                tokens_consumption_metadata=TokensConsumptionMetadata(
+                    input_tokens=1, output_tokens=2
+                ),
+            )
+        ]
         engine = Mock(spec=ModelEngineCompletions)
         engine.generate = AsyncMock(return_value=engine_response)
         engine.model = PalmCodeGeckoModel(Mock(), "gl", "us-central-1")
@@ -119,8 +121,8 @@ class TestCodeCompletionsLegacy:
                 editor_lang=editor_lang,
             )
 
-        assert expected_output == actual.text
-        assert expected_language_id == actual.lang_id
+        assert expected_output == actual[0].text
+        assert expected_language_id == actual[0].lang_id
 
         engine.generate.assert_called_with(prefix, suffix, file_name, editor_lang)
         mock_benchmark.assert_called_with(
@@ -164,21 +166,23 @@ class TestCodeCompletionsLegacy:
         expected_language_id: LanguageId,
         expected_output: str,
     ):
-        engine_response = ModelEngineOutput(
-            text=engine_response_text,
-            score=0,
-            model=ModelMetadata(name="code-gecko", engine="vertex-ai"),
-            lang_id=expected_language_id,
-            metadata=MetadataPromptBuilder(
-                components={
-                    "prefix": MetadataCodeContent(length=10, length_tokens=2),
-                    "suffix": MetadataCodeContent(length=10, length_tokens=2),
-                },
-            ),
-            tokens_consumption_metadata=TokensConsumptionMetadata(
-                input_tokens=1, output_tokens=2
-            ),
-        )
+        engine_response = [
+            ModelEngineOutput(
+                text=engine_response_text,
+                score=0,
+                model=ModelMetadata(name="code-gecko", engine="vertex-ai"),
+                lang_id=expected_language_id,
+                metadata=MetadataPromptBuilder(
+                    components={
+                        "prefix": MetadataCodeContent(length=10, length_tokens=2),
+                        "suffix": MetadataCodeContent(length=10, length_tokens=2),
+                    },
+                ),
+                tokens_consumption_metadata=TokensConsumptionMetadata(
+                    input_tokens=1, output_tokens=2
+                ),
+            )
+        ]
         engine = Mock(spec=ModelEngineCompletions)
         engine.generate = AsyncMock(return_value=engine_response)
         engine.model = PalmCodeGeckoModel(
@@ -228,21 +232,23 @@ class TestCodeCompletionsLegacy:
             value=2,
         )
 
-        engine_response = ModelEngineOutput(
-            text="",
-            score=0,
-            model=ModelMetadata(name="code-gecko", engine="vertex-ai"),
-            lang_id=LanguageId.PYTHON,
-            metadata=MetadataPromptBuilder(
-                components={
-                    "prefix": MetadataCodeContent(length=10, length_tokens=2),
-                    "suffix": MetadataCodeContent(length=10, length_tokens=2),
-                },
-            ),
-            tokens_consumption_metadata=TokensConsumptionMetadata(
-                input_tokens=1, output_tokens=2
-            ),
-        )
+        engine_response = [
+            ModelEngineOutput(
+                text="",
+                score=0,
+                model=ModelMetadata(name="code-gecko", engine="vertex-ai"),
+                lang_id=LanguageId.PYTHON,
+                metadata=MetadataPromptBuilder(
+                    components={
+                        "prefix": MetadataCodeContent(length=10, length_tokens=2),
+                        "suffix": MetadataCodeContent(length=10, length_tokens=2),
+                    },
+                ),
+                tokens_consumption_metadata=TokensConsumptionMetadata(
+                    input_tokens=1, output_tokens=2
+                ),
+            )
+        ]
         engine = Mock(spec=ModelEngineCompletions)
         engine.generate = AsyncMock(return_value=engine_response)
         engine.model = PalmCodeGeckoModel(

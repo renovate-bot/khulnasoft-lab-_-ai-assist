@@ -90,9 +90,11 @@ def _side_effect_unknown_tpl_palm(
     def _fn(prompt: str, _suffix: str):
         assert filename in prompt
 
-        return TextGenModelOutput(
-            text=model_output, score=-1, safety_attributes=safety_attributes
-        )
+        return [
+            TextGenModelOutput(
+                text=model_output, score=-1, safety_attributes=safety_attributes
+            )
+        ]
 
     return _fn
 
@@ -134,9 +136,11 @@ def _side_effect_with_suffix(
             <= PalmCodeGenBaseModel.MAX_MODEL_LEN
         )
 
-        return TextGenModelOutput(
-            text=model_output, score=-1, safety_attributes=safety_attributes
-        )
+        return [
+            TextGenModelOutput(
+                text=model_output, score=-1, safety_attributes=safety_attributes
+            )
+        ]
 
     return _fn
 
@@ -151,9 +155,11 @@ def _side_effect_with_imports(
     def _fn(prompt: str, suffix: str):
         assert content.startswith("import os\nimport pytest")
 
-        return TextGenModelOutput(
-            text=model_output, score=-1, safety_attributes=safety_attributes
-        )
+        return [
+            TextGenModelOutput(
+                text=model_output, score=-1, safety_attributes=safety_attributes
+            )
+        ]
 
     return _fn
 
@@ -166,12 +172,14 @@ def _side_effect_with_tokens_consumption_metadata(
     safety_attributes: SafetyAttributes,
 ):
     def _fn(prompt: str, suffix: str):
-        return TextGenModelOutput(
-            text=model_output,
-            score=-1,
-            safety_attributes=safety_attributes,
-            metadata=TokensConsumptionMetadata(input_tokens=1, output_tokens=2),
-        )
+        return [
+            TextGenModelOutput(
+                text=model_output,
+                score=-1,
+                safety_attributes=safety_attributes,
+                metadata=TokensConsumptionMetadata(input_tokens=1, output_tokens=2),
+            )
+        ]
 
     return _fn
 
@@ -600,7 +608,9 @@ async def test_model_engine_palm(
         raises_expectation = pytest.raises(ModelAPIError)
 
     with raises_expectation:
-        completion = await engine.generate(prefix, suffix, file_name, editor_language)
+        completion = (
+            await engine.generate(prefix, suffix, file_name, editor_language)
+        )[0]
 
     if prompt_builder_metadata:
         max_imports_len = int(

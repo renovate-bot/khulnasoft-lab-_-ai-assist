@@ -3,7 +3,7 @@ from typing import Any, Callable, NamedTuple, Optional
 import structlog
 
 from ai_gateway.code_suggestions.processing.base import (
-    MINIMIMUM_CONFIDENCE_SCORE,
+    MINIMUM_CONFIDENCE_SCORE,
     ModelEngineBase,
     ModelEngineOutput,
     PromptBuilderBase,
@@ -194,15 +194,17 @@ class ModelEngineCompletions(ModelEngineBase):
             prefix, file_name, suffix, lang_id, kwargs.get("code_context")
         )
 
-        empty_output = ModelEngineOutput(
-            text="",
-            score=0,
-            model=self.model.metadata,
-            metadata=MetadataPromptBuilder(components={}),
-            tokens_consumption_metadata=TokensConsumptionMetadata(
-                input_tokens=0, output_tokens=0
+        empty_output = [
+            ModelEngineOutput(
+                text="",
+                score=0,
+                model=self.model.metadata,
+                metadata=MetadataPromptBuilder(components={}),
+                tokens_consumption_metadata=TokensConsumptionMetadata(
+                    input_tokens=0, output_tokens=0
+                ),
             ),
-        )
+        ]
 
         # TODO: keep watching the suffix length until logging ModelEngineOutput in the upper layer
         with self.instrumentator.watch(
@@ -217,47 +219,56 @@ class ModelEngineCompletions(ModelEngineBase):
 
                 watch_container.register_lang(lang_id, editor_lang)
 
-                if res := await self.model.generate(
+                if responses := await self.model.generate(
                     prompt.prefix, prompt.suffix, **kwargs
                 ):
-                    watch_container.register_model_output_length(res.text)
-                    watch_container.register_model_score(res.score)
-                    watch_container.register_safety_attributes(res.safety_attributes)
-
-                    if res.score > MINIMIMUM_CONFIDENCE_SCORE:
-                        completion = res.text
-                    else:
-                        watch_container.register_is_discarded()
-                        completion = ""
-
-                    if res.metadata:
-                        log.debug(
-                            "token consumption metadata:",
-                            metadata=res.metadata,
-                        )
-                        tokens_consumption_metadata = res.metadata
-                    else:
-                        log.debug(
-                            "code completions: token consumption metadata is not available, using estimates"
-                        )
-                        tokens_consumption_metadata = TokensConsumptionMetadata(
-                            output_tokens=self.tokenization_strategy.estimate_length(
-                                completion
-                            )[0],
-                            input_tokens=sum(
-                                md.length_tokens
-                                for md in prompt.metadata.components.values()
-                            ),
+                    outputs = []
+                    for res in responses:
+                        watch_container.register_model_output_length(res.text)
+                        watch_container.register_model_score(res.score)
+                        watch_container.register_safety_attributes(
+                            res.safety_attributes
                         )
 
-                    return ModelEngineOutput(
-                        text=completion,
-                        score=res.score,
-                        model=self.model.metadata,
-                        lang_id=lang_id,
-                        metadata=prompt.metadata,
-                        tokens_consumption_metadata=tokens_consumption_metadata,
-                    )
+                        if res.score > MINIMUM_CONFIDENCE_SCORE:
+                            completion = res.text
+                        else:
+                            watch_container.register_is_discarded()
+                            completion = ""
+
+                        if res.metadata:
+                            log.debug(
+                                "token consumption metadata:",
+                                metadata=res.metadata,
+                            )
+                            tokens_consumption_metadata = res.metadata
+                        else:
+                            log.debug(
+                                "code completions: token consumption metadata is not available, using estimates"
+                            )
+                            tokens_consumption_metadata = TokensConsumptionMetadata(
+                                output_tokens=self.tokenization_strategy.estimate_length(
+                                    completion
+                                )[
+                                    0
+                                ],
+                                input_tokens=sum(
+                                    md.length_tokens
+                                    for md in prompt.metadata.components.values()
+                                ),
+                            )
+
+                        outputs.append(
+                            ModelEngineOutput(
+                                text=completion,
+                                score=res.score,
+                                model=self.model.metadata,
+                                lang_id=lang_id,
+                                metadata=prompt.metadata,
+                                tokens_consumption_metadata=tokens_consumption_metadata,
+                            )
+                        )
+                    return outputs
             except (VertexAPIConnectionError, VertexAPIStatusError) as ex:
                 watch_container.register_model_exception(str(ex), ex.code)
                 raise

@@ -132,6 +132,7 @@ class PalmCodeGenBaseModel(TextGenBaseModel):
         max_output_tokens: int,
         top_p: float,
         top_k: int,
+        candidate_count: int = 1,
         stop_sequences: Optional[Sequence[str]] = None,
         code_context: Optional[Sequence[str]] = None,
     ) -> Optional[TextGenModelOutput]:
@@ -149,6 +150,7 @@ class PalmCodeGenBaseModel(TextGenBaseModel):
             "maxOutputTokens": max_output_tokens,
             "topP": top_p,
             "topK": top_k,
+            "candidateCount": min(candidate_count, 4),
         }
         if stop_sequences:
             parameters_dict["stopSequences"] = stop_sequences
@@ -183,23 +185,26 @@ class PalmCodeGenBaseModel(TextGenBaseModel):
             except GoogleAPIError as ex:
                 raise VertexAPIConnectionError.from_exception(ex)
 
+        textGenModelOutputs = []
         for prediction in predictions:
-            return TextGenModelOutput(
-                text=prediction.get("content"),
-                score=prediction.get("score"),
-                safety_attributes=SafetyAttributes(
-                    **prediction.get("safetyAttributes", {})
-                ),
-                metadata=TokensConsumptionMetadata(
-                    input_tokens=tokens_metatada.get("inputTokenCount", {}).get(
-                        "totalTokens", None
+            textGenModelOutputs.append(
+                TextGenModelOutput(
+                    text=prediction.get("content"),
+                    score=prediction.get("score"),
+                    safety_attributes=SafetyAttributes(
+                        **prediction.get("safetyAttributes", {})
                     ),
-                    output_tokens=tokens_metatada.get("outputTokenCount", {}).get(
-                        "totalTokens", None
+                    metadata=TokensConsumptionMetadata(
+                        input_tokens=tokens_metatada.get("inputTokenCount", {}).get(
+                            "totalTokens", None
+                        ),
+                        output_tokens=tokens_metatada.get("outputTokenCount", {}).get(
+                            "totalTokens", None
+                        ),
                     ),
-                ),
+                )
             )
-        return None
+        return textGenModelOutputs
 
     @property
     def metadata(self) -> ModelMetadata:
@@ -215,6 +220,7 @@ class PalmCodeGenBaseModel(TextGenBaseModel):
         max_output_tokens: int = 32,
         top_p: float = 0.95,
         top_k: int = 40,
+        candidate_count: int = 1,
         stop_sequences: Optional[Sequence[str]] = None,
     ) -> Optional[TextGenModelOutput]:
         pass
@@ -243,6 +249,7 @@ class PalmTextBisonModel(PalmCodeGenBaseModel):
         max_output_tokens: int = 32,
         top_p: float = 0.95,
         top_k: int = 40,
+        candidate_count: int = 1,
         stop_sequences: Optional[Sequence[str]] = None,
     ) -> Optional[TextGenModelOutput]:
         model_input = TextBisonModelInput(prompt)
@@ -252,6 +259,7 @@ class PalmTextBisonModel(PalmCodeGenBaseModel):
             max_output_tokens,
             top_p,
             top_k,
+            candidate_count,
             stop_sequences,
         )
 
@@ -294,6 +302,7 @@ class PalmCodeBisonModel(PalmCodeGenBaseModel):
         max_output_tokens: int = 2048,
         top_p: float = 0.95,
         top_k: int = 40,
+        candidate_count: int = 1,
         stop_sequences: Optional[Sequence[str]] = None,
     ) -> Optional[TextGenModelOutput]:
         model_input = CodeBisonModelInput(prompt)
@@ -303,6 +312,7 @@ class PalmCodeBisonModel(PalmCodeGenBaseModel):
             max_output_tokens,
             top_p,
             top_k,
+            candidate_count,
             stop_sequences,
         )
 
@@ -347,6 +357,7 @@ class PalmCodeGeckoModel(PalmCodeGenBaseModel):
         max_output_tokens: int = 64,
         top_p: float = 0.95,
         top_k: int = 40,
+        candidate_count: int = 1,
         stop_sequences: Optional[Sequence[str]] = None,
         code_context: Optional[list[str]] = None,
     ) -> Optional[TextGenModelOutput]:
@@ -361,6 +372,7 @@ class PalmCodeGeckoModel(PalmCodeGenBaseModel):
             max_output_tokens,
             top_p,
             top_k,
+            candidate_count,
             stop_sequences,
             code_context,
         )

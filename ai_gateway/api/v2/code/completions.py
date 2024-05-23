@@ -110,39 +110,32 @@ async def completions(
         # We support the prompt version 2 only with the Anthropic models
         if payload.prompt_version == 2:
             kwargs.update({"raw_prompt": payload.prompt})
+
+        suggestions = [
+            await _execute_code_completion(payload, code_completions, **kwargs)
+        ]
+
+        if isinstance(suggestions[0], AsyncIterator):
+            return await _handle_stream(suggestions[0])
     else:
         code_completions = completions_legacy_factory()
+        if payload.choices_count > 0:
+            kwargs.update({"candidate_count": payload.choices_count})
 
-    with TelemetryInstrumentator().watch(payload.telemetry):
-        suggestion = await code_completions.execute(
-            prefix=payload.current_file.content_above_cursor,
-            suffix=payload.current_file.content_below_cursor,
-            file_name=payload.current_file.file_name,
-            editor_lang=payload.current_file.language_identifier,
-            stream=payload.stream,
-            **kwargs,
+        suggestions = await _execute_code_completion(
+            payload, code_completions, **kwargs
         )
-
-    if isinstance(suggestion, AsyncIterator):
-        return await _handle_stream(suggestion)
-
-    log.debug(
-        "code completion suggestion:",
-        suggestion=suggestion.text,
-        score=suggestion.score,
-        language=suggestion.lang,
-    )
 
     return SuggestionsResponse(
         id="id",
         created=int(time()),
         model=SuggestionsResponse.Model(
-            engine=suggestion.model.engine,
-            name=suggestion.model.name,
-            lang=suggestion.lang,
+            engine=suggestions[0].model.engine,
+            name=suggestions[0].model.name,
+            lang=suggestions[0].lang,
         ),
-        experiments=suggestion.metadata.experiments,
-        choices=_suggestion_choices(suggestion.text),
+        experiments=suggestions[0].metadata.experiments,
+        choices=_completion_suggestion_choices(suggestions),
     )
 
 
@@ -234,7 +227,7 @@ async def generations(
             name=suggestion.model.name,
             lang=suggestion.lang,
         ),
-        choices=_suggestion_choices(suggestion.text),
+        choices=_generation_suggestion_choices(suggestion.text),
     )
 
 
@@ -262,7 +255,28 @@ def _resolve_code_generations_anthropic_chat(
     )
 
 
-def _suggestion_choices(text: str) -> list:
+def _completion_suggestion_choices(suggestions: list) -> list:
+    if len(suggestions) == 0:
+        return []
+
+    choices = []
+    for suggestion in suggestions:
+        log.debug(
+            "code completion suggestion:",
+            suggestion=suggestion.text,
+            score=suggestion.score,
+            language=suggestion.lang,
+        )
+
+        if not suggestion.text:
+            continue
+
+        choices.append(SuggestionsResponse.Choice(text=suggestion.text))
+
+    return choices
+
+
+def _generation_suggestion_choices(text: str) -> list:
     return [SuggestionsResponse.Choice(text=text)] if text else []
 
 
@@ -327,3 +341,21 @@ async def _handle_stream(
     return StreamSuggestionsResponse(
         _stream_generator(), media_type="text/event-stream"
     )
+
+
+async def _execute_code_completion(
+    payload: CompletionsRequestWithVersion,
+    code_completions: Factory[CodeCompletions | CodeCompletionsLegacy],
+    **kwargs: dict
+) -> any:
+    with TelemetryInstrumentator().watch(payload.telemetry):
+        output = await code_completions.execute(
+            prefix=payload.current_file.content_above_cursor,
+            suffix=payload.current_file.content_below_cursor,
+            file_name=payload.current_file.file_name,
+            editor_lang=payload.current_file.language_identifier,
+            stream=payload.stream,
+            **kwargs,
+        )
+
+    return output

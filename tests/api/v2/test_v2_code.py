@@ -63,24 +63,30 @@ class TestCodeCompletions:
         [
             # non-empty suggestions from model
             (
-                ModelEngineOutput(
-                    text="def search",
-                    score=0,
-                    model=ModelMetadata(name="code-gecko", engine="vertex-ai"),
-                    lang_id=LanguageId.PYTHON,
-                    metadata=MetadataPromptBuilder(
-                        components={
-                            "prefix": MetadataCodeContent(length=10, length_tokens=2),
-                            "suffix": MetadataCodeContent(length=10, length_tokens=2),
-                        },
-                        experiments=[
-                            ExperimentTelemetry(name="truncate_suffix", variant=1)
-                        ],
-                    ),
-                    tokens_consumption_metadata=TokensConsumptionMetadata(
-                        input_tokens=0, output_tokens=0
-                    ),
-                ),
+                [
+                    ModelEngineOutput(
+                        text="def search",
+                        score=0,
+                        model=ModelMetadata(name="code-gecko", engine="vertex-ai"),
+                        lang_id=LanguageId.PYTHON,
+                        metadata=MetadataPromptBuilder(
+                            components={
+                                "prefix": MetadataCodeContent(
+                                    length=10, length_tokens=2
+                                ),
+                                "suffix": MetadataCodeContent(
+                                    length=10, length_tokens=2
+                                ),
+                            },
+                            experiments=[
+                                ExperimentTelemetry(name="truncate_suffix", variant=1)
+                            ],
+                        ),
+                        tokens_consumption_metadata=TokensConsumptionMetadata(
+                            input_tokens=0, output_tokens=0
+                        ),
+                    )
+                ],
                 {
                     "id": "id",
                     "model": {
@@ -102,24 +108,30 @@ class TestCodeCompletions:
             ),
             # empty suggestions from model
             (
-                ModelEngineOutput(
-                    text="",
-                    score=0,
-                    model=ModelMetadata(name="code-gecko", engine="vertex-ai"),
-                    lang_id=LanguageId.PYTHON,
-                    metadata=MetadataPromptBuilder(
-                        components={
-                            "prefix": MetadataCodeContent(length=10, length_tokens=2),
-                            "suffix": MetadataCodeContent(length=10, length_tokens=2),
-                        },
-                        experiments=[
-                            ExperimentTelemetry(name="truncate_suffix", variant=1)
-                        ],
-                    ),
-                    tokens_consumption_metadata=TokensConsumptionMetadata(
-                        input_tokens=0, output_tokens=0
-                    ),
-                ),
+                [
+                    ModelEngineOutput(
+                        text="",
+                        score=0,
+                        model=ModelMetadata(name="code-gecko", engine="vertex-ai"),
+                        lang_id=LanguageId.PYTHON,
+                        metadata=MetadataPromptBuilder(
+                            components={
+                                "prefix": MetadataCodeContent(
+                                    length=10, length_tokens=2
+                                ),
+                                "suffix": MetadataCodeContent(
+                                    length=10, length_tokens=2
+                                ),
+                            },
+                            experiments=[
+                                ExperimentTelemetry(name="truncate_suffix", variant=1)
+                            ],
+                        ),
+                        tokens_consumption_metadata=TokensConsumptionMetadata(
+                            input_tokens=0, output_tokens=0
+                        ),
+                    )
+                ],
                 {
                     "id": "id",
                     "model": {
@@ -608,22 +620,26 @@ class TestCodeCompletions:
             )
         )
 
-        model_output = ModelEngineOutput(
-            text="def search",
-            score=0,
-            model=ModelMetadata(name="code-gecko", engine="vertex-ai"),
-            lang_id=LanguageId.PYTHON,
-            metadata=MetadataPromptBuilder(
-                components={
-                    "prefix": MetadataCodeContent(length=10, length_tokens=2),
-                    "suffix": MetadataCodeContent(length=10, length_tokens=2),
-                },
-                experiments=[ExperimentTelemetry(name="truncate_suffix", variant=1)],
-            ),
-            tokens_consumption_metadata=TokensConsumptionMetadata(
-                input_tokens=0, output_tokens=0
-            ),
-        )
+        model_output = [
+            ModelEngineOutput(
+                text="def search",
+                score=0,
+                model=ModelMetadata(name="code-gecko", engine="vertex-ai"),
+                lang_id=LanguageId.PYTHON,
+                metadata=MetadataPromptBuilder(
+                    components={
+                        "prefix": MetadataCodeContent(length=10, length_tokens=2),
+                        "suffix": MetadataCodeContent(length=10, length_tokens=2),
+                    },
+                    experiments=[
+                        ExperimentTelemetry(name="truncate_suffix", variant=1)
+                    ],
+                ),
+                tokens_consumption_metadata=TokensConsumptionMetadata(
+                    input_tokens=0, output_tokens=0
+                ),
+            )
+        ]
 
         code_completions_mock = mock.Mock(spec=CodeCompletionsLegacy)
         code_completions_mock.execute = mock.AsyncMock(return_value=model_output)
@@ -653,6 +669,7 @@ class TestCodeCompletions:
                     "project_id": 278964,
                     "current_file": current_file,
                     "telemetry": telemetry,
+                    "choices_count": 1,
                 },
             )
 
@@ -1166,6 +1183,7 @@ class TestCodeGenerations:
                     "model_provider": "vertex-ai",
                     "model_name": "code-bison@002",
                     "telemetry": telemetry,
+                    "choices_count": 1,
                 },
             )
 

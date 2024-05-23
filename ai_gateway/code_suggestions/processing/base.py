@@ -42,7 +42,7 @@ EXPERIMENT_COUNTER = Counter(
     "code_suggestions_experiments", "Ongoing experiments", ["name", "variant"]
 )
 
-MINIMIMUM_CONFIDENCE_SCORE = -10
+MINIMUM_CONFIDENCE_SCORE = -10
 
 
 class ModelEngineOutput(NamedTuple):
