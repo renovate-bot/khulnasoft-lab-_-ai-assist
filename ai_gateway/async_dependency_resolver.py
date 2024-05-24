@@ -1,7 +1,3 @@
-from dependency_injector.wiring import Provide, inject
-
-from ai_gateway.container import ContainerApplication
-
 """
 This module allows you to resolve the dependencies with Python async/coroutines.
 
@@ -19,6 +15,10 @@ However, since `Provide` object is not async/coroutine compatible, FastAPI runs 
 
 See https://gitlab.com/gitlab-org/modelops/applied-ml/code-suggestions/ai-assist/-/merge_requests/606 for more information.
 """
+
+from dependency_injector.wiring import Provide, inject
+
+from ai_gateway.container import ContainerApplication
 
 
 @inject

@@ -94,5 +94,5 @@ def feature_categories(mapping: dict[GitLabUnitPrimitive, GitLabFeatureCategory]
 def get_feature_category() -> str:
     if context.exists():
         return context.get(_CATEGORY_CONTEXT_KEY, _UNKNOWN_FEATURE_CATEGORY)
-    else:
-        return _UNKNOWN_FEATURE_CATEGORY
+
+    return _UNKNOWN_FEATURE_CATEGORY

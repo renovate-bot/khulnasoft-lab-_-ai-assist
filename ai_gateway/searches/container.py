@@ -1,7 +1,7 @@
 from typing import Iterator, Optional
 
 from dependency_injector import containers, providers
-from google.cloud import discoveryengine as discoveryengine
+from google.cloud import discoveryengine
 
 from ai_gateway.models import mock
 
