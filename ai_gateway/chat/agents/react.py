@@ -81,6 +81,8 @@ class ReActPlainTextParser(BaseParser):
                 thought=match_thought.group(1) if match_thought else "",
             )
 
+        return None
+
     def parse(self, text: str) -> TypeReActAgentAction:
         text = f"Thought: {text}"
         message = f"<message>{text}</message>"

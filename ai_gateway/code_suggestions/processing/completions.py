@@ -101,8 +101,11 @@ class _PromptBuilder(PromptBuilderBase):
         suffix: CodeContent,
         file_name: str,
         lang_id: Optional[LanguageId] = None,
-        experiments: Optional[list[ExperimentTelemetry]] = [],
+        experiments: Optional[list[ExperimentTelemetry]] = None,
     ):
+        if experiments is None:
+            experiments = []
+
         super().__init__(prefix, suffix, lang_id)
 
         self.file_name = file_name

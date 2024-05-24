@@ -9,7 +9,7 @@ class TestTextGenBaseModel:
         def metadata(self):
             return ModelMetadata(engine="vertex", name="code-gecko@002")
 
-        def generate(self, **kwargs):
+        async def generate(self, **kwargs):
             pass
 
     @mock.patch("ai_gateway.models.base.config.model_engine_concurrency_limits")

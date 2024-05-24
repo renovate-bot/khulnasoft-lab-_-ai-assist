@@ -8,5 +8,5 @@ __all__ = [
 
 class PostProcessorBase(ABC):
     @abstractmethod
-    def process(self, completion: str, **kwargs: Any) -> str:
+    async def process(self, completion: str, **kwargs: Any) -> str:
         pass
