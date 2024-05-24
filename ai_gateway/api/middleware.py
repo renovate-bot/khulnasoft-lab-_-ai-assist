@@ -126,7 +126,6 @@ class MiddlewareLogRequest(Middleware):
                     "backtrace": traceback.format_exc(),
                 }
                 log_exception(e)
-                raise
             finally:
                 elapsed_time = time.perf_counter() - start_time_total
                 cpu_time = time.process_time() - start_time_cpu
@@ -172,7 +171,8 @@ class MiddlewareLogRequest(Middleware):
                     **fields,
                 )
                 response.headers["X-Process-Time"] = str(elapsed_time)
-                return response
+
+            return response
 
     def __init__(self, skip_endpoints: Optional[list] = None):
         path_resolver = _PathResolver.from_optional_list(skip_endpoints)
