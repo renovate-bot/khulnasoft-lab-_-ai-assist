@@ -1,5 +1,6 @@
 from time import time
 from unittest import mock
+from unittest.mock import patch
 
 import pytest
 from fastapi.testclient import TestClient
@@ -82,16 +83,18 @@ async def test_success(
     mock_llm_model = mock.Mock(spec=VertexAISearch)
     mock_llm_model.search_with_retry = mock.AsyncMock(return_value=search_results)
 
+    time_now = time()
     container = ContainerApplication()
     with container.searches.vertex_search.override(mock_llm_model):
-        response = mock_client.post(
-            "/search/gitlab-docs",
-            headers={
-                "Authorization": "Bearer 12345",
-                "X-Gitlab-Authentication-Type": "oidc",
-            },
-            json=request_body,
-        )
+        with patch("time.time", return_value=time_now):
+            response = mock_client.post(
+                "/search/gitlab-docs",
+                headers={
+                    "Authorization": "Bearer 12345",
+                    "X-Gitlab-Authentication-Type": "oidc",
+                },
+                json=request_body,
+            )
 
     assert response.status_code == 200
 
@@ -123,7 +126,7 @@ async def test_success(
         ),
         metadata=SearchResponseMetadata(
             provider="vertex-ai",
-            timestamp=int(time()),
+            timestamp=int(time_now),
         ),
     )
 
