@@ -21,7 +21,7 @@ from ai_gateway.api.monitoring import router as http_monitoring_router
 from ai_gateway.api.v1 import api_router as http_api_router_v1
 from ai_gateway.api.v2 import api_router as http_api_router_v2
 from ai_gateway.api.v3 import api_router as http_api_router_v3
-from ai_gateway.auth import GitLabOidcProvider
+from ai_gateway.auth import CompositeProvider, GitLabOidcProvider, LocalAuthProvider
 from ai_gateway.config import Config
 from ai_gateway.container import ContainerApplication
 from ai_gateway.instrumentators.threads import monitor_threads
@@ -76,11 +76,16 @@ def create_fast_api_server(config: Config):
             ),
             MiddlewareLogRequest(skip_endpoints=_SKIP_ENDPOINTS),
             MiddlewareAuthentication(
-                GitLabOidcProvider(
-                    oidc_providers={
-                        "Gitlab": config.gitlab_url,
-                        "CustomersDot": config.customer_portal_url,
-                    }
+                CompositeProvider(
+                    [
+                        LocalAuthProvider(),
+                        GitLabOidcProvider(
+                            oidc_providers={
+                                "Gitlab": config.gitlab_url,
+                                "CustomersDot": config.customer_portal_url,
+                            }
+                        ),
+                    ]
                 ),
                 bypass_auth=config.auth.bypass_external,
                 skip_endpoints=_SKIP_ENDPOINTS,
