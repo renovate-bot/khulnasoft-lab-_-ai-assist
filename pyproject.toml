@@ -127,8 +127,6 @@ disable = [
   "useless-parent-delegation",
   "consider-using-in",
   "abstract-method",
-  "return-in-finally",
-  "lost-exception",
   "broad-exception-caught",
   "too-many-instance-attributes",
   "consider-using-sys-exit",
