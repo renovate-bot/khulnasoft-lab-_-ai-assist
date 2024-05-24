@@ -176,6 +176,7 @@ async def generations(
         current_file_name=payload.current_file.file_name,
         stream=payload.stream,
         endpoint=payload.model_endpoint,
+        api_key="*" * len(payload.model_api_key) if payload.model_api_key else None,
     )
 
     if payload.model_provider == KindModelProvider.ANTHROPIC:
@@ -193,6 +194,7 @@ async def generations(
         code_generations = generations_litellm_factory(
             model__name=payload.model_name,
             model__endpoint=payload.model_endpoint,
+            model__api_key=payload.model_api_key,
         )
     else:
         code_generations = generations_vertex_factory()
