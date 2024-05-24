@@ -20,8 +20,14 @@ class TestLiteLlmChatMode:
         return "http://127.0.0.1:1111/v1"
 
     @pytest.fixture
-    def lite_llm_chat_model(self, endpoint):
-        return LiteLlmChatModel.from_model_name(name="mistral", endpoint=endpoint)
+    def api_key(self):
+        return "specified-api-key"
+
+    @pytest.fixture
+    def lite_llm_chat_model(self, endpoint, api_key):
+        return LiteLlmChatModel.from_model_name(
+            name="mistral", endpoint=endpoint, api_key=api_key
+        )
 
     @pytest.mark.parametrize("model_name", ["mistral", "mixtral"])
     def test_from_model_name(self, model_name: str, endpoint):
@@ -29,10 +35,11 @@ class TestLiteLlmChatMode:
 
         assert model.metadata.name == f"openai/{model_name}"
         assert model.endpoint == endpoint
+        assert model.api_key == "stubbed-api-key"
         assert model.metadata.engine == "litellm"
 
     @pytest.mark.asyncio
-    async def test_generate(self, lite_llm_chat_model, endpoint):
+    async def test_generate(self, lite_llm_chat_model, endpoint, api_key):
         expected_messages = [{"role": "user", "content": "Test message"}]
 
         with patch("ai_gateway.models.litellm.acompletion") as mock_acompletion:
@@ -52,14 +59,14 @@ class TestLiteLlmChatMode:
                 top_p=0.95,
                 top_k=40,
                 max_tokens=2048,
-                api_key="stubbed-api-key",
+                api_key=api_key,
                 api_base=endpoint,
                 timeout=30.0,
                 stop=["</new_code>"],
             )
 
     @pytest.mark.asyncio
-    async def test_generate_stream(self, lite_llm_chat_model, endpoint):
+    async def test_generate_stream(self, lite_llm_chat_model, endpoint, api_key):
         expected_messages = [{"role": "user", "content": "Test message"}]
 
         streamed_response = AsyncMock()
@@ -102,7 +109,7 @@ class TestLiteLlmChatMode:
                 top_p=0.9,
                 top_k=25,
                 max_tokens=1024,
-                api_key="stubbed-api-key",
+                api_key=api_key,
                 api_base=endpoint,
                 timeout=30.0,
                 stop=["</new_code>"],
@@ -112,7 +119,7 @@ class TestLiteLlmChatMode:
             watcher.finish.assert_called_once()
 
     @pytest.mark.asyncio
-    async def test_generate_stream_instrumented(self, lite_llm_chat_model, endpoint):
+    async def test_generate_stream_instrumented(self, lite_llm_chat_model):
         async def mock_stream(*args, **kwargs):
             completions = [
                 AsyncMock(

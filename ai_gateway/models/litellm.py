@@ -35,7 +35,9 @@ class LiteLlmChatModel(ChatModelBase):
         self,
         model_name: KindLiteLlmModel = KindLiteLlmModel.MISTRAL,
         endpoint: Optional[str] = None,
+        api_key: Optional[str] = STUBBED_API_KEY,
     ):
+        self.api_key = api_key
         self.endpoint = endpoint
         self._metadata = ModelMetadata(
             name=model_name.chat_model(),
@@ -66,7 +68,7 @@ class LiteLlmChatModel(ChatModelBase):
                 top_p=top_p,
                 top_k=top_k,
                 max_tokens=max_output_tokens,
-                api_key=STUBBED_API_KEY,
+                api_key=self.api_key,
                 api_base=self.endpoint,
                 timeout=30.0,
                 stop=["</new_code>"],
@@ -106,10 +108,11 @@ class LiteLlmChatModel(ChatModelBase):
         cls,
         name: Union[str, KindLiteLlmModel],
         endpoint: Optional[str] = None,
+        api_key: Optional[str] = STUBBED_API_KEY,
     ):
         try:
             kind_model = KindLiteLlmModel(name)
         except ValueError:
             raise ValueError(f"no model found by the name '{name}'")
 
-        return cls(model_name=kind_model, endpoint=endpoint)
+        return cls(model_name=kind_model, endpoint=endpoint, api_key=api_key)
