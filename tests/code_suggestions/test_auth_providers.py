@@ -1,20 +1,82 @@
 import json
 import logging
+import os
 from time import sleep
 from unittest.mock import patch
 
 import pytest
 import requests
 import responses
-from jose import exceptions, jwt
+from jose import jwt
+from jose.exceptions import JWKError
 
-from ai_gateway.auth import GitLabOidcProvider
+from ai_gateway.auth import CompositeProvider, GitLabOidcProvider, LocalAuthProvider
 
 
-class TestGitLabOidcProvider:
+class TestCompositeProvider:
     # JSON Web Key can be generated via https://mkjwk.org/
     # Private key: X.509 PEM format
     # Public key: JWK format
+    private_key_ai_gateway_signing_key_test = """
+-----BEGIN PRIVATE KEY-----
+MIIEvgIBADANBgkqhkiG9w0BAQEFAASCBKgwggSkAgEAAoIBAQC8fPBt+n0IIAAo
+hqChw64BGRAsYtZo0J/B12yYp/2ZQHDYnOiYLnx9WJUwKg0/lyvNnuUAJ6Zjy2aF
+x5Qa3dRLvT0G0jXsMdYyT9Dk5E1wi+0+whgKDxPNHuF3/BGLbXwu0ZcgEqUbMvfQ
+EK70kWQinFq2nR52sj/+8HwlXhPCAX1r66f10Kxrc5SZ3DBcr7RYGxVycP9PBy9Z
+psTh9RvmgOvCH5yEJoU4VsglilCL/HxFOQcN8daAY1m3kK5Bct2saT1wK95Scfdy
+cAp6ZBz65PIvtmLMuQw3ndxzfJN1/oG9ge1TDL/OS+aW1VJChfTAWF8ur0OiBgs3
+w24oU8AJAgMBAAECggEAARCFsMVSibuuiP3WU7Dk7Y1FROtZ39IP0dAWBTvrp/DX
+Jd/SGpaYZuYNbd/K7TInrl9d1pGGULCVl57joqpukTYptIuEqrlO/9xa7jQDjkky
+scvZqy9RyA9undc5lgfsPafJGqLoUk/ry/3JBPPeQw05g5mvg/GaKzRMOWvqLwqB
+WFB6Hcoi+B8zD1SUtfJzp9zDQZ58m46vViGNxrNhkntHI8tOo5H2EQxdzUssSdTb
+SZoLk90yzszYvGu8URPuPJbMdk8bWlrUpn1fASe166UVvQ7Y6AD/HMwA0zRhjKhD
+h+CPBU1kE/bZAXUvlFdeQNG1rQTP/Tj3skWGAIhMhQKBgQDvWX+Sfb8XE0o9Bu6T
+rsAZ/Mrlm4yjQaEV7LEJbMRSVm7qf8l2quLBdJ50TZM4lciKtzaoLynBgQ/4zczo
+93nFrbqWnlVlxO7tMclgaSXM1mVXPiGB1w5TDVWjJsUiFFGZYK9xd17r6En3uco5
+Zg6YyUHKCr06me4PWessVWuwRQKBgQDJmanST8KFFc1EiI1ohMllYhzxdoKbE10Q
+9xL10hs3NGEJOH+J0RaFm2vQSMujDbbUXLFEl+P0fdhgodDwgrBP+/fVS791S0a/
+y7Y/zotR88++Co4yz0WMmgkCRGiwqJnQuvncuaOJObotg45KFTJ1D5v0rWpaxhKf
+Ra/0A9e29QKBgQCggtaIuQdjRC5vCq0IIRL22o5+uHfyK9sJRvfaqDRoO0qavCOx
+DxyOO9Tfjf6C3f/k9sUSuL455IF/ixQ1z3C8XqtYwsnmO9E3BEJWA220FrtTbHkw
+B7a1f6XEigV9uz6Vqz88yp6/ecHQ/aleIND9KUqTYexQ1lXNubF6w7Y6OQKBgQCc
+J002HRez1CZR/l9h5PDGec+nbL9PdRkySd7Cz8LK6OR8qumHC5ChXriM9cXd/4Jt
+TXr1gZ1NRKj0eIKJuQDug2H9MhYTuYIMj7MUC1041lxEfJKWYpwhgzKVMf3RUFcM
+KbfeM2Crqy49kNgHJBIYQEXxqN1ngGLuQaE/pjZRfQKBgHWHBgh5kbruu1nyamdB
+VZa/bwDiuM7xlEnBnhenLIvdJM1TqIczieNAZIXa7VCWVLSDaWvrtaq/h4i3v5kj
+KXSvBjykZx92Su24sgukm3P7sT9hyEuerUFPUGt2axCrL8JNL4JXWC5/KkXJREjt
+5OhnoClVD62lY8Bc90NTkMJe
+-----END PRIVATE KEY-----
+    """
+    private_key_ai_gateway_validation_key_test = """
+-----BEGIN PRIVATE KEY-----
+MIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQC8YtGLWttDfdaR
+cMRSsuHV0EljYIlS+B4gtCM8OplNKeTz9pxyIBlIaw83Z2FCAgC9tr1MlYZ5RoWq
+hMiDOiC774hU5syrAlQhMHd8ijQo7fa8qTc08f1I+lkCbWRyFi3X15qf/80L60Ou
+VhpsPzhs1mKYTCrY1c/MHnYdyf5VFNQvypFLvYoIrNemJueTLywZLS6+XsDphpIB
+rBruTYkp+aP0Nn2t1ykATVySVvaeuuT85z80O72afyn7sPSpCtSTg28y/w3Nybjo
+s1JQXw3zMTNX0D8JnvK9yVj+bJqh7giHluIBnrxwABGakw2Aj3qXt1rGM5BAlIyX
+HLSsvdnJAgMBAAECggEAF3mWbE++9zTzBBZp5nbDSNQu0vcEgb3orjFYWzDfqdOM
+w+BhHCEXGXS61Y/4uQOcIUfoZKbU1h+1OBuaC202x0iI4/CLREuS3XxnRVIJACkw
+GBAbkKnPgtSsew6T59oO7iDANEwpWmD/ovW4jvDdWIWqDVmfdLwHDAPnOtzRCDus
+Jx34OrqyTPoLJ7d/h2gJNN2r+qZll87MvOGhIPrBKgs1mJlxvcnIxHJarWrP/X43
+4x9NBJ66xGWjbzJ+zKT/UhBQyQDNQoGGCBZwfPQcM1qelbUEOGoqBqWB1qLCFvfq
+bdMoeZPoyM4MCNi18e8YYYMKmmfEjat6fVJLyb4B4QKBgQD6NUsFwTf+QdjU/vU3
+9lN0LeA1BTpKb6s7UJS+/MHioTxv2ZWv/bmwrzrd8BtO6qYRDzcLTMbwkNSSz80+
+rDs2pbVs4W92RmnHgvf73WiK0WhAQUqcQG8nX4BefETC9sKmiL5hkUja5U847A1i
+V9DmNr7FLUVsk3I84mR3nQf06QKBgQDAvyyF73wzICUU4pGKqFFJPlLIkZcXbdmt
+AhamTKLQwNSxnK6b6MgzQXYkqLbgJ2aau5v8wFrQVURLZx8+OLjAE2S6CrK0RLPO
+mT9rlJNhSjx3Lacq9Lc8Pk5a5HEB4dSvEQk6riHPWo4GWpcmsIrw6X12C1XkR1xa
+dNhNnIcx4QKBgHlZaYZj/K0i8G/1K6c1n6oEKe5tF6VMXYbKASpT2hD5VB+HLtMJ
+QosPoYRMVGJE6b/yWibv2LiJ9Z8yi3+u9pT9b21cNLvvUJRDz9PmwTI6d85aHD6F
+/aLh7Zdlu8+28Bbm0TbuyJ/pgS/BRIiCwL02pfVpjHcpV8lxn3pnvZkpAoGAJKX0
+5D6F4f6xrkfqHnAkjIWiHeq4zMahRekIv3QA3SpdBqxg8toO/tfqi8vcgcBcHP2h
+CizU15nu01t3MFB+qF7HnywbkHUjrxuqWF02rJ/94Tc3+s3u7TB3m4amChKTavoV
+RCgJ27A/Iuwko0GcGXR7228KVM5QvA5NdmxVtGECgYEAorK1bE8j1u8sjXkpbyxh
+uMQ15NX72v03rOSjEiglkVYVPM6+jA4A5TZYQLEYfyGDjw/twsxNwHLi6hzoqkJv
+C7OH109IoruXRyRUXjizfZJCtVnE6sYCXgeJMQgIivwD4WD+5jkMunQBh8v3/N8j
+x9RTl7Z7UubXvhAXD6+4uh0=
+-----END PRIVATE KEY-----
+    """
     private_key_test = """
 -----BEGIN PRIVATE KEY-----
 MIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQCAzC66XB4Fppc0
@@ -125,6 +187,7 @@ UGw3kIW+604fnnXLDm4TaLA=
         "e": "AQAB",
         "use": "sig",
         "alg": "RS256",
+        "kid": "ZoObadsnUfqW_C_EfXp9DM6LUdzl0R",
         "n": "stiq29kurlOhBUZuBT4Yhths3D0pc98nTAX58CGKRyJQuZ531vl2JuMaJk7zValW-JIzZ4bCAe"
         "J84_DaBUWg_L9a0_0hdMGT5R-U0Mo_YQGZ-9y5ECcN5rstKt_Cy64RLdFajSI8MR-uTISYAendkXhoE"
         "vajw9D52S5RVFXNbR9U8S13x6dJ6Jvhe6Oj3fHbYoaloG54p8Y7j3b2Y9tAr3hQGqjYIK3a6srI_fff5"
@@ -138,98 +201,6 @@ UGw3kIW+604fnnXLDm4TaLA=
     }
 
     ai_gateway_audience = {"aud": "gitlab-ai-gateway"}
-
-    @responses.activate
-    @pytest.mark.parametrize(
-        "private_key,claims,gitlab_realm,authenticated",
-        [
-            (
-                private_key_test,
-                claims | ai_gateway_audience,
-                "self-managed",
-                True,
-            ),
-            (
-                forged_private_key,
-                claims | ai_gateway_audience,
-                "",
-                False,
-            ),
-            (
-                private_key_customers,
-                claims | ai_gateway_audience,
-                "self-managed",
-                True,
-            ),
-            (
-                private_key_test,
-                {
-                    "is_life_beautiful": True,
-                    "scopes": ["code_suggestions"],
-                    "gitlab_realm": "saas",
-                }
-                | ai_gateway_audience,
-                "saas",
-                True,
-            ),
-        ],
-    )
-    def test_gitlab_oidc_provider(
-        self, private_key, claims, gitlab_realm, authenticated
-    ):
-        well_known_test_response = responses.get(
-            "http://test.com/.well-known/openid-configuration",
-            body='{"jwks_uri": "http://test.com/oauth/discovery/keys"}',
-            status=200,
-        )
-
-        well_known_customers_response = responses.get(
-            "http://customers.test.com/.well-known/openid-configuration",
-            body='{"jwks_uri": "http://customers.test.com/oauth/discovery/keys"}',
-            status=200,
-        )
-
-        jwks_test_response = responses.get(
-            "http://test.com/oauth/discovery/keys",
-            body=f'{{"keys": [{json.dumps(self.public_key_test)}]}}',
-            status=200,
-        )
-
-        jwks_customers_response = responses.get(
-            "http://customers.test.com/oauth/discovery/keys",
-            body=f'{{"keys": [{json.dumps(self.public_key_customers)}]}}',
-            status=200,
-        )
-
-        auth_provider = GitLabOidcProvider(
-            oidc_providers={
-                "Gitlab": "http://test.com",
-                "CustomersDot": "http://customers.test.com",
-            }
-        )
-
-        token = jwt.encode(
-            claims,
-            private_key,
-            algorithm="RS256",
-        )
-        user = auth_provider.authenticate(token)
-
-        assert user is not None
-        assert user.authenticated is authenticated
-        assert user.claims.gitlab_realm == gitlab_realm
-
-        if authenticated:
-            assert user.claims.scopes == ["code_suggestions"]
-
-        assert well_known_test_response.call_count == 1
-        assert well_known_customers_response.call_count == 1
-        assert jwks_test_response.call_count == 1
-        assert jwks_customers_response.call_count == 1
-
-        cached_keys = auth_provider.cache.get(auth_provider.CACHE_KEY).value
-
-        assert len(cached_keys["keys"]) == 2
 
     @responses.activate
     @pytest.mark.parametrize(
@@ -299,11 +270,15 @@ UGw3kIW+604fnnXLDm4TaLA=
             status=200,
         )
 
-        auth_provider = GitLabOidcProvider(
-            oidc_providers={
-                "Gitlab": "http://test.com",
-                "CustomersDot": "http://customers.test.com",
-            }
+        auth_provider = CompositeProvider(
+            [
+                GitLabOidcProvider(
+                    oidc_providers={
+                        "Gitlab": "http://test.com",
+                        "CustomersDot": "http://customers.test.com",
+                    }
+                )
+            ]
         )
 
         token = jwt.encode(
@@ -357,10 +332,15 @@ UGw3kIW+604fnnXLDm4TaLA=
             status=200,
         )
 
-        auth_provider = GitLabOidcProvider(
-            oidc_providers={
-                "Gitlab": "http://test.com",
-            }
+        auth_provider = CompositeProvider(
+            [
+                LocalAuthProvider(),
+                GitLabOidcProvider(
+                    oidc_providers={
+                        "Gitlab": "http://test.com",
+                    }
+                ),
+            ]
         )
         token = jwt.encode(
             {},
@@ -369,10 +349,203 @@ UGw3kIW+604fnnXLDm4TaLA=
         )
 
         user = None
-        with pytest.raises(GitLabOidcProvider.CriticalAuthError):
+        with pytest.raises((CompositeProvider.CriticalAuthError, JWKError)):
             user = auth_provider.authenticate(token)
 
         assert user is None
 
         assert well_known_test_response.call_count == 1
         assert jwks_test_response.call_count == 1
+
+    @responses.activate
+    @pytest.mark.parametrize(
+        "jwt_signing_key,jwt_validation_key,key_to_sign,kid",
+        [
+            (
+                None,
+                private_key_ai_gateway_validation_key_test,
+                private_key_ai_gateway_validation_key_test,
+                "gitlab_ai_gateway_validation_key",
+            ),
+            (
+                private_key_ai_gateway_signing_key_test,
+                None,
+                private_key_ai_gateway_signing_key_test,
+                "gitlab_ai_gateway_signing_key",
+            ),
+        ],
+    )
+    def test_missing_one_environment_variable(
+        self,
+        jwt_signing_key,
+        jwt_validation_key,
+        key_to_sign,
+        kid,
+    ):
+        # pylint: disable=direct-environment-variable-reference
+        if jwt_signing_key:
+            os.environ["JWT_SIGNING_KEY"] = jwt_signing_key
+        else:
+            os.environ.pop("JWT_SIGNING_KEY", None)
+        if jwt_validation_key:
+            os.environ["JWT_VALIDATION_KEY"] = jwt_validation_key
+        else:
+            os.environ.pop("JWT_VALIDATION_KEY", None)
+        # pylint: enable=direct-environment-variable-reference
+
+        auth_provider = CompositeProvider([LocalAuthProvider()])
+        token = jwt.encode(
+            self.claims | self.ai_gateway_audience,
+            key_to_sign,
+            algorithm="RS256",
+        )
+
+        user = auth_provider.authenticate(token)
+
+        assert user is not None
+        assert user.authenticated
+
+        cached_keys = auth_provider.cache.get(auth_provider.CACHE_KEY).value
+        assert len(cached_keys["keys"]) == 1
+        assert cached_keys["keys"][0]["kid"] == kid
+
+    def test_missing_environment_variables_error(self):
+        # pylint: disable=direct-environment-variable-reference
+        os.environ.pop("JWT_SIGNING_KEY", None)
+        os.environ.pop("JWT_VALIDATION_KEY", None)
+        # pylint: enable=direct-environment-variable-reference
+
+        auth_provider = CompositeProvider([LocalAuthProvider()])
+        token = jwt.encode(
+            self.claims | self.ai_gateway_audience,
+            self.private_key_ai_gateway_validation_key_test,
+            algorithm="RS256",
+        )
+
+        user = None
+        with pytest.raises(CompositeProvider.CriticalAuthError):
+            user = auth_provider.authenticate(token)
+
+        assert user is None
+
+    @responses.activate
+    @pytest.mark.parametrize(
+        "private_key_used_to_sign,claims,gitlab_realm,authenticated",
+        [
+            (
+                private_key_test,
+                claims | ai_gateway_audience,
+                "self-managed",
+                True,
+            ),
+            (
+                private_key_ai_gateway_signing_key_test,
+                claims | ai_gateway_audience,
+                "self-managed",
+                True,
+            ),
+            (
+                private_key_ai_gateway_validation_key_test,
+                claims | ai_gateway_audience,
+                "self-managed",
+                True,
+            ),
+            (
+                private_key_customers,
+                claims | ai_gateway_audience,
+                "self-managed",
+                True,
+            ),
+            (
+                forged_private_key,
+                claims | ai_gateway_audience,
+                "",
+                False,
+            ),
+            (
+                private_key_test,
+                {
+                    "is_life_beautiful": True,
+                    "scopes": ["code_suggestions"],
+                    "gitlab_realm": "saas",
+                }
+                | ai_gateway_audience,
+                "saas",
+                True,
+            ),
+        ],
+    )
+    def test_composite_provider(
+        self, private_key_used_to_sign, claims, gitlab_realm, authenticated
+    ):
+        well_known_test_response = responses.get(
+            "http://test.com/.well-known/openid-configuration",
+            body='{"jwks_uri": "http://test.com/oauth/discovery/keys"}',
+            status=200,
+        )
+
+        well_known_customers_response = responses.get(
+            "http://customers.test.com/.well-known/openid-configuration",
+            body='{"jwks_uri": "http://customers.test.com/oauth/discovery/keys"}',
+            status=200,
+        )
+
+        jwks_test_response = responses.get(
+            "http://test.com/oauth/discovery/keys",
+            body=f'{{"keys": [{json.dumps(self.public_key_test)}]}}',
+            status=200,
+        )
+
+        jwks_customers_response = responses.get(
+            "http://customers.test.com/oauth/discovery/keys",
+            body=f'{{"keys": [{json.dumps(self.public_key_customers)}]}}',
+            status=200,
+        )
+
+        # pylint: disable=direct-environment-variable-reference
+        os.environ["JWT_SIGNING_KEY"] = self.private_key_ai_gateway_signing_key_test
+        os.environ["JWT_VALIDATION_KEY"] = (
+            self.private_key_ai_gateway_validation_key_test
+        )
+        # pylint: enable=direct-environment-variable-reference
+
+        auth_provider = CompositeProvider(
+            [
+                LocalAuthProvider(),
+                GitLabOidcProvider(
+                    oidc_providers={
+                        "Gitlab": "http://test.com",
+                        "CustomersDot": "http://customers.test.com",
+                    }
+                ),
+            ]
+        )
+
+        token = jwt.encode(
+            claims,
+            private_key_used_to_sign,
+            algorithm="RS256",
+        )
+        user = auth_provider.authenticate(token)
+
+        assert user is not None
+        assert user.authenticated is authenticated
+        assert user.claims.gitlab_realm == gitlab_realm
+
+        if authenticated:
+            assert user.claims.scopes == ["code_suggestions"]
+
+        assert well_known_test_response.call_count == 1
+        assert well_known_customers_response.call_count == 1
+        assert jwks_test_response.call_count == 1
+        assert jwks_customers_response.call_count == 1
+
+        cached_keys = auth_provider.cache.get(auth_provider.CACHE_KEY).value
+
+        assert len(cached_keys["keys"]) == 4
+        assert [key["kid"] for key in cached_keys["keys"]] == [
+            "gitlab_ai_gateway_signing_key",
+            "gitlab_ai_gateway_validation_key",
+            "MFRZ2Sp4sCciuzxArGCtNP5w2X716R6prptJqYHpFBw",
+            "ZoObadsnUfqW_C_EfXp9DM6LUdzl0R",
+        ]
