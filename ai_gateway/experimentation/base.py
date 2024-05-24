@@ -19,12 +19,12 @@ class ExperimentOutput(NamedTuple):
 
 class Experiment:
     def __init__(
-        self, name: str, description: str, variants: list = [], weights: list = []
+        self, name: str, description: str, variants: list = None, weights: list = None
     ):
         self.name = name
         self.description = description
-        self.variants = variants
-        self.weights = weights
+        self.variants = variants if variants is not None else []
+        self.weights = weights if weights is not None else []
 
     def run(self, **kwargs):
         (variant_idx,) = random.choices(range(len(self.variants)), weights=self.weights)

@@ -50,7 +50,7 @@ def run():
 
     for i in range(0, len(rows_to_insert), batch_size):
         errors = client.insert_rows(t, rows_to_insert[i : i + batch_size])
-        if errors == []:
+        if not errors:
             print(f"Added batch_size {i}")
         else:
             raise Exception(f"Failed to insert {errors}")

@@ -10,7 +10,7 @@ __all__ = [
 log = structlog.stdlib.get_logger("exceptions")
 
 
-def log_exception(ex: Exception, extra: dict = {}) -> None:
+def log_exception(ex: Exception, extra: dict = None) -> None:
     """Log the exception with the correlation ID.
 
     Args:
@@ -21,6 +21,9 @@ def log_exception(ex: Exception, extra: dict = {}) -> None:
     """
     status_code = getattr(ex, "code", None)
     exception_class = type(ex).__name__
+
+    if extra is None:
+        extra = {}
 
     log.error(
         str(ex),
