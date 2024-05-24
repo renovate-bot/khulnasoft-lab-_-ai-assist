@@ -103,7 +103,6 @@ In that directory, the following artifacts can be of interest:
 1. `api/v2/endpoints/code.py` - that houses implementation of main production Code Suggestions API
 1. `api/v2/experimental/code.py` - implements experimental endpoints that route requests to fixed external models for experimentation and testing
 
-This project utilizes middleware to provide additional mechanisms that are not strictly feature-related including authorization and logging.
 Middlewares are hosted at `ai_gateway/api/middleware.py` and interact with the `context` global variable that represents the API request.
 
 ## Application settings
@@ -160,23 +159,6 @@ AIGW_LOGGING__LEVEL=debug
 AIGW_LOGGING__TO_FILE=../modelgateway_debug.log
 ```
 
-### Set OIDC providers
-
-When `AIGW_AUTH__BYPASS_EXTERNAL` is true, OIDC provider discovery is skipped.
-
-To test OIDC, set the following in `.env`:
-
-```shell
-AIGW_AUTH__BYPASS_EXTERNAL=false
-
-# To test GitLab SaaS instance as OIDC provider
-AIGW_GITLAB_URL=http://127.0.0.1:3000/
-AIGW_GITLAB_API_URL=http://127.0.0.1:3000/api/v4/
-
-# To test CustomersDot as OIDC provider
-AIGW_CUSTOMER_PORTAL_URL=http://127.0.0.1:5000
-```
-
 ### How to manually activate the virtualenv
 
 - `poetry shell` or `poetry install` should create the virtualenv environment.
@@ -217,39 +199,7 @@ go to `/admin/groups` select `Edit` on the group you are using, set `Plan` to `U
 
 ## Authentication
 
-The intended use of this API is to be called from a client such as the
-[GitLab VS Code Extension](https://gitlab.com/gitlab-org/gitlab-vscode-extension)
-and other language servers. The client authenticates users against the GitLab
-API using their OAuth or Personal Access Tokens (PAT). Once GitLab successfully
-authenticates the request, it generates a JSON Web Token (JWT) and forwards the
-code suggestions request to this Gateway.
-
-The following diagram describes the authentication flow.
-
-```mermaid
-sequenceDiagram
-    autonumber
-
-    participant C as Client
-    participant G as GitLab
-    participant AI as AI Gateway
-
-    C->>+G: /code_suggestions/completions<br>with OAuth/PAT
-    G->>+AI: /completions with JWT
-
-    AI->>AI: validate JWKS exist
-
-    alt JWKS missing
-        AI-->>+G: /.well-known/openid-configuration
-        G-->>-AI: jwks_uri
-        AI-->>+G: /oauth/discovery/keys
-        G-->>-AI: JWKS
-        AI->>AI: cache for 24 hours
-    end
-
-    AI-->>-G: suggestions
-    G-->>-C: suggestions
-```
+See [authentication and authorization doc](./docs/auth.md).
 
 ## Component overview
 
@@ -269,22 +219,6 @@ We are supporting the following clients:
 
 - [GitLab VS Code Extension](https://gitlab.com/gitlab-org/gitlab-vscode-extension)
 - [GitLab Language Server for Code Suggestions](https://gitlab.com/gitlab-org/editor-extensions/gitlab-language-server-for-code-suggestions)
-
-### AI Gateway API
-
-Is written in Python and uses the [FastAPI](https://fastapi.tiangolo.com) framework
-along with Uvicorn. It has the following functions:
-
-1. Provide a REST API for incoming calls such as `/completions`.
-1. Authenticate incoming requests using GitLab JSON Web Key Sets (JWKS).
-1. Convert the prompt into a format that can be used by GCP Vertex AI API.
-1. Call Vertex AI API, await the result and parse it back as a response.
-
-### GitLab API
-
-The endpoint `/.well-known/openid-configuration` is to get the JWKS URI. We then
-call this URI to fetch the JWKS. We cache the JWKS for 24 hours and use it to validate
-the authenticity of the suggestion requests.
 
 ## Deployment
 

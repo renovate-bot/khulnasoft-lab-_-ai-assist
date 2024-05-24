@@ -71,6 +71,7 @@ class TestUnauthorizedScopes:
                 headers={
                     "Authorization": "Bearer 12345",
                     "X-Gitlab-Authentication-Type": "oidc",
+                    "X-Gitlab-Unit-Primitive": GitLabUnitPrimitive.EXPLAIN_VULNERABILITY,
                 },
                 json={
                     "model": "claude-3-opus-20240229",
@@ -81,4 +82,6 @@ class TestUnauthorizedScopes:
             )
 
         assert response.status_code == 403
-        assert response.json() == {"detail": "Forbidden"}
+        assert response.json() == {
+            "detail": "Unauthorized to access explain_vulnerability"
+        }
