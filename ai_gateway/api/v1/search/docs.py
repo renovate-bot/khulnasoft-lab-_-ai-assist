@@ -1,4 +1,4 @@
-from time import time
+import time
 
 import structlog
 from dependency_injector.providers import Factory
@@ -77,6 +77,6 @@ async def docs(
         ),
         metadata=SearchResponseMetadata(
             provider="vertex-ai",
-            timestamp=int(time()),
+            timestamp=int(time.time()),
         ),
     )
