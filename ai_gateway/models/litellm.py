@@ -77,8 +77,8 @@ class LiteLlmChatModel(ChatModelBase):
             if stream:
                 return self._handle_stream(
                     suggestion,
-                    lambda: watcher.finish(),
-                    lambda: watcher.register_error(),
+                    watcher.finish,
+                    watcher.register_error,
                 )
 
         return TextGenModelOutput(

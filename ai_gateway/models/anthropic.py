@@ -162,7 +162,7 @@ class AnthropicModel(TextGenBaseModel):
                 raise AnthropicAPIConnectionError.from_exception(ex)
 
             if stream:
-                return self._handle_stream(suggestion, lambda: watcher.finish())
+                return self._handle_stream(suggestion, watcher.finish)
 
         return TextGenModelOutput(
             text=suggestion.completion,
@@ -281,8 +281,8 @@ class AnthropicChatModel(ChatModelBase):
             if stream:
                 return self._handle_stream(
                     suggestion,
-                    lambda: watcher.finish(),
-                    lambda: watcher.register_error(),
+                    watcher.finish,
+                    watcher.register_error,
                 )
 
         return TextGenModelOutput(

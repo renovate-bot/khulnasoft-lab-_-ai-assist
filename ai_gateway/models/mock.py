@@ -107,7 +107,7 @@ class LLM(TextGenBaseModel):
                     TextGenModelChunk(text=chunk)
                     for chunk in re.split(r"(\s)", suggestion)
                 ]
-                return AsyncStream(chunks, lambda: watcher.finish())
+                return AsyncStream(chunks, watcher.finish)
 
         return TextGenModelOutput(
             text=suggestion,
@@ -150,7 +150,7 @@ class ChatModel(ChatModelBase):
                     TextGenModelChunk(text=chunk)
                     for chunk in re.split(r"(\s)", suggestion)
                 ]
-                return AsyncStream(chunks, lambda: watcher.finish())
+                return AsyncStream(chunks, watcher.finish)
 
         return TextGenModelOutput(
             text=suggestion,

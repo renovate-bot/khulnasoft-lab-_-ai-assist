@@ -2,7 +2,7 @@ import re
 from typing import Any
 
 from google.api_core.exceptions import GoogleAPIError, NotFound
-from google.cloud import discoveryengine as discoveryengine
+from google.cloud import discoveryengine
 from google.protobuf.json_format import MessageToDict
 
 from ai_gateway.models import ModelAPIError
@@ -20,8 +20,8 @@ def _convert_version(version: str) -> str:
         # Extract major and minor parts and join them with a hyphen
         major, minor = match.groups()
         return f"{major}-{minor}"
-    else:
-        raise ValueError(f"Invalid version: {version}")
+
+    raise ValueError(f"Invalid version: {version}")
 
 
 def _get_data_store_id(gl_version: str) -> str:
