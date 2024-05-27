@@ -35,8 +35,11 @@ class LiteLlmChatModel(ChatModelBase):
         self,
         model_name: KindLiteLlmModel = KindLiteLlmModel.MISTRAL,
         endpoint: Optional[str] = None,
-        api_key: Optional[str] = STUBBED_API_KEY,
+        api_key: Optional[str] = None,
     ):
+        if api_key is None:
+            api_key = STUBBED_API_KEY
+
         self.api_key = api_key
         self.endpoint = endpoint
         self._metadata = ModelMetadata(
@@ -108,7 +111,7 @@ class LiteLlmChatModel(ChatModelBase):
         cls,
         name: Union[str, KindLiteLlmModel],
         endpoint: Optional[str] = None,
-        api_key: Optional[str] = STUBBED_API_KEY,
+        api_key: Optional[str] = None,
     ):
         try:
             kind_model = KindLiteLlmModel(name)
