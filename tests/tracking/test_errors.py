@@ -20,7 +20,7 @@ def test_log_exception(mock_traceback, mock_correlation_id):
     assert cap_logs[0]["event"].startswith("dummy message")
     assert cap_logs[0]["backtrace"] == "dummy backtrace"
     assert cap_logs[0]["correlation_id"] == "123"
-    assert cap_logs[0]["status_code"] == None
+    assert cap_logs[0]["status_code"] is None
     assert cap_logs[0]["exception_class"] == "Exception"
 
 

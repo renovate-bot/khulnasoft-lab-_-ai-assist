@@ -36,9 +36,7 @@ async def clean_model_reflection(context: str, completion: str, **kwargs: Any) -
         )
 
     def _with_special_characters(counter: Counter, min_p: float):
-        special_characters_count = sum(
-            [counter.get(c, 0) for c in tuple(_SPECIAL_CHARS)]
-        )
+        special_characters_count = sum(counter.get(c, 0) for c in _SPECIAL_CHARS)
         total_count = sum(counter.values())
 
         return (special_characters_count / total_count) >= min_p

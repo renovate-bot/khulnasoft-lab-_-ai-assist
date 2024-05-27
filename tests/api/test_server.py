@@ -285,4 +285,4 @@ def test_setup_gcp_service_account(service_account_json_key, should_create_cred_
         del os.environ["GOOGLE_APPLICATION_CREDENTIALS"]
         # pylint: enable=direct-environment-variable-reference
     else:
-        assert os.path.exists("/tmp/gcp-service-account.json") == False
+        assert not os.path.exists("/tmp/gcp-service-account.json")
