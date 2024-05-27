@@ -1740,13 +1740,13 @@ rapidfuzz = ">=3.8.0,<4.0.0"
 
 [[package]]
 name = "litellm"
-version = "1.37.16"
+version = "1.38.10"
 description = "Library to easily interface with LLM API providers"
 optional = false
 python-versions = "!=2.7.*,!=3.0.*,!=3.1.*,!=3.2.*,!=3.3.*,!=3.4.*,!=3.5.*,!=3.6.*,!=3.7.*,>=3.8"
 files = [
-    {file = "litellm-1.37.16-py3-none-any.whl", hash = "sha256:b3250832ff8578d906ee9230ebaf13b787f139de705d4d397f87a0ce3ee57392"},
-    {file = "litellm-1.37.16.tar.gz", hash = "sha256:c90c826a16d154c755f73a828b84b11cef9fc0891ff322023ea247b3c7fcdc1f"},
+    {file = "litellm-1.38.10-py3-none-any.whl", hash = "sha256:4d33465eacde566832b9d7aa7677476e61aa7ba4ec26631fb1c8411c87219ed1"},
+    {file = "litellm-1.38.10.tar.gz", hash = "sha256:1a0b3088fe4b072f367343a7d7d25e4c5f9990975d9ee7dbf21f3b25ff046bb0"},
 ]
 
 [package.dependencies]
@@ -1754,7 +1754,7 @@ aiohttp = "*"
 click = "*"
 importlib-metadata = ">=6.8.0"
 jinja2 = ">=3.1.2,<4.0.0"
-openai = ">=1.0.0"
+openai = ">=1.27.0"
 python-dotenv = ">=0.2.0"
 requests = ">=2.31.0,<3.0.0"
 tiktoken = ">=0.4.0"
@@ -2048,13 +2048,13 @@ files = [
 
 [[package]]
 name = "openai"
-version = "1.25.0"
+version = "1.30.3"
 description = "The official Python library for the openai API"
 optional = false
 python-versions = ">=3.7.1"
 files = [
-    {file = "openai-1.25.0-py3-none-any.whl", hash = "sha256:d0cfdf6afb31a5dabf3b95966cb31f3c757a0edaf3228715409cb404b9933de0"},
-    {file = "openai-1.25.0.tar.gz", hash = "sha256:22c35b26b8281cd2759b1a4c05ac99e2f2b26a9df71f90a0b4ddb75aa27adc81"},
+    {file = "openai-1.30.3-py3-none-any.whl", hash = "sha256:f88119c8a848998be533c71ab8aa832446fa72b7ddbc70917c3f5886dc132051"},
+    {file = "openai-1.30.3.tar.gz", hash = "sha256:8e1bcdca2b96fe3636ab522fa153d88efde1b702d12ec32f1c73e9553ff93f45"},
 ]
 
 [package.dependencies]
