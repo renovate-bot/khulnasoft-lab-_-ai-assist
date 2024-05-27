@@ -28,7 +28,7 @@ class TestLLM:
         expected_substrings = [prefix, suffix] if suffix else [prefix]
         expected_substrings += [json.dumps(kwargs)]
 
-        assert all([substring in response.text for substring in expected_substrings])
+        assert all(substring in response.text for substring in expected_substrings)
         assert response.text.startswith("echo:")
         assert response.score == 0
         assert response.safety_attributes == SafetyAttributes()
@@ -42,7 +42,7 @@ class TestLLM:
         expected_substrings = [prefix, suffix] if suffix else [prefix]
         expected_substrings += [json.dumps(kwargs)]
 
-        assert all([substring in actual_text for substring in expected_substrings])
+        assert all(substring in actual_text for substring in expected_substrings)
 
 
 @pytest.mark.asyncio
@@ -75,7 +75,7 @@ class TestChatModel:
         assert response.score == 0
         assert response.safety_attributes == SafetyAttributes()
         assert response.text.startswith("echo:")
-        assert all([substring in response.text for substring in expected_substrings])
+        assert all(substring in response.text for substring in expected_substrings)
 
     @pytest.mark.parametrize(("messages", "kwargs"), TEST_CASES)
     async def test_stream(self, messages: list[Message], kwargs: dict):
@@ -88,4 +88,4 @@ class TestChatModel:
         expected_substrings = [json.dumps(s) for s in (messages, kwargs)]
 
         assert actual_text.startswith("echo:")
-        assert all([substring in actual_text for substring in expected_substrings])
+        assert all(substring in actual_text for substring in expected_substrings)

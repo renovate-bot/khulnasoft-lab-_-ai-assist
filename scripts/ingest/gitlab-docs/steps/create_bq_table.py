@@ -53,7 +53,7 @@ def run():
         if not errors:
             print(f"Added batch_size {i}")
         else:
-            raise Exception(f"Failed to insert {errors}")
+            raise RuntimeError(f"Failed to insert {errors}")
 
 
 if __name__ == "__main__":
