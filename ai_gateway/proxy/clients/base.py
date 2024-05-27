@@ -37,21 +37,19 @@ class BaseProxyClient(ABC):
             json=json_body,
         )
 
-        with ModelRequestInstrumentator(
-            model_engine=self._upstream_service(),
-            model_name=model_name,
-            concurrency_limit=self.concurrency_limit.for_model(
-                engine=self._upstream_service(), name=model_name
-            ),
-        ).watch(stream=stream) as watcher:
-            try:
+        try:
+            with ModelRequestInstrumentator(
+                model_engine=self._upstream_service(),
+                model_name=model_name,
+                concurrency_limit=self.concurrency_limit.for_model(
+                    engine=self._upstream_service(), name=model_name
+                ),
+            ).watch(stream=stream) as watcher:
                 response_from_upstream = await self.client.send(
                     request_to_upstream, stream=stream
                 )
-            except Exception:
-                watcher.register_error()
-                watcher.finish()
-                raise fastapi.HTTPException(status_code=502, detail="Bad Gateway")
+        except Exception:
+            raise fastapi.HTTPException(status_code=502, detail="Bad Gateway")
 
         headers_to_downstream = self._create_headers_to_downstream(
             response_from_upstream.headers

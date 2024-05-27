@@ -8,10 +8,11 @@ from fastapi import HTTPException, Request
 from starlette_context import context, request_cycle_context
 
 from ai_gateway.api.feature_category import (
+    current_feature_category,
     feature_categories,
     feature_category,
-    get_feature_category,
 )
+from ai_gateway.gitlab_features import GitLabFeatureCategory
 
 
 class DummyGitLabFeatureCategory(str, Enum):
@@ -26,7 +27,10 @@ class DummyGitLabUnitPrimitive(str, Enum):
 
 @pytest.fixture
 def patch_feature_category():
-    patcher = patch("ai_gateway.api.feature_category.GitLabFeatureCategory")
+    patcher = patch(
+        "ai_gateway.api.feature_category.GitLabFeatureCategory",
+        spec=GitLabFeatureCategory,
+    )
     mock_thing = patcher.start()
     mock_thing.side_effect = DummyGitLabFeatureCategory
     yield
@@ -63,16 +67,21 @@ def test_unknown_feature_category():
     assert str(error.value) == "Invalid feature category: not_exist"
 
 
-def test_get_feature_category():
+def test_current_feature_category():
+    with request_cycle_context(
+        {"meta.feature_category": GitLabFeatureCategory.CODE_SUGGESTIONS}
+    ):
+        assert current_feature_category() == "code_suggestions"
+
     with request_cycle_context({"meta.feature_category": "awesome_category"}):
-        assert get_feature_category() == "awesome_category"
+        assert current_feature_category() == "awesome_category"
 
     # When there value isn't set in the context
     with request_cycle_context({}):
-        assert get_feature_category() == "unknown"
+        assert current_feature_category() == "unknown"
 
     # When the context isn't initialized
-    assert get_feature_category() == "unknown"
+    assert current_feature_category() == "unknown"
 
 
 @pytest.mark.asyncio
