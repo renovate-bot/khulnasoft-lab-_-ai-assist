@@ -2,8 +2,8 @@
 
 You can use `POST /v1/search/(search-app-name)` endpoint in AI Gateway for performing semantic search on public data.
 
-- [Architecture overview](https://gitlab.com/gitlab-org/gitlab/-/blob/rag-at-gitlab/doc/architecture/blueprints/gitlab_rag/vertex_ai_search.md)
-- [Implementation details](https://gitlab.com/gitlab-org/gitlab/-/blob/rag-at-gitlab/doc/architecture/blueprints/gitlab_duo_rag/vertex_ai_search.md)
+- [Architecture overview](https://docs.gitlab.com/ee/architecture/blueprints/gitlab_rag/vertex_ai_search.html)
+- [Implementation details](https://docs.gitlab.com/ee/architecture/blueprints/gitlab_duo_rag/vertex_ai_search.html)
 
 ## Data ingestion and refreshing
 
