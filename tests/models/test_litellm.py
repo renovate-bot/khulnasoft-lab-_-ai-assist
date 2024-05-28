@@ -38,6 +38,13 @@ class TestLiteLlmChatMode:
         assert model.api_key == "stubbed-api-key"
         assert model.metadata.engine == "litellm"
 
+        model = LiteLlmChatModel.from_model_name(
+            name=model_name, endpoint=endpoint, api_key=None
+        )
+
+        assert model.endpoint == endpoint
+        assert model.api_key == "stubbed-api-key"
+
     @pytest.mark.asyncio
     async def test_generate(self, lite_llm_chat_model, endpoint, api_key):
         expected_messages = [{"role": "user", "content": "Test message"}]
