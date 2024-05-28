@@ -18,7 +18,7 @@ class BaseContextVisitor(BaseVisitor):
     ]
 
     def __init__(self, target_point: tuple[int, int]):
-        self.visited_nodes = []
+        self.visited_nodes: List[Node] = []
         self.target_point = target_point
 
     def _visit_node(self, node: Node):

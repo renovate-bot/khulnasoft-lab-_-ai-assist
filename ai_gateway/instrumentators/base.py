@@ -202,7 +202,9 @@ class Telemetry(BaseModel):
     errors: int
 
 
-def _format_experiment_telemetry(experiments: list[ExperimentTelemetry]) -> dict:
+def _format_experiment_telemetry(
+    experiments: Optional[list[ExperimentTelemetry]],
+) -> dict:
     if not experiments:
         return {"exp_names": None, "exp_variants": None}
     return {

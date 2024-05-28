@@ -37,7 +37,7 @@ class BaseCommentVisitor(BaseVisitor):
             self._stop_tree_traversal = True
 
     def _visit_node(self, node: Node):
-        return super()._visit_node(node)
+        pass
 
 
 class CCommentVisitor(BaseCommentVisitor):

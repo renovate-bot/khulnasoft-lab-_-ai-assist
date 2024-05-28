@@ -138,12 +138,12 @@ class RustCounterVisitor(BaseCounterVisitor):
 
 
 class ScalaCounterVisitor(BaseCounterVisitor):
-    _TARGET_SYMBOLS = {
+    _TARGET_SYMBOLS = [
         "import_declaration",
         "function_definition",
         "class_definition",
         "comment",
-    }
+    ]
 
 
 class TsCounterVisitor(BaseCounterVisitor):

@@ -24,7 +24,7 @@ PROMETHEUS_METRICS: dict[KnownMetrics, Histogram] = {
 
 
 @contextmanager
-def benchmark(metric_key: KnownMetrics, labels: dict[str]):
+def benchmark(metric_key: KnownMetrics, labels: dict[str, str]):
     """Benchmark and record elapsed time in log and Prometheus."""
     start_time = time.perf_counter()
 

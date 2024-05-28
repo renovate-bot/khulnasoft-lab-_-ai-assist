@@ -14,22 +14,10 @@ MYPY_LINT_TODO_DIR ?= --exclude "ai_gateway/api/*" \
 	--exclude "ai_gateway/chat/*" \
 	--exclude "ai_gateway/code_suggestions/*" \
 	--exclude "ai_gateway/experimentation/*" \
-	--exclude "ai_gateway/instrumentators/*" \
 	--exclude "ai_gateway/models/*" \
-	--exclude "ai_gateway/prompts/*" \
-	--exclude "ai_gateway/suggestions/*" \
-	--exclude "ai_gateway/tracking/*" \
-	--exclude "ai_gateway/x_ray/*" \
 	--exclude "tests/api/*" \
 	--exclude "tests/chat/*" \
 	--exclude "tests/code_suggestions/*" \
-	--exclude "tests/fixtures/*" \
-	--exclude "tests/instrumentators/*" \
-	--exclude "tests/integration/*" \
-	--exclude "tests/lints/*" \
-	--exclude "tests/models/*" \
-	--exclude "tests/tracking/*" \
-	--exclude "tests/x_ray/*"
 
 COMPOSE_FILES := -f docker-compose.dev.yaml
 ifneq (,$(wildcard docker-compose.override.yaml))

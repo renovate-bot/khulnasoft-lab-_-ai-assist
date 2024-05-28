@@ -1,6 +1,7 @@
 import pytest
 from google.api_core.exceptions import (
     DuplicateCredentialArgs,
+    GoogleAPICallError,
     GoogleAPIError,
     InternalServerError,
     PermissionDenied,
@@ -62,7 +63,7 @@ class TestVertexAPIStatusError:
         ],
     )
     def test_from_exception(
-        self, original_error: GoogleAPIError, expected_error_string: str
+        self, original_error: GoogleAPICallError, expected_error_string: str
     ):
         wrapped_error = VertexAPIStatusError.from_exception(original_error)
 
