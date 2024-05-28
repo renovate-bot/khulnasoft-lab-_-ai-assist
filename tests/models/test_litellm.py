@@ -26,24 +26,35 @@ class TestLiteLlmChatMode:
     @pytest.fixture
     def lite_llm_chat_model(self, endpoint, api_key):
         return LiteLlmChatModel.from_model_name(
-            name="mistral", endpoint=endpoint, api_key=api_key
+            name="mistral",
+            endpoint=endpoint,
+            api_key=api_key,
+            custom_models_enabled=True,
         )
 
     @pytest.mark.parametrize("model_name", ["mistral", "mixtral"])
     def test_from_model_name(self, model_name: str, endpoint):
-        model = LiteLlmChatModel.from_model_name(name=model_name, endpoint=endpoint)
+        model = LiteLlmChatModel.from_model_name(
+            name=model_name, endpoint=endpoint, custom_models_enabled=True
+        )
 
         assert model.metadata.name == f"openai/{model_name}"
         assert model.endpoint == endpoint
         assert model.api_key == "stubbed-api-key"
         assert model.metadata.engine == "litellm"
 
-        model = LiteLlmChatModel.from_model_name(
-            name=model_name, endpoint=endpoint, api_key=None
-        )
+        model = LiteLlmChatModel.from_model_name(name=model_name, api_key=None)
 
-        assert model.endpoint == endpoint
+        assert model.endpoint == None
         assert model.api_key == "stubbed-api-key"
+
+        with pytest.raises(ValueError) as exc:
+            LiteLlmChatModel.from_model_name(name=model_name, endpoint=endpoint)
+        assert str(exc.value) == "specifying custom models endpoint is disabled"
+
+        with pytest.raises(ValueError) as exc:
+            LiteLlmChatModel.from_model_name(name=model_name, api_key="api-key")
+        assert str(exc.value) == "specifying custom models endpoint is disabled"
 
     @pytest.mark.asyncio
     async def test_generate(self, lite_llm_chat_model, endpoint, api_key):

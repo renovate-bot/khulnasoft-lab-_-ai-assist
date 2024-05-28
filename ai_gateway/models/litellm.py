@@ -110,9 +110,14 @@ class LiteLlmChatModel(ChatModelBase):
     def from_model_name(
         cls,
         name: Union[str, KindLiteLlmModel],
+        custom_models_enabled: bool = False,
         endpoint: Optional[str] = None,
         api_key: Optional[str] = None,
     ):
+        if not custom_models_enabled:
+            if endpoint is not None or api_key is not None:
+                raise ValueError("specifying custom models endpoint is disabled")
+
         try:
             kind_model = KindLiteLlmModel(name)
         except ValueError:
