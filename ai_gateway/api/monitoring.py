@@ -6,10 +6,10 @@ from fastapi import APIRouter, Depends
 from fastapi_health import health
 
 from ai_gateway.async_dependency_resolver import (
+    get_code_suggestions_completions_vertex_legacy_provider,
     get_code_suggestions_generations_anthropic_factory_provider,
-    get_code_suggestions_generations_vertex_provider,
 )
-from ai_gateway.code_suggestions import CodeGenerations
+from ai_gateway.code_suggestions import CodeCompletionsLegacy, CodeGenerations
 from ai_gateway.models import KindAnthropicModel, KindModelProvider
 
 __all__ = [
@@ -52,16 +52,16 @@ def single_validation(
 
 @single_validation(KindModelProvider.VERTEX_AI)
 async def validate_vertex_available(
-    generations_vertex_factory: Factory[CodeGenerations] = Depends(
-        get_code_suggestions_generations_vertex_provider
+    completions_legacy_vertex_factory: Factory[CodeCompletionsLegacy] = Depends(
+        get_code_suggestions_completions_vertex_legacy_provider
     ),
 ) -> bool:
-    code_suggestions = generations_vertex_factory()
-    await code_suggestions.execute(
+    code_completions = completions_legacy_vertex_factory()
+    await code_completions.execute(
         prefix="def hello_world():",
+        suffix="",
         file_name="monitoring.py",
         editor_lang="python",
-        model_provider=KindModelProvider.VERTEX_AI.value,
     )
     return True
 
