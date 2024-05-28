@@ -21,8 +21,9 @@ spec:
     scrape_targets:
       - "localhost:8082"
   startup_probe:
-    path: "/monitoring/healthz"
+    path: "/monitoring/ready"
     initial_delay_seconds: 20
+    timeout_seconds: 5
     period_seconds: 10
     failure_threshold: 24
   liveness_probe:
