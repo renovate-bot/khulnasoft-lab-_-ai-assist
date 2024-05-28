@@ -122,6 +122,9 @@ async def completions(
         if payload.choices_count > 0:
             kwargs.update({"candidate_count": payload.choices_count})
 
+        if payload.context:
+            kwargs.update({"code_context": [ctx.content for ctx in payload.context]})
+
         suggestions = await _execute_code_completion(
             payload, code_completions, **kwargs
         )
