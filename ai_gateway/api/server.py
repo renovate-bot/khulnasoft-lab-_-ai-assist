@@ -33,7 +33,7 @@ __all__ = [
     "create_fast_api_server",
 ]
 
-_SKIP_ENDPOINTS = ["/monitoring/healthz", "/monitoring/ready", "/metrics"]
+_SKIP_ENDPOINTS = ["/monitoring/healthz", "/metrics"]
 
 
 @asynccontextmanager
