@@ -29,6 +29,10 @@ class ConfigLogging(BaseModel):
     to_file: Optional[str] = None
 
 
+class ConfigSelfSignedJwt(BaseModel):
+    signing_key: str = ""
+
+
 class ConfigFastApi(BaseModel):
     api_host: str = "0.0.0.0"
     api_port: int = 5000
@@ -143,6 +147,9 @@ class Config(BaseSettings):
     logging: Annotated[ConfigLogging, Field(default_factory=ConfigLogging)] = (
         ConfigLogging()
     )
+    self_signed_jwt: Annotated[
+        ConfigSelfSignedJwt, Field(default_factory=ConfigSelfSignedJwt)
+    ] = ConfigSelfSignedJwt()
     fastapi: Annotated[ConfigFastApi, Field(default_factory=ConfigFastApi)] = (
         ConfigFastApi()
     )
