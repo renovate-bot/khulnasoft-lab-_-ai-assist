@@ -12,7 +12,7 @@ class RubyParserMixin:
         first_text = first.text.decode("utf-8", errors="ignore")
 
         return (
-            (first_text == "require" or first_text == "require_relative")
+            first_text in {"require", "require_relative"}
             and first.type == "identifier"
             and second.type == "argument_list"
         )

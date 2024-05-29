@@ -19,7 +19,7 @@ class DirectEnvironmentVariableReference(BaseChecker):
             and hasattr(attribute, "attrname")
             and hasattr(attribute.expr, "name")
             and attribute.expr.name == "os"
-            and (attribute.attrname == "environ" or attribute.attrname == "getenv")
+            and attribute.attrname in {"environ", "getenv"}
         ):
             self.add_message("direct-environment-variable-reference", node=attribute)
 

@@ -202,7 +202,7 @@ async def generations(
     else:
         code_generations = generations_vertex_factory()
 
-    if payload.prompt_version == 2 or payload.prompt_version == 3:
+    if payload.prompt_version in {2, 3}:
         code_generations.with_prompt_prepared(payload.prompt)
 
     with TelemetryInstrumentator().watch(payload.telemetry):
