@@ -23,7 +23,7 @@ class PromptBuilderBase(ABC):
         self.always_len = 0
 
         self.tpl: PromptTemplateBase = None
-        self.tpl_args = dict()
+        self.tpl_args = {}
 
     def add_template(self, tpl: PromptTemplateBase, **kwargs: Any) -> int:
         self.tpl = tpl

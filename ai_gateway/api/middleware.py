@@ -111,33 +111,35 @@ class MiddlewareLogRequest(Middleware):
                 http_method = request.method
                 http_version = request.scope["http_version"]
 
-                fields = dict(
-                    url=str(request.url),
-                    path=url,
-                    status_code=status_code,
-                    method=http_method,
-                    correlation_id=request_id,
-                    http_version=http_version,
-                    client_ip=client_host,
-                    client_port=client_port,
-                    duration_s=elapsed_time,
-                    duration_request=wait_duration,
-                    cpu_s=cpu_time,
-                    user_agent=request.headers.get("User-Agent"),
-                    gitlab_instance_id=request.headers.get(X_GITLAB_INSTANCE_ID_HEADER),
-                    gitlab_global_user_id=request.headers.get(
+                fields = {
+                    "url": str(request.url),
+                    "path": url,
+                    "status_code": status_code,
+                    "method": http_method,
+                    "correlation_id": request_id,
+                    "http_version": http_version,
+                    "client_ip": client_host,
+                    "client_port": client_port,
+                    "duration_s": elapsed_time,
+                    "duration_request": wait_duration,
+                    "cpu_s": cpu_time,
+                    "user_agent": request.headers.get("User-Agent"),
+                    "gitlab_instance_id": request.headers.get(
+                        X_GITLAB_INSTANCE_ID_HEADER
+                    ),
+                    "gitlab_global_user_id": request.headers.get(
                         X_GITLAB_GLOBAL_USER_ID_HEADER
                     ),
-                    gitlab_host_name=request.headers.get(X_GITLAB_HOST_NAME_HEADER),
-                    gitlab_version=request.headers.get(X_GITLAB_VERSION_HEADER),
-                    gitlab_saas_duo_pro_namespace_ids=request.headers.get(
+                    "gitlab_host_name": request.headers.get(X_GITLAB_HOST_NAME_HEADER),
+                    "gitlab_version": request.headers.get(X_GITLAB_VERSION_HEADER),
+                    "gitlab_saas_duo_pro_namespace_ids": request.headers.get(
                         X_GITLAB_SAAS_DUO_PRO_NAMESPACE_IDS_HEADER
                     ),
-                    gitlab_saas_namespace_ids=request.headers.get(
+                    "gitlab_saas_namespace_ids": request.headers.get(
                         X_GITLAB_SAAS_NAMESPACE_IDS_HEADER
                     ),
-                    gitlab_realm=request.headers.get(X_GITLAB_REALM_HEADER),
-                )
+                    "gitlab_realm": request.headers.get(X_GITLAB_REALM_HEADER),
+                }
                 fields.update(context.data)
 
                 # Recreate the Uvicorn access log format, but add all parameters as structured information

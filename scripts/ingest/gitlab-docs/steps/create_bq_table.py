@@ -1,5 +1,6 @@
 import json
 import os
+import sys
 from typing import Any
 
 from google.cloud import bigquery
@@ -7,7 +8,7 @@ from google.cloud import bigquery
 # pylint: disable=direct-environment-variable-reference
 if os.environ.get("INGEST_DRY_RUN") == "true":
     print("INFO: Dry Run mode. Skipped.")
-    exit(0)
+    sys.exit(0)
 
 client = bigquery.Client(project=os.environ["GCP_PROJECT_NAME"])
 # pylint: enable=direct-environment-variable-reference

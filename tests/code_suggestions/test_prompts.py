@@ -37,7 +37,7 @@ def test_prompt_template_few_shot(tpl_codegen_dir, lang, content, example):
     example_tpl = PromptTemplate.from_local_file(ex_tpl_filepath)
     tpl = PromptTemplateFewShot.from_local_file(
         tpl_filepath,
-        [dict(lang=lang, code=example)],
+        [{"lang": lang, "code": example}],
         example_tpl,
     )
     prompt = tpl.apply(lang=lang, prompt=content)

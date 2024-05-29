@@ -122,7 +122,7 @@ class RubyCounterVisitor(BaseCounterVisitor, RubyParserMixin):
             # 2. Another `module` node type for just the `module Foo` part, with no children.
             if (
                 node.type == "comment"
-                or (node.type == "module" or node.type == "class")
+                or node.type in {"module", "class"}
                 and len(node.children) > 0
             ):
                 self._symbol_counter.update([node.type])

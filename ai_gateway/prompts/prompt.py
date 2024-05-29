@@ -10,9 +10,6 @@ __all__ = [
 
 
 class PromptTemplate(PromptTemplateBase):
-    def __init__(self, tpl_raw: str):
-        super().__init__(tpl_raw)
-
     def apply(self, **kwargs: Any) -> str:
         return self.tpl_raw.format(**kwargs)
 

@@ -36,7 +36,7 @@ class BaseAuthCache(ABC):
 class LocalAuthCache(BaseAuthCache):
     def __init__(self):
         super().__init__()
-        self.in_memory_cache = dict()
+        self.in_memory_cache = {}
 
     def set(self, k: str, val: User, exp: datetime):
         self.in_memory_cache[k] = AuthRecord(
