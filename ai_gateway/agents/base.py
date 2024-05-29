@@ -1,25 +1,32 @@
-from typing import Any, Dict
+from abc import ABC, abstractmethod
+from typing import Any, Iterator, Optional, TypeVar
 
-from jinja2 import BaseLoader, Environment
+from langchain_core.runnables import Runnable, RunnableConfig
 
-from ai_gateway.models.base_chat import ChatModelBase
+__all__ = ["Agent", "BaseAgentRegistry"]
 
-__all__ = ["Agent"]
+Input = TypeVar("Input")
+Output = TypeVar("Output")
 
 
-class Agent:
-    def __init__(
-        self, name: str, model: ChatModelBase, prompt_templates: Dict[str, str]
-    ):
+class Agent(Runnable[Input, Output]):
+    def __init__(self, name: str, chain: Runnable):
         self.name = name
-        self.model = model
-        self.prompt_templates = prompt_templates
-        self.jinja_env = Environment(loader=BaseLoader())
+        self.chain = chain
 
-    def prompt(self, key: str, **kwargs: Any):
-        try:
-            return self.jinja_env.from_string(self.prompt_templates[key]).render(
-                **kwargs
-            )
-        except KeyError:
-            return None
+    def invoke(self, input: Input, config: Optional[RunnableConfig] = None) -> Output:
+        raise NotImplementedError
+
+    def stream(
+        self,
+        input: Input,
+        config: Optional[RunnableConfig] = None,
+        **kwargs: Optional[Any],
+    ) -> Iterator[Output]:
+        raise NotImplementedError
+
+
+class BaseAgentRegistry(ABC):
+    @abstractmethod
+    def get(self, use_case: str, agent_type: str, **kwargs: Optional[Any]) -> Any:
+        pass

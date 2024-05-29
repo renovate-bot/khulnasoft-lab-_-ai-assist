@@ -1,11 +1,8 @@
 from typing import AsyncIterator, Generic, Protocol, Sequence
 
-from ai_gateway.chat.agents import (
-    AgentStep,
-    BaseSingleActionAgent,
-    TypeAgentAction,
-    TypeAgentInputs,
-)
+from langchain_core.runnables import Runnable
+
+from ai_gateway.agents.chat import TypeAgentAction, TypeAgentInputs
 from ai_gateway.chat.tools import BaseTool
 
 __all__ = [
@@ -14,13 +11,13 @@ __all__ = [
 ]
 
 
-class TypeAgentFactory(Protocol[TypeAgentInputs]):
+class TypeAgentFactory(Protocol[TypeAgentInputs, TypeAgentAction]):
     def __call__(
         self,
         *,
         tools: Sequence[BaseTool],
-        agent_inputs: TypeAgentInputs,
-    ) -> BaseSingleActionAgent: ...
+        inputs: TypeAgentInputs,
+    ) -> Runnable[TypeAgentInputs, TypeAgentAction]: ...
 
 
 class GLAgentRemoteExecutor(Generic[TypeAgentInputs, TypeAgentAction]):
@@ -33,35 +30,17 @@ class GLAgentRemoteExecutor(Generic[TypeAgentInputs, TypeAgentAction]):
         self.agent_factory = agent_factory
         self.tools = tools
 
-    async def invoke(
-        self,
-        *,
-        inputs: TypeAgentInputs,
-        scratchpad: Sequence[AgentStep[TypeAgentAction]],
-    ) -> TypeAgentAction:
-        agent = self._build_agent(inputs=inputs, scratchpad=scratchpad)
-        action = await agent.invoke(inputs=inputs)
+    async def invoke(self, *, inputs: TypeAgentInputs) -> TypeAgentAction:
+        agent = self.agent_factory(tools=self.tools, inputs=inputs)
 
-        return action
+        return await agent.ainvoke(inputs)
 
     async def stream(
         self,
         *,
         inputs: TypeAgentInputs,
-        scratchpad: Sequence[AgentStep[TypeAgentAction]],
     ) -> AsyncIterator[TypeAgentAction]:
-        agent = self._build_agent(inputs=inputs, scratchpad=scratchpad)
+        agent = self.agent_factory(tools=self.tools, inputs=inputs)
 
-        async for action in agent.stream(inputs=inputs):
+        async for action in agent.astream(inputs):
             yield action
-
-    def _build_agent(
-        self,
-        *,
-        inputs: TypeAgentInputs,
-        scratchpad: Sequence[AgentStep[TypeAgentAction]],
-    ) -> BaseSingleActionAgent:
-        agent = self.agent_factory(tools=self.tools, agent_inputs=inputs)
-        agent.agent_scratchpad.extend(scratchpad)
-
-        return agent

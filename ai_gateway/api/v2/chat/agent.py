@@ -5,15 +5,16 @@ from fastapi import APIRouter, Depends, Request
 from starlette.authentication import requires
 from starlette.responses import StreamingResponse
 
-from ai_gateway.api.feature_category import feature_category
-from ai_gateway.api.v2.chat.typing import AgentRequest, AgentStreamResponseEvent
-from ai_gateway.async_dependency_resolver import get_container_application
-from ai_gateway.chat.agents import AgentStep, AgentToolAction
-from ai_gateway.chat.agents.react import (
+from ai_gateway.agents.chat import (
+    AgentStep,
+    AgentToolAction,
     ReActAgentInputs,
     ReActAgentToolAction,
     TypeReActAgentAction,
 )
+from ai_gateway.api.feature_category import feature_category
+from ai_gateway.api.v2.chat.typing import AgentRequest, AgentStreamResponseEvent
+from ai_gateway.async_dependency_resolver import get_container_application
 from ai_gateway.chat.executor import GLAgentRemoteExecutor
 from ai_gateway.gitlab_features import GitLabFeatureCategory, GitLabUnitPrimitive
 
@@ -53,14 +54,8 @@ async def chat(
 
             yield f"{event.model_dump_json()}\n"
 
-    inputs = ReActAgentInputs(
-        question=agent_request.prompt,
-        chat_history=agent_request.options.chat_history,
-        context=agent_request.options.context,
-    )
-
     scratchpad = [
-        AgentStep(
+        AgentStep[TypeReActAgentAction](
             action=ReActAgentToolAction(
                 thought=step.thought,
                 tool=step.tool,
@@ -71,9 +66,14 @@ async def chat(
         for step in agent_request.options.agent_scratchpad.steps
     ]
 
-    stream_actions = gl_agent_remote_executor.stream(
-        inputs=inputs, scratchpad=scratchpad
+    inputs = ReActAgentInputs(
+        question=agent_request.prompt,
+        chat_history=agent_request.options.chat_history,
+        agent_scratchpad=scratchpad,
+        context=agent_request.options.context,
     )
+
+    stream_actions = gl_agent_remote_executor.stream(inputs=inputs)
 
     return StreamingResponse(
         _stream_handler(stream_actions), media_type="text/event-stream"

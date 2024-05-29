@@ -2,8 +2,7 @@ from typing import Literal, Optional
 
 from pydantic import BaseModel, Field
 
-from ai_gateway.chat.agents.react import TypeReActAgentAction
-from ai_gateway.chat.typing import Context
+from ai_gateway.agents.chat import Context, TypeReActAgentAction
 
 __all__ = [
     "ReActAgentScratchpad",

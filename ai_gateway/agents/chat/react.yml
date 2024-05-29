@@ -1,5 +1,6 @@
 ---
 name: Claude 3 ReAct Chat agent
+provider: anthropic
 model: claude-3-sonnet-20240229
 prompt_templates:
   system: |
@@ -102,3 +103,5 @@ prompt_templates:
     Question: {{question}}
   assistant: |
     {{agent_scratchpad}}
+stop:
+  - "Observation:"
