@@ -104,7 +104,6 @@ disable = [
   "no-name-in-module",
   "too-many-locals",
   "use-dict-literal",
-  "import-self",
   "import-error",
   "import-outside-toplevel",
   "too-many-function-args",
@@ -113,7 +112,6 @@ disable = [
   "unspecified-encoding",
   "redefined-builtin",
   "arguments-renamed",
-  "keyword-arg-before-vararg",
   "raise-missing-from",
   "too-many-ancestors",
   "useless-parent-delegation",
@@ -128,7 +126,6 @@ disable = [
   "redefined-outer-name",
   "pointless-statement",
   "duplicate-code",
-  "cyclic-import",
   "too-many-boolean-expressions",
   "redefined-argument-from-local",
   "undefined-variable"

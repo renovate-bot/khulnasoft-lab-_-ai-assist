@@ -1,4 +1,4 @@
-from ai_gateway.tracking import Client, SnowplowEvent
+from ai_gateway.tracking.snowplow import Client, SnowplowEvent
 
 __all__ = ["SnowplowInstrumentator"]
 
