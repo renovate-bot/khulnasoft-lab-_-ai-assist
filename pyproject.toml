@@ -110,7 +110,6 @@ disable = [
   "invalid-overridden-method",
   "consider-using-generator",
   "use-dict-literal",
-  "import-self",
   "import-error",
   "import-outside-toplevel",
   "inconsistent-return-statements",
@@ -120,7 +119,6 @@ disable = [
   "unspecified-encoding",
   "redefined-builtin",
   "arguments-renamed",
-  "keyword-arg-before-vararg",
   "raise-missing-from",
   "unnecessary-lambda",
   "too-many-ancestors",
@@ -142,7 +140,6 @@ disable = [
   "use-a-generator",
   "singleton-comparison",
   "duplicate-code",
-  "cyclic-import",
   "too-many-boolean-expressions",
   "redefined-argument-from-local",
   "undefined-variable"

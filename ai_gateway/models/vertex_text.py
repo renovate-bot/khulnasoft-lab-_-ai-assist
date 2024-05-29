@@ -234,8 +234,8 @@ class PalmTextBisonModel(PalmCodeGenBaseModel):
         client: PredictionServiceAsyncClient,
         project: str,
         location: str,
-        model_name: str = KindVertexTextModel.TEXT_BISON_002.value,
         *args: Any,
+        model_name: str = KindVertexTextModel.TEXT_BISON_002.value,
         **kwargs: Any,
     ):
         super().__init__(model_name, client, project, location, *args, **kwargs)
@@ -287,8 +287,8 @@ class PalmCodeBisonModel(PalmCodeGenBaseModel):
         client: PredictionServiceAsyncClient,
         project: str,
         location: str,
-        model_name: str = KindVertexTextModel.CODE_BISON_002.value,
         *args: Any,
+        model_name: str = KindVertexTextModel.CODE_BISON_002.value,
         **kwargs: Any,
     ):
         super().__init__(model_name, client, project, location, *args, **kwargs)
@@ -342,8 +342,8 @@ class PalmCodeGeckoModel(PalmCodeGenBaseModel):
         client: PredictionServiceAsyncClient,
         project: str,
         location: str,
-        model_name: str = KindVertexTextModel.CODE_GECKO_002.value,
         *args: Any,
+        model_name: str = KindVertexTextModel.CODE_GECKO_002.value,
         **kwargs: Any,
     ):
         super().__init__(model_name, client, project, location, *args, **kwargs)

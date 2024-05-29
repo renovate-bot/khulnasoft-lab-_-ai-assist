@@ -1,7 +1,6 @@
 from typing import Iterable
 
-from ai_gateway.prompts.snippets import CodeSnippet
-from ai_gateway.prompts.snippets.base import BaseCodeSnippetsIterator
+from ai_gateway.prompts.snippets.base import BaseCodeSnippetsIterator, CodeSnippet
 
 __all__ = ["LineBasedCodeSnippets"]
 
