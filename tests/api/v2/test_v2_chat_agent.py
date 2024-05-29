@@ -4,6 +4,14 @@ from unittest import mock
 import pytest
 from starlette.testclient import TestClient
 
+from ai_gateway.agents.chat import (
+    AgentStep,
+    Context,
+    ReActAgentInputs,
+    ReActAgentToolAction,
+    TypeAgentAction,
+    TypeReActAgentAction,
+)
 from ai_gateway.api.v2 import api_router
 from ai_gateway.api.v2.chat.typing import (
     AgentRequestOptions,
@@ -12,9 +20,6 @@ from ai_gateway.api.v2.chat.typing import (
 )
 from ai_gateway.auth import User, UserClaims
 from ai_gateway.chat import GLAgentRemoteExecutor
-from ai_gateway.chat.agents import AgentStep, TypeAgentAction
-from ai_gateway.chat.agents.react import ReActAgentInputs, ReActAgentToolAction
-from ai_gateway.chat.typing import Context
 from ai_gateway.container import ContainerApplication
 
 
@@ -116,14 +121,8 @@ class TestReActAgentStream:
             for chunk in response.text.strip().split("\n")
         ]
 
-        agent_inputs = ReActAgentInputs(
-            question=prompt,
-            chat_history=agent_options.chat_history,
-            context=agent_options.context,
-        )
-
         agent_scratchpad = [
-            AgentStep(
+            AgentStep[TypeReActAgentAction](
                 action=ReActAgentToolAction(
                     thought=step.thought,
                     tool=step.tool,
@@ -134,8 +133,13 @@ class TestReActAgentStream:
             for step in agent_options.agent_scratchpad.steps
         ]
 
+        agent_inputs = ReActAgentInputs(
+            question=prompt,
+            chat_history=agent_options.chat_history,
+            agent_scratchpad=agent_scratchpad,
+            context=agent_options.context,
+        )
+
         assert response.status_code == 200
         assert actual_actions == expected_actions
-        mocked_react_executor.stream.assert_called_with(
-            inputs=agent_inputs, scratchpad=agent_scratchpad
-        )
+        mocked_react_executor.stream.assert_called_with(inputs=agent_inputs)

@@ -10,8 +10,8 @@ from starlette_context.middleware import RawContextMiddleware
 
 from ai_gateway.api.middleware import MiddlewareAuthentication, MiddlewareLogRequest
 from ai_gateway.auth import User, UserClaims
-from ai_gateway.container import ContainerApplication
 from ai_gateway.config import Config
+from ai_gateway.container import ContainerApplication
 from ai_gateway.models import TextGenBaseModel
 
 pytest_plugins = ("pytest_asyncio",)

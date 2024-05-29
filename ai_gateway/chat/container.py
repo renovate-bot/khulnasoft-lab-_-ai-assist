@@ -2,8 +2,8 @@ from typing import Sequence
 
 from dependency_injector import containers, providers
 
-from ai_gateway.agents.registry import BaseAgentRegistry
-from ai_gateway.chat.agents.react import ReActAgent, ReActAgentInputs
+from ai_gateway.agents import BaseAgentRegistry
+from ai_gateway.agents.chat import ReActAgent, ReActAgentInputs, TypeReActAgentAction
 from ai_gateway.chat.executor import GLAgentRemoteExecutor, TypeAgentFactory
 from ai_gateway.chat.tools import BaseTool
 from ai_gateway.chat.tools.gitlab import GitLabToolkit
@@ -15,13 +15,15 @@ __all__ = [
 
 def _react_agent_factory(
     agent_registry: BaseAgentRegistry,
-) -> TypeAgentFactory[ReActAgentInputs]:
-    def _fn(tools: Sequence[BaseTool], agent_inputs: ReActAgentInputs) -> ReActAgent:
-        return ReActAgent(
-            agent=agent_registry.get("chat", "react"),
-            tools=tools,
-            inputs=agent_inputs,
-        )
+) -> TypeAgentFactory[ReActAgentInputs, TypeReActAgentAction]:
+    def _fn(tools: Sequence[BaseTool], inputs: ReActAgentInputs) -> ReActAgent:
+        kwargs = {}
+        if context := inputs.context:
+            kwargs.update(
+                {"context_type": context.type, "context_content": context.content}
+            )
+
+        return agent_registry.get("chat", "react", **kwargs)
 
     return _fn
 

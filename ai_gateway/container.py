@@ -59,9 +59,9 @@ class ContainerApplication(containers.DeclarativeContainer):
         ContainerXRay,
         models=pkg_models,
     )
-    agents = providers.Container(ContainerAgents, models=pkg_models)
+    pkg_agents = providers.Container(ContainerAgents)
     chat = providers.Container(
         ContainerChat,
-        agents=agents,
+        agents=pkg_agents,
         models=pkg_models,
     )
