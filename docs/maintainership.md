@@ -30,4 +30,8 @@ While there is no strict guideline how to become a maintainer, we generally reco
 - Review more than or equal to 5 MRs as a trainee maintainer.
 - Familiarize yourself with the [preferred domain knowledge](#preferred-domain-knowledge).
 
-When it's ready, create a merge request and indicate your role as a `ai-gateway: maintainer` in your [team member entry](https://gitlab.com/gitlab-com/www-gitlab-com/blob/master/doc/team_database.md). Assign MR to your manager and AI Gateway maintainers for merge.
+When it's ready:
+
+- Create a merge request and indicate your role as an `ai-gateway: maintainer` in your [team member entry](https://gitlab.com/gitlab-com/www-gitlab-com/blob/master/doc/team_database.md).
+- Assign MR to your manager and AI Gateway maintainers for merge.
+- After the MR is merged, ask an Owner of [`@gitlab-org/maintainers/ai-gateway`](https://gitlab.com/groups/gitlab-org/maintainers/ai-gateway/-/group_members?with_inherited_permissions=exclude) group to add you. It will make you one of the [Code Owners](https://gitlab.com/gitlab-org/modelops/applied-ml/code-suggestions/ai-assist/-/blob/main/.gitlab/CODEOWNERS?ref_type=heads) whose approval is required for an MR to be merged.
