@@ -163,6 +163,7 @@ class ContainerModels(containers.DeclarativeContainer):
         _mock_selector,
         original=providers.Factory(
             LiteLlmChatModel.from_model_name,
+            custom_models_enabled=config.custom_models.enabled,
         ),
         mocked=providers.Factory(mock.ChatModel),
     )

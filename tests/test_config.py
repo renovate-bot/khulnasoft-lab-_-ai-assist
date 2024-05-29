@@ -6,6 +6,7 @@ import pytest
 from ai_gateway.config import (
     Config,
     ConfigAuth,
+    ConfigCustomModels,
     ConfigFastApi,
     ConfigGoogleCloudPlatform,
     ConfigGoogleCloudProfiler,
@@ -311,6 +312,27 @@ def test_config_google_cloud_platform(
         assert config.google_cloud_platform == expected_google_cloud_platform
         assert config.vertex_text_model == expected_vertex_text_model
         assert config.vertex_search == expected_vertex_search
+
+
+@pytest.mark.parametrize(
+    ("values", "expected"),
+    [
+        ({}, ConfigCustomModels(enabled=False)),
+        (
+            {
+                "AIGW_CUSTOM_MODELS__ENABLED": "True",
+            },
+            ConfigCustomModels(
+                enabled=True,
+            ),
+        ),
+    ],
+)
+def test_custom_models(values: dict, expected: ConfigCustomModels):
+    with mock.patch.dict(os.environ, values, clear=True):
+        config = Config(_env_file=None)
+
+        assert config.custom_models == expected
 
 
 @pytest.mark.parametrize(

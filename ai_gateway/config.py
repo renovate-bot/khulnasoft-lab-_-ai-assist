@@ -17,6 +17,7 @@ __all__ = [
     "ConfigInstrumentator",
     "ConfigVertexTextModel",
     "ConfigModelConcurrency",
+    "ConfigCustomModels",
 ]
 
 ENV_PREFIX = "AIGW"
@@ -70,6 +71,10 @@ class ConfigSnowplow(BaseModel):
     endpoint: Optional[str] = None
     batch_size: Optional[int] = 10
     thread_count: Optional[int] = 1
+
+
+class ConfigCustomModels(BaseModel):
+    enabled: bool = False
 
 
 def _build_location(default: str = "us-central1") -> str:
@@ -155,6 +160,9 @@ class Config(BaseSettings):
     google_cloud_platform: Annotated[
         ConfigGoogleCloudPlatform, Field(default_factory=ConfigGoogleCloudPlatform)
     ] = ConfigGoogleCloudPlatform()
+    custom_models: Annotated[
+        ConfigCustomModels, Field(default_factory=ConfigCustomModels)
+    ] = ConfigCustomModels()
     vertex_text_model: Annotated[
         ConfigVertexTextModel, Field(default_factory=ConfigVertexTextModel)
     ] = ConfigVertexTextModel()
