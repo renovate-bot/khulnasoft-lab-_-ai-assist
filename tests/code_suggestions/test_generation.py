@@ -214,9 +214,9 @@ class TestCodeGeneration:
 
             if stream:
                 async for _ in actual:
-                    _
+                    pass
 
-            mock.estimate_length.assert_called
+            mock.estimate_length.assert_called()
 
             snowplow_mock.watch.assert_has_calls(
                 [call(expected_event_1), call(expected_event_2)]

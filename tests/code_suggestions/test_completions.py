@@ -276,6 +276,7 @@ class TestCodeCompletionsLegacy:
                 editor_lang="python",
             )
 
+        mock_benchmark.assert_not_called()
         snowplow_instrumentator_mock.watch.assert_has_calls(
             [call(expected_event_1), call(expected_event_2)]
         )
@@ -516,7 +517,7 @@ class TestCodeCompletions:
 
         use_case.model.generate = AsyncMock(side_effect=_side_effect)
 
-        with pytest.raises(model_exception_type) as exc:
+        with pytest.raises(model_exception_type):
             _ = await use_case.execute(prefix, suffix, file_name, editor_lang)
 
         code = (

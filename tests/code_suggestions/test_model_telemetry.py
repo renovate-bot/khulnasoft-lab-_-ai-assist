@@ -85,7 +85,7 @@ def test_telemetry_capture_invalid_headers(mock_counter):
         response = client.post("/", headers=headers, data={"foo": "bar"})
 
         args, _ = mock_log_exception.call_args
-        assert type(args[0]) is ValidationError
+        assert isinstance(args[0], ValidationError)
 
     assert response.status_code == 200
     assert mock_counter.call_count == 0
