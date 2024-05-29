@@ -122,16 +122,11 @@ disable = [
   "broad-exception-caught",
   "too-many-instance-attributes",
   "consider-using-sys-exit",
-  "unused-variable",
   "too-many-statements",
-  "unidiomatic-typecheck",
   "redefined-outer-name",
-  "pointless-statement",
   "duplicate-code",
   "cyclic-import",
   "too-many-boolean-expressions",
-  "redefined-argument-from-local",
-  "undefined-variable"
 ]
 enable = [
   "unsafe-dependency-resolution",

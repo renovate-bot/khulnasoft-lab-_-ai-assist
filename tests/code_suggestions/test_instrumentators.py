@@ -32,7 +32,6 @@ class TestTextGenModelInstrumentator:
         prompt = Prompt(prefix=prefix, suffix=suffix, metadata=metadata)
         model_engine = "vertex-ai"
         model_name = "code-gecko"
-        feature_category = "code_suggestions"
         completion = "e f g"  # expected len: 3
 
         instrumentator = TextGenModelInstrumentator(
@@ -106,7 +105,6 @@ class TestTextGenModelInstrumentator:
         prompt = Prompt(prefix=prefix, metadata=metadata)
         model_engine = "vertex-ai"
         model_name = "code-gecko"
-        feature_category = "code_suggestions"
 
         instrumentator = TextGenModelInstrumentator(
             model_engine=model_engine, model_name=model_name

@@ -718,7 +718,7 @@ export default App;
         "code_context",
         "expected_imports",
         "expected_functions",
-        "expected_context",
+        "expected_contexts",
     ),
     [
         (
@@ -793,7 +793,7 @@ async def test_prompt_building_model_engine_palm(
     code_context: list[str],
     expected_imports: list[str],
     expected_functions: list[str],
-    expected_context: list[str],
+    expected_contexts: list[str],
 ):
     engine = ModelEngineCompletions(
         model=text_gen_base_model,
@@ -814,5 +814,5 @@ async def test_prompt_building_model_engine_palm(
     for expected_function in expected_functions:
         assert expected_function in prompt.prefix
 
-    for expected_context in expected_context:
+    for expected_context in expected_contexts:
         assert expected_context in prompt.prefix
