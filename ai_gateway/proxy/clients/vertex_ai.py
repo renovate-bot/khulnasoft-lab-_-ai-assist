@@ -19,11 +19,7 @@ class VertexAIProxyClient(BaseProxyClient):
         "content-type",
     ]
 
-    ALLOWED_HEADERS_TO_DOWNSTREAM = [
-        "date",
-        "content-type",
-        "transfer-encoding",
-    ]
+    ALLOWED_HEADERS_TO_DOWNSTREAM = ["content-type"]
 
     def _extract_upstream_path(self, request_path: str) -> str:
         model, action, sse_flag = self._extract_params_from_path(request_path)
