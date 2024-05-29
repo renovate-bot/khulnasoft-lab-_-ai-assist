@@ -20,11 +20,7 @@ class AnthropicProxyClient(BaseProxyClient):
         "anthropic-version",
     ]
 
-    ALLOWED_HEADERS_TO_DOWNSTREAM = [
-        "date",
-        "content-type",
-        "transfer-encoding",
-    ]
+    ALLOWED_HEADERS_TO_DOWNSTREAM = ["content-type"]
 
     def _allowed_upstream_paths(self) -> list[str]:
         return AnthropicProxyClient.ALLOWED_UPSTREAM_PATHS
