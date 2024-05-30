@@ -23,13 +23,14 @@ spec:
   startup_probe:
     path: "/monitoring/ready"
     initial_delay_seconds: 20
-    timeout_seconds: 5
-    period_seconds: 10
+    # We have limited concurrency in staging, so picking a long period
+    timeout_seconds: 10
+    period_seconds: 17
     failure_threshold: 24
   liveness_probe:
     path: "/monitoring/healthz"
   scalability:
-    min_instances: 4
+    min_instances: 1
     max_instances: 200
     max_instance_request_concurrency: 40
   resources:
