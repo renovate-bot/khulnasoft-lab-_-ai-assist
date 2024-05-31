@@ -46,6 +46,8 @@ class ContainerChat(containers.DeclarativeContainer):
         llm=_anthropic_claude_llm_factory, chat=_anthropic_claude_chat_factory
     )
 
+    litellm_factory = providers.Factory(models.litellm)
+
     gl_agent_remote_executor = providers.Factory(
         GLAgentRemoteExecutor,
         agent_factory=_react_agent_factory,

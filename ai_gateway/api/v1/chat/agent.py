@@ -2,7 +2,7 @@ from time import time
 from typing import AsyncIterator, Union
 
 import structlog
-from dependency_injector.providers import FactoryAggregate
+from dependency_injector.providers import Factory, FactoryAggregate
 from fastapi import APIRouter, Depends, HTTPException, Request, status
 from starlette.authentication import requires
 
@@ -16,6 +16,7 @@ from ai_gateway.api.v1.chat.typing import (
 )
 from ai_gateway.async_dependency_resolver import (
     get_chat_anthropic_claude_factory_provider,
+    get_chat_litellm_factory_provider,
 )
 from ai_gateway.gitlab_features import GitLabFeatureCategory, GitLabUnitPrimitive
 from ai_gateway.models import (
@@ -46,21 +47,34 @@ async def chat(
     anthropic_claude_factory: FactoryAggregate = Depends(
         get_chat_anthropic_claude_factory_provider
     ),
+    litellm_factory: Factory = Depends(get_chat_litellm_factory_provider),
 ):
     prompt_component = chat_request.prompt_components[0]
     payload = prompt_component.payload
 
     try:
-        completion = await _generate_completion(
-            anthropic_claude_factory, payload, stream=chat_request.stream
-        )
+        if payload.provider == KindModelProvider.LITELLM:
+            model = litellm_factory(
+                name=payload.model,
+                endpoint=payload.model_endpoint,
+                api_key=payload.model_api_key,
+            )
+
+            completion = await model.generate(
+                messages=payload.content,
+                stream=chat_request.stream,
+            )
+        else:
+            completion = await _generate_completion(
+                anthropic_claude_factory, payload, stream=chat_request.stream
+            )
 
         if isinstance(completion, AsyncIterator):
             return await _handle_stream(completion)
         return ChatResponse(
             response=completion.text,
             metadata=ChatResponseMetadata(
-                provider=KindModelProvider.ANTHROPIC.value,
+                provider=payload.provider,
                 model=payload.model.value,
                 timestamp=int(time()),
             ),
