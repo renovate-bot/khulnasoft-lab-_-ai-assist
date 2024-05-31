@@ -134,7 +134,7 @@ def test_ready(client: TestClient, container: ContainerApplication):
     ]
     assert anthropic_completions_mock.mock_calls == [
         mock.call.execute(
-            prefix="def hello_world():",
+            prefix="\n\nHuman: Complete this code: def hello_world():\n\nAssistant:",
             file_name="monitoring.py",
             editor_lang="python",
             model_provider="anthropic",
@@ -199,7 +199,7 @@ def test_ready_anthropic_failure(client: TestClient, container: ContainerApplica
     # the money if the service is not going to be ready
     assert anthropic_completions_mock.mock_calls == [
         mock.call.execute(
-            prefix="def hello_world():",
+            prefix="\n\nHuman: Complete this code: def hello_world():\n\nAssistant:",
             file_name="monitoring.py",
             editor_lang="python",
             model_provider="anthropic",

@@ -73,11 +73,14 @@ async def validate_anthropic_available(
     ),
 ) -> bool:
     code_generations = generations_anthropic_factory(
-        model__name=KindAnthropicModel.CLAUDE_2_0.value,
+        model__name=KindAnthropicModel.CLAUDE_INSTANT_1_2.value,
         model__stop_sequences=["</new_code>"],
     )
+
+    # The generation prompt is currently built in rails, so include a minimal one
+    # here to replace that
     await code_generations.execute(
-        prefix="def hello_world():",
+        prefix="\n\nHuman: Complete this code: def hello_world():\n\nAssistant:",
         file_name="monitoring.py",
         editor_lang="python",
         model_provider=KindModelProvider.ANTHROPIC.value,
