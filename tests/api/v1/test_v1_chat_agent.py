@@ -17,6 +17,8 @@ from ai_gateway.models import (
     AnthropicChatModel,
     AnthropicModel,
     KindAnthropicModel,
+    KindLiteLlmModel,
+    LiteLlmChatModel,
     Message,
     ModelAPIError,
     SafetyAttributes,
@@ -57,12 +59,20 @@ def mock_models():
     mock_chat_model = mock.Mock(spec=AnthropicChatModel)
     mock_chat_model.generate = AsyncMock(return_value=model_output)
 
+    mock_litellm_chat_model = mock.Mock(spec=LiteLlmChatModel)
+    mock_litellm_chat_model.generate = AsyncMock(return_value=model_output)
+
     container = ContainerApplication()
     with (
         container.chat._anthropic_claude_llm_factory.override(mock_llm_model),
         container.chat._anthropic_claude_chat_factory.override(mock_chat_model),
+        container.chat.litellm_factory.override(mock_litellm_chat_model),
     ):
-        yield {"llm": mock_llm_model, "chat": mock_chat_model}
+        yield {
+            "llm": mock_llm_model,
+            "anthropic-chat": mock_chat_model,
+            "litellm-chat": mock_litellm_chat_model,
+        }
 
 
 @pytest.fixture()
@@ -242,6 +252,27 @@ class TestAgentSuccessfulRequest:
                     },
                 ]
             },
+            {
+                "prompt_components": [
+                    {
+                        "type": "prompt",
+                        "metadata": {
+                            "source": "gitlab-rails-sm",
+                            "version": "16.5.0-ee",
+                        },
+                        "payload": {
+                            "content": [
+                                {
+                                    "role": "user",
+                                    "content": "define a function that adds numbers together",
+                                },
+                            ],
+                            "provider": "litellm",
+                            "model": "mistral",
+                        },
+                    },
+                ]
+            },
         ],
     )
     async def test_successful_response(
@@ -267,8 +298,9 @@ class TestAgentSuccessfulRequest:
         response_metadata = response.json()["metadata"]
         prompt_payload = request_body["prompt_components"][0]["payload"]
         prompt_params = prompt_payload.get("params", {})
+        provider = prompt_payload["provider"]
 
-        assert response_metadata["provider"] == "anthropic"
+        assert response_metadata["provider"] == provider
         assert response_metadata["model"] == prompt_payload["model"]
 
         if isinstance(prompt_payload["content"], str):
@@ -280,7 +312,9 @@ class TestAgentSuccessfulRequest:
             if max_tokens := prompt_params.pop("max_tokens_to_sample", None):
                 prompt_params["max_tokens"] = max_tokens
 
-            mock_models["chat"].generate.assert_called_with(
+            mock_model = mock_models[f"{provider}-chat"]
+
+            mock_model.generate.assert_called_with(
                 messages=messages, stream=False, **prompt_params
             )
 

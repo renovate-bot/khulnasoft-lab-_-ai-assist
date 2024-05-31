@@ -3,7 +3,12 @@ from typing import Annotated, List, Literal, Optional, Union
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field, StringConstraints
 
-from ai_gateway.models import KindAnthropicModel, KindModelProvider, Message
+from ai_gateway.models import (
+    KindAnthropicModel,
+    KindLiteLlmModel,
+    KindModelProvider,
+    Message,
+)
 
 __all__ = [
     "ChatRequest",
@@ -35,11 +40,15 @@ class PromptPayload(BaseModel):
         Annotated[str, StringConstraints(max_length=400000)],
         Annotated[list[Message], Field(min_length=1, max_length=100)],
     ]
-    provider: Optional[Literal[KindModelProvider.ANTHROPIC]] = (
-        None  # We only support and expect Anthropic for now
+    provider: Optional[
+        Literal[KindModelProvider.ANTHROPIC, KindModelProvider.LITELLM]
+    ] = None
+    model: Optional[KindAnthropicModel | KindLiteLlmModel] = (
+        KindAnthropicModel.CLAUDE_2_0
     )
-    model: Optional[KindAnthropicModel] = KindAnthropicModel.CLAUDE_2_0
     params: Optional[AnthropicParams] = None
+    model_endpoint: Optional[str] = None
+    model_api_key: Optional[str] = None
 
 
 class PromptComponent(BaseModel):
