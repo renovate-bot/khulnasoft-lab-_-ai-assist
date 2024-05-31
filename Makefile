@@ -24,7 +24,7 @@ ifneq (,$(wildcard docker-compose.override.yaml))
 COMPOSE_FILES += -f docker-compose.override.yaml
 endif
 COMPOSE := docker-compose $(COMPOSE_FILES)
-TEST_PATH_ARG ?= 
+TEST_PATH_ARG ?=
 
 .PHONY: develop-local
 develop-local:
@@ -81,7 +81,7 @@ check-isort: install-lint-deps
 .PHONY: check-pylint
 check-pylint: install-lint-deps
 	@echo "Running pylint check..."
-	@poetry run pylint ${LINT_WORKING_DIR}
+	@poetry run pylint ${LINT_WORKING_DIR} --ignore=vendor
 
 .PHONY: check-mypy
 check-mypy: install-lint-deps
@@ -90,7 +90,7 @@ ifeq ($(TODO),true)
 	@poetry run mypy ${LINT_WORKING_DIR}
 else
 	@echo "Running mypy check..."
-	@poetry run mypy ${LINT_WORKING_DIR} ${MYPY_LINT_TODO_DIR}
+	@poetry run mypy ${LINT_WORKING_DIR} ${MYPY_LINT_TODO_DIR} --exclude "scripts/vendor/*"
 endif
 
 .PHONY: install-test-deps
