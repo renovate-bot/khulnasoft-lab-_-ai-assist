@@ -4,7 +4,7 @@ from typing import Annotated, AsyncIterator, Union
 import anthropic
 import structlog
 from dependency_injector.providers import Factory
-from fastapi import APIRouter, Body, Depends, Request
+from fastapi import APIRouter, Body, Depends, HTTPException, Request, status
 from starlette.datastructures import CommaSeparatedStrings
 
 from ai_gateway.api.feature_category import feature_category
@@ -35,7 +35,7 @@ from ai_gateway.async_dependency_resolver import (
     get_code_suggestions_generations_vertex_provider,
     get_snowplow_instrumentator,
 )
-from ai_gateway.auth.authentication import requires
+from ai_gateway.auth.user import GitLabUser, get_current_user
 from ai_gateway.code_suggestions import (
     CodeCompletions,
     CodeCompletionsLegacy,
@@ -72,11 +72,11 @@ GenerationsRequestWithVersion = Annotated[
 
 @router.post("/completions")
 @router.post("/code/completions")
-@requires(GitLabUnitPrimitive.CODE_SUGGESTIONS)
 @feature_category(GitLabFeatureCategory.CODE_SUGGESTIONS)
 async def completions(
     request: Request,
     payload: CompletionsRequestWithVersion,
+    current_user: Annotated[GitLabUser, Depends(get_current_user)],
     completions_legacy_factory: Factory[CodeCompletionsLegacy] = Depends(
         get_code_suggestions_completions_vertex_legacy_provider
     ),
@@ -87,6 +87,12 @@ async def completions(
         get_snowplow_instrumentator
     ),
 ):
+    if not current_user.can(GitLabUnitPrimitive.CODE_SUGGESTIONS):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Unauthorized to access code suggestions",
+        )
+
     try:
         snowplow_instrumentator.watch(
             _suggestion_requested_snowplow_event(request, payload)
@@ -143,11 +149,11 @@ async def completions(
 
 
 @router.post("/code/generations")
-@requires(GitLabUnitPrimitive.CODE_SUGGESTIONS)
 @feature_category(GitLabFeatureCategory.CODE_SUGGESTIONS)
 async def generations(
     request: Request,
     payload: GenerationsRequestWithVersion,
+    current_user: Annotated[GitLabUser, Depends(get_current_user)],
     generations_vertex_factory: Factory[CodeGenerations] = Depends(
         get_code_suggestions_generations_vertex_provider
     ),
@@ -164,6 +170,11 @@ async def generations(
         get_snowplow_instrumentator
     ),
 ):
+    if not current_user.can(GitLabUnitPrimitive.CODE_SUGGESTIONS):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Unauthorized to access code suggestions",
+        )
     try:
         snowplow_instrumentator.watch(
             _suggestion_requested_snowplow_event(request, payload)
@@ -351,7 +362,7 @@ async def _handle_stream(
 async def _execute_code_completion(
     payload: CompletionsRequestWithVersion,
     code_completions: Factory[CodeCompletions | CodeCompletionsLegacy],
-    **kwargs: dict
+    **kwargs: dict,
 ) -> any:
     with TelemetryInstrumentator().watch(payload.telemetry):
         output = await code_completions.execute(

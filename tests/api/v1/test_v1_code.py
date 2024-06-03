@@ -178,3 +178,28 @@ def test_user_access_token_gitlab_realm_header_missing(
     )
     assert response.status_code == status.HTTP_400_BAD_REQUEST
     assert response.json()["detail"] == "Missing X-Gitlab-Realm header"
+
+
+class TestUnauthorizedIssuer:
+    @pytest.fixture
+    def auth_user(self):
+        return User(
+            authenticated=True,
+            claims=UserClaims(scopes=["code_suggestions"], issuer="gitlab-ai-gateway"),
+        )
+
+    def test_failed_authorization_issuer(
+        self, mock_client: TestClient, mock_jwt_signing_key
+    ):
+        response = mock_client.post(
+            "/code/user_access_token",
+            headers={
+                "X-Gitlab-Global-User-Id": GLOBAL_USER_ID,
+                "Authorization": "Bearer 12345",
+                "X-Gitlab-Authentication-Type": "oidc",
+                "X-GitLab-Instance-Id": "1234",
+                "X-Gitlab-Realm": "self-managed",
+            },
+        )
+        assert response.status_code == status.HTTP_403_FORBIDDEN
+        assert response.json()["detail"] == "Unauthorized to access code suggestions"

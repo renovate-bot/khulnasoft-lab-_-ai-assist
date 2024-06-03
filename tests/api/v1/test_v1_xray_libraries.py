@@ -1,6 +1,7 @@
 from unittest import mock
 
 import pytest
+from fastapi import status
 
 from ai_gateway.api.v1 import api_router
 from ai_gateway.api.v1.x_ray.typing import AnyPromptComponent
@@ -135,8 +136,53 @@ class TestUnauthorizedScopes:
                 },
             )
 
-        assert response.status_code == 403
-        assert response.json() == {"detail": "Forbidden"}
+        assert response.status_code == status.HTTP_403_FORBIDDEN
+        assert response.json() == {"detail": "Unauthorized to access code suggestions"}
+
+
+class TestUnauthorizedIssuer:
+    @pytest.fixture
+    def auth_user(self):
+        return User(
+            authenticated=True,
+            claims=UserClaims(
+                scopes=["unauthorized_scope"],
+                subject="1234",
+                gitlab_realm="self-managed",
+                issuer="gitlab-ai-gateway",
+            ),
+        )
+
+    @pytest.mark.parametrize("path", ["/x-ray/libraries"])
+    def test_failed_authorization_issuer(self, mock_client, path):
+        container = ContainerApplication()
+
+        with container.x_ray.anthropic_claude.override(mock.Mock()):
+            response = mock_client.post(
+                path,
+                headers={
+                    "Authorization": "Bearer 12345",
+                    "X-Gitlab-Authentication-Type": "oidc",
+                    "X-GitLab-Instance-Id": "1234",
+                    "X-GitLab-Realm": "self-managed",
+                },
+                json={
+                    "prompt_components": [
+                        {
+                            "type": "x_ray_package_file_prompt",
+                            "payload": {
+                                "prompt": "Human: Parse Gemfile content: `gem kaminari`. Respond using only valid JSON with list of libraries",
+                                "provider": "anthropic",
+                                "model": "claude-2.0",
+                            },
+                            "metadata": {"scannerVersion": "0.0.1"},
+                        }
+                    ]
+                },
+            )
+
+        assert response.status_code == status.HTTP_403_FORBIDDEN
+        assert response.json() == {"detail": "Unauthorized to access code suggestions"}
 
 
 class TestAnyPromptComponent:

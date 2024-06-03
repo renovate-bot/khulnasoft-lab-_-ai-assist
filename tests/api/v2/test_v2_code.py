@@ -4,6 +4,7 @@ from unittest import mock
 
 import pytest
 from dependency_injector import containers
+from fastapi import status
 from fastapi.testclient import TestClient
 from snowplow_tracker import Snowplow
 from starlette.datastructures import CommaSeparatedStrings
@@ -678,6 +679,83 @@ class TestCodeCompletions:
         assert len(args) == 1
         assert args[0] == expected_event
 
+    @pytest.mark.parametrize(
+        ("auth_user", "expected_status_code"),
+        [
+            (
+                User(
+                    authenticated=True,
+                    claims=UserClaims(
+                        scopes=["code_suggestions"],
+                        subject="1234",
+                        gitlab_realm="self-managed",
+                    ),
+                ),
+                200,
+            ),
+            (
+                User(
+                    authenticated=True,
+                    claims=UserClaims(
+                        scopes=["code_suggestions"],
+                        subject="1234",
+                        gitlab_realm="self-managed",
+                        issuer="gitlab-ai-gateway",
+                    ),
+                ),
+                200,
+            ),
+        ],
+    )
+    def test_successful_response_with_correct_issuers(
+        self,
+        mock_client: TestClient,
+        mock_container: containers.DeclarativeContainer,
+        auth_user: User,
+        expected_status_code: int,
+    ):
+        code_completions_mock = mock.Mock(spec=CodeCompletions)
+        code_completions_mock.execute = mock.AsyncMock(
+            return_value=CodeSuggestionsOutput(
+                text="def search",
+                score=0,
+                model=ModelMetadata(name="claude-instant-1.2", engine="anthropic"),
+                lang_id=LanguageId.PYTHON,
+                metadata=CodeSuggestionsOutput.Metadata(
+                    experiments=[],
+                ),
+            )
+        )
+
+        current_file = {
+            "file_name": "main.py",
+            "content_above_cursor": "# Create a fast binary search\n",
+            "content_below_cursor": "\n",
+        }
+        data = {
+            "prompt_version": 1,
+            "project_path": "gitlab-org/gitlab",
+            "project_id": 278964,
+            "model_provider": "anthropic",
+            "current_file": current_file,
+        }
+
+        with mock_container.code_suggestions.completions.anthropic.override(
+            code_completions_mock
+        ):
+            response = mock_client.post(
+                "/completions",
+                headers={
+                    "Authorization": "Bearer 12345",
+                    "X-Gitlab-Authentication-Type": "oidc",
+                    "X-GitLab-Instance-Id": "1234",
+                    "X-GitLab-Realm": "self-managed",
+                },
+                json=data,
+            )
+
+        assert response.status_code == expected_status_code
+
 
 class TestCodeGenerations:
     def cleanup(self):
@@ -1255,5 +1333,5 @@ class TestUnauthorizedScopes:
             },
         )
 
-        assert response.status_code == 403
-        assert response.json() == {"detail": "Forbidden"}
+        assert response.status_code == status.HTTP_403_FORBIDDEN
+        assert response.json() == {"detail": "Unauthorized to access code suggestions"}

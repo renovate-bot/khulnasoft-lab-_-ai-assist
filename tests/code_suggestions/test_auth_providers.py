@@ -198,6 +198,7 @@ UGw3kIW+604fnnXLDm4TaLA=
     claims = {
         "gitlab_realm": "self-managed",
         "scopes": ["code_suggestions"],
+        "issuer": "https://customers.gitlab.com",
     }
 
     ai_gateway_audience = {"aud": "gitlab-ai-gateway"}

@@ -55,6 +55,7 @@ class CompositeProvider(AuthProvider):
         is_allowed = False
         gitlab_realm = ""
         subject = ""
+        issuer = ""
         scopes = []
 
         if len(jwks.get("keys", [])) == 0:
@@ -68,6 +69,7 @@ class CompositeProvider(AuthProvider):
             )
             gitlab_realm = jwt_claims.get("gitlab_realm", "")
             subject = jwt_claims.get("sub", "")
+            issuer = jwt_claims.get("iss", "")
             scopes = jwt_claims.get("scopes", [])
             is_allowed = True
         except JWTError as err:
@@ -76,7 +78,7 @@ class CompositeProvider(AuthProvider):
         return User(
             authenticated=is_allowed,
             claims=UserClaims(
-                gitlab_realm=gitlab_realm, scopes=scopes, subject=subject
+                gitlab_realm=gitlab_realm, scopes=scopes, subject=subject, issuer=issuer
             ),
         )
 
