@@ -36,7 +36,7 @@ async def user_access_token(
     ):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="Unauthorized to access code suggestions",
+            detail="Unauthorized to create user access token for code suggestions",
         )
 
     gitlab_user_id = request.headers.get(X_GITLAB_GLOBAL_USER_ID_HEADER)

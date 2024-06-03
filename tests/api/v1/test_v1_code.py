@@ -215,7 +215,8 @@ class TestUnauthorizedIssuer:
             )
             assert response.status_code == status.HTTP_403_FORBIDDEN
             assert (
-                response.json()["detail"] == "Unauthorized to access code suggestions"
+                response.json()["detail"]
+                == "Unauthorized to create user access token for code suggestions"
             )
 
 

@@ -46,6 +46,7 @@ from ai_gateway.code_suggestions.processing.ops import lang_from_filename
 from ai_gateway.gitlab_features import GitLabFeatureCategory, GitLabUnitPrimitive
 from ai_gateway.instrumentators.base import TelemetryInstrumentator
 from ai_gateway.models import KindAnthropicModel, KindModelProvider
+from ai_gateway.self_signed_token.token_authority import SELF_SIGNED_TOKEN_ISSUER
 from ai_gateway.tracking import RequestCount, SnowplowEvent, SnowplowEventContext
 from ai_gateway.tracking.errors import log_exception
 from ai_gateway.tracking.instrumentator import SnowplowInstrumentator
@@ -90,7 +91,7 @@ async def completions(
     if not current_user.can(GitLabUnitPrimitive.CODE_SUGGESTIONS):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="Unauthorized to access code suggestions",
+            detail="Unauthorized to access code completions",
         )
 
     try:
@@ -170,10 +171,13 @@ async def generations(
         get_snowplow_instrumentator
     ),
 ):
-    if not current_user.can(GitLabUnitPrimitive.CODE_SUGGESTIONS):
+    if not current_user.can(
+        GitLabUnitPrimitive.CODE_SUGGESTIONS,
+        disallowed_issuers=[SELF_SIGNED_TOKEN_ISSUER],
+    ):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="Unauthorized to access code suggestions",
+            detail="Unauthorized to access code generations",
         )
     try:
         snowplow_instrumentator.watch(

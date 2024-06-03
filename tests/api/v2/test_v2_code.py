@@ -1311,8 +1311,14 @@ class TestUnauthorizedScopes:
             ),
         )
 
-    @pytest.mark.parametrize("path", ["/completions", "/code/generations"])
-    def test_failed_authorization_scope(self, mock_client, path):
+    @pytest.mark.parametrize(
+        ("path", "error_message"),
+        [
+            ("/completions", "Unauthorized to access code completions"),
+            ("/code/generations", "Unauthorized to access code generations"),
+        ],
+    )
+    def test_failed_authorization_scope(self, mock_client, path, error_message):
         response = mock_client.post(
             path,
             headers={
@@ -1334,4 +1340,42 @@ class TestUnauthorizedScopes:
         )
 
         assert response.status_code == status.HTTP_403_FORBIDDEN
-        assert response.json() == {"detail": "Unauthorized to access code suggestions"}
+        assert response.json() == {"detail": error_message}
+
+
+class TestUnauthorizedIssuer:
+    @pytest.fixture
+    def auth_user(self):
+        return User(
+            authenticated=True,
+            claims=UserClaims(
+                scopes=["code_suggestions"],
+                subject="1234",
+                gitlab_realm="self-managed",
+                issuer="gitlab-ai-gateway",
+            ),
+        )
+
+    def test_failed_authorization_scope(self, mock_client):
+        response = mock_client.post(
+            "/code/generations",
+            headers={
+                "Authorization": "Bearer 12345",
+                "X-Gitlab-Authentication-Type": "oidc",
+                "X-GitLab-Instance-Id": "1234",
+                "X-GitLab-Realm": "self-managed",
+            },
+            json={
+                "prompt_version": 1,
+                "project_path": "gitlab-org/gitlab",
+                "project_id": 278964,
+                "current_file": {
+                    "file_name": "main.py",
+                    "content_above_cursor": "# Create a fast binary search\n",
+                    "content_below_cursor": "\n",
+                },
+            },
+        )
+
+        assert response.status_code == status.HTTP_403_FORBIDDEN
+        assert response.json() == {"detail": "Unauthorized to access code generations"}
