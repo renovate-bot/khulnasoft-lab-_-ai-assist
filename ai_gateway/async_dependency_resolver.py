@@ -88,3 +88,10 @@ async def get_vertex_ai_proxy_client(
     ],
 ):
     return vertex_ai_proxy_client
+
+
+@inject
+async def get_token_authority(
+    token_authority=Provide[ContainerApplication.self_signed_jwt.token_authority],
+):
+    return token_authority

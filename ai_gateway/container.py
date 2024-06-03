@@ -6,6 +6,7 @@ from ai_gateway.chat.container import ContainerChat
 from ai_gateway.code_suggestions.container import ContainerCodeSuggestions
 from ai_gateway.models.container import ContainerModels
 from ai_gateway.searches.container import ContainerSearches
+from ai_gateway.self_signed_jwt.container import ContainerSelfSignedJwt
 from ai_gateway.tracking.container import ContainerTracking
 
 __all__ = [
@@ -64,4 +65,8 @@ class ContainerApplication(containers.DeclarativeContainer):
         ContainerChat,
         agents=pkg_agents,
         models=pkg_models,
+    )
+    self_signed_jwt = providers.Container(
+        ContainerSelfSignedJwt,
+        config=config,
     )
