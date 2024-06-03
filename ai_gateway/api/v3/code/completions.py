@@ -1,10 +1,10 @@
 from time import time
-from typing import AsyncIterator
+from typing import Annotated, AsyncIterator
 
 import structlog
 from dependency_injector.providers import Factory
 from dependency_injector.wiring import Provide, inject
-from fastapi import APIRouter, Request
+from fastapi import APIRouter, Depends, HTTPException, Request, status
 
 from ai_gateway.api.feature_category import feature_category
 from ai_gateway.api.v3.code.typing import (
@@ -18,7 +18,7 @@ from ai_gateway.api.v3.code.typing import (
     ResponseMetadataBase,
     StreamSuggestionsResponse,
 )
-from ai_gateway.auth.authentication import requires
+from ai_gateway.auth.user import GitLabUser, get_current_user
 from ai_gateway.code_suggestions import (
     CodeCompletions,
     CodeCompletionsLegacy,
@@ -41,12 +41,18 @@ router = APIRouter()
 
 
 @router.post("/completions")
-@requires(GitLabUnitPrimitive.CODE_SUGGESTIONS)
 @feature_category(GitLabFeatureCategory.CODE_SUGGESTIONS)
 async def completions(
     request: Request,
     payload: CompletionRequest,
+    current_user: Annotated[GitLabUser, Depends(get_current_user)],
 ):
+    if not current_user.can(GitLabUnitPrimitive.CODE_SUGGESTIONS):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Unauthorized to access code suggestions",
+        )
+
     component = payload.prompt_components[0]
     code_context = [
         component.payload.content

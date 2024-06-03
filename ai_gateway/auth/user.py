@@ -12,6 +12,7 @@ class UserClaims(NamedTuple):
     gitlab_realm: str = ""
     scopes: list = []
     subject: str = ""
+    issuer: str = ""
 
 
 class User(NamedTuple):
@@ -42,12 +43,17 @@ class GitLabUser(BaseUser):
     def is_authenticated(self) -> bool:
         return self._authenticated
 
-    def can(self, unit_primitive: GitLabUnitPrimitive) -> bool:
+    def can(
+        self, unit_primitive: GitLabUnitPrimitive, disallowed_issuers: list[str] = None
+    ) -> bool:
         if not unit_primitive:
             return False
 
         if self.is_debug:
             return True
+
+        if disallowed_issuers and self._claims.issuer in disallowed_issuers:
+            return False
 
         return unit_primitive in self._claims.scopes
 
