@@ -46,7 +46,7 @@ from ai_gateway.code_suggestions.processing.ops import lang_from_filename
 from ai_gateway.gitlab_features import GitLabFeatureCategory, GitLabUnitPrimitive
 from ai_gateway.instrumentators.base import TelemetryInstrumentator
 from ai_gateway.models import KindAnthropicModel, KindModelProvider
-from ai_gateway.self_signed_token.token_authority import SELF_SIGNED_TOKEN_ISSUER
+from ai_gateway.self_signed_jwt.token_authority import SELF_SIGNED_TOKEN_ISSUER
 from ai_gateway.tracking import RequestCount, SnowplowEvent, SnowplowEventContext
 from ai_gateway.tracking.errors import log_exception
 from ai_gateway.tracking.instrumentator import SnowplowInstrumentator
