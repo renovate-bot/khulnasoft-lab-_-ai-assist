@@ -2,6 +2,7 @@ from abc import ABC, abstractmethod
 from enum import Enum
 from typing import Any, AsyncIterator, NamedTuple, Optional, Union
 
+import structlog
 from anthropic import AsyncAnthropic
 from google.cloud.aiplatform.gapic import PredictionServiceAsyncClient
 from pydantic import BaseModel
@@ -28,6 +29,8 @@ __all__ = [
     "grpc_connect_vertex",
     "connect_anthropic",
 ]
+
+log = structlog.stdlib.get_logger("codesuggestions")
 
 
 class KindModelProvider(str, Enum):
@@ -139,6 +142,7 @@ class TextGenBaseModel(ABC):
 
 
 def grpc_connect_vertex(client_options: dict) -> PredictionServiceAsyncClient:
+    log.info("Initializing Vertex AI client", **client_options)
     return PredictionServiceAsyncClient(client_options=client_options)
 
 
