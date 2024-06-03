@@ -15,13 +15,14 @@ class TokenAuthority:
     def __init__(self, signing_key):
         self.signing_key = signing_key
 
-    def encode(self, sub) -> str:
+    def encode(self, sub) -> tuple[str, int]:
+        expires_at = datetime.now(timezone.utc) + timedelta(hours=1)
         try:
             claims = {
                 "iss": "gitlab-ai-gateway",
                 "sub": sub,
                 "aud": "gitlab-ai-gateway",
-                "exp": datetime.now(timezone.utc) + timedelta(hours=1),
+                "exp": expires_at,
                 "nbf": datetime.now(timezone.utc),
                 "iat": datetime.now(timezone.utc),
                 "jti": str(uuid.uuid4()),
@@ -31,7 +32,7 @@ class TokenAuthority:
 
             token = jwt.encode(claims, self.signing_key, algorithm="RS256")
 
-            return token
+            return (token, int(expires_at.timestamp()))
         except JWTError as err:
             log_exception(err)
             raise
