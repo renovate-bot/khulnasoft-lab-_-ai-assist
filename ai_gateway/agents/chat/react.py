@@ -1,5 +1,5 @@
 import re
-from typing import Any, AsyncIterator, Callable, Optional, TypedDict
+from typing import Any, AsyncIterator, Optional, TypedDict
 
 from langchain_core.exceptions import OutputParserException
 from langchain_core.output_parsers import BaseCumulativeTransformOutputParser
@@ -46,6 +46,19 @@ class ReActAgentInputs(BaseModel):
     chat_history: str | list[str]
     agent_scratchpad: list[AgentStep[TypeReActAgentAction]]
     context: Optional[Context] = None
+
+
+class ReActInputParser(Runnable[ReActAgentInputs, dict]):
+    def invoke(
+        self, input: ReActAgentInputs, config: Optional[RunnableConfig] = None
+    ) -> dict:
+        return {
+            "chat_history": chat_history_plain_text_renderer(input.chat_history),
+            "question": input.question,
+            "agent_scratchpad": agent_scratchpad_plain_text_renderer(
+                input.agent_scratchpad
+            ),
+        }
 
 
 def chat_history_plain_text_renderer(chat_history: list | str) -> str:
@@ -155,21 +168,8 @@ class ReActAgent(Agent[ReActAgentInputs, TypeReActAgentAction]):
         len_log: int
         len_thought: int
 
-    render_chat_history: Callable[[list | str], str] = chat_history_plain_text_renderer
-    render_agent_scratchpad: Callable[[list[AgentStep]], str] = (
-        agent_scratchpad_plain_text_renderer
-    )
-
     def __init__(self, *, name: str, chain: Runnable):
-        super().__init__(name, chain | ReActPlainTextParser())
-
-    async def ainvoke(
-        self,
-        input: ReActAgentInputs,
-        config: Optional[RunnableConfig] = None,
-        **kwargs: Optional[Any],
-    ) -> TypeReActAgentAction:
-        return await self.chain.ainvoke(self._args(input), config=config, **kwargs)
+        super().__init__(name, ReActInputParser() | chain | ReActPlainTextParser())
 
     async def astream(
         self,
@@ -184,7 +184,7 @@ class ReActAgent(Agent[ReActAgentInputs, TypeReActAgentAction]):
             len_thought=0,
         )
 
-        astream = self.chain.astream(self._args(input), config=config, **kwargs)
+        astream = super().astream(input, config=config, **kwargs)
 
         async for action in astream:
             if isinstance(action, ReActAgentToolAction):
@@ -197,22 +197,12 @@ class ReActAgent(Agent[ReActAgentInputs, TypeReActAgentAction]):
                 yield ReActAgentFinalAnswer(
                     thought=action.thought[state["len_thought"] :],
                     text=action.text[state["len_final_answer"] :],
-                    log=action.log[state["len_log"] :],
+                    log=action.log and action.log[state["len_log"] :],
                 )
 
                 state["len_thought"] = len(action.thought)
                 state["len_final_answer"] = len(action.text)
-                state["len_log"] = len(action.log)
+                state["len_log"] = len(action.log) if action.log else 0
 
         if tool_action := state.get("tool_action", None):
             yield tool_action
-
-    @staticmethod
-    def _args(input: ReActAgentInputs) -> dict:
-        return {
-            "chat_history": ReActAgent.render_chat_history(input.chat_history),
-            "question": input.question,
-            "agent_scratchpad": ReActAgent.render_agent_scratchpad(
-                input.agent_scratchpad
-            ),
-        }

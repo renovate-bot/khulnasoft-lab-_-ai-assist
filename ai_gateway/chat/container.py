@@ -17,13 +17,13 @@ def _react_agent_factory(
     agent_registry: BaseAgentRegistry,
 ) -> TypeAgentFactory[ReActAgentInputs, TypeReActAgentAction]:
     def _fn(tools: Sequence[BaseTool], inputs: ReActAgentInputs) -> ReActAgent:
-        kwargs = {}
+        options = {}
         if context := inputs.context:
-            kwargs.update(
+            options.update(
                 {"context_type": context.type, "context_content": context.content}
             )
 
-        return agent_registry.get("chat", "react", **kwargs)
+        return agent_registry.get("chat", "react", options)
 
     return _fn
 
