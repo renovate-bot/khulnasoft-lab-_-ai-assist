@@ -1,11 +1,10 @@
 from functools import lru_cache
+from pathlib import Path
 from typing import Any, NamedTuple, Optional, Type
 
 import yaml
-from jinja2 import BaseLoader, Environment
 from langchain_anthropic import ChatAnthropic
 from langchain_core.language_models.chat_models import BaseChatModel
-from langchain_core.messages import AIMessage, HumanMessage, SystemMessage
 from langchain_core.prompts import ChatPromptTemplate
 
 from ai_gateway.agents.base import Agent, BaseAgentRegistry
@@ -18,16 +17,9 @@ class Key(NamedTuple):
     type: str
 
 
-class PromptTemplate(NamedTuple):
-    user: str
-    system: Optional[str] = None
-    assistant: Optional[str] = None
-
-
 class LocalAgentRegistry(BaseAgentRegistry):
     def __init__(self, agent_definitions: dict[Key, tuple[Type[Agent], dict]]):
         self.agent_definitions = agent_definitions
-        self.jinja_env = Environment(loader=BaseLoader())
 
     @lru_cache
     def _get_model(self, provider: str, name: str) -> BaseChatModel:
@@ -37,25 +29,9 @@ class LocalAgentRegistry(BaseAgentRegistry):
             case _:
                 raise ValueError(f"Unknown provider: {provider}")
 
-    @lru_cache
-    def _build_chat_prompt_templates(
-        self, template: PromptTemplate, **kwargs: Optional[Any]
-    ) -> ChatPromptTemplate:
-        def _format_str(content: str, **kwargs: Optional[Any]) -> str:
-            return self.jinja_env.from_string(content).render(**kwargs)
-
-        messages = []
-        for klass, content in [
-            (SystemMessage, template.system),
-            (HumanMessage, template.user),
-            (AIMessage, template.assistant),
-        ]:
-            if content:
-                messages.append(klass(content=_format_str(content, **kwargs)))
-
-        return ChatPromptTemplate.from_messages(messages)
-
-    def get(self, use_case: str, agent_type: str, **kwargs: Optional[Any]) -> Any:
+    def get(
+        self, use_case: str, agent_type: str, options: Optional[dict[str, Any]] = None
+    ) -> Any:
         klass, config = self.agent_definitions[Key(use_case=use_case, type=agent_type)]
 
         model = self._get_model(
@@ -63,22 +39,19 @@ class LocalAgentRegistry(BaseAgentRegistry):
             name=config["model"],
         ).bind(stop=config["stop"])
 
-        # TODO: We build only chat prompt templates now
-        prompt_template = self._build_chat_prompt_templates(
-            PromptTemplate(**config["prompt_templates"]), **kwargs
-        )
+        messages = klass.build_messages(config["prompt_template"], options or {})
+        prompt = ChatPromptTemplate.from_messages(messages)
 
         return klass(
             name=config["name"],
-            chain=prompt_template | model,
+            chain=prompt | model,
         )
 
     @classmethod
-    def from_local_yaml(
-        cls, data: dict[Key, tuple[str, Type[Agent]]]
-    ) -> "LocalAgentRegistry":
+    def from_local_yaml(cls, data: dict[Key, Type[Agent]]) -> "LocalAgentRegistry":
         agent_definitions = {}
-        for key, (path, klass) in data.items():
+        for key, klass in data.items():
+            path = Path(__file__).parent / key.use_case / f"{key.type}.yml"
             with open(path, "r") as fp:
                 agent_definitions[key] = (klass, yaml.safe_load(fp))
 
