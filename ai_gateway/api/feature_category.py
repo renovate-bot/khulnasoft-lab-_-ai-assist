@@ -91,8 +91,16 @@ def feature_categories(mapping: dict[GitLabUnitPrimitive, GitLabFeatureCategory]
     return decorator
 
 
-def get_feature_category() -> str:
+def current_feature_category() -> str:
+    """
+    Get the feature category set to the current request context.
+    """
     if context.exists():
-        return context.get(_CATEGORY_CONTEXT_KEY, _UNKNOWN_FEATURE_CATEGORY)
+        feature_category = context.get(_CATEGORY_CONTEXT_KEY, _UNKNOWN_FEATURE_CATEGORY)
+
+        if isinstance(feature_category, GitLabFeatureCategory):
+            return feature_category.value
+
+        return feature_category
 
     return _UNKNOWN_FEATURE_CATEGORY

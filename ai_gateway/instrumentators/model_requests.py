@@ -4,7 +4,7 @@ from typing import Optional
 
 from prometheus_client import Counter, Gauge, Histogram
 
-from ai_gateway.api.feature_category import get_feature_category
+from ai_gateway.api.feature_category import current_feature_category
 from ai_gateway.tracking.errors import log_exception
 
 METRIC_LABELS = ["model_engine", "model_name"]
@@ -83,7 +83,7 @@ class ModelRequestInstrumentator:
             detail_labels = {
                 "error": "yes" if self.error else "no",
                 "streaming": "yes" if self.streaming else "no",
-                "feature_category": get_feature_category(),
+                "feature_category": current_feature_category(),
             }
             return {**self.labels, **detail_labels}
 
@@ -109,7 +109,8 @@ class ModelRequestInstrumentator:
         except Exception as ex:
             log_exception(ex, self.labels)
             watcher.register_error()
+            watcher.finish()
             raise
-        finally:
-            if not stream:
-                watcher.finish()
+
+        if not stream:
+            watcher.finish()
