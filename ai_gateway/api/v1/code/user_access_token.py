@@ -8,6 +8,7 @@ from ai_gateway.api.middleware import (
     X_GITLAB_GLOBAL_USER_ID_HEADER,
     X_GITLAB_REALM_HEADER,
 )
+from ai_gateway.api.v1.code.typing import Token
 from ai_gateway.async_dependency_resolver import get_token_authority
 from ai_gateway.auth.user import GitLabUser, get_current_user
 from ai_gateway.gitlab_features import GitLabFeatureCategory, GitLabUnitPrimitive
@@ -54,10 +55,10 @@ async def user_access_token(
         )
 
     try:
-        token = token_authority.encode(
+        token, expires_at = token_authority.encode(
             request.headers.get(X_GITLAB_GLOBAL_USER_ID_HEADER)
         )
     except Exception:
         raise HTTPException(status_code=500, detail="Failed to generate JWT")
 
-    return {"token": token}
+    return Token(token=token, expires_at=expires_at)

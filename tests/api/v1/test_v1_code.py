@@ -90,15 +90,17 @@ def test_user_access_token_success(mock_client: TestClient):
         )
         assert response.status_code == status.HTTP_200_OK
 
-        token = response.json()["token"]
+        parsed_response = response.json()
         decoded_token = jwt.decode(
-            token, TEST_PUBLIC_KEY, audience="gitlab-ai-gateway", algorithms=["RS256"]
+            parsed_response["token"],
+            TEST_PUBLIC_KEY,
+            audience="gitlab-ai-gateway",
+            algorithms=["RS256"],
         )
 
         current_time = datetime.now(timezone.utc)
         current_time_posix = int(current_time.timestamp())
 
-        print(decoded_token["exp"])
         assert decoded_token["iss"] == "gitlab-ai-gateway"
         assert decoded_token["sub"] == GLOBAL_USER_ID
         assert decoded_token["aud"] == "gitlab-ai-gateway"
@@ -111,6 +113,7 @@ def test_user_access_token_success(mock_client: TestClient):
         assert decoded_token["jti"]
         assert decoded_token["gitlab_realm"] == "self-managed"
         assert decoded_token["scopes"] == ["code_suggestions"]
+        assert parsed_response["expires_at"] == decoded_token["exp"]
 
 
 def test_user_access_token_global_user_id_header_empty(mock_client: TestClient):
