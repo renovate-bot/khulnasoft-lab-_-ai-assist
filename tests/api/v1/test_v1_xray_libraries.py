@@ -137,7 +137,7 @@ class TestUnauthorizedScopes:
             )
 
         assert response.status_code == status.HTTP_403_FORBIDDEN
-        assert response.json() == {"detail": "Unauthorized to access code suggestions"}
+        assert response.json() == {"detail": "Unauthorized to access X Ray"}
 
 
 class TestUnauthorizedIssuer:
@@ -146,7 +146,7 @@ class TestUnauthorizedIssuer:
         return User(
             authenticated=True,
             claims=UserClaims(
-                scopes=["unauthorized_scope"],
+                scopes=["code_suggestions"],
                 subject="1234",
                 gitlab_realm="self-managed",
                 issuer="gitlab-ai-gateway",
@@ -182,7 +182,7 @@ class TestUnauthorizedIssuer:
             )
 
         assert response.status_code == status.HTTP_403_FORBIDDEN
-        assert response.json() == {"detail": "Unauthorized to access code suggestions"}
+        assert response.json() == {"detail": "Unauthorized to access X Ray"}
 
 
 class TestAnyPromptComponent:

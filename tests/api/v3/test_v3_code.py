@@ -33,25 +33,6 @@ def auth_user():
 
 
 class TestEditorContentCompletion:
-    def auth_user_default_issued():
-        return User(
-            authenticated=True,
-            claims=UserClaims(
-                scopes=["code_suggestions"], subject="1234", gitlab_realm="self-managed"
-            ),
-        )
-
-    def auth_user_aigw_issued():
-        return User(
-            authenticated=True,
-            claims=UserClaims(
-                scopes=["code_suggestions"],
-                subject="1234",
-                gitlab_realm="self-managed",
-                issuer="gitlab-ai-gateway",
-            ),
-        )
-
     @pytest.mark.parametrize(
         ("model_output", "expected_response"),
         [
@@ -356,83 +337,6 @@ class TestEditorContentCompletion:
             stream=True,
             code_context=None,
         )
-
-    @pytest.mark.parametrize(
-        ("auth_user", "expected_status_code"),
-        [
-            (
-                User(
-                    authenticated=True,
-                    claims=UserClaims(
-                        scopes=["code_suggestions"],
-                        subject="1234",
-                        gitlab_realm="self-managed",
-                    ),
-                ),
-                200,
-            ),
-            (
-                User(
-                    authenticated=True,
-                    claims=UserClaims(
-                        scopes=["code_suggestions"],
-                        subject="1234",
-                        gitlab_realm="self-managed",
-                        issuer="gitlab-ai-gateway",
-                    ),
-                ),
-                200,
-            ),
-        ],
-    )
-    def test_successful_response_with_correct_issuers(
-        self, mock_client: TestClient, auth_user: User, expected_status_code: int
-    ):
-        code_completions_mock = mock.Mock(spec=CodeCompletions)
-        code_completions_mock.execute = mock.AsyncMock(
-            return_value=CodeSuggestionsOutput(
-                text="def search",
-                score=0,
-                model=ModelMetadata(name="code-gecko", engine="vertex-ai"),
-                lang_id=LanguageId.PYTHON,
-                metadata=CodeSuggestionsOutput.Metadata(
-                    experiments=[],
-                ),
-            )
-        )
-        container = ContainerApplication()
-
-        payload = {
-            "file_name": "main.py",
-            "content_above_cursor": "# Create a fast binary search\n",
-            "content_below_cursor": "\n",
-            "language_identifier": "python",
-        }
-
-        prompt_component = {
-            "type": "code_editor_completion",
-            "payload": payload,
-        }
-
-        data = {
-            "prompt_components": [prompt_component],
-        }
-
-        with container.code_suggestions.completions.vertex_legacy.override(
-            code_completions_mock
-        ):
-            response = mock_client.post(
-                "/code/completions",
-                headers={
-                    "Authorization": "Bearer 12345",
-                    "X-Gitlab-Authentication-Type": "oidc",
-                    "X-GitLab-Instance-Id": "1234",
-                    "X-GitLab-Realm": "self-managed",
-                },
-                json=data,
-            )
-
-        assert response.status_code == expected_status_code
 
 
 class TestEditorContentGeneration:
@@ -962,3 +866,44 @@ class TestIncomingRequest:
             )
 
         assert response.status_code == expected_code
+
+
+class TestUnauthorizedIssuer:
+    @pytest.fixture
+    def auth_user(self):
+        return User(
+            authenticated=True,
+            claims=UserClaims(
+                scopes=["code_suggestions"],
+                subject="1234",
+                gitlab_realm="self-managed",
+                issuer="gitlab-ai-gateway",
+            ),
+        )
+
+    def test_failed_authorization_scope(self, mock_client):
+        response = mock_client.post(
+            "/code/completions",
+            headers={
+                "Authorization": "Bearer 12345",
+                "X-Gitlab-Authentication-Type": "oidc",
+                "X-GitLab-Instance-Id": "1234",
+                "X-GitLab-Realm": "self-managed",
+            },
+            json={
+                "prompt_components": [
+                    {
+                        "type": "code_editor_completion",
+                        "payload": {
+                            "file_name": "test",
+                            "content_above_cursor": "def hello_world():",
+                            "content_below_cursor": "",
+                            "model_provider": "vertex-ai",
+                        },
+                    }
+                ]
+            },
+        )
+
+        assert response.status_code == 403
+        assert response.json() == {"detail": "Unauthorized to access code suggestions"}

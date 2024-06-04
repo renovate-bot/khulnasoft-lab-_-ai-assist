@@ -29,6 +29,7 @@ from ai_gateway.code_suggestions import (
 from ai_gateway.container import ContainerApplication
 from ai_gateway.gitlab_features import GitLabFeatureCategory, GitLabUnitPrimitive
 from ai_gateway.models import KindModelProvider
+from ai_gateway.self_signed_token.token_authority import SELF_SIGNED_TOKEN_ISSUER
 
 __all__ = [
     "router",
@@ -47,7 +48,10 @@ async def completions(
     payload: CompletionRequest,
     current_user: Annotated[GitLabUser, Depends(get_current_user)],
 ):
-    if not current_user.can(GitLabUnitPrimitive.CODE_SUGGESTIONS):
+    if not current_user.can(
+        GitLabUnitPrimitive.CODE_SUGGESTIONS,
+        disallowed_issuers=[SELF_SIGNED_TOKEN_ISSUER],
+    ):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Unauthorized to access code suggestions",
