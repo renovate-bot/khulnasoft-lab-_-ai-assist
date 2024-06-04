@@ -43,6 +43,7 @@ async def docs(
 
     search_params = {
         "query": payload.query,
+        "page_size": payload.page_size,
         "gl_version": search_request.metadata.version,
     }
 

@@ -83,6 +83,7 @@ class VertexAISearch:
         self,
         query: str,
         gl_version: str,
+        page_size: int = 20,
         **kwargs: Any,
     ) -> dict:
         try:
@@ -104,7 +105,7 @@ class VertexAISearch:
         request = discoveryengine.SearchRequest(
             serving_config=serving_config,
             query=query,
-            # content_search_spec=content_search_spec,
+            page_size=page_size,
             query_expansion_spec=discoveryengine.SearchRequest.QueryExpansionSpec(
                 condition=discoveryengine.SearchRequest.QueryExpansionSpec.Condition.AUTO,
             ),

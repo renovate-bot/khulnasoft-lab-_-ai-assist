@@ -8,6 +8,7 @@ from structlog.testing import capture_logs
 
 from ai_gateway.api.v1 import api_router
 from ai_gateway.api.v1.search.typing import (
+    DEFAULT_PAGE_SIZE,
     SearchResponse,
     SearchResponseDetails,
     SearchResponseMetadata,
@@ -135,6 +136,7 @@ async def test_success(
     mock_llm_model.search_with_retry.assert_called_once_with(
         query=request_body["payload"]["query"],
         gl_version=request_body["metadata"]["version"],
+        page_size=DEFAULT_PAGE_SIZE,
     )
 
 

@@ -1,12 +1,14 @@
 from typing import Annotated, List
 
-from pydantic import BaseModel, StringConstraints
+from pydantic import BaseModel, Field, StringConstraints
 
 __all__ = [
     "SearchRequest",
     "SearchResponseMetadata",
     "SearchResponse",
 ]
+
+DEFAULT_PAGE_SIZE = 4
 
 
 class SearchMetadata(BaseModel):
@@ -16,6 +18,7 @@ class SearchMetadata(BaseModel):
 
 class SearchPayload(BaseModel):
     query: Annotated[str, StringConstraints(max_length=400000)]
+    page_size: Annotated[int, Field(ge=1, le=20)] = DEFAULT_PAGE_SIZE
 
 
 class SearchRequest(BaseModel):
