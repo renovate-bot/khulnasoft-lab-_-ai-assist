@@ -1,9 +1,9 @@
 import time
+from typing import Annotated
 
 import structlog
 from dependency_injector.providers import Factory
 from fastapi import APIRouter, Depends, HTTPException, Request, status
-from starlette.authentication import requires
 
 from ai_gateway.api.feature_category import feature_category
 from ai_gateway.api.v1.search.typing import (
@@ -14,6 +14,7 @@ from ai_gateway.api.v1.search.typing import (
     SearchResult,
 )
 from ai_gateway.async_dependency_resolver import get_vertex_search_factory_provider
+from ai_gateway.auth.user import GitLabUser, get_current_user
 from ai_gateway.gitlab_features import GitLabFeatureCategory, GitLabUnitPrimitive
 from ai_gateway.searches import DataStoreNotFound, VertexAISearch, VertexAPISearchError
 from ai_gateway.tracking import log_exception
@@ -30,15 +31,21 @@ router = APIRouter()
 @router.post(
     "/gitlab-docs", response_model=SearchResponse, status_code=status.HTTP_200_OK
 )
-@requires(GitLabUnitPrimitive.DOCUMENTATION_SEARCH)
 @feature_category(GitLabFeatureCategory.DUO_CHAT)
 async def docs(
     request: Request,
+    current_user: Annotated[GitLabUser, Depends(get_current_user)],
     search_request: SearchRequest,
     vertex_search_factory: Factory[VertexAISearch] = Depends(
         get_vertex_search_factory_provider
     ),
 ):
+    if not current_user.can(GitLabUnitPrimitive.DOCUMENTATION_SEARCH):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Unauthorized to search documentations",
+        )
+
     payload = search_request.payload
 
     search_params = {

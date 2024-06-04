@@ -1,8 +1,9 @@
 import json
+from typing import Annotated
 
 import pytest
 from dependency_injector.wiring import inject
-from fastapi import APIRouter, FastAPI, Request
+from fastapi import APIRouter, Depends, FastAPI, HTTPException, Request, status
 from fastapi.testclient import TestClient
 from starlette.middleware import Middleware
 from starlette.responses import JSONResponse
@@ -11,7 +12,7 @@ from structlog.testing import capture_logs
 
 from ai_gateway.api.middleware import MiddlewareAuthentication
 from ai_gateway.auth import User, UserClaims
-from ai_gateway.auth.authentication import requires
+from ai_gateway.auth.user import GitLabUser, get_current_user
 
 router = APIRouter(
     prefix="",
@@ -20,8 +21,18 @@ router = APIRouter(
 
 
 @router.post("/")
-@requires(["feature1|feature2", "feature3"])
-def homepage(request: Request):
+def homepage(
+    request: Request, current_user: Annotated[GitLabUser, Depends(get_current_user)]
+):
+    if not (
+        (current_user.can("feature1") or current_user.can("feature2"))
+        and current_user.can("feature3")
+    ):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Unauthorized to access homepage",
+        )
+
     return JSONResponse(
         status_code=200,
         content={
@@ -195,7 +206,7 @@ invalid_authentication_token_type_error = {
                 authenticated=True,
                 claims=UserClaims(subject="1234", gitlab_realm="self-managed"),
             ),
-            {"detail": "Forbidden"},
+            {"detail": "Unauthorized to access homepage"},
             ["auth_duration_s"],
         ),
         (
@@ -214,7 +225,7 @@ invalid_authentication_token_type_error = {
                     scopes=["feature1"], subject="1234", gitlab_realm="self-managed"
                 ),
             ),
-            {"detail": "Forbidden"},
+            {"detail": "Unauthorized to access homepage"},
             ["auth_duration_s"],
         ),
         (
@@ -233,7 +244,7 @@ invalid_authentication_token_type_error = {
                     scopes=["feature3"], subject="1234", gitlab_realm="self-managed"
                 ),
             ),
-            {"detail": "Forbidden"},
+            {"detail": "Unauthorized to access homepage"},
             ["auth_duration_s"],
         ),
         (
@@ -254,7 +265,7 @@ invalid_authentication_token_type_error = {
                     gitlab_realm="self-managed",
                 ),
             ),
-            {"detail": "Forbidden"},
+            {"detail": "Unauthorized to access homepage"},
             ["auth_duration_s"],
         ),
         (

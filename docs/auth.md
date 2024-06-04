@@ -130,17 +130,3 @@ async def awesome_feature(
             detail=f"Unauthorized to access awesome feature",
         )
 ```
-
-### Check permission at endpoint level
-
-You can also check the user permission at endpoint level. Example:
-
-```python
-from ai_gateway.auth.authentication import requires # or `from starlette.authentication import requires`
-
-@requires(GitLabUnitPrimitive.AWESOME_FEATURE)
-async def awesome_feature(
-    request: Request
-):
-    # ... and business logic of the awesome feature.
-```
