@@ -11,6 +11,9 @@ __all__ = [
 ]
 
 
+SELF_SIGNED_TOKEN_ISSUER = "gitlab-ai-gateway"
+
+
 class TokenAuthority:
     def __init__(self, signing_key):
         self.signing_key = signing_key
@@ -19,9 +22,9 @@ class TokenAuthority:
         expires_at = datetime.now(timezone.utc) + timedelta(hours=1)
         try:
             claims = {
-                "iss": "gitlab-ai-gateway",
+                "iss": SELF_SIGNED_TOKEN_ISSUER,
                 "sub": sub,
-                "aud": "gitlab-ai-gateway",
+                "aud": SELF_SIGNED_TOKEN_ISSUER,
                 "exp": expires_at,
                 "nbf": datetime.now(timezone.utc),
                 "iat": datetime.now(timezone.utc),

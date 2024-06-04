@@ -29,7 +29,7 @@ from ai_gateway.code_suggestions import (
 from ai_gateway.container import ContainerApplication
 from ai_gateway.gitlab_features import GitLabFeatureCategory, GitLabUnitPrimitive
 from ai_gateway.models import KindModelProvider
-from ai_gateway.self_signed_token.token_authority import SELF_SIGNED_TOKEN_ISSUER
+from ai_gateway.self_signed_jwt.token_authority import SELF_SIGNED_TOKEN_ISSUER
 
 __all__ = [
     "router",

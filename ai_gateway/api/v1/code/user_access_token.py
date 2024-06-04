@@ -13,11 +13,12 @@ from ai_gateway.async_dependency_resolver import get_token_authority
 from ai_gateway.auth.user import GitLabUser, get_current_user
 from ai_gateway.gitlab_features import GitLabFeatureCategory, GitLabUnitPrimitive
 from ai_gateway.self_signed_jwt import TokenAuthority
-from ai_gateway.self_signed_token.token_authority import SELF_SIGNED_TOKEN_ISSUER
 
 __all__ = [
     "router",
 ]
+
+from ai_gateway.self_signed_jwt.token_authority import SELF_SIGNED_TOKEN_ISSUER
 
 log = structlog.stdlib.get_logger("user_access_token")
 
