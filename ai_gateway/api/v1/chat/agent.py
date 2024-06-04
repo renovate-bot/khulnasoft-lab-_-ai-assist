@@ -1,10 +1,9 @@
 from time import time
-from typing import AsyncIterator, Union
+from typing import Annotated, AsyncIterator, Union
 
 import structlog
 from dependency_injector.providers import Factory, FactoryAggregate
 from fastapi import APIRouter, Depends, HTTPException, Request, status
-from starlette.authentication import requires
 
 from ai_gateway.api.feature_category import feature_category
 from ai_gateway.api.v1.chat.typing import (
@@ -18,6 +17,7 @@ from ai_gateway.async_dependency_resolver import (
     get_chat_anthropic_claude_factory_provider,
     get_chat_litellm_factory_provider,
 )
+from ai_gateway.auth.user import GitLabUser, get_current_user
 from ai_gateway.gitlab_features import GitLabFeatureCategory, GitLabUnitPrimitive
 from ai_gateway.models import (
     AnthropicAPIConnectionError,
@@ -39,16 +39,22 @@ router = APIRouter()
 
 
 @router.post("/agent", response_model=ChatResponse, status_code=status.HTTP_200_OK)
-@requires(GitLabUnitPrimitive.DUO_CHAT)
 @feature_category(GitLabFeatureCategory.DUO_CHAT)
 async def chat(
     request: Request,
     chat_request: ChatRequest,
+    current_user: Annotated[GitLabUser, Depends(get_current_user)],
     anthropic_claude_factory: FactoryAggregate = Depends(
         get_chat_anthropic_claude_factory_provider
     ),
     litellm_factory: Factory = Depends(get_chat_litellm_factory_provider),
 ):
+    if not current_user.can(GitLabUnitPrimitive.DUO_CHAT):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Unauthorized to access duo chat",
+        )
+
     prompt_component = chat_request.prompt_components[0]
     payload = prompt_component.payload
 

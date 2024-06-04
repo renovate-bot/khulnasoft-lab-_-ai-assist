@@ -488,7 +488,7 @@ class TestAnthropicInvalidScope:
         )
 
         assert response.status_code == 403
-        assert response.json() == {"detail": "Forbidden"}
+        assert response.json() == {"detail": "Unauthorized to access duo chat"}
 
 
 class TestAgentInvalidRequestMissingFields:

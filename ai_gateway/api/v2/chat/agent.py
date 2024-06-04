@@ -1,8 +1,7 @@
-from typing import AsyncIterator
+from typing import Annotated, AsyncIterator
 
 import structlog
-from fastapi import APIRouter, Depends, Request
-from starlette.authentication import requires
+from fastapi import APIRouter, Depends, HTTPException, Request, status
 from starlette.responses import StreamingResponse
 
 from ai_gateway.agents.chat import (
@@ -15,6 +14,7 @@ from ai_gateway.agents.chat import (
 from ai_gateway.api.feature_category import feature_category
 from ai_gateway.api.v2.chat.typing import AgentRequest, AgentStreamResponseEvent
 from ai_gateway.async_dependency_resolver import get_container_application
+from ai_gateway.auth.user import GitLabUser, get_current_user
 from ai_gateway.chat.executor import GLAgentRemoteExecutor
 from ai_gateway.gitlab_features import GitLabFeatureCategory, GitLabUnitPrimitive
 
@@ -33,15 +33,21 @@ async def get_gl_agent_remote_executor():
 
 
 @router.post("/agent")
-@requires(GitLabUnitPrimitive.DUO_CHAT)
 @feature_category(GitLabFeatureCategory.DUO_CHAT)
 async def chat(
     request: Request,
     agent_request: AgentRequest,
+    current_user: Annotated[GitLabUser, Depends(get_current_user)],
     gl_agent_remote_executor: GLAgentRemoteExecutor[
         ReActAgentInputs, TypeReActAgentAction
     ] = Depends(get_gl_agent_remote_executor),
 ):
+    if not current_user.can(GitLabUnitPrimitive.DUO_CHAT):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Unauthorized to access duo chat",
+        )
+
     async def _stream_handler(stream_actions: AsyncIterator[TypeReActAgentAction]):
         async for action in stream_actions:
             event_type = (
