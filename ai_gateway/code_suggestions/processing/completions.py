@@ -225,6 +225,9 @@ class ModelEngineCompletions(ModelEngineBase):
                 if responses := await self.model.generate(
                     prompt.prefix, prompt.suffix, **kwargs
                 ):
+                    if not isinstance(responses, list):
+                        responses = [responses]
+
                     outputs = []
                     for res in responses:
                         watch_container.register_model_output_length(res.text)

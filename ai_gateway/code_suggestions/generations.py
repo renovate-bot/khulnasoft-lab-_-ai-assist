@@ -121,6 +121,9 @@ class CodeGenerations:
                         prompt.prefix, "", stream=stream, **kwargs
                     )
 
+                if isinstance(res, list):
+                    res = res[0]
+
                 if res:
                     if isinstance(res, AsyncIterator):
                         return self._handle_stream(res)

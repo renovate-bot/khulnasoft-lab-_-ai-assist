@@ -135,7 +135,7 @@ class PalmCodeGenBaseModel(TextGenBaseModel):
         candidate_count: int = 1,
         stop_sequences: Optional[Sequence[str]] = None,
         code_context: Optional[Sequence[str]] = None,
-    ) -> Optional[TextGenModelOutput]:
+    ) -> Optional[TextGenModelOutput | list[TextGenModelOutput]]:
         if not input.is_valid():
             return TextGenModelOutput(
                 text="", score=0, safety_attributes=SafetyAttributes()
@@ -222,7 +222,7 @@ class PalmCodeGenBaseModel(TextGenBaseModel):
         top_k: int = 40,
         candidate_count: int = 1,
         stop_sequences: Optional[Sequence[str]] = None,
-    ) -> Optional[TextGenModelOutput]:
+    ) -> Optional[TextGenModelOutput | list[TextGenModelOutput]]:
         pass
 
 
@@ -251,7 +251,7 @@ class PalmTextBisonModel(PalmCodeGenBaseModel):
         top_k: int = 40,
         candidate_count: int = 1,
         stop_sequences: Optional[Sequence[str]] = None,
-    ) -> Optional[TextGenModelOutput]:
+    ) -> Optional[TextGenModelOutput | list[TextGenModelOutput]]:
         model_input = TextBisonModelInput(prompt)
         res = await self._generate(
             model_input,
@@ -304,7 +304,7 @@ class PalmCodeBisonModel(PalmCodeGenBaseModel):
         top_k: int = 40,
         candidate_count: int = 1,
         stop_sequences: Optional[Sequence[str]] = None,
-    ) -> Optional[TextGenModelOutput]:
+    ) -> Optional[TextGenModelOutput | list[TextGenModelOutput]]:
         model_input = CodeBisonModelInput(prompt)
         res = await self._generate(
             model_input,
@@ -360,7 +360,7 @@ class PalmCodeGeckoModel(PalmCodeGenBaseModel):
         candidate_count: int = 1,
         stop_sequences: Optional[Sequence[str]] = None,
         code_context: Optional[list[str]] = None,
-    ) -> Optional[TextGenModelOutput]:
+    ) -> Optional[TextGenModelOutput | list[TextGenModelOutput]]:
         model_input = CodeGeckoModelInput(prompt, suffix)
 
         if not stop_sequences:
