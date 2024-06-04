@@ -322,6 +322,11 @@ UGw3kIW+604fnnXLDm4TaLA=
         self,
         jwks_response_body,
     ):
+        # pylint: disable=direct-environment-variable-reference
+        os.environ.pop("AIGW_SELF_SIGNED_JWT__SIGNING_KEY", None)
+        os.environ.pop("AIGW_SELF_SIGNED_JWT__VALIDATION_KEY", None)
+        # pylint: enable=direct-environment-variable-reference
+
         well_known_test_response = responses.get(
             "http://test.com/.well-known/openid-configuration",
             body='{"jwks_uri": "http://test.com/oauth/discovery/keys"}',
@@ -385,13 +390,13 @@ UGw3kIW+604fnnXLDm4TaLA=
     ):
         # pylint: disable=direct-environment-variable-reference
         if jwt_signing_key:
-            os.environ["JWT_SIGNING_KEY"] = jwt_signing_key
+            os.environ["AIGW_SELF_SIGNED_JWT__SIGNING_KEY"] = jwt_signing_key
         else:
-            os.environ.pop("JWT_SIGNING_KEY", None)
+            os.environ.pop("AIGW_SELF_SIGNED_JWT__SIGNING_KEY", None)
         if jwt_validation_key:
-            os.environ["JWT_VALIDATION_KEY"] = jwt_validation_key
+            os.environ["AIGW_SELF_SIGNED_JWT__VALIDATION_KEY"] = jwt_validation_key
         else:
-            os.environ.pop("JWT_VALIDATION_KEY", None)
+            os.environ.pop("AIGW_SELF_SIGNED_JWT__VALIDATION_KEY", None)
         # pylint: enable=direct-environment-variable-reference
 
         auth_provider = CompositeProvider([LocalAuthProvider()])
@@ -412,8 +417,8 @@ UGw3kIW+604fnnXLDm4TaLA=
 
     def test_missing_environment_variables_error(self):
         # pylint: disable=direct-environment-variable-reference
-        os.environ.pop("JWT_SIGNING_KEY", None)
-        os.environ.pop("JWT_VALIDATION_KEY", None)
+        os.environ.pop("AIGW_SELF_SIGNED_JWT__SIGNING_KEY", None)
+        os.environ.pop("AIGW_SELF_SIGNED_JWT__VALIDATION_KEY", None)
         # pylint: enable=direct-environment-variable-reference
 
         auth_provider = CompositeProvider([LocalAuthProvider()])
@@ -504,8 +509,10 @@ UGw3kIW+604fnnXLDm4TaLA=
         )
 
         # pylint: disable=direct-environment-variable-reference
-        os.environ["JWT_SIGNING_KEY"] = self.private_key_ai_gateway_signing_key_test
-        os.environ["JWT_VALIDATION_KEY"] = (
+        os.environ["AIGW_SELF_SIGNED_JWT__SIGNING_KEY"] = (
+            self.private_key_ai_gateway_signing_key_test
+        )
+        os.environ["AIGW_SELF_SIGNED_JWT__VALIDATION_KEY"] = (
             self.private_key_ai_gateway_validation_key_test
         )
         # pylint: enable=direct-environment-variable-reference

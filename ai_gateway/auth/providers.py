@@ -111,9 +111,12 @@ class LocalAuthProvider(JwksProvider):
 
         try:
             # pylint: disable=direct-environment-variable-reference
-            if environ.get("JWT_SIGNING_KEY"):
+            if environ.get("AIGW_SELF_SIGNED_JWT__SIGNING_KEY"):
                 signing_key = (
-                    jwk.RSAKey(algorithm=self.ALGORITHM, key=environ["JWT_SIGNING_KEY"])
+                    jwk.RSAKey(
+                        algorithm=self.ALGORITHM,
+                        key=environ["AIGW_SELF_SIGNED_JWT__SIGNING_KEY"],
+                    )
                     .public_key()
                     .to_dict()
                 )
@@ -131,10 +134,11 @@ class LocalAuthProvider(JwksProvider):
 
         try:
             # pylint: disable=direct-environment-variable-reference
-            if environ.get("JWT_VALIDATION_KEY"):
+            if environ.get("AIGW_SELF_SIGNED_JWT__VALIDATION_KEY"):
                 validation_key = (
                     jwk.RSAKey(
-                        algorithm=self.ALGORITHM, key=environ["JWT_VALIDATION_KEY"]
+                        algorithm=self.ALGORITHM,
+                        key=environ["AIGW_SELF_SIGNED_JWT__VALIDATION_KEY"],
                     )
                     .public_key()
                     .to_dict()
