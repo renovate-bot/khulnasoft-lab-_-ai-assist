@@ -90,7 +90,9 @@ class LLM(TextGenBaseModel):
         suffix: Optional[str] = None,
         stream: bool = False,
         **kwargs: Any,
-    ) -> TextGenModelOutput | AsyncIterator[TextGenModelChunk]:
+    ) -> (
+        TextGenModelOutput | list[TextGenModelOutput] | AsyncIterator[TextGenModelChunk]
+    ):
         scope = {
             "prefix": prefix,
             "suffix": suffix,

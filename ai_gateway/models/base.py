@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 from enum import Enum
-from typing import Any, AsyncIterator, NamedTuple, Optional, Union
+from typing import Any, AsyncIterator, NamedTuple, Optional
 
 import structlog
 from anthropic import AsyncAnthropic
@@ -137,7 +137,9 @@ class TextGenBaseModel(ABC):
         max_output_tokens: int = 16,
         top_p: float = 0.95,
         top_k: int = 40,
-    ) -> Union[TextGenModelOutput, AsyncIterator[TextGenModelChunk]]:
+    ) -> (
+        TextGenModelOutput | list[TextGenModelOutput] | AsyncIterator[TextGenModelChunk]
+    ):
         pass
 
 
