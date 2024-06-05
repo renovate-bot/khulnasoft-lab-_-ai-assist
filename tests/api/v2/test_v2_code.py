@@ -680,7 +680,7 @@ class TestCodeCompletions:
         assert args[0] == expected_event
 
     @pytest.mark.parametrize(
-        ("auth_user", "expected_status_code"),
+        ("auth_user", "extra_headers", "expected_status_code"),
         [
             (
                 User(
@@ -691,6 +691,7 @@ class TestCodeCompletions:
                         gitlab_realm="self-managed",
                     ),
                 ),
+                {"X-GitLab-Instance-Id": "1234"},
                 200,
             ),
             (
@@ -703,6 +704,7 @@ class TestCodeCompletions:
                         issuer="gitlab-ai-gateway",
                     ),
                 ),
+                {"X-Gitlab-Global-User-Id": "1234"},
                 200,
             ),
         ],
@@ -712,6 +714,7 @@ class TestCodeCompletions:
         mock_client: TestClient,
         mock_container: containers.DeclarativeContainer,
         auth_user: User,
+        extra_headers: Dict[str, str],
         expected_status_code: int,
     ):
         code_completions_mock = mock.Mock(spec=CodeCompletions)
@@ -748,9 +751,9 @@ class TestCodeCompletions:
                 headers={
                     "Authorization": "Bearer 12345",
                     "X-Gitlab-Authentication-Type": "oidc",
-                    "X-GitLab-Instance-Id": "1234",
                     "X-GitLab-Realm": "self-managed",
-                },
+                }
+                | extra_headers,
                 json=data,
             )
 
@@ -1362,7 +1365,7 @@ class TestUnauthorizedIssuer:
             headers={
                 "Authorization": "Bearer 12345",
                 "X-Gitlab-Authentication-Type": "oidc",
-                "X-GitLab-Instance-Id": "1234",
+                "X-Gitlab-Global-User-Id": "1234",
                 "X-GitLab-Realm": "self-managed",
             },
             json={

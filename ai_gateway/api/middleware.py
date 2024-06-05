@@ -28,6 +28,7 @@ from ai_gateway.api.timing import timing
 from ai_gateway.auth import AuthProvider, UserClaims
 from ai_gateway.auth.user import GitLabUser
 from ai_gateway.instrumentators.base import Telemetry, TelemetryInstrumentator
+from ai_gateway.self_signed_jwt.token_authority import SELF_SIGNED_TOKEN_ISSUER
 from ai_gateway.tracking.errors import log_exception
 
 __all__ = [
@@ -235,7 +236,11 @@ class MiddlewareAuthentication(Middleware):
         def _validate_headers(self, claims, headers):
             claim_header_mapping = {
                 "gitlab_realm": X_GITLAB_REALM_HEADER,
-                "subject": X_GITLAB_INSTANCE_ID_HEADER,
+                "subject": (
+                    X_GITLAB_GLOBAL_USER_ID_HEADER
+                    if claims.issuer == SELF_SIGNED_TOKEN_ISSUER
+                    else X_GITLAB_INSTANCE_ID_HEADER
+                ),
             }
 
             for claim, header in claim_header_mapping.items():

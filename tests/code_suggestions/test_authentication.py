@@ -352,6 +352,52 @@ invalid_authentication_token_type_error = {
             },
             ["auth_duration_s"],
         ),
+        (
+            {
+                "Authorization": "Bearer 12345",
+                "X-Gitlab-Authentication-Type": "oidc",
+                "X-GitLab-Instance-Id": "1234",
+                "X-GitLab-Realm": "self-managed",
+            },
+            None,
+            401,
+            User(
+                authenticated=True,
+                claims=UserClaims(
+                    scopes=["feature1", "feature3"],
+                    subject="1234",
+                    issuer="gitlab-ai-gateway",
+                    gitlab_realm="self-managed",
+                ),
+            ),
+            {"error": "Header mismatch 'X-Gitlab-Global-User-Id'"},
+            ["auth_duration_s", "auth_error_details"],
+        ),
+        (
+            {
+                "Authorization": "Bearer 12345",
+                "X-Gitlab-Authentication-Type": "oidc",
+                "X-Gitlab-Global-User-Id": "1234",
+                "X-GitLab-Realm": "self-managed",
+            },
+            None,
+            200,
+            User(
+                authenticated=True,
+                claims=UserClaims(
+                    scopes=["feature1", "feature3"],
+                    subject="1234",
+                    issuer="gitlab-ai-gateway",
+                    gitlab_realm="self-managed",
+                ),
+            ),
+            {
+                "authenticated": True,
+                "is_debug": False,
+                "scopes": ["feature1", "feature3"],
+            },
+            ["auth_duration_s"],
+        ),
     ],
 )
 def test_failed_authorization_logging(

@@ -887,7 +887,7 @@ class TestUnauthorizedIssuer:
             headers={
                 "Authorization": "Bearer 12345",
                 "X-Gitlab-Authentication-Type": "oidc",
-                "X-GitLab-Instance-Id": "1234",
+                "X-Gitlab-Global-User-Id": "1234",
                 "X-GitLab-Realm": "self-managed",
             },
             json={
