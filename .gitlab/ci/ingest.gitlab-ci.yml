@@ -5,7 +5,7 @@
     GITLAB_DOCS_REPO: "https://gitlab.com/gitlab-org/gitlab.git"
     GITLAB_DOCS_REPO_REF: "master"
     GITLAB_DOCS_CLONE_DIR: "/tmp/gitlab-org/gitlab"
-    GITLAB_DOCS_JSONL_EXPORT_PATH: "/tmp/gitlab-org/gitlab/docs.jsonl"
+    GITLAB_DOCS_JSONL_EXPORT_PATH: "$CI_PROJECT_DIR/docs.jsonl"
     GITLAB_DOCS_WEB_ROOT_URL: "https://gitlab.com/help"
   needs: [build:ingest-image]
 
@@ -65,3 +65,8 @@ ingest:dry-run:
     - cd /app && make ingest INGEST_DRY_RUN=true
   rules:
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+  artifacts:
+    # can only pack files inside $CI_PROJECT_DIR
+    # https://docs.gitlab.com/ee/ci/yaml/index.html#artifactspaths
+    paths:
+    - $GITLAB_DOCS_JSONL_EXPORT_PATH
