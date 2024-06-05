@@ -75,6 +75,10 @@ def remove_whitespace(text: str) -> str:
 
 
 class TextGenModelInstrumentator:
+    # Code Completions currently returns multiple completion suggestions while code
+    # generations returns one. For most of these properties, we return the data from
+    # the first suggestion, except for model_output_length which aggregates the
+    # length of all suggestions. Cautiously use this WatchContainer
     class WatchContainer:
         def __init__(self, **kwargs: Any):
             self.__dict__.update(**kwargs)
@@ -95,10 +99,12 @@ class TextGenModelInstrumentator:
         def register_model_output_length(self, model_output: str):
             self.__dict__.update(
                 {
-                    "model_output_length": len(model_output),
-                    "model_output_length_stripped": len(
-                        remove_whitespace(model_output)
-                    ),
+                    "model_output_length": self.__dict__.get("model_output_length", 0)
+                    + len(model_output),
+                    "model_output_length_stripped": self.__dict__.get(
+                        "model_output_length_stripped", 0
+                    )
+                    + len(remove_whitespace(model_output)),
                 }
             )
 
