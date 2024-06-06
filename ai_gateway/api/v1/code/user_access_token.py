@@ -56,9 +56,7 @@ async def user_access_token(
         )
 
     try:
-        token, expires_at = token_authority.encode(
-            request.headers.get(X_GITLAB_GLOBAL_USER_ID_HEADER)
-        )
+        token, expires_at = token_authority.encode(gitlab_user_id, gitlab_realm)
     except Exception:
         raise HTTPException(status_code=500, detail="Failed to generate JWT")
 
