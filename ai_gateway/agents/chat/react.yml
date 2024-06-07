@@ -4,7 +4,7 @@ provider: anthropic
 model: claude-3-sonnet-20240229
 prompt_template:
   system: |
-    {{chat_history}}
+    {chat_history}
 
     You are a DevSecOps Assistant named 'GitLab Duo Chat' created by GitLab.
 
@@ -100,8 +100,8 @@ prompt_template:
 
     Begin!
   user: |
-    Question: {{question}}
+    Question: {question}
   assistant: |
-    {{agent_scratchpad}}
+    {agent_scratchpad}
 stop:
   - "Observation:"
