@@ -478,6 +478,100 @@ class TestCodeCompletions:
                 assert cap_logs[-1]["duration_request"] == -1
 
     @pytest.mark.parametrize(
+        (
+            "prompt_version",
+            "prefix",
+            "model_provider",
+            "model_name",
+            "model_endpoint",
+            "model_api_key",
+            "model_output_text",
+            "want_litellm_called",
+            "want_status",
+            "want_choices",
+        ),
+        [
+            # test litellm completions
+            (
+                2,
+                "foo",
+                "litellm",
+                "codegemma",
+                "http://localhost:4000/",
+                "api-key",
+                "foo",
+                True,
+                200,
+                [{"text": "foo", "index": 0, "finish_reason": "length"}],
+            ),
+        ],
+    )
+    def test_non_stream_response(
+        self,
+        mock_client,
+        mock_container: containers.DeclarativeContainer,
+        prompt_version,
+        prefix,
+        model_provider,
+        model_name,
+        model_endpoint,
+        model_api_key,
+        model_output_text,
+        want_litellm_called,
+        want_status,
+        want_choices,
+    ):
+        model_output = CodeSuggestionsOutput(
+            text=model_output_text,
+            score=0,
+            model=ModelMetadata(name="some-model", engine="some-engine"),
+            lang_id=LanguageId.PYTHON,
+            metadata=CodeSuggestionsOutput.Metadata(
+                experiments=[],
+            ),
+        )
+
+        code_completions_litellm_mock = mock.Mock(spec=CodeCompletions)
+        code_completions_litellm_mock.execute = mock.AsyncMock(
+            return_value=model_output
+        )
+
+        with mock_container.code_suggestions.completions.litellm_factory.override(
+            code_completions_litellm_mock
+        ):
+            response = mock_client.post(
+                "/code/completions",
+                headers={
+                    "Authorization": "Bearer 12345",
+                    "X-Gitlab-Authentication-Type": "oidc",
+                    "X-GitLab-Instance-Id": "1234",
+                    "X-GitLab-Realm": "self-managed",
+                },
+                json={
+                    "prompt_version": prompt_version,
+                    "project_path": "gitlab-org/gitlab",
+                    "project_id": 278964,
+                    "current_file": {
+                        "file_name": "main.py",
+                        "content_above_cursor": prefix,
+                        "content_below_cursor": "\n",
+                    },
+                    "prompt": "",
+                    "model_provider": model_provider,
+                    "model_name": model_name,
+                    "model_endpoint": model_endpoint,
+                    "model_api_key": model_api_key,
+                },
+            )
+
+        assert response.status_code == want_status
+        assert code_completions_litellm_mock.execute.called == want_litellm_called
+
+        if want_status == 200:
+            body = response.json()
+            assert body["choices"] == want_choices
+
+    @pytest.mark.parametrize(
         ("model_chunks", "expected_response"),
         [
             (
