@@ -73,7 +73,11 @@ def auth_user():
     )
 
 
-def test_user_access_token_success(mock_client: TestClient):
+@pytest.mark.parametrize(
+    "gitlab_realm",
+    ["self-managed", "saas"],
+)
+def test_user_access_token_success(mock_client: TestClient, gitlab_realm):
     container = ContainerApplication()
     with container.self_signed_jwt.config.override(
         {"self_signed_jwt": {"signing_key": TEST_PRIVATE_KEY}}
@@ -85,7 +89,7 @@ def test_user_access_token_success(mock_client: TestClient):
                 "Authorization": "Bearer 12345",
                 "X-Gitlab-Authentication-Type": "oidc",
                 "X-GitLab-Instance-Id": "1234",
-                "X-Gitlab-Realm": "self-managed",
+                "X-Gitlab-Realm": gitlab_realm,
             },
         )
         assert response.status_code == status.HTTP_200_OK
@@ -111,7 +115,7 @@ def test_user_access_token_success(mock_client: TestClient):
         assert decoded_token["nbf"] <= current_time_posix
         assert decoded_token["iat"] <= current_time_posix
         assert decoded_token["jti"]
-        assert decoded_token["gitlab_realm"] == "self-managed"
+        assert decoded_token["gitlab_realm"] == gitlab_realm
         assert decoded_token["scopes"] == ["code_suggestions"]
         assert parsed_response["expires_at"] == decoded_token["exp"]
 
