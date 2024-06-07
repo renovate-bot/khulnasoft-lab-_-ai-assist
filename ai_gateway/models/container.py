@@ -9,7 +9,7 @@ from ai_gateway.config import ConfigModelConcurrency
 from ai_gateway.models import mock
 from ai_gateway.models.anthropic import AnthropicChatModel, AnthropicModel
 from ai_gateway.models.base import connect_anthropic, grpc_connect_vertex
-from ai_gateway.models.litellm import LiteLlmChatModel
+from ai_gateway.models.litellm import LiteLlmChatModel, LiteLlmTextGenModel
 from ai_gateway.models.vertex_text import (
     PalmCodeBisonModel,
     PalmCodeGeckoModel,
@@ -159,7 +159,16 @@ class ContainerModels(containers.DeclarativeContainer):
         mocked=providers.Factory(mock.ChatModel),
     )
 
-    litellm = providers.Selector(
+    llmlite = providers.Selector(
+        _mock_selector,
+        original=providers.Factory(
+            LiteLlmTextGenModel.from_model_name,
+            custom_models_enabled=config.custom_models.enabled,
+        ),
+        mocked=providers.Factory(mock.ChatModel),
+    )
+
+    llmlite_chat = providers.Selector(
         _mock_selector,
         original=providers.Factory(
             LiteLlmChatModel.from_model_name,

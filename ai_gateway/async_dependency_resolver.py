@@ -48,6 +48,10 @@ async def get_code_suggestions_completions_anthropic_provider():
     yield get_container_application().code_suggestions.completions.anthropic
 
 
+async def get_code_suggestions_completions_litellm_factory_provider():
+    yield get_container_application().code_suggestions.completions.litellm_factory
+
+
 async def get_snowplow_instrumentator():
     yield get_container_application().snowplow.instrumentator()
 

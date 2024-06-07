@@ -28,6 +28,7 @@ from ai_gateway.api.v2.code.typing import (
 )
 from ai_gateway.async_dependency_resolver import (
     get_code_suggestions_completions_anthropic_provider,
+    get_code_suggestions_completions_litellm_factory_provider,
     get_code_suggestions_completions_vertex_legacy_provider,
     get_code_suggestions_generations_anthropic_chat_factory_provider,
     get_code_suggestions_generations_anthropic_factory_provider,
@@ -84,6 +85,9 @@ async def completions(
     completions_anthropic_factory: Factory[CodeCompletions] = Depends(
         get_code_suggestions_completions_anthropic_provider
     ),
+    completions_litellm_factory: Factory[CodeCompletions] = Depends(
+        get_code_suggestions_completions_litellm_factory_provider
+    ),
     snowplow_instrumentator: SnowplowInstrumentator = Depends(
         get_snowplow_instrumentator
     ),
@@ -124,6 +128,15 @@ async def completions(
 
         if isinstance(suggestions[0], AsyncIterator):
             return await _handle_stream(suggestions[0])
+    elif payload.model_provider == KindModelProvider.LITELLM:
+        code_completions = completions_litellm_factory(
+            model__name=payload.model_name,
+            model__endpoint=payload.model_endpoint,
+        )
+
+        suggestions = [
+            await _execute_code_completion(payload, code_completions, **kwargs)
+        ]
     else:
         code_completions = completions_legacy_factory()
         if payload.choices_count > 0:

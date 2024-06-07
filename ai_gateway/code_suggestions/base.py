@@ -51,6 +51,7 @@ USE_CASES_MODELS_MAP = {
         KindVertexTextModel.CODE_GECKO_002,
         KindLiteLlmModel.MISTRAL,
         KindLiteLlmModel.MIXTRAL,
+        KindLiteLlmModel.CODE_GEMMA,
     },
     KindUseCase.CODE_GENERATIONS: {
         KindAnthropicModel.CLAUDE_2_0,
