@@ -17,7 +17,8 @@ def _react_agent_factory(
     agent_registry: BaseAgentRegistry,
 ) -> TypeAgentFactory[ReActAgentInputs, TypeReActAgentAction]:
     def _fn(tools: Sequence[BaseTool], inputs: ReActAgentInputs) -> ReActAgent:
-        options = {}
+        options = {"tools": tools}
+
         if context := inputs.context:
             options.update(
                 {"context_type": context.type, "context_content": context.content}
