@@ -47,7 +47,7 @@ from ai_gateway.gitlab_features import GitLabFeatureCategory, GitLabUnitPrimitiv
 from ai_gateway.instrumentators.base import TelemetryInstrumentator
 from ai_gateway.models import KindAnthropicModel, KindModelProvider
 from ai_gateway.self_signed_jwt.token_authority import SELF_SIGNED_TOKEN_ISSUER
-from ai_gateway.tracking import RequestCount, SnowplowEvent, SnowplowEventContext
+from ai_gateway.tracking import SnowplowEvent, SnowplowEventContext
 from ai_gateway.tracking.errors import log_exception
 from ai_gateway.tracking.instrumentator import SnowplowInstrumentator
 
@@ -314,26 +314,22 @@ def _suggestion_requested_snowplow_event(
     if not gitlab_realm and req.user and req.user.claims:
         gitlab_realm = req.user.claims.gitlab_realm
 
-    request_counts = [
-        RequestCount(
-            requests=stats.requests,
-            accepts=stats.accepts,
-            errors=stats.errors,
-            lang=stats.lang,
-            model_engine=stats.model_engine,
-            model_name=stats.model_name,
-        )
-        for stats in payload.telemetry
-    ]
+    is_direct_connection = False
+    if (
+        req.user
+        and req.user.claims
+        and req.user.claims.issuer == SELF_SIGNED_TOKEN_ISSUER
+    ):
+        is_direct_connection = True
 
     return SnowplowEvent(
         context=SnowplowEventContext(
-            request_counts=request_counts,
             prefix_length=len(payload.current_file.content_above_cursor),
             suffix_length=len(payload.current_file.content_below_cursor),
             language=language,
             user_agent=req.headers.get("User-Agent", ""),
             gitlab_realm=gitlab_realm if gitlab_realm else "",
+            is_direct_connection=is_direct_connection,
             gitlab_instance_id=req.headers.get(X_GITLAB_INSTANCE_ID_HEADER, ""),
             gitlab_global_user_id=req.headers.get(X_GITLAB_GLOBAL_USER_ID_HEADER, ""),
             gitlab_host_name=req.headers.get(X_GITLAB_HOST_NAME_HEADER, ""),

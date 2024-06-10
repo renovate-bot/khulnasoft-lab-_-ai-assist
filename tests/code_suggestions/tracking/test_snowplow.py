@@ -5,7 +5,6 @@ import pytest
 from snowplow_tracker import SelfDescribingJson, Snowplow, StructuredEvent
 
 from ai_gateway.tracking import (
-    RequestCount,
     SnowplowClient,
     SnowplowClientConfiguration,
     SnowplowEvent,
@@ -68,12 +67,12 @@ class TestSnowplowClient:
                     label="some label",
                     value=1,
                     context=SnowplowEventContext(
-                        request_counts=[],
                         prefix_length=2048,
                         suffix_length=1024,
                         language="python",
                         user_agent="vs-code-gitlab-workflow",
                         gitlab_realm="saas",
+                        is_direct_connection=True,
                         gitlab_instance_id="ABCDEF",
                         gitlab_global_user_id="123XYZ",
                         gitlab_host_name="gitlab.com",

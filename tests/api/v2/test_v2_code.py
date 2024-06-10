@@ -31,11 +31,7 @@ from ai_gateway.models.base import TokensConsumptionMetadata
 from ai_gateway.models.base_chat import Message, Role
 from ai_gateway.tracking.container import ContainerTracking
 from ai_gateway.tracking.instrumentator import SnowplowInstrumentator
-from ai_gateway.tracking.snowplow import (
-    RequestCount,
-    SnowplowEvent,
-    SnowplowEventContext,
-)
+from ai_gateway.tracking.snowplow import SnowplowEvent, SnowplowEventContext
 
 
 @pytest.fixture(scope="class")
@@ -48,7 +44,10 @@ def auth_user():
     return User(
         authenticated=True,
         claims=UserClaims(
-            scopes=["code_suggestions"], subject="1234", gitlab_realm="self-managed"
+            scopes=["code_suggestions"],
+            subject="1234",
+            gitlab_realm="self-managed",
+            issuer="issuer",
         ),
     )
 
@@ -551,6 +550,7 @@ class TestCodeCompletions:
 
     @pytest.mark.parametrize(
         (
+            "auth_user",
             "telemetry",
             "current_file",
             "request_headers",
@@ -558,6 +558,15 @@ class TestCodeCompletions:
         ),
         [
             (
+                User(
+                    authenticated=True,
+                    claims=UserClaims(
+                        scopes=["code_suggestions"],
+                        subject="1234",
+                        gitlab_realm="self-managed",
+                        issuer="gitlab-ai-gateway",
+                    ),
+                ),
                 [
                     {
                         "model_engine": "vertex",
@@ -576,7 +585,7 @@ class TestCodeCompletions:
                 {
                     "User-Agent": "vs-code",
                     "X-Gitlab-Instance-Id": "1234",
-                    "X-Gitlab-Global-User-Id": "XTuMnZ6XTWkP3yh0ZwXualmOZvm2Gg/bk9jyfkL7Y6k=",
+                    "X-Gitlab-Global-User-Id": "1234",
                     "X-Gitlab-Host-Name": "gitlab.com",
                     "X-Gitlab-Saas-Namespace-Ids": "1,2,3",
                     "X-Gitlab-Saas-Duo-Pro-Namespace-Ids": "4,5,6",
@@ -590,6 +599,7 @@ class TestCodeCompletions:
         self,
         mock_client: TestClient,
         mock_container: containers.DeclarativeContainer,
+        auth_user: User,
         telemetry: List[Dict[str, Union[str, int, None]]],
         current_file: Dict[str, str],
         expected_language: str,
@@ -597,12 +607,12 @@ class TestCodeCompletions:
     ):
         expected_event = SnowplowEvent(
             context=SnowplowEventContext(
-                request_counts=[RequestCount(**rc) for rc in telemetry],
                 prefix_length=len(current_file.get("content_above_cursor", "")),
                 suffix_length=len(current_file.get("content_below_cursor", "")),
                 language=expected_language,
                 user_agent=request_headers.get("User-Agent", ""),
                 gitlab_realm=request_headers.get("X-Gitlab-Realm", ""),
+                is_direct_connection=True,
                 gitlab_instance_id=request_headers.get("X-Gitlab-Instance-Id", ""),
                 gitlab_global_user_id=request_headers.get(
                     "X-Gitlab-Global-User-Id", ""
@@ -1232,12 +1242,12 @@ class TestCodeGenerations:
     ):
         expected_event = SnowplowEvent(
             context=SnowplowEventContext(
-                request_counts=[RequestCount(**rc) for rc in telemetry],
                 prefix_length=len(current_file.get("content_above_cursor", "")),
                 suffix_length=len(current_file.get("content_below_cursor", "")),
                 language=expected_language,
                 user_agent=request_headers.get("User-Agent", ""),
                 gitlab_realm=request_headers.get("X-Gitlab-Realm", ""),
+                is_direct_connection=False,
                 gitlab_instance_id=request_headers.get("X-Gitlab-Instance-Id", ""),
                 gitlab_global_user_id=request_headers.get(
                     "X-Gitlab-Global-User-Id", ""
