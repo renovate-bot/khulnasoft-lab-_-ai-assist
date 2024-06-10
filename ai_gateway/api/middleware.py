@@ -212,6 +212,7 @@ class MiddlewareAuthentication(Middleware):
             auth_provider = self._auth_provider(headers)
 
             user = auth_provider.authenticate(token)
+            context["token_issuer"] = user.claims.issuer
             # We will send this with an HTTP header field going forward since we are
             # retiring direct access to the gateway from clients, which was the main
             # reason this value was carried in the access token.

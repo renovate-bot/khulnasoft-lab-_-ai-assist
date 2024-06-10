@@ -6,7 +6,6 @@ from snowplow_tracker import AsyncEmitter, SelfDescribingJson, StructuredEvent, 
 
 __all__ = [
     "Client",
-    "RequestCount",
     "SnowplowClient",
     "SnowplowClientConfiguration",
     "SnowplowClientStub",
@@ -27,27 +26,15 @@ class SnowplowClientConfiguration:
 
 
 @dataclass
-class RequestCount:
-    """Acceptance, show and error counts for previous requests."""
-
-    requests: int
-    errors: int
-    accepts: int
-    lang: Optional[str]
-    model_engine: Optional[str]
-    model_name: Optional[str]
-
-
-@dataclass
 class SnowplowEventContext:
-    """Additional context that attached to SnowplowEvent."""
+    """Additional context attached to SnowplowEvent."""
 
-    request_counts: Optional[list[RequestCount]]
     prefix_length: int
     suffix_length: int
     language: str
     user_agent: str
     gitlab_realm: str
+    is_direct_connection: str
     gitlab_instance_id: str
     gitlab_global_user_id: str
     gitlab_host_name: str

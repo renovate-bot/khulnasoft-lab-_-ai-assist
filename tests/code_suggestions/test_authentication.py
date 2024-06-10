@@ -142,7 +142,7 @@ invalid_authentication_token_type_error = {
                 "is_debug": False,
                 "scopes": ["feature1", "feature3"],
             },
-            ["auth_duration_s"],
+            ["auth_duration_s", "token_issuer"],
         ),
         (
             {
@@ -166,7 +166,7 @@ invalid_authentication_token_type_error = {
                 "is_debug": False,
                 "scopes": ["feature2", "feature3"],
             },
-            ["auth_duration_s"],
+            ["auth_duration_s", "token_issuer"],
         ),
         (
             {
@@ -190,7 +190,7 @@ invalid_authentication_token_type_error = {
                 "is_debug": False,
                 "scopes": ["feature1", "feature2", "feature3"],
             },
-            ["auth_duration_s"],
+            ["auth_duration_s", "token_issuer"],
         ),
         (
             #  No scopes in the token
@@ -207,7 +207,7 @@ invalid_authentication_token_type_error = {
                 claims=UserClaims(subject="1234", gitlab_realm="self-managed"),
             ),
             {"detail": "Unauthorized to access homepage"},
-            ["auth_duration_s"],
+            ["auth_duration_s", "token_issuer"],
         ),
         (
             #  Missing feature3 scope
@@ -226,7 +226,7 @@ invalid_authentication_token_type_error = {
                 ),
             ),
             {"detail": "Unauthorized to access homepage"},
-            ["auth_duration_s"],
+            ["auth_duration_s", "token_issuer"],
         ),
         (
             # Missing feature1 or feature2 scopes
@@ -245,7 +245,7 @@ invalid_authentication_token_type_error = {
                 ),
             ),
             {"detail": "Unauthorized to access homepage"},
-            ["auth_duration_s"],
+            ["auth_duration_s", "token_issuer"],
         ),
         (
             # Invalid scope
@@ -266,7 +266,7 @@ invalid_authentication_token_type_error = {
                 ),
             ),
             {"detail": "Unauthorized to access homepage"},
-            ["auth_duration_s"],
+            ["auth_duration_s", "token_issuer"],
         ),
         (
             # Unauthorized user
@@ -287,7 +287,7 @@ invalid_authentication_token_type_error = {
                 ),
             ),
             {"error": "Forbidden by auth provider"},
-            ["auth_duration_s", "auth_error_details"],
+            ["auth_duration_s", "auth_error_details", "token_issuer"],
         ),
         (
             {
@@ -307,7 +307,7 @@ invalid_authentication_token_type_error = {
                 ),
             ),
             {"error": "Header mismatch 'X-Gitlab-Instance-Id'"},
-            ["auth_duration_s", "auth_error_details"],
+            ["auth_duration_s", "auth_error_details", "token_issuer"],
         ),
         (
             {
@@ -327,7 +327,7 @@ invalid_authentication_token_type_error = {
                 ),
             ),
             {"error": "Header mismatch 'X-Gitlab-Realm'"},
-            ["auth_duration_s", "auth_error_details"],
+            ["auth_duration_s", "auth_error_details", "token_issuer"],
         ),
         (
             # If JWT claim doesn't contain a value, the value header check is skipped
@@ -350,7 +350,7 @@ invalid_authentication_token_type_error = {
                 "is_debug": False,
                 "scopes": ["feature1", "feature3"],
             },
-            ["auth_duration_s"],
+            ["auth_duration_s", "token_issuer"],
         ),
         (
             {
@@ -371,7 +371,7 @@ invalid_authentication_token_type_error = {
                 ),
             ),
             {"error": "Header mismatch 'X-Gitlab-Global-User-Id'"},
-            ["auth_duration_s", "auth_error_details"],
+            ["auth_duration_s", "auth_error_details", "token_issuer"],
         ),
         (
             {
@@ -396,7 +396,7 @@ invalid_authentication_token_type_error = {
                 "is_debug": False,
                 "scopes": ["feature1", "feature3"],
             },
-            ["auth_duration_s"],
+            ["auth_duration_s", "token_issuer"],
         ),
     ],
 )
