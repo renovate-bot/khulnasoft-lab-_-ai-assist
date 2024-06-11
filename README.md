@@ -240,6 +240,10 @@ For more information and assistance, please check out:
 - [Runway - Issue Tracker](https://gitlab.com/groups/gitlab-com/gl-infra/platform/runway/-/issues)
 - `#f_runway` in Slack.
 
+## Release
+
+See [release doc](./docs/release.md).
+
 ## Rate limiting
 
 Access to AI Gateway is subjected to rate limiting defined as part of https://gitlab.com/gitlab-com/gl-infra/scalability/-/issues/2719#note_1780449328.
