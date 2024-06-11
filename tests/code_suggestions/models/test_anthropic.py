@@ -10,22 +10,20 @@ from anthropic import (
     BadRequestError,
     UnprocessableEntityError,
 )
-from anthropic.types import (
-    Completion,
-    ContentBlock,
-    ContentBlockDeltaEvent,
-    ContentBlockStartEvent,
-    ContentBlockStopEvent,
-)
+from anthropic.types import Completion
 from anthropic.types import Message as AMessage
 from anthropic.types import (
-    MessageDeltaEvent,
     MessageDeltaUsage,
-    MessageStartEvent,
-    MessageStopEvent,
+    RawContentBlockDeltaEvent,
+    RawContentBlockStartEvent,
+    RawContentBlockStopEvent,
+    RawMessageDeltaEvent,
+    RawMessageStartEvent,
+    RawMessageStopEvent,
+    TextBlock,
     TextDelta,
     Usage,
-    message_delta_event,
+    raw_message_delta_event,
 )
 
 from ai_gateway.models import (
@@ -657,7 +655,7 @@ class TestAnthropicChatModel:
         def _client_predict(*_args, **_kwargs):
             return AMessage(
                 id="msg_01PE3CarfxWEG2taV9AygzH9",
-                content=[ContentBlock(text=suggestion, type="text")],
+                content=[TextBlock(text=suggestion, type="text")],
                 model=model_name_version,
                 role="assistant",
                 stop_reason="end_turn",
@@ -723,7 +721,7 @@ class TestAnthropicChatModel:
     async def test_anthropic_model_generate_stream_instrumented(self):
         async def mock_stream(*args, **kwargs):
             completions = [
-                MessageStartEvent(
+                RawMessageStartEvent(
                     message=AMessage(
                         id="msg_01PE3CarfxWEG2taV9AygzH9",
                         content=[],
@@ -736,12 +734,12 @@ class TestAnthropicChatModel:
                     ),
                     type="message_start",
                 ),
-                ContentBlockStartEvent(
-                    content_block=ContentBlock(text="", type="text"),
+                RawContentBlockStartEvent(
+                    content_block=TextBlock(text="", type="text"),
                     index=0,
                     type="content_block_start",
                 ),
-                ContentBlockDeltaEvent(
+                RawContentBlockDeltaEvent(
                     delta=TextDelta(text="It's", type="text_delta"),
                     index=0,
                     type="content_block_delta",
@@ -799,7 +797,7 @@ class TestAnthropicChatModel:
                     Message(role=Role.USER, content="write code"),
                 ],
                 [
-                    MessageStartEvent(
+                    RawMessageStartEvent(
                         message=AMessage(
                             id="msg_01PE3CarfxWEG2taV9AygzH9",
                             content=[],
@@ -812,30 +810,30 @@ class TestAnthropicChatModel:
                         ),
                         type="message_start",
                     ),
-                    ContentBlockStartEvent(
-                        content_block=ContentBlock(text="", type="text"),
+                    RawContentBlockStartEvent(
+                        content_block=TextBlock(text="", type="text"),
                         index=0,
                         type="content_block_start",
                     ),
-                    ContentBlockDeltaEvent(
+                    RawContentBlockDeltaEvent(
                         delta=TextDelta(text="def hello_", type="text_delta"),
                         index=0,
                         type="content_block_delta",
                     ),
-                    ContentBlockDeltaEvent(
+                    RawContentBlockDeltaEvent(
                         delta=TextDelta(text="world():", type="text_delta"),
                         index=0,
                         type="content_block_delta",
                     ),
-                    ContentBlockStopEvent(index=0, type="content_block_stop"),
-                    MessageDeltaEvent(
-                        delta=message_delta_event.Delta(
+                    RawContentBlockStopEvent(index=0, type="content_block_stop"),
+                    RawMessageDeltaEvent(
+                        delta=raw_message_delta_event.Delta(
                             stop_reason="end_turn", stop_sequence=None
                         ),
                         type="message_delta",
                         usage=MessageDeltaUsage(output_tokens=57),
                     ),
-                    MessageStopEvent(type="message_stop"),
+                    RawMessageStopEvent(type="message_stop"),
                 ],
                 [
                     "def hello_",
