@@ -38,7 +38,7 @@ Process flow:
 1. The OIDC provider authenticates the request and returns JWT.
 1. The client requests to the AI Gateway to access a feature with the JWT.
 1. AI Gateway attempts to decode the JWT with JWKS provided by trusted OIDC providers.
-   These JWKS are cached in AI Gateway so that it doesn't need to request to OIDC providers everytime.
+   These JWKS are cached in AI Gateway so that it doesn't need to request to OIDC providers every time.
 1. Same
 1. Same
 1. If AI Gateway successfully decodes the JWT, the client request is authenticated and passed to the feature endpoints (e.g. `POST /v1/chat/agent`).

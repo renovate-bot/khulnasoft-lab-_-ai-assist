@@ -112,7 +112,7 @@ class RubyCounterVisitor(BaseCounterVisitor, RubyParserMixin):
             # with children and one without. For example:
             #
             # module Foo
-            #   def initalize(self):
+            #   def initialize(self):
             #   end
             # end
             #
