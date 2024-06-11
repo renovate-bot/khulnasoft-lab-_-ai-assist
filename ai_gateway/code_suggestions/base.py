@@ -62,6 +62,7 @@ USE_CASES_MODELS_MAP = {
         KindAnthropicModel.CLAUDE_3_HAIKU,
         KindLiteLlmModel.MISTRAL,
         KindLiteLlmModel.MIXTRAL,
+        KindLiteLlmModel.CODE_GEMMA,
     },
 }
 

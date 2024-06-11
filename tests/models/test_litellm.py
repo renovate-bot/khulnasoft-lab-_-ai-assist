@@ -13,6 +13,7 @@ class TestKindLiteLlmModel:
     def test_chat_model(self):
         assert KindLiteLlmModel.MISTRAL.chat_model() == "openai/mistral"
         assert KindLiteLlmModel.MIXTRAL.chat_model() == "openai/mixtral"
+        assert KindLiteLlmModel.CODE_GEMMA.chat_model() == "openai/codegemma"
 
     def test_text_model(self):
         assert (
