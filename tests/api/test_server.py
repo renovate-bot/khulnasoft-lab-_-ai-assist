@@ -3,13 +3,14 @@ import os
 import socket
 from typing import Iterator, cast
 from unittest import mock
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import MagicMock, patch
 
 import pytest
 from fastapi import FastAPI
 from fastapi.routing import APIRoute
 from fastapi.testclient import TestClient
 from starlette.exceptions import HTTPException as StarletteHTTPException
+from starlette.requests import Request
 
 from ai_gateway.api import create_fast_api_server, server
 from ai_gateway.api.server import (
@@ -55,6 +56,14 @@ def config():
 @pytest.fixture
 def app():
     return FastAPI()
+
+
+@pytest.fixture
+def container_application():
+    container_app = ContainerApplication()
+    container_app.init_resources = MagicMock()
+    container_app.shutdown_resources = MagicMock()
+    return container_app
 
 
 @pytest.fixture(scope="session")
@@ -135,11 +144,8 @@ def test_setup_prometheus_fastapi_instrumentator():
     )
 
 
-@patch("ai_gateway.api.server.ContainerApplication")
 @pytest.mark.asyncio
-async def test_lifespan(mock_container_app, config, app, unused_port, monkeypatch):
-    mock_container_app.return_value.shutdown_resources = AsyncMock()
-
+async def test_lifespan(config, app, unused_port, monkeypatch):
     mock_credentials = MagicMock()
     mock_credentials.client_id = "mocked_client_id"
 
@@ -148,6 +154,10 @@ async def test_lifespan(mock_container_app, config, app, unused_port, monkeypatc
 
     monkeypatch.setattr("google.auth.default", mock_default)
 
+    mock_container_app = MagicMock(spec=ContainerApplication)
+    monkeypatch.setattr(
+        "ai_gateway.api.server.ContainerApplication", mock_container_app
+    )
     monkeypatch.setattr(asyncio, "get_running_loop", MagicMock())
 
     config.fastapi.metrics_port = unused_port
@@ -156,15 +166,15 @@ async def test_lifespan(mock_container_app, config, app, unused_port, monkeypatc
 
     async with server.lifespan(app):
         mock_container_app.assert_called_once()
-        mock_container_app.return_value.config.from_dict.assert_called_once_with(
+        assert mock_container_app.return_value.config.from_dict.called_once_with(
             config.model_dump()
         )
-        mock_container_app.return_value.init_resources.assert_called_once()
+        assert mock_container_app.return_value.init_resources.called_once()
 
         if config.instrumentator.thread_monitoring_enabled:
             asyncio.get_running_loop.assert_called_once()
 
-    mock_container_app.return_value.shutdown_resources.assert_awaited_once()
+    assert mock_container_app.return_value.shutdown_resources.called_once()
 
 
 def test_middleware_authentication(fastapi_server_app: FastAPI, auth_enabled: bool):

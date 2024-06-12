@@ -1,4 +1,4 @@
-from typing import AsyncIterator
+from typing import Iterator
 
 from anthropic import AsyncAnthropic
 from dependency_injector import containers, providers
@@ -10,12 +10,12 @@ __all__ = [
 ]
 
 
-async def _init_anthropic_client() -> AsyncIterator[AsyncAnthropic]:
+def _init_anthropic_client() -> Iterator[AsyncAnthropic]:
     async_client = AsyncAnthropic()
 
     yield async_client
 
-    await async_client.close()
+    async_client.close()
 
 
 class ContainerModels(containers.DeclarativeContainer):

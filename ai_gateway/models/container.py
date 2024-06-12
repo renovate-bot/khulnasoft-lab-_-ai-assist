@@ -1,4 +1,4 @@
-from typing import AsyncIterator, Optional
+from typing import Iterator, Optional
 
 import httpx
 from anthropic import AsyncAnthropic
@@ -22,28 +22,28 @@ __all__ = [
 ]
 
 
-async def _init_vertex_grpc_client(
+def _init_vertex_grpc_client(
     endpoint: str, mock_model_responses: bool
-) -> AsyncIterator[Optional[PredictionServiceAsyncClient]]:
+) -> Iterator[Optional[PredictionServiceAsyncClient]]:
     if mock_model_responses:
         yield None
         return
 
     client = grpc_connect_vertex({"api_endpoint": endpoint})
     yield client
-    await client.transport.close()
+    client.transport.close()
 
 
-async def _init_anthropic_client(
+def _init_anthropic_client(
     mock_model_responses: bool,
-) -> AsyncIterator[Optional[AsyncAnthropic]]:
+) -> Iterator[Optional[AsyncAnthropic]]:
     if mock_model_responses:
         yield None
         return
 
     client = connect_anthropic()
     yield client
-    await client.close()
+    client.close()
 
 
 async def _init_anthropic_proxy_client(
