@@ -30,7 +30,7 @@ def _get_data_store_id(gl_version: str) -> str:
     return f"{SEARCH_APP_NAME}-{data_store_version}"
 
 
-# TODO: Both Vertex Model API and Search API use the same error hierachy under the hood via
+# TODO: Both Vertex Model API and Search API use the same error hierarchy under the hood via
 # google-api-core (https://googleapis.dev/python/google-api-core/latest/). We would need to
 # extract ModelAPIError to a common module that can be shared between /searches and /models
 # module.

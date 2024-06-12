@@ -1,6 +1,6 @@
 # Application settings
 
-All of the appllication settings should be defined in `example.env`, which is a list of environment variables
+All of the application settings should be defined in `example.env`, which is a list of environment variables
 with a specific format.
 
 ## How to add a new setting

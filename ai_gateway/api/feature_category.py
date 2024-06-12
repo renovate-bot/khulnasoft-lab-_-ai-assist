@@ -44,7 +44,7 @@ def feature_categories(mapping: dict[GitLabUnitPrimitive, GitLabFeatureCategory]
     Track feature categories in a multi purpose endpoint.
 
     It gets the purpose of API call from X-GitLab-Unit-Primitive header,
-    identifies the corresponding feature cateogry and store them in the starlette context.
+    identifies the corresponding feature category and stores them in the Starlette context.
 
     Example:
 
