@@ -24,13 +24,12 @@ from ai_gateway.models.container import (
         ),
     ],
 )
-@pytest.mark.asyncio
-async def test_init_vertex_grpc_client(args, expected_init):
+def test_init_vertex_grpc_client(args, expected_init):
     with patch(
         # "google.cloud.aiplatform.gapic.PredictionServiceAsyncClient"
         "ai_gateway.models.container.grpc_connect_vertex"
     ) as mock_grpc_client:
-        await _init_vertex_grpc_client(**args).__anext__()
+        next(_init_vertex_grpc_client(**args))
 
         if expected_init:
             mock_grpc_client.assert_called_once_with({"api_endpoint": args["endpoint"]})

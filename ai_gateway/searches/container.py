@@ -1,4 +1,4 @@
-from typing import AsyncIterator, Optional
+from typing import Iterator, Optional
 
 from dependency_injector import containers, providers
 from google.cloud import discoveryengine
@@ -10,16 +10,16 @@ from .search import VertexAISearch
 __all__ = ["ContainerSearches"]
 
 
-async def _init_vertex_search_service_client(
+def _init_vertex_search_service_client(
     mock_model_responses: bool,
-) -> AsyncIterator[Optional[discoveryengine.SearchServiceAsyncClient]]:
+) -> Iterator[Optional[discoveryengine.SearchServiceAsyncClient]]:
     if mock_model_responses:
         yield None
         return
 
     client = discoveryengine.SearchServiceAsyncClient()
     yield client
-    await client.transport.close()
+    client.transport.close()
 
 
 class ContainerSearches(containers.DeclarativeContainer):

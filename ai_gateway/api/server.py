@@ -53,7 +53,7 @@ async def lifespan(app: FastAPI):
 
     yield
 
-    await container_application.shutdown_resources()
+    container_application.shutdown_resources()
 
 
 def create_fast_api_server(config: Config):
