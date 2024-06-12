@@ -63,6 +63,7 @@ ingest:dry-run:
     GCP_PROJECT_NAME: dummy
   script:
     - cd /app && make ingest INGEST_DRY_RUN=true
+    - ./scripts/ingest/gitlab-docs/test.sh
   rules:
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
   artifacts:
