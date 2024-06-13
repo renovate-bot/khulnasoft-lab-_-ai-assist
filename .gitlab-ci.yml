@@ -107,7 +107,7 @@ build-docker-model-gateway:
     KANIKO_BUILD_FILE: Dockerfile
     KANIKO_DESTINATION: "${TARGET_IMAGE}"
 
-tests:
+tests:unit:
   extends: .poetry
   stage: test
   needs:
@@ -130,9 +130,11 @@ tests:
     # - Many non-threadsafe asyncio APIs (such as loop.call_soon() and loop.call_at() methods) raise an exception if they are called from a wrong thread.
     PYTHONASYNCIODEBUG: "True"
 
-e2e-test-code-suggestions:
+tests:integration:
   extends: .poetry
   stage: test
+  needs:
+    - build-docker-model-gateway
   services:
     - name: registry.gitlab.com/gitlab-org/modelops/applied-ml/code-suggestions/ai-assist/model-gateway:${CI_COMMIT_SHORT_SHA}
       alias: ai-gateway
@@ -145,9 +147,7 @@ e2e-test-code-suggestions:
     AI_GATEWAY_URL: "http://ai-gateway:5052"
     CI_DEBUG_SERVICES: true
   script:
-    - apt-get update && apt-get install -y jq
-    - poetry install --with test
-    - poetry run python scripts/tests/e2e_code_suggestions.py
+    - make test-integration
 
 container_scanning:
   stage: test
