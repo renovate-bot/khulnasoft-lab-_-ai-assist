@@ -8,6 +8,7 @@ class GitLabFeatureCategory(str, Enum):
     CODE_SUGGESTIONS = "code_suggestions"
     CONTINUOUS_INTEGRATION = "continuous_integration"
     DUO_CHAT = "duo_chat"
+    GLOBAL_SEARCH = "global_search"
     PRODUCT_ANALYTICS_VISUALIZATION = "product_analytics_visualization"
     SOURCE_CODE_MANAGEMENT = "source_code_management"
     TEAM_PLANNING = "team_planning"
@@ -29,6 +30,7 @@ class GitLabUnitPrimitive(str, Enum):
     GENERATE_ISSUE_DESCRIPTION = "generate_issue_description"
     RESOLVE_VULNERABILITY = "resolve_vulnerability"
     REVIEW_MERGE_REQUEST = "review_merge_request"
+    SEMANTIC_SEARCH_ISSUE = "semantic_search_issue"
     SUMMARIZE_ISSUE_DISCUSSIONS = "summarize_issue_discussions"
     SUMMARIZE_MERGE_REQUEST = "summarize_merge_request"
     SUMMARIZE_REVIEW = "summarize_review"
@@ -48,6 +50,7 @@ FEATURE_CATEGORIES_FOR_PROXY_ENDPOINTS = {
     GitLabUnitPrimitive.GENERATE_ISSUE_DESCRIPTION: GitLabFeatureCategory.TEAM_PLANNING,
     GitLabUnitPrimitive.RESOLVE_VULNERABILITY: GitLabFeatureCategory.VULNERABILITY_MANAGEMENT,
     GitLabUnitPrimitive.REVIEW_MERGE_REQUEST: GitLabFeatureCategory.CODE_REVIEW_WORKFLOW,
+    GitLabUnitPrimitive.SEMANTIC_SEARCH_ISSUE: GitLabFeatureCategory.GLOBAL_SEARCH,
     GitLabUnitPrimitive.SUMMARIZE_ISSUE_DISCUSSIONS: GitLabFeatureCategory.CODE_REVIEW_WORKFLOW,
     GitLabUnitPrimitive.SUMMARIZE_MERGE_REQUEST: GitLabFeatureCategory.CODE_REVIEW_WORKFLOW,
     GitLabUnitPrimitive.SUMMARIZE_REVIEW: GitLabFeatureCategory.CODE_REVIEW_WORKFLOW,
