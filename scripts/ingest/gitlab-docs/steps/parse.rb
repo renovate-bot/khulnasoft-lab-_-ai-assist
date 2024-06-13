@@ -10,7 +10,6 @@ METADATA_KEYS = %w[title md5sum source source_type source_url].freeze
 
 require 'json'
 require_relative "base_content_parser"
-require_relative "docs_content_parser"
 
 def parse(filenames)
   filenames.map do |filename|
@@ -18,11 +17,10 @@ def parse(filenames)
 
     puts "parsing: { filename: #{filename}, source: #{source} }"
 
-    ::Gitlab::Llm::Embeddings::Utils::DocsContentParser.parse_and_split(
+    parser = ::Gitlab::Llm::Embeddings::Utils::BaseContentParser.new( ROOT_URL )
+    parser.parse_and_split(
       File.read(filename),
-      source,
-      'doc',
-      root_url: ROOT_URL
+      source
     )
   end
 end
