@@ -1,11 +1,10 @@
-from ai_gateway.chat.tools.base import BaseRemoteTool, BaseTool, BaseToolkit
+from ai_gateway.chat.tools.base import BaseRemoteTool
 
 __all__ = [
     "CiEditorAssistant",
     "IssueReader",
     "GitlabDocumentation",
     "EpicReader",
-    "GitLabToolkit",
 ]
 
 
@@ -70,18 +69,3 @@ class EpicReader(BaseRemoteTool):
             Based on this information you can present final answer.
         Action: epic_reader
         Action Input: Please identify the author of &123 epic."""
-
-
-class GitLabToolkit(BaseToolkit):
-    class Config:
-        """Pydantic config."""
-
-        arbitrary_types_allowed = True
-
-    def get_tools(self) -> list[BaseTool]:
-        return [
-            CiEditorAssistant(),
-            IssueReader(),
-            GitlabDocumentation(),
-            EpicReader(),
-        ]
