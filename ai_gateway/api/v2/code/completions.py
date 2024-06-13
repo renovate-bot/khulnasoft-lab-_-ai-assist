@@ -121,22 +121,11 @@ async def completions(
         # We support the prompt version 2 only with the Anthropic models
         if payload.prompt_version == 2:
             kwargs.update({"raw_prompt": payload.prompt})
-
-        suggestions = [
-            await _execute_code_completion(payload, code_completions, **kwargs)
-        ]
-
-        if isinstance(suggestions[0], AsyncIterator):
-            return await _handle_stream(suggestions[0])
     elif payload.model_provider == KindModelProvider.LITELLM:
         code_completions = completions_litellm_factory(
             model__name=payload.model_name,
             model__endpoint=payload.model_endpoint,
         )
-
-        suggestions = [
-            await _execute_code_completion(payload, code_completions, **kwargs)
-        ]
     else:
         code_completions = completions_legacy_factory()
         if payload.choices_count > 0:
@@ -145,9 +134,10 @@ async def completions(
         if payload.context:
             kwargs.update({"code_context": [ctx.content for ctx in payload.context]})
 
-        suggestions = await _execute_code_completion(
-            payload, code_completions, **kwargs
-        )
+    suggestions = await _execute_code_completion(payload, code_completions, **kwargs)
+
+    if isinstance(suggestions[0], AsyncIterator):
+        return await _handle_stream(suggestions[0])
 
     return SuggestionsResponse(
         id="id",
@@ -386,5 +376,8 @@ async def _execute_code_completion(
             stream=payload.stream,
             **kwargs,
         )
+
+    if isinstance(code_completions, CodeCompletions):
+        return [output]
 
     return output
