@@ -1,9 +1,16 @@
 # Application settings
 
-All of the application settings should be defined in `example.env`, which is a list of environment variables
-with a specific format.
+## How to update application settings
+
+1. Open `.env` file at AI Gateway root directory. If you're using GDK, it's located at `<GDK-root>/gitlab-ai-gateway/.env`.
+1. Update the file.
+
+The change takes an effect when you start the application or restart if it's already running.
 
 ## How to add a new setting
+
+All of the application settings should be defined in `example.env`, which is a list of environment variables
+with a specific format.
 
 We are using [Pydantic Settings](https://docs.pydantic.dev/latest/concepts/pydantic_settings/)
 to parse the dotenv file into pydantic objects. The environment variables are formatted in the following way:
