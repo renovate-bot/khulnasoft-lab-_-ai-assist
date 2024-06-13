@@ -18,8 +18,8 @@ from ai_gateway.api.v2.chat.typing import (
     AgentStreamResponseEvent,
     ReActAgentScratchpad,
 )
-from ai_gateway.auth import User, UserClaims
-from ai_gateway.chat import GLAgentRemoteExecutor
+from ai_gateway.auth import GitLabUser, User, UserClaims
+from ai_gateway.chat import GLAgentRemoteExecutor, WrongUnitPrimitives
 from ai_gateway.container import ContainerApplication
 
 
@@ -142,4 +142,45 @@ class TestReActAgentStream:
 
         assert response.status_code == 200
         assert actual_actions == expected_actions
-        mocked_react_executor.stream.assert_called_with(inputs=agent_inputs)
+        mocked_react_executor.stream.assert_called_once_with(inputs=agent_inputs)
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize(
+        "auth_user",
+        [(User(authenticated=True, claims=UserClaims(scopes="wrong_scope")))],
+    )
+    async def test_exception_403(
+        self,
+        auth_user: User,
+        mock_client: TestClient,
+        mocked_react_executor: mock.Mock,
+    ):
+        def _on_behalf(user: GitLabUser) -> AsyncIterator[TypeAgentAction]:
+            if len(user.unit_primitives) == 0:
+                # We don't expect any unit primitives allocated by the user
+                raise WrongUnitPrimitives()
+            else:
+                raise Exception("raised exception to catch broken tests")
+
+        mocked_react_executor.on_behalf = mock.Mock(side_effect=_on_behalf)
+
+        response = mock_client.post(
+            "/chat/agent",
+            headers={
+                "Authorization": "Bearer 12345",
+                "X-Gitlab-Authentication-Type": "oidc",
+            },
+            json={
+                "prompt": "random prompt",
+                "options": AgentRequestOptions(
+                    chat_history="chat history",
+                    agent_scratchpad=ReActAgentScratchpad(
+                        agent_type="react",
+                        steps=[],
+                    ),
+                ).model_dump(mode="json"),
+            },
+        )
+
+        assert response.status_code == 403
+        mocked_react_executor.on_behalf.assert_called_once()

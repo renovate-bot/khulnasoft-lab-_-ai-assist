@@ -43,6 +43,21 @@ class GitLabUser(BaseUser):
     def is_authenticated(self) -> bool:
         return self._authenticated
 
+    @property
+    def unit_primitives(self) -> list[GitLabUnitPrimitive]:
+        unit_primitives = []
+
+        if not self.claims:
+            return []
+
+        for scope in self.claims.scopes:
+            try:
+                unit_primitives.append(GitLabUnitPrimitive(scope))
+            except ValueError:
+                pass
+
+        return unit_primitives
+
     def can(
         self, unit_primitive: GitLabUnitPrimitive, disallowed_issuers: list[str] = None
     ) -> bool:

@@ -28,3 +28,31 @@ def test_issuer_in_disallowed_issuers(user: GitLabUser):
         GitLabUnitPrimitive.CODE_SUGGESTIONS,
         disallowed_issuers=["https://customers.gitlab.com"],
     )
+
+
+@pytest.mark.parametrize(
+    ("user", "expected_unit_primitives"),
+    [
+        (
+            GitLabUser(
+                authenticated=True, claims=UserClaims(scopes=["code_suggestions"])
+            ),
+            [GitLabUnitPrimitive.CODE_SUGGESTIONS],
+        ),
+        (
+            GitLabUser(
+                authenticated=True,
+                claims=UserClaims(scopes=["code_suggestions", "unknown"]),
+            ),
+            [GitLabUnitPrimitive.CODE_SUGGESTIONS],
+        ),
+        (GitLabUser(authenticated=True, claims=None), []),
+    ],
+)
+def test_user_unit_primitives(
+    user: GitLabUser,
+    expected_unit_primitives: list[GitLabUnitPrimitive],
+):
+    actual_unit_primitives = user.unit_primitives
+
+    assert actual_unit_primitives == expected_unit_primitives

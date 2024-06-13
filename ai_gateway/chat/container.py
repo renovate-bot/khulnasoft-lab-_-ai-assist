@@ -6,7 +6,7 @@ from ai_gateway.agents import BaseAgentRegistry
 from ai_gateway.agents.chat import ReActAgent, ReActAgentInputs, TypeReActAgentAction
 from ai_gateway.chat.executor import GLAgentRemoteExecutor, TypeAgentFactory
 from ai_gateway.chat.tools import BaseTool
-from ai_gateway.chat.tools.gitlab import GitLabToolkit
+from ai_gateway.chat.toolset import DuoChatToolsRegistry
 
 __all__ = [
     "ContainerChat",
@@ -54,5 +54,5 @@ class ContainerChat(containers.DeclarativeContainer):
     gl_agent_remote_executor = providers.Factory(
         GLAgentRemoteExecutor,
         agent_factory=_react_agent_factory,
-        tools=GitLabToolkit().get_tools(),
+        tools_registry=DuoChatToolsRegistry(),
     )

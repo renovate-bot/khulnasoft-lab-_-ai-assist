@@ -1,4 +1,4 @@
-from abc import ABC, abstractmethod
+from abc import ABC
 from typing import Any, Optional
 
 from pydantic import BaseModel
@@ -6,7 +6,6 @@ from pydantic import BaseModel
 __all__ = [
     "BaseTool",
     "BaseRemoteTool",
-    "BaseToolkit",
 ]
 
 
@@ -23,9 +22,3 @@ class BaseRemoteTool(BaseTool):
         raise NotImplementedError(
             "Please check the Rails app for an implementation of this tool."
         )
-
-
-class BaseToolkit(ABC):
-    @abstractmethod
-    def get_tools(self) -> list[BaseTool]:
-        raise NotImplementedError
