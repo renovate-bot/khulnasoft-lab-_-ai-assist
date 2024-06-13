@@ -417,13 +417,30 @@ def test_failed_authorization_logging(
 
 def test_bypass_auth(fast_api_router, stub_auth_provider):
     middlewares = [
-        MiddlewareAuthentication(stub_auth_provider, True, None),
+        MiddlewareAuthentication(stub_auth_provider, True, False),
     ]
     app = FastAPI(middleware=middlewares)
     app.include_router(fast_api_router)
     mock_client = TestClient(app)
 
     response = mock_client.post("/")
+
+    assert response.json() == {
+        "authenticated": True,
+        "is_debug": True,
+        "scopes": [],
+    }
+
+
+def test_bypass_external_with_header(fast_api_router, stub_auth_provider):
+    middlewares = [
+        MiddlewareAuthentication(stub_auth_provider, False, True),
+    ]
+    app = FastAPI(middleware=middlewares)
+    app.include_router(fast_api_router)
+    mock_client = TestClient(app)
+
+    response = mock_client.post("/", headers={"Bypass-Auth": "true"})
 
     assert response.json() == {
         "authenticated": True,

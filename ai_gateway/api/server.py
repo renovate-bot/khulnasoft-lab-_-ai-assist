@@ -88,6 +88,7 @@ def create_fast_api_server(config: Config):
                     ]
                 ),
                 bypass_auth=config.auth.bypass_external,
+                bypass_auth_with_header=config.auth.bypass_external_with_header,
                 skip_endpoints=_SKIP_ENDPOINTS,
             ),
             MiddlewareModelTelemetry(skip_endpoints=_SKIP_ENDPOINTS),
