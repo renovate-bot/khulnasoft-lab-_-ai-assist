@@ -571,7 +571,7 @@ class TestCodeCompletions:
             assert body["choices"] == want_choices
 
     @pytest.mark.parametrize(
-        ("model_chunks", "expected_response"),
+        ("model_chunks", "expected_response", "provider", "factory_name"),
         [
             (
                 [
@@ -583,6 +583,21 @@ class TestCodeCompletions:
                     ),
                 ],
                 "def search (query)",
+                "anthropic",
+                "anthropic",
+            ),
+            (
+                [
+                    CodeSuggestionsChunk(
+                        text="def search",
+                    ),
+                    CodeSuggestionsChunk(
+                        text=" (query)",
+                    ),
+                ],
+                "def search (query)",
+                "litellm",
+                "litellm_factory",
             ),
         ],
     )
@@ -592,6 +607,8 @@ class TestCodeCompletions:
         mock_container: containers.DeclarativeContainer,
         model_chunks: list[CodeSuggestionsChunk],
         expected_response: str,
+        provider: str,
+        factory_name: str,
     ):
         async def _stream_generator(
             prefix, suffix, file_name, editor_lang, stream
@@ -611,14 +628,16 @@ class TestCodeCompletions:
             "prompt_version": 1,
             "project_path": "gitlab-org/gitlab",
             "project_id": 278964,
-            "model_provider": "anthropic",
+            "model_provider": provider,
             "current_file": current_file,
             "stream": True,
         }
 
-        with mock_container.code_suggestions.completions.anthropic.override(
-            code_completions_mock
-        ):
+        provider_factory = getattr(
+            mock_container.code_suggestions.completions, factory_name
+        )
+
+        with provider_factory.override(code_completions_mock):
             response = mock_client.post(
                 "/completions",
                 headers={
