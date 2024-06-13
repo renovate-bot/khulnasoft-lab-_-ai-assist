@@ -141,7 +141,24 @@ def test_config_fastapi(values: dict, expected: ConfigFastApi):
         ({"AIGW_AUTH__BYPASS_EXTERNAL": "yes"}, ConfigAuth(bypass_external=True)),
     ],
 )
-def test_config_auth(values: dict, expected: ConfigAuth):
+def test_config_auth_bypass_external(values: dict, expected: ConfigAuth):
+    with mock.patch.dict(os.environ, values, clear=True):
+        config = Config(_env_file=None)  # type: ignore[call-arg]
+
+        assert config.auth == expected
+
+
+@pytest.mark.parametrize(
+    ("values", "expected"),
+    [
+        ({}, ConfigAuth()),
+        (
+            {"AIGW_AUTH__BYPASS_EXTERNAL_WITH_HEADER": "yes"},
+            ConfigAuth(bypass_external_with_header=True),
+        ),
+    ],
+)
+def test_config_auth_bypass_external_with_header(values: dict, expected: ConfigAuth):
     with mock.patch.dict(os.environ, values, clear=True):
         config = Config(_env_file=None)  # type: ignore[call-arg]
 

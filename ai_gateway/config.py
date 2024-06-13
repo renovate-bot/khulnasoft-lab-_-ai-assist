@@ -47,6 +47,7 @@ class ConfigFastApi(BaseModel):
 
 class ConfigAuth(BaseModel):
     bypass_external: bool = False
+    bypass_external_with_header: bool = False
 
 
 class ConfigGoogleCloudProfiler(BaseModel):

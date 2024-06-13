@@ -171,10 +171,12 @@ class MiddlewareAuthentication(Middleware):
             self,
             oidc_auth_provider: AuthProvider,
             bypass_auth: bool,
+            bypass_auth_with_header: bool,
             path_resolver: _PathResolver,
         ):
             self.oidc_auth_provider = oidc_auth_provider
             self.bypass_auth = bypass_auth
+            self.bypass_auth_with_header = bypass_auth_with_header
             self.path_resolver = path_resolver
 
         async def authenticate(
@@ -189,6 +191,16 @@ class MiddlewareAuthentication(Middleware):
 
             if self.bypass_auth:
                 log.critical("Auth is disabled, all users allowed")
+
+                return AuthCredentials(), GitLabUser(authenticated=True, is_debug=True)
+
+            if (
+                self.bypass_auth_with_header  # Should only be set and used for test & dev
+                and conn.headers.get("Bypass-Auth") == "true"
+            ):
+                log.critical(
+                    "Auth is disabled, all requests with `Bypass-Auth` header set allowed"
+                )
 
                 return AuthCredentials(), GitLabUser(authenticated=True, is_debug=True)
 
@@ -259,6 +271,7 @@ class MiddlewareAuthentication(Middleware):
         self,
         oidc_auth_provider: AuthProvider,
         bypass_auth: bool = False,
+        bypass_auth_with_header: bool = False,
         skip_endpoints: Optional[list] = None,
     ):
         path_resolver = _PathResolver.from_optional_list(skip_endpoints)
@@ -266,7 +279,10 @@ class MiddlewareAuthentication(Middleware):
         super().__init__(
             AuthenticationMiddleware,
             backend=MiddlewareAuthentication.AuthBackend(
-                oidc_auth_provider, bypass_auth, path_resolver
+                oidc_auth_provider,
+                bypass_auth,
+                bypass_auth_with_header,
+                path_resolver,
             ),
             on_error=MiddlewareAuthentication.on_auth_error,
         )

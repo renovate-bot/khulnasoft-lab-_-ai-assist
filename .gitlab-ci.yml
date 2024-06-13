@@ -132,6 +132,25 @@ tests:
     # - Many non-threadsafe asyncio APIs (such as loop.call_soon() and loop.call_at() methods) raise an exception if they are called from a wrong thread.
     PYTHONASYNCIODEBUG: "True"
 
+e2e-test-code-suggestions:
+  extends: .poetry
+  stage: test
+  services:
+    - name: registry.gitlab.com/gitlab-org/modelops/applied-ml/code-suggestions/ai-assist/model-gateway:${CI_COMMIT_SHORT_SHA}
+      alias: ai-gateway
+  variables:
+    AIGW_SELF_SIGNED_JWT__SIGNING_KEY: "-----BEGIN PRIVATE KEY-----\nMIIEvAIBADANBgkqhkiG9w0BAQEFAASCBKYwggSiAgEAAoIBAQC+ErJOBYMe4/d5\nlcVtqnQEazhGYqyefHQNtfpzQyb/WuPJa5BZu68KeS0fWKcZJluNk/jGXSb3cvei\n28wtnbBlEOdTTOzMpP217rLtoYdnzgJfO7DLj3tUL+JbQHj51bLwgkrHlALFDoUt\nzWaOrs+WO6QVLnIsl+YZ6CrKpc9fXLtlvZp0yYuic1BxKCw8Q2lWjMhj6w1fubwM\ne3MsTMcgBV5ek3twY/vHkU/Q2gjniLZSTBmzaXrHjfbS1au2vQBTsKmtPDATrnTU\nVLxLvAtb7p3bZAZObIj4oDi+2qGQGDoWVaiGYXfRquKHdle7hBLwuvOlmVGAdfHd\nN18QO9kbAgMBAAECggEAQpdJScVrnThv/PRocVXtBJlN43bxlCr0+9K8NoKZ2I/O\ny0P4lD+JgUlX8in8jPafz7e+SjzbiIkKUk/gNkEPSjFEYi5Krh3F12YT4OYdCtSl\nhxjiBUc1BZcrHh415A2m/dUf/tEPsVs3dIcIPcfn6XHmuBcIIDBtiLkKuOmjf/xh\n/2l7QUHNC0Hn1STNvE5CscnqH0/s9dw2/KYhjpZWJsoNOAJ4PWgypxlftdUcspQK\nQL+FWrNL+aa1+nPeR0ArNw3nlkKnzcX3DmIHyD4az1IwrzHqMCh1zv16eqmCBYuN\nn2QrAAkAt+SFVEwjejwN/lNLMg4O6tyMvFnuOddp2QKBgQDhXgmOZgoJJYz7Vd0u\n/U3E4Ma+HysQ7TU3utidAke5YJXSms0UJrOFxgcRKserkXjD9wbyeUcMbrKRNTxm\nPgjGayVCqVc6T3kMHio8CvSs+RYt+jR7CnFIfQbQATR7c8nzy4Z/JNsW213SmXpj\n4S3TQWwGFSrF8h+A098cgFwNGQKBgQDX6IvIumrnQGiCJn8qQW3hKGfJwSl6/e4Z\nfC/o8uFzTtV1aL39AusDKAt4c5DsVUHCZLSH5acFGeeGt4dePpqnr0dpIb02ByGJ\na6tLJm2RwjaiXFOAsedOP12yqTZELi7rinKjVqG50eOvXuV40CVVP9qXzxE9e2DP\nQGe2ZFmqUwKBgFvsCkPNtOw0J8PgKt5erRjPgeDMP7mgtyMrD+1Cn9Sp45JKV7mP\na4v10K4c3+JH7JUprei6tNMKV8VIjIE7bkLYMxN0lMKQ5dOefiWNZm0jD/vi4QMK\nqFgjvuKaiziLauUIr6wucTpqcWNT/Iq+rv1K4u+8NH0Wm+jlAkzSwjkJAoGAG5Wd\nTk7q25KyB3bNpmNnm22jHPatywXoRp9EK7nkLewzf2WbaFjYF7YlCQWSzW7zENf2\n7KndldxCZUbLZ7IN5kCRmg/ycZWlpj34S4ikVQwAGOw8yuNvzuJvoSTXRwyzd+pf\nTRkDXo8/TKeOH8pQCr02u1B8PmOl8bSjy3y0q/sCgYAkdWZ6xLJeS9HlzuuXchl3\numZM4n88lad2yNoCu3aJs2fbVCGCiHyFsThluDU0KD3xE5+RZVpAMTErcCE3HqNK\nn1rbBNBVtUTKeu1Qkw0B1X813oH7omqmZVGJx+hceIKimjKWvD7hQlr90NPoFDFz\n0Laqissu1lxAspLYIulpWg==\n-----END PRIVATE KEY-----"
+    AIGW_SELF_SIGNED_JWT__VALIDATION_KEY: "-----BEGIN PRIVATE KEY-----\nMIIEvAIBADANBgkqhkiG9w0BAQEFAASCBKYwggSiAgEAAoIBAQC5wpUNTuvvZeDn\nDF7BHxPQGNT+b8abaBLzRXB7HU0pKxUqW35BhEBrhbs4ahntOTx4LWTk/rPcaohU\n3jVXVe0luTHqsXqj0uqBhdbC161Bey2gwZUszN94l59n/hzSy9dWjN4g9ZaV8Qcq\nWAsGo/NiIHTp2BkmPSL3yedQXkZpUYEIpQpC8T3MozA3fGla8OveCf5UiEbYmKgA\nu+h9efeTLJD08QXOgAiI3OVvUwKsNeCiyYj2Xufp1dW9SdYN05PNxxQEPMLwwV0A\nfwn1SZL7naaCvoiy3IIr7lY9NAxboAhzSQFOmIOw4kXjju6d2HmUytzxHlsjZp5A\ngRTPLweJAgMBAAECggEAFUAcj4twA7DGr//TBipBOLzifuH4GTaodlKDCd6CAXvn\nfbM+SA3yVaqUjqFaqm/yCjh9MpItrsE0K+tItF9E1BwxyOy5QC0EfUE7nooQTK2j\n/GAw6dFdHj1QM9QW5YmCrqjKT4Bw0+HhJTexuTZ/xQG8BjVduSlkyu56yw+h4/HH\n2FqjwPj5DTtZj5qrW1ywJCkBcGkVv87ml64evOX9PQPhsu0UpSoycLDoFNCGN5qC\nu+7/lvhU6YQcwq8J3G80VPIRQr6QTd4SXjNveyCZIdSlrDiOJvypTz3+RIvuymNW\nDzvHlV2jr5gfFkSRK5mEoiKVb96BVbxXSS1Fsv8V4QKBgQD7XWNLmxeywhp+HhQu\nk2+00N1QfJWOd2mehKEdWyNRNloEb3510scPWYnYDp8NrPXlFLxWEg9nIstFPEF4\nfJlkoNy4jzYVowv4CEQ3NCr90HQe5cSpuG/oGX4uiFuC9pn23XwZd49a74Z2KNFB\n5bz/saE3HO+wdG/vmuBjSukuuQKBgQC9L37lczb5URUpaAu0RxkE0/4GHzoN0yHB\n+NlqX2i75DK40KTqpjN8MHKrqW4VwXJacrfpAoPnZBgi9DsHIvN1iVFMyhSzYkTD\nyrqFxTkJcAq9FOFF878dHCr5qvzoV+G7EwKdYUa0kOmJQZYPHy/uGPgZhD+y09op\nQW7puom3UQKBgCsrC511YimB6jjUg5TIHzwHTqq+6pRP76SYlG7NMxCEbAss9qPX\ncfYx41lmkWww0v3nhLynV1vX/t7CDWBazaEZey568cffe3O6P7TXUbbLMNYJka+w\nDA/pKOFm64hfP2vE98YL4WO1lPr/4YgWo1GqOMyVPJiqNnsItxZ2S/uJAoGAO2fF\nngEeuw0F6xmby0EkDwsOUhfOH/czO3iLtMY+2fkfID+L+Y60zgNcjqDGS5iR8urg\n6w76Ileg6KDuRCBqeHblC4rNE0MBOsXW6hhy/46qIJOE5XVThq2IpRtXDRJDdH3U\nrVyVWi/C1XG90APIBijbBxAq/FlfwOKmFEiZ4/ECgYAArmmklXcqPfYfwvlP2wgu\nTIw9nFIUWGP7UlVTsXdVGkehilWgG7UUFAx1mPT9hRcjY9dbsIl5yEMJG3KmTydG\nKymFDMPv0Wpo0LKgp+MH5Xeutbp6+HW2HaWeolIlDMsrKG6vPcmePtT6UeQc1TG5\n+OuRxXWVAxwxNsBaHYYWyA==\n-----END PRIVATE KEY-----"
+    AIGW_AUTH__BYPASS_EXTERNAL_WITH_HEADER: true
+    AIGW_MOCK_MODEL_RESPONSES: true
+    AIGW_FASTAPI__API_PORT: 5052
+    AI_GATEWAY_URL: "http://ai-gateway:5052"
+    CI_DEBUG_SERVICES: true
+  script:
+    - apt-get update && apt-get install -y jq
+    - poetry install --with test
+    - poetry run python scripts/tests/e2e_code_suggestions.py
+
 container_scanning:
   stage: test
   needs:
