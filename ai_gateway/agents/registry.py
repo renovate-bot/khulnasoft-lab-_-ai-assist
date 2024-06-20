@@ -5,6 +5,7 @@ from typing import Any, NamedTuple, Optional, Protocol, Type
 import yaml
 from langchain_core.language_models.chat_models import BaseChatModel
 from langchain_core.prompts import ChatPromptTemplate
+from langchain_core.runnables import Runnable
 
 from ai_gateway.agents.base import Agent, BaseAgentRegistry
 
@@ -48,12 +49,15 @@ class LocalAgentRegistry(BaseAgentRegistry):
     ) -> Any:
         klass, config = self.agent_definitions[Key(use_case=use_case, type=agent_type)]
 
-        model = self._get_model(
+        # TODO: read model parameters such as `temperature`, `top_k`
+        #  and pass them to the model factory via **kwargs.
+        model: Runnable = self._get_model(
             provider=config["provider"],
             name=config["model"],
-            # TODO: read model parameters such as `temperature`, `top_k`
-            #  and pass them to the model factory via **kwargs.
-        ).bind(stop=config["stop"])
+        )
+
+        if "stop" in config:
+            model = model.bind(stop=config["stop"])
 
         messages = klass.build_messages(config["prompt_template"], options or {})
         prompt = ChatPromptTemplate.from_messages(messages)
@@ -66,13 +70,19 @@ class LocalAgentRegistry(BaseAgentRegistry):
     @classmethod
     def from_local_yaml(
         cls,
-        data: dict[Key, Type[Agent]],
         model_factories: dict[ModelProvider, ModelFactoryType],
+        class_overrides: dict[Key, Type[Agent]],
     ) -> "LocalAgentRegistry":
+        """Iterate over all agent definition files matching [usecase]/[type].yml,
+        and create a corresponding agent for each one. The base Agent class is
+        used if no matching override is provided in `class_overrides`.
+        """
+
         agent_definitions = {}
-        for key, klass in data.items():
-            path = Path(__file__).parent / key.use_case / f"{key.type}.yml"
+        for path in Path(__file__).parent.glob("*/*.yml"):
+            key = Key(use_case=path.parent.name, type=path.stem)
             with open(path, "r") as fp:
+                klass = class_overrides.get(key, Agent)
                 agent_definitions[key] = (klass, yaml.safe_load(fp))
 
         return cls(agent_definitions, model_factories)
