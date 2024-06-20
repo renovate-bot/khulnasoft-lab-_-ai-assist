@@ -84,6 +84,10 @@ class LiteLlmChatModel(ChatModelBase):
         top_p: float = 0.95,
         top_k: int = 40,
     ) -> Union[TextGenModelOutput, AsyncIterator[TextGenModelChunk]]:
+
+        if isinstance(messages, str):
+            messages = [Message(content=messages, role=Role.USER)]
+
         litellm_messages = [message.model_dump(mode="json") for message in messages]
 
         with self.instrumentator.watch(stream=stream) as watcher:
