@@ -15,6 +15,6 @@ class ContainerAgents(containers.DeclarativeContainer):
 
     agent_registry = providers.Singleton(
         LocalAgentRegistry.from_local_yaml,
-        data={Key(use_case="chat", type="react"): ReActAgent},
         model_factories={ModelProvider.ANTHROPIC: _anthropic_claude_fn},
+        class_overrides={Key(use_case="chat", type="react"): ReActAgent},
     )
