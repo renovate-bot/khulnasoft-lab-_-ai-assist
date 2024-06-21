@@ -52,6 +52,7 @@ USE_CASES_MODELS_MAP = {
         KindLiteLlmModel.MISTRAL,
         KindLiteLlmModel.MIXTRAL,
         KindLiteLlmModel.CODE_GEMMA,
+        KindLiteLlmModel.CODESTRAL,
     },
     KindUseCase.CODE_GENERATIONS: {
         KindAnthropicModel.CLAUDE_2_0,
@@ -63,6 +64,7 @@ USE_CASES_MODELS_MAP = {
         KindLiteLlmModel.MISTRAL,
         KindLiteLlmModel.MIXTRAL,
         KindLiteLlmModel.CODE_GEMMA,
+        KindLiteLlmModel.CODESTRAL,
     },
 }
 
