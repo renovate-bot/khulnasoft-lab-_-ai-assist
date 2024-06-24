@@ -1,13 +1,9 @@
 from typing import Annotated
 
 import structlog
-from fastapi import APIRouter, Depends, HTTPException, Request, status
+from fastapi import APIRouter, Depends, Header, HTTPException, Request, status
 
 from ai_gateway.api.feature_category import feature_category
-from ai_gateway.api.middleware import (
-    X_GITLAB_GLOBAL_USER_ID_HEADER,
-    X_GITLAB_REALM_HEADER,
-)
 from ai_gateway.api.v1.code.typing import Token
 from ai_gateway.async_dependency_resolver import get_token_authority
 from ai_gateway.auth.self_signed_jwt import SELF_SIGNED_TOKEN_ISSUER, TokenAuthority
@@ -30,6 +26,12 @@ async def user_access_token(
     request: Request,
     current_user: Annotated[GitLabUser, Depends(get_current_user)],
     token_authority: TokenAuthority = Depends(get_token_authority),
+    x_gitlab_global_user_id: Annotated[
+        str, Header()
+    ] = None,  # This is the value of X_GITLAB_GLOBAL_USER_ID_HEADER
+    x_gitlab_realm: Annotated[
+        str, Header()
+    ] = None,  # This is the value of X_GITLAB_REALM_HEADER
 ):
     if not current_user.can(
         GitLabUnitPrimitive.CODE_SUGGESTIONS,
@@ -40,22 +42,22 @@ async def user_access_token(
             detail="Unauthorized to create user access token for code suggestions",
         )
 
-    gitlab_user_id = request.headers.get(X_GITLAB_GLOBAL_USER_ID_HEADER)
-    if not gitlab_user_id:
+    if not x_gitlab_global_user_id:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Missing X-Gitlab-Global-User-Id header",
         )
 
-    gitlab_realm = request.headers.get(X_GITLAB_REALM_HEADER)
-    if not gitlab_realm:
+    if not x_gitlab_realm:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Missing X-Gitlab-Realm header",
         )
 
     try:
-        token, expires_at = token_authority.encode(gitlab_user_id, gitlab_realm)
+        token, expires_at = token_authority.encode(
+            x_gitlab_global_user_id, x_gitlab_realm
+        )
     except Exception:
         raise HTTPException(status_code=500, detail="Failed to generate JWT")
 
