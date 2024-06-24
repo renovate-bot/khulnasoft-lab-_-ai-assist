@@ -1,4 +1,4 @@
-from abc import abstractmethod
+from abc import ABC, abstractmethod
 from enum import Enum
 from typing import Any, Optional, Sequence, Union
 
@@ -11,7 +11,6 @@ from ai_gateway.models.base import (
     KindModelProvider,
     ModelAPICallError,
     ModelAPIError,
-    ModelInput,
     ModelMetadata,
     SafetyAttributes,
     TextGenBaseModel,
@@ -50,6 +49,19 @@ class VertexAPIStatusError(ModelAPICallError):
         message = f"Vertex Model API error: {type(ex).__name__} {ex.message}"
 
         return cls(message, errors=(ex,), details=ex.details)
+
+
+class ModelInput(ABC):
+    @abstractmethod
+    def is_valid(self) -> bool:
+        pass
+
+    @abstractmethod
+    def dict(self) -> dict:
+        pass
+
+    def __eq__(self, obj):
+        return self.dict() == obj.dict()
 
 
 class CodeBisonModelInput(ModelInput):
