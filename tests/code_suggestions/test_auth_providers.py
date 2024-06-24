@@ -285,7 +285,7 @@ UGw3kIW+604fnnXLDm4TaLA=
         token = jwt.encode(
             {},
             self.private_key_test,
-            algorithm="RS256",
+            algorithm=CompositeProvider.RS256_ALGORITHM,
         )
 
         with patch("ai_gateway.auth.providers.log_exception") as mock_log_exception:
@@ -351,7 +351,7 @@ UGw3kIW+604fnnXLDm4TaLA=
         token = jwt.encode(
             {},
             self.private_key_test,
-            algorithm="RS256",
+            algorithm=CompositeProvider.RS256_ALGORITHM,
         )
 
         user = None
@@ -403,7 +403,7 @@ UGw3kIW+604fnnXLDm4TaLA=
         token = jwt.encode(
             self.claims | self.ai_gateway_audience,
             key_to_sign,
-            algorithm="RS256",
+            algorithm=CompositeProvider.RS256_ALGORITHM,
         )
 
         user = auth_provider.authenticate(token)
@@ -425,7 +425,7 @@ UGw3kIW+604fnnXLDm4TaLA=
         token = jwt.encode(
             self.claims | self.ai_gateway_audience,
             self.private_key_ai_gateway_validation_key_test,
-            algorithm="RS256",
+            algorithm=CompositeProvider.RS256_ALGORITHM,
         )
 
         user = None
@@ -532,7 +532,7 @@ UGw3kIW+604fnnXLDm4TaLA=
         token = jwt.encode(
             claims,
             private_key_used_to_sign,
-            algorithm="RS256",
+            algorithm=CompositeProvider.RS256_ALGORITHM,
         )
         user = auth_provider.authenticate(token)
 

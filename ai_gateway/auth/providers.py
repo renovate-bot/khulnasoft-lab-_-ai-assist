@@ -30,15 +30,14 @@ class AuthProvider(ABC):
 
 
 class JwksProvider:
-    ALGORITHM = "RS256"
-
     @abstractmethod
     def jwks(self, *args, **kwargs) -> dict:
         pass
 
 
 class CompositeProvider(AuthProvider):
-    ALGORITHM = "RS256"
+    RS256_ALGORITHM = "RS256"
+    SUPPORTED_ALGORITHMS = [RS256_ALGORITHM]
     AUDIENCE = "gitlab-ai-gateway"
     CACHE_KEY = "jwks"
 
@@ -65,7 +64,10 @@ class CompositeProvider(AuthProvider):
 
         try:
             jwt_claims = jwt.decode(
-                token, jwks, audience=self.AUDIENCE, algorithms=[self.ALGORITHM]
+                token,
+                jwks,
+                audience=self.AUDIENCE,
+                algorithms=self.SUPPORTED_ALGORITHMS,
             )
             gitlab_realm = jwt_claims.get("gitlab_realm", "")
             subject = jwt_claims.get("sub", "")
@@ -105,6 +107,8 @@ class CompositeProvider(AuthProvider):
 
 
 class LocalAuthProvider(JwksProvider):
+    ALGORITHM = CompositeProvider.RS256_ALGORITHM
+
     def jwks(self) -> dict:
         jwks = defaultdict(list)
         jwks["keys"] = []

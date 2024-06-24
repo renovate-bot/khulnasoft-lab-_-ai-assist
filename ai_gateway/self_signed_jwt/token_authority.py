@@ -3,6 +3,7 @@ from datetime import datetime, timedelta, timezone
 
 from jose import JWTError, jwt
 
+from ai_gateway.auth.providers import CompositeProvider
 from ai_gateway.gitlab_features import GitLabUnitPrimitive
 from ai_gateway.tracking.errors import log_exception
 
@@ -15,6 +16,8 @@ SELF_SIGNED_TOKEN_ISSUER = "gitlab-ai-gateway"
 
 
 class TokenAuthority:
+    ALGORITHM = CompositeProvider.RS256_ALGORITHM
+
     def __init__(self, signing_key):
         self.signing_key = signing_key
 
@@ -33,7 +36,7 @@ class TokenAuthority:
                 "scopes": [GitLabUnitPrimitive.CODE_SUGGESTIONS],
             }
 
-            token = jwt.encode(claims, self.signing_key, algorithm="RS256")
+            token = jwt.encode(claims, self.signing_key, algorithm=self.ALGORITHM)
 
             return (token, int(expires_at.timestamp()))
         except JWTError as err:

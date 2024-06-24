@@ -9,7 +9,9 @@ from jose import jwt
 
 from ai_gateway.api.v1 import api_router
 from ai_gateway.auth import User, UserClaims
+from ai_gateway.auth.providers import CompositeProvider
 from ai_gateway.container import ContainerApplication
+from ai_gateway.self_signed_jwt.token_authority import TokenAuthority
 
 # JSON Web Key can be generated via https://mkjwk.org/
 # Private key: X.509 PEM format
@@ -99,7 +101,7 @@ def test_user_access_token_success(mock_client: TestClient, gitlab_realm):
             parsed_response["token"],
             TEST_PUBLIC_KEY,
             audience="gitlab-ai-gateway",
-            algorithms=["RS256"],
+            algorithms=CompositeProvider.SUPPORTED_ALGORITHMS,
         )
 
         current_time = datetime.now(timezone.utc)
