@@ -18,9 +18,9 @@ from ai_gateway.code_suggestions.processing.typing import (
     Prompt,
 )
 from ai_gateway.instrumentators import TextGenModelInstrumentator
-from ai_gateway.models import (
-    SafetyAttributes,
-    TextGenBaseModel,
+from ai_gateway.models import SafetyAttributes
+from ai_gateway.models.base_text import (
+    TextGenModelBase,
     TextGenModelChunk,
     TextGenModelOutput,
 )
@@ -48,7 +48,7 @@ class TestCodeGeneration:
 
     @pytest.fixture(scope="class")
     def use_case(self):
-        model = Mock(spec=TextGenBaseModel)
+        model = Mock(spec=TextGenModelBase)
         model.MAX_MODEL_LEN = 2048
         tokenization_strategy_mock = Mock(spec=TokenStrategyBase)
         tokenization_strategy_mock.estimate_length = Mock(return_value=[1, 2])

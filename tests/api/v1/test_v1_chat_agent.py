@@ -22,9 +22,8 @@ from ai_gateway.models import (
     Message,
     ModelAPIError,
     SafetyAttributes,
-    TextGenModelChunk,
-    TextGenModelOutput,
 )
+from ai_gateway.models.base_text import TextGenModelChunk, TextGenModelOutput
 
 
 @pytest.fixture(scope="class")

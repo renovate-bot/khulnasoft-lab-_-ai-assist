@@ -15,15 +15,13 @@ from ai_gateway.code_suggestions.processing.post.generations import (
 )
 from ai_gateway.code_suggestions.processing.pre import PromptBuilderPrefixBased
 from ai_gateway.instrumentators import TextGenModelInstrumentator
-from ai_gateway.models import (
-    Message,
-    ModelAPICallError,
-    ModelAPIError,
-    TextGenBaseModel,
+from ai_gateway.models import Message, ModelAPICallError, ModelAPIError
+from ai_gateway.models.base_chat import ChatModelBase
+from ai_gateway.models.base_text import (
+    TextGenModelBase,
     TextGenModelChunk,
     TextGenModelOutput,
 )
-from ai_gateway.models.base_chat import ChatModelBase
 from ai_gateway.prompts import PromptTemplate
 from ai_gateway.tracking.instrumentator import SnowplowInstrumentator
 from ai_gateway.tracking.snowplow import SnowplowEvent
@@ -43,7 +41,7 @@ TPL_GENERATION_BASE = """
 class CodeGenerations:
     def __init__(
         self,
-        model: TextGenBaseModel,
+        model: TextGenModelBase,
         tokenization_strategy: TokenStrategyBase,
         snowplow_instrumentator: SnowplowInstrumentator,
     ):

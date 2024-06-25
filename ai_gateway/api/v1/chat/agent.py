@@ -24,9 +24,8 @@ from ai_gateway.models import (
     AnthropicAPIStatusError,
     AnthropicAPITimeoutError,
     KindModelProvider,
-    TextGenModelChunk,
-    TextGenModelOutput,
 )
+from ai_gateway.models.base_text import TextGenModelChunk, TextGenModelOutput
 from ai_gateway.tracking import log_exception
 
 __all__ = [

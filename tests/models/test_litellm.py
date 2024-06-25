@@ -4,8 +4,8 @@ from unittest.mock import AsyncMock, Mock, patch
 import pytest
 
 from ai_gateway.models import KindLiteLlmModel, LiteLlmChatModel
-from ai_gateway.models.base import TextGenModelChunk, TextGenModelOutput
 from ai_gateway.models.base_chat import Message, Role
+from ai_gateway.models.base_text import TextGenModelChunk, TextGenModelOutput
 from ai_gateway.models.litellm import LiteLlmTextGenModel
 
 

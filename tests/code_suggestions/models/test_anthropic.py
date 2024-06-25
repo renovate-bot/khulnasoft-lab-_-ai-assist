@@ -36,8 +36,8 @@ from ai_gateway.models import (
     Message,
     Role,
     SafetyAttributes,
-    TextGenModelOutput,
 )
+from ai_gateway.models.base_text import TextGenModelOutput
 
 
 class TestAnthropicModel:

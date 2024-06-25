@@ -7,14 +7,13 @@ import fastapi
 import httpx
 from anthropic.types import Message
 
-from ai_gateway.models.base import (
-    ModelMetadata,
-    SafetyAttributes,
-    TextGenBaseModel,
+from ai_gateway.models.base import ModelMetadata, SafetyAttributes
+from ai_gateway.models.base_chat import ChatModelBase
+from ai_gateway.models.base_text import (
+    TextGenModelBase,
     TextGenModelChunk,
     TextGenModelOutput,
 )
-from ai_gateway.models.base_chat import ChatModelBase
 
 __all__ = [
     "AsyncStream",
@@ -71,7 +70,7 @@ class SearchClient(AsyncMock):
         return {}
 
 
-class LLM(TextGenBaseModel):
+class LLM(TextGenModelBase):
     """
     Implementation of the stub model that inherits the `TextGenBaseModel` interface.
     Please, use this class if you require to mock such models as `AnthropicModel` or `PalmCodeGeckoModel`

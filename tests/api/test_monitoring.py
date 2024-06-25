@@ -23,13 +23,9 @@ from ai_gateway.code_suggestions.processing.typing import (
 )
 from ai_gateway.config import Config, ConfigAuth
 from ai_gateway.container import ContainerApplication
-from ai_gateway.models import (
-    ModelAPIError,
-    ModelMetadata,
-    SafetyAttributes,
-    TextGenModelOutput,
-)
+from ai_gateway.models import ModelAPIError, ModelMetadata, SafetyAttributes
 from ai_gateway.models.base import TokensConsumptionMetadata
+from ai_gateway.models.base_text import TextGenModelOutput
 
 
 @pytest.fixture

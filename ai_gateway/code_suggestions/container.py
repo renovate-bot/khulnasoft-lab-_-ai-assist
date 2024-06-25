@@ -13,8 +13,9 @@ from ai_gateway.code_suggestions.processing.post.completions import (
 )
 from ai_gateway.code_suggestions.processing.pre import TokenizerTokenStrategy
 from ai_gateway.experimentation import experiment_registry_provider
-from ai_gateway.models import KindAnthropicModel, KindVertexTextModel, TextGenBaseModel
+from ai_gateway.models import KindAnthropicModel, KindVertexTextModel
 from ai_gateway.models.base_chat import ChatModelBase
+from ai_gateway.models.base_text import TextGenModelBase
 from ai_gateway.tokenizer import init_tokenizer
 from ai_gateway.tracking.instrumentator import SnowplowInstrumentator
 
@@ -25,8 +26,8 @@ __all__ = [
 
 class ContainerCodeGenerations(containers.DeclarativeContainer):
     tokenizer = providers.Dependency(instance_of=PreTrainedTokenizerFast)
-    vertex_code_bison = providers.Dependency(instance_of=TextGenBaseModel)
-    anthropic_claude = providers.Dependency(instance_of=TextGenBaseModel)
+    vertex_code_bison = providers.Dependency(instance_of=TextGenModelBase)
+    anthropic_claude = providers.Dependency(instance_of=TextGenModelBase)
     anthropic_claude_chat = providers.Dependency(instance_of=ChatModelBase)
     llmlite_chat = providers.Dependency(instance_of=ChatModelBase)
     snowplow_instrumentator = providers.Dependency(instance_of=SnowplowInstrumentator)
@@ -83,9 +84,9 @@ class ContainerCodeGenerations(containers.DeclarativeContainer):
 
 class ContainerCodeCompletions(containers.DeclarativeContainer):
     tokenizer = providers.Dependency(instance_of=PreTrainedTokenizerFast)
-    vertex_code_gecko = providers.Dependency(instance_of=TextGenBaseModel)
-    anthropic_claude = providers.Dependency(instance_of=TextGenBaseModel)
-    llmlite = providers.Dependency(instance_of=TextGenBaseModel)
+    vertex_code_gecko = providers.Dependency(instance_of=TextGenModelBase)
+    anthropic_claude = providers.Dependency(instance_of=TextGenModelBase)
+    llmlite = providers.Dependency(instance_of=TextGenModelBase)
     snowplow_instrumentator = providers.Dependency(instance_of=SnowplowInstrumentator)
 
     config = providers.Configuration(strict=True)

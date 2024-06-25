@@ -22,10 +22,9 @@ from ai_gateway.instrumentators import (
     TextGenModelInstrumentator,
     benchmark,
 )
-from ai_gateway.models import (
-    ModelAPICallError,
-    ModelAPIError,
-    TextGenBaseModel,
+from ai_gateway.models import ModelAPICallError, ModelAPIError
+from ai_gateway.models.base_text import (
+    TextGenModelBase,
     TextGenModelChunk,
     TextGenModelOutput,
 )
@@ -112,7 +111,7 @@ class CodeCompletions:
     SUFFIX_RESERVED_PERCENT = 0.07
 
     def __init__(
-        self, model: TextGenBaseModel, tokenization_strategy: TokenStrategyBase
+        self, model: TextGenModelBase, tokenization_strategy: TokenStrategyBase
     ):
         self.model = model
 

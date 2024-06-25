@@ -26,11 +26,13 @@ from ai_gateway.models import (
     ModelMetadata,
     PalmCodeGeckoModel,
     SafetyAttributes,
-    TextGenBaseModel,
+)
+from ai_gateway.models.base import TokensConsumptionMetadata
+from ai_gateway.models.base_text import (
+    TextGenModelBase,
     TextGenModelChunk,
     TextGenModelOutput,
 )
-from ai_gateway.models.base import TokensConsumptionMetadata
 from ai_gateway.tracking.instrumentator import SnowplowInstrumentator
 from ai_gateway.tracking.snowplow import SnowplowEvent
 
@@ -286,7 +288,7 @@ class TestCodeCompletionsLegacy:
 class TestCodeCompletions:
     @pytest.fixture(scope="class")
     def use_case(self):
-        model = Mock(spec=TextGenBaseModel)
+        model = Mock(spec=TextGenModelBase)
         model.MAX_MODEL_LEN = 2048
 
         use_case = CodeCompletions(model, Mock(spec=TokenStrategyBase))

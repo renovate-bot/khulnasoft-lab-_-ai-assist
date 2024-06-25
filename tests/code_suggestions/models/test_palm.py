@@ -7,6 +7,7 @@ from google.cloud.aiplatform.gapic import PredictionServiceAsyncClient, PredictR
 from google.protobuf import json_format
 
 from ai_gateway.models.base import SafetyAttributes
+from ai_gateway.models.base_text import TextGenModelOutput
 from ai_gateway.models.vertex_text import (
     CodeBisonModelInput,
     CodeGeckoModelInput,
@@ -16,7 +17,6 @@ from ai_gateway.models.vertex_text import (
     PalmCodeGenBaseModel,
     PalmTextBisonModel,
     TextBisonModelInput,
-    TextGenModelOutput,
     VertexAPIConnectionError,
     VertexAPIStatusError,
 )

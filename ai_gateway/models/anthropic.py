@@ -19,11 +19,13 @@ from ai_gateway.models.base import (
     ModelAPIError,
     ModelMetadata,
     SafetyAttributes,
-    TextGenBaseModel,
+)
+from ai_gateway.models.base_chat import ChatModelBase, Message, Role
+from ai_gateway.models.base_text import (
+    TextGenModelBase,
     TextGenModelChunk,
     TextGenModelOutput,
 )
-from ai_gateway.models.base_chat import ChatModelBase, Message, Role
 
 __all__ = [
     "AnthropicAPIConnectionError",
@@ -74,7 +76,7 @@ class KindAnthropicModel(str, Enum):
     CLAUDE_3_HAIKU = "claude-3-haiku-20240307"
 
 
-class AnthropicModel(TextGenBaseModel):
+class AnthropicModel(TextGenModelBase):
     """This class uses the deprecated Completions API from Anthropic.
     Claude models v3 and above should use AnthropicChatModel.
 
