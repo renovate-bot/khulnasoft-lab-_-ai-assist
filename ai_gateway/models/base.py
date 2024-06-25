@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 from enum import Enum
-from typing import Any, AsyncIterator, NamedTuple, Optional
+from typing import Any, NamedTuple
 
 import structlog
 from anthropic import AsyncAnthropic
@@ -23,9 +23,7 @@ __all__ = [
     "ModelMetadata",
     "TokensConsumptionMetadata",
     "SafetyAttributes",
-    "TextGenModelOutput",
-    "TextGenModelChunk",
-    "TextGenBaseModel",
+    "ModelBase",
     "grpc_connect_vertex",
     "connect_anthropic",
 ]
@@ -69,11 +67,6 @@ class ModelAPICallError(ModelAPIError):
         super().__init__(f"{self.code} {message}", errors=errors, details=details)
 
 
-class ModelMetadata(NamedTuple):
-    name: str
-    engine: str
-
-
 class TokensConsumptionMetadata(NamedTuple):
     input_tokens: int
     output_tokens: int
@@ -98,18 +91,12 @@ class SafetyAttributes(BaseModel):
     errors: list[int] = []
 
 
-class TextGenModelOutput(NamedTuple):
-    text: str
-    score: float
-    safety_attributes: SafetyAttributes
-    metadata: Optional[TokensConsumptionMetadata] = None
+class ModelMetadata(NamedTuple):
+    name: str
+    engine: str
 
 
-class TextGenModelChunk(NamedTuple):
-    text: str
-
-
-class TextGenBaseModel(ABC):
+class ModelBase(ABC):
     MAX_MODEL_LEN = 2048
 
     @property
@@ -125,21 +112,6 @@ class TextGenBaseModel(ABC):
     @property
     @abstractmethod
     def metadata(self) -> ModelMetadata:
-        pass
-
-    @abstractmethod
-    async def generate(
-        self,
-        prefix: str,
-        suffix: str,
-        stream: bool = False,
-        temperature: float = 0.2,
-        max_output_tokens: int = 16,
-        top_p: float = 0.95,
-        top_k: int = 40,
-    ) -> (
-        TextGenModelOutput | list[TextGenModelOutput] | AsyncIterator[TextGenModelChunk]
-    ):
         pass
 
 

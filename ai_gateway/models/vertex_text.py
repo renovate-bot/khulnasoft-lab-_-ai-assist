@@ -14,10 +14,9 @@ from ai_gateway.models.base import (
     ModelInput,
     ModelMetadata,
     SafetyAttributes,
-    TextGenBaseModel,
-    TextGenModelOutput,
     TokensConsumptionMetadata,
 )
+from ai_gateway.models.base_text import TextGenModelBase, TextGenModelOutput
 
 __all__ = [
     "PalmCodeBisonModel",
@@ -101,7 +100,7 @@ class KindVertexTextModel(str, Enum):
     TEXTEMBEDDING_GECKO_003 = "textembedding-gecko@003"
 
 
-class PalmCodeGenBaseModel(TextGenBaseModel):
+class PalmCodeGenBaseModel(TextGenModelBase):
     # Max number of tokens the model can handle
     # Source: https://cloud.google.com/vertex-ai/docs/generative-ai/learn/models#foundation_models
     MAX_MODEL_LEN = 2048

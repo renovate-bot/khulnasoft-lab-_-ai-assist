@@ -20,11 +20,11 @@ from ai_gateway.models import (
     ModelMetadata,
     PalmCodeGenBaseModel,
     SafetyAttributes,
-    TextGenModelOutput,
     VertexAPIConnectionError,
     VertexAPIStatusError,
 )
 from ai_gateway.models.base import TokensConsumptionMetadata
+from ai_gateway.models.base_text import TextGenModelOutput
 
 tokenization_strategy = TokenizerTokenStrategy(
     tokenizer=AutoTokenizer.from_pretrained("Salesforce/codegen2-16B")

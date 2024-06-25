@@ -3,15 +3,13 @@ from typing import AsyncIterator, Callable, Optional, Union
 
 from litellm import CustomStreamWrapper, acompletion
 
-from ai_gateway.models.base import (
-    KindModelProvider,
-    ModelMetadata,
-    SafetyAttributes,
-    TextGenBaseModel,
+from ai_gateway.models.base import KindModelProvider, ModelMetadata, SafetyAttributes
+from ai_gateway.models.base_chat import ChatModelBase, Message, Role
+from ai_gateway.models.base_text import (
+    TextGenModelBase,
     TextGenModelChunk,
     TextGenModelOutput,
 )
-from ai_gateway.models.base_chat import ChatModelBase, Message, Role
 
 __all__ = [
     "LiteLlmChatModel",
@@ -155,7 +153,7 @@ class LiteLlmChatModel(ChatModelBase):
         return cls(model_name=kind_model, endpoint=endpoint, api_key=api_key)
 
 
-class LiteLlmTextGenModel(TextGenBaseModel):
+class LiteLlmTextGenModel(TextGenModelBase):
     def __init__(
         self,
         model_name: KindLiteLlmModel = KindLiteLlmModel.CODE_GEMMA,

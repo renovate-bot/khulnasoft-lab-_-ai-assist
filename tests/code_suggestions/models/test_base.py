@@ -1,10 +1,11 @@
 from unittest import mock
 
-from ai_gateway.models import ModelMetadata, TextGenBaseModel
+from ai_gateway.models import ModelMetadata
+from ai_gateway.models.base_text import TextGenModelBase
 
 
 class TestTextGenBaseModel:
-    class TestClass(TextGenBaseModel):
+    class TestClass(TextGenModelBase):
         @property
         def metadata(self):
             return ModelMetadata(engine="vertex", name="code-gecko@002")

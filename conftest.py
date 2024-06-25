@@ -12,7 +12,7 @@ from ai_gateway.api.middleware import MiddlewareAuthentication, MiddlewareLogReq
 from ai_gateway.auth import User, UserClaims
 from ai_gateway.config import Config
 from ai_gateway.container import ContainerApplication
-from ai_gateway.models import TextGenBaseModel
+from ai_gateway.models.base_text import TextGenModelBase
 
 pytest_plugins = ("pytest_asyncio",)
 
@@ -26,7 +26,7 @@ def tpl_codegen_dir() -> Path:
 
 @pytest.fixture
 def text_gen_base_model():
-    model = Mock(spec=TextGenBaseModel)
+    model = Mock(spec=TextGenModelBase)
     model.MAX_MODEL_LEN = 1_000
     model.UPPER_BOUND_MODEL_CHARS = model.MAX_MODEL_LEN * 5
     return model
