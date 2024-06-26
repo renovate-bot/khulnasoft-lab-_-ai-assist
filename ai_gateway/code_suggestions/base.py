@@ -60,6 +60,7 @@ USE_CASES_MODELS_MAP = {
         KindVertexTextModel.CODE_BISON_002,
         KindAnthropicModel.CLAUDE_3_OPUS,
         KindAnthropicModel.CLAUDE_3_SONNET,
+        KindAnthropicModel.CLAUDE_3_5_SONNET,
         KindAnthropicModel.CLAUDE_3_HAIKU,
         KindLiteLlmModel.MISTRAL,
         KindLiteLlmModel.MIXTRAL,
