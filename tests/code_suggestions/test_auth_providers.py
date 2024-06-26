@@ -1,16 +1,13 @@
 import json
-import logging
-import os
-from time import sleep
 from unittest.mock import patch
 
 import pytest
 import requests
 import responses
 from jose import jwt
-from jose.exceptions import JWKError
 
 from ai_gateway.auth import CompositeProvider, GitLabOidcProvider, LocalAuthProvider
+from ai_gateway.config import ConfigSelfSignedJwt
 
 
 class TestCompositeProvider:
@@ -322,11 +319,6 @@ UGw3kIW+604fnnXLDm4TaLA=
         self,
         jwks_response_body,
     ):
-        # pylint: disable=direct-environment-variable-reference
-        os.environ.pop("AIGW_SELF_SIGNED_JWT__SIGNING_KEY", None)
-        os.environ.pop("AIGW_SELF_SIGNED_JWT__VALIDATION_KEY", None)
-        # pylint: enable=direct-environment-variable-reference
-
         well_known_test_response = responses.get(
             "http://test.com/.well-known/openid-configuration",
             body='{"jwks_uri": "http://test.com/oauth/discovery/keys"}',
@@ -340,7 +332,6 @@ UGw3kIW+604fnnXLDm4TaLA=
 
         auth_provider = CompositeProvider(
             [
-                LocalAuthProvider(),
                 GitLabOidcProvider(
                     oidc_providers={
                         "Gitlab": "http://test.com",
@@ -355,84 +346,13 @@ UGw3kIW+604fnnXLDm4TaLA=
         )
 
         user = None
-        with pytest.raises((CompositeProvider.CriticalAuthError, JWKError)):
+        with pytest.raises((CompositeProvider.CriticalAuthError)):
             user = auth_provider.authenticate(token)
 
         assert user is None
 
         assert well_known_test_response.call_count == 1
         assert jwks_test_response.call_count == 1
-
-    @responses.activate
-    @pytest.mark.parametrize(
-        "jwt_signing_key,jwt_validation_key,key_to_sign,kid",
-        [
-            (
-                None,
-                private_key_ai_gateway_validation_key_test,
-                private_key_ai_gateway_validation_key_test,
-                "gitlab_ai_gateway_validation_key",
-            ),
-            (
-                private_key_ai_gateway_signing_key_test,
-                None,
-                private_key_ai_gateway_signing_key_test,
-                "gitlab_ai_gateway_signing_key",
-            ),
-        ],
-    )
-    def test_missing_one_environment_variable(
-        self,
-        jwt_signing_key,
-        jwt_validation_key,
-        key_to_sign,
-        kid,
-    ):
-        # pylint: disable=direct-environment-variable-reference
-        if jwt_signing_key:
-            os.environ["AIGW_SELF_SIGNED_JWT__SIGNING_KEY"] = jwt_signing_key
-        else:
-            os.environ.pop("AIGW_SELF_SIGNED_JWT__SIGNING_KEY", None)
-        if jwt_validation_key:
-            os.environ["AIGW_SELF_SIGNED_JWT__VALIDATION_KEY"] = jwt_validation_key
-        else:
-            os.environ.pop("AIGW_SELF_SIGNED_JWT__VALIDATION_KEY", None)
-        # pylint: enable=direct-environment-variable-reference
-
-        auth_provider = CompositeProvider([LocalAuthProvider()])
-        token = jwt.encode(
-            self.claims | self.ai_gateway_audience,
-            key_to_sign,
-            algorithm=CompositeProvider.RS256_ALGORITHM,
-        )
-
-        user = auth_provider.authenticate(token)
-
-        assert user is not None
-        assert user.authenticated
-
-        cached_keys = auth_provider.cache.get(auth_provider.CACHE_KEY).value
-        assert len(cached_keys["keys"]) == 1
-        assert cached_keys["keys"][0]["kid"] == kid
-
-    def test_missing_environment_variables_error(self):
-        # pylint: disable=direct-environment-variable-reference
-        os.environ.pop("AIGW_SELF_SIGNED_JWT__SIGNING_KEY", None)
-        os.environ.pop("AIGW_SELF_SIGNED_JWT__VALIDATION_KEY", None)
-        # pylint: enable=direct-environment-variable-reference
-
-        auth_provider = CompositeProvider([LocalAuthProvider()])
-        token = jwt.encode(
-            self.claims | self.ai_gateway_audience,
-            self.private_key_ai_gateway_validation_key_test,
-            algorithm=CompositeProvider.RS256_ALGORITHM,
-        )
-
-        user = None
-        with pytest.raises(CompositeProvider.CriticalAuthError):
-            user = auth_provider.authenticate(token)
-
-        assert user is None
 
     @responses.activate
     @pytest.mark.parametrize(
@@ -508,18 +428,14 @@ UGw3kIW+604fnnXLDm4TaLA=
             status=200,
         )
 
-        # pylint: disable=direct-environment-variable-reference
-        os.environ["AIGW_SELF_SIGNED_JWT__SIGNING_KEY"] = (
-            self.private_key_ai_gateway_signing_key_test
+        self_signed_jwt = ConfigSelfSignedJwt(
+            signing_key=self.private_key_ai_gateway_signing_key_test,
+            validation_key=self.private_key_ai_gateway_validation_key_test,
         )
-        os.environ["AIGW_SELF_SIGNED_JWT__VALIDATION_KEY"] = (
-            self.private_key_ai_gateway_validation_key_test
-        )
-        # pylint: enable=direct-environment-variable-reference
 
         auth_provider = CompositeProvider(
             [
-                LocalAuthProvider(),
+                LocalAuthProvider(self_signed_jwt),
                 GitLabOidcProvider(
                     oidc_providers={
                         "Gitlab": "http://test.com",

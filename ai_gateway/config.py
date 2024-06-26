@@ -31,6 +31,7 @@ class ConfigLogging(BaseModel):
 
 class ConfigSelfSignedJwt(BaseModel):
     signing_key: str = ""
+    validation_key: str = ""
 
 
 class ConfigFastApi(BaseModel):

@@ -78,7 +78,7 @@ def create_fast_api_server(config: Config):
             MiddlewareAuthentication(
                 CompositeProvider(
                     [
-                        LocalAuthProvider(),
+                        LocalAuthProvider(self_signed_jwt=config.self_signed_jwt),
                         GitLabOidcProvider(
                             oidc_providers={
                                 "Gitlab": config.gitlab_url,
