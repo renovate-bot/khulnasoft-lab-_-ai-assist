@@ -2,7 +2,6 @@ import urllib.parse
 from abc import ABC, abstractmethod
 from collections import defaultdict
 from datetime import datetime, timedelta
-from os import environ
 
 import requests
 from jose import JWTError, jwk, jwt
@@ -10,6 +9,7 @@ from jose.exceptions import JWKError
 
 from ai_gateway.auth.cache import LocalAuthCache
 from ai_gateway.auth.user import User, UserClaims
+from ai_gateway.config import ConfigSelfSignedJwt
 from ai_gateway.tracking.errors import log_exception
 
 __all__ = [
@@ -109,60 +109,52 @@ class CompositeProvider(AuthProvider):
 class LocalAuthProvider(JwksProvider):
     ALGORITHM = CompositeProvider.RS256_ALGORITHM
 
+    def __init__(self, self_signed_jwt: ConfigSelfSignedJwt) -> None:
+        self.signing_key = self_signed_jwt.signing_key
+        self.validation_key = self_signed_jwt.validation_key
+
     def jwks(self) -> dict:
         jwks = defaultdict(list)
         jwks["keys"] = []
 
         try:
-            # pylint: disable=direct-environment-variable-reference
-            if environ.get("AIGW_SELF_SIGNED_JWT__SIGNING_KEY"):
-                signing_key = (
-                    jwk.RSAKey(
-                        algorithm=self.ALGORITHM,
-                        key=environ["AIGW_SELF_SIGNED_JWT__SIGNING_KEY"],
-                    )
-                    .public_key()
-                    .to_dict()
+            signing_key = (
+                jwk.RSAKey(
+                    algorithm=self.ALGORITHM,
+                    key=self.signing_key,
                 )
-                # pylint: enable=direct-environment-variable-reference
-                signing_key.update(
-                    {
-                        "kid": "gitlab_ai_gateway_signing_key",
-                        "use": "sig",
-                    }
-                )
-            else:
-                signing_key = {}
+                .public_key()
+                .to_dict()
+            )
+            signing_key.update(
+                {
+                    "kid": "gitlab_ai_gateway_signing_key",
+                    "use": "sig",
+                }
+            )
         except JWKError as e:
             log_exception(e)
 
         try:
-            # pylint: disable=direct-environment-variable-reference
-            if environ.get("AIGW_SELF_SIGNED_JWT__VALIDATION_KEY"):
-                validation_key = (
-                    jwk.RSAKey(
-                        algorithm=self.ALGORITHM,
-                        key=environ["AIGW_SELF_SIGNED_JWT__VALIDATION_KEY"],
-                    )
-                    .public_key()
-                    .to_dict()
+            validation_key = (
+                jwk.RSAKey(
+                    algorithm=self.ALGORITHM,
+                    key=self.validation_key,
                 )
-                # pylint: enable=direct-environment-variable-reference
-                validation_key.update(
-                    {
-                        "kid": "gitlab_ai_gateway_validation_key",
-                        "use": "sig",
-                    }
-                )
-            else:
-                validation_key = {}
+                .public_key()
+                .to_dict()
+            )
+            validation_key.update(
+                {
+                    "kid": "gitlab_ai_gateway_validation_key",
+                    "use": "sig",
+                }
+            )
         except JWKError as e:
             log_exception(e)
 
-        if signing_key:
-            jwks["keys"].append(signing_key)
-        if validation_key:
-            jwks["keys"].append(validation_key)
+        jwks["keys"].append(signing_key)
+        jwks["keys"].append(validation_key)
 
         return jwks
 
