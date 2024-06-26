@@ -21,31 +21,7 @@ Set up a Google Cloud project with access to the Vertex AI API and authenticate 
 
 ## Testing
 
-This project uses [Pytest](https://docs.pytest.org/en/stable/) for testing.
-To run the entire test suite, you can use the following command:
-
-```shell
-make test
-```
-
-To run the tests in watch mode, use the following command:
-
-```shell
-make test-watch
-```
-
-To see test coverage, you can run the following command:
-
-```shell
-make test-coverage
-```
-
-This will run all the tests, output coverage in the terminal and generate an HTML report.
-You can view the HTML report by running:
-
-```shell
-open htmlcov/index.html
-```
+See [test doc](./docs/tests.md).
 
 ## Linting
 

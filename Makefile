@@ -3,12 +3,14 @@ AI_GATEWAY_DIR := ${ROOT_DIR}/ai_gateway
 LINTS_DIR := ${ROOT_DIR}/lints
 SCRIPTS_DIR := ${ROOT_DIR}/scripts
 TESTS_DIR := ${ROOT_DIR}/tests
+INTEGRATION_TESTS_DIR := ${ROOT_DIR}/integration_tests
 AUTOGRAPH_DIR := ${ROOT_DIR}/autograph
 
 LINT_WORKING_DIR ?= ${AI_GATEWAY_DIR} \
 	${LINTS_DIR} \
 	${SCRIPTS_DIR} \
 	${TESTS_DIR} \
+	${INTEGRATION_TESTS_DIR} \
 	${AUTOGRAPH_DIR}
 
 MYPY_LINT_TODO_DIR ?= --exclude "ai_gateway/api/*" \
@@ -119,6 +121,11 @@ test-coverage: install-test-deps
 test-coverage-ci: install-test-deps
 	@echo "Running tests with coverage on CI..."
 	@poetry run pytest --cov=ai_gateway --cov=lints --cov-report term --cov-report xml:.test-reports/coverage.xml --junitxml=".test-reports/tests.xml"
+
+.PHONY: test-integration
+test-integration: install-test-deps
+	@echo "Running integration tests..."
+	@poetry run pytest integration_tests/
 
 .PHONY: ingest
 ingest:
