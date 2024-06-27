@@ -4,6 +4,8 @@ from typing import Annotated, Dict, List, Optional, Sequence, Tuple
 from langchain_core.messages import BaseMessage
 from typing_extensions import TypedDict
 
+from autograph.entities.plan import Task
+
 __all__ = [
     "WorkflowState",
     "Action",
@@ -57,7 +59,7 @@ def reduce_cost_state(
 
 class WorkflowState(TypedDict):
     goal: str
-    plan: List[str]  # Follow up will add full implementation
+    plan: List[Task]
     previous_step_summary: Optional[str]
     messages: List[BaseMessage]
     # ------Presentation Layer------
