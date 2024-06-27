@@ -1,91 +1,175 @@
 from pathlib import Path
-from typing import Type
-from unittest.mock import mock_open, patch
+from typing import Sequence, Type
 
 import pytest
 from langchain_anthropic import ChatAnthropic
 from langchain_core.prompts import ChatPromptTemplate
+from langchain_core.prompts.chat import MessageLikeRepresentation
+from pyfakefs.fake_filesystem import FakeFilesystem
 
-from ai_gateway import agents
 from ai_gateway.agents.base import Agent
-from ai_gateway.agents.registry import Key, LocalAgentRegistry, ModelProvider
+from ai_gateway.agents.registry import (
+    AgentRegistered,
+    LocalAgentRegistry,
+    ModelFactoryType,
+    ModelProvider,
+)
 
 
 class MockAgentClass(Agent):
     pass
 
 
-class TestLocalAgentRegistry:
-    @pytest.mark.parametrize(
-        ("agent_yml", "class_overrides", "expected_class", "expected_kwargs"),
-        [
-            (
-                """
+@pytest.fixture
+def model_factories():
+    yield {
+        ModelProvider.ANTHROPIC: lambda model, **model_kwargs: ChatAnthropic(model=model)  # type: ignore[call-arg]
+    }
+
+
+@pytest.fixture
+def mock_fs(fs: FakeFilesystem):
+    agents_definitions_dir = (
+        Path(__file__).parent.parent.parent / "ai_gateway" / "agents" / "definitions"
+    )
+    fs.create_file(
+        agents_definitions_dir / "test" / "base.yml",
+        contents="""
 ---
 name: Test agent
 provider: anthropic
-model: claude-3-haiku-20240307
+model: claude-2.1
+unit_primitives:
+  - explain_code
 prompt_template:
   system: Template1
-  user: Template2
-            """,
-                {},
-                Agent,
-                None,
-            ),
-            (
-                """
+""",
+    )
+    fs.create_file(
+        agents_definitions_dir / "chat" / "react.yml",
+        contents="""
 ---
-name: Test agent
+name: Chat react agent
 provider: anthropic
 model: claude-3-haiku-20240307
+unit_primitives:
+  - duo_chat
 prompt_template:
   system: Template1
   user: Template2
 stop:
   - Foo
   - Bar
-            """,
-                {Key(use_case="chat", type="react"): MockAgentClass},
+""",
+    )
+    yield fs
+
+
+@pytest.fixture
+def agents_registered():
+    yield {
+        "test/base": AgentRegistered(
+            klass=Agent,
+            config={
+                "name": "Test agent",
+                "provider": "anthropic",
+                "model": "claude-2.1",
+                "unit_primitives": ["explain_code"],
+                "prompt_template": {"system": "Template1"},
+            },
+        ),
+        "chat/react": AgentRegistered(
+            klass=MockAgentClass,
+            config={
+                "name": "Chat react agent",
+                "provider": "anthropic",
+                "model": "claude-3-haiku-20240307",
+                "unit_primitives": ["duo_chat"],
+                "prompt_template": {"system": "Template1", "user": "Template2"},
+                "stop": ["Foo", "Bar"],
+            },
+        ),
+    }
+
+
+class TestLocalAgentRegistry:
+    def test_from_local_yaml(
+        self,
+        mock_fs: FakeFilesystem,
+        model_factories: dict[ModelProvider, ModelFactoryType],
+        agents_registered: dict[str, AgentRegistered],
+    ):
+        registry = LocalAgentRegistry.from_local_yaml(
+            model_factories, {"chat/react": MockAgentClass}
+        )
+
+        assert registry.agents_registered == agents_registered
+
+    @pytest.mark.parametrize(
+        (
+            "agent_id",
+            "expected_name",
+            "expected_class",
+            "expected_messages",
+            "expected_model",
+            "expected_kwargs",
+        ),
+        [
+            (
+                "test",
+                "Test agent",
+                Agent,
+                [("system", "Template1")],
+                "claude-2.1",
+                None,
+            ),
+            (
+                "test/base",
+                "Test agent",
+                Agent,
+                [("system", "Template1")],
+                "claude-2.1",
+                None,
+            ),
+            (
+                "chat/react",
+                "Chat react agent",
                 MockAgentClass,
+                [("system", "Template1"), ("user", "Template2")],
+                "claude-3-haiku-20240307",
                 {"stop": ["Foo", "Bar"]},
             ),
         ],
     )
     def test_get(
         self,
-        agent_yml: str,
-        class_overrides: dict[Key, Type[Agent]],
+        model_factories: dict[ModelProvider, ModelFactoryType],
+        agents_registered: dict[str, AgentRegistered],
+        agent_id: str,
+        expected_name: str,
         expected_class: Type[Agent],
+        expected_messages: Sequence[MessageLikeRepresentation],
+        expected_model: str,
         expected_kwargs: dict,
     ):
+        registry = LocalAgentRegistry(
+            agents_registered=agents_registered,
+            model_factories=model_factories,
+        )
 
-        with patch("builtins.open", mock_open(read_data=agent_yml)) as mock_file:
-            registry = LocalAgentRegistry.from_local_yaml(
-                class_overrides=class_overrides,
-                model_factories={
-                    ModelProvider.ANTHROPIC: lambda model, **model_kwargs: ChatAnthropic(model=model)  # type: ignore[call-arg]
-                },
-            )
+        agent = registry.get(agent_id)
 
-            agent = registry.get("chat", "react")
+        chain = agent.bound
+        actual_messages = chain.first.messages
+        actual_model = chain.last
 
-            chain = agent.bound
-            actual_messages = chain.first.messages
-            actual_model = chain.last
+        assert agent.name == expected_name
+        assert isinstance(agent, expected_class)
+        assert (
+            actual_messages
+            == ChatPromptTemplate.from_messages(expected_messages).messages
+        )
+        assert actual_model.model == expected_model
 
-            expected_messages = ChatPromptTemplate.from_messages(
-                [("system", "Template1"), ("user", "Template2")]
-            ).messages
-
-            mock_file.assert_called_with(
-                Path(agents.__file__).parent / "chat" / "react.yml", "r"
-            )
-
-            assert agent.name == "Test agent"
-            assert isinstance(agent, expected_class)
-            assert actual_messages == expected_messages
-            assert actual_model.model == "claude-3-haiku-20240307"
-
-            if expected_kwargs:
-                assert actual_model.kwargs == expected_kwargs
+        if expected_kwargs:
+            assert actual_model.kwargs == expected_kwargs

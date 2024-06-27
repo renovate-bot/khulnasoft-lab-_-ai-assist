@@ -5,6 +5,9 @@ from jinja2 import BaseLoader, Environment
 from langchain_core.prompts.chat import MessageLikeRepresentation
 from langchain_core.runnables import Runnable, RunnableBinding
 
+from ai_gateway.auth.user import GitLabUser
+from ai_gateway.gitlab_features import GitLabUnitPrimitive, WrongUnitPrimitives
+
 __all__ = ["Agent", "BaseAgentRegistry"]
 
 Input = TypeVar("Input")
@@ -18,9 +21,13 @@ def _format_str(content: str, options: dict[str, Any]) -> str:
 
 
 class Agent(RunnableBinding[Input, Output]):
-    def __init__(self, name: str, chain: Runnable):
-        super().__init__(bound=chain)
-        self.name = name
+    name: str
+    unit_primitives: list[GitLabUnitPrimitive]
+
+    def __init__(
+        self, name: str, unit_primitives: list[GitLabUnitPrimitive], chain: Runnable
+    ):
+        super().__init__(name=name, unit_primitives=unit_primitives, bound=chain)  # type: ignore[call-arg]
 
     # Assume that the prompt template keys map to roles. Subclasses can
     # override this method to implement more complex logic.
@@ -46,7 +53,15 @@ class Agent(RunnableBinding[Input, Output]):
 
 class BaseAgentRegistry(ABC):
     @abstractmethod
-    def get(
-        self, use_case: str, agent_type: str, options: Optional[dict[str, Any]]
-    ) -> Agent:
+    def get(self, agent_id: str, options: Optional[dict[str, Any]] = None) -> Agent:
         pass
+
+    def get_on_behalf(
+        self, user: GitLabUser, agent_id: str, options: Optional[dict[str, Any]] = None
+    ) -> Agent:
+        agent = self.get(agent_id, options)
+
+        if not set(agent.unit_primitives).issubset(user.unit_primitives):
+            raise WrongUnitPrimitives
+
+        return agent

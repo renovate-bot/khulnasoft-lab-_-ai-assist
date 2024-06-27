@@ -37,6 +37,10 @@ class GitLabUnitPrimitive(str, Enum):
     SUMMARIZE_SUBMITTED_REVIEW = "summarize_submitted_review"
 
 
+class WrongUnitPrimitives(Exception):
+    pass
+
+
 FEATURE_CATEGORIES_FOR_PROXY_ENDPOINTS = {
     GitLabUnitPrimitive.ANALYZE_CI_JOB_FAILURE: GitLabFeatureCategory.CONTINUOUS_INTEGRATION,
     GitLabUnitPrimitive.CATEGORIZE_DUO_CHAT_QUESTION: GitLabFeatureCategory.DUO_CHAT,

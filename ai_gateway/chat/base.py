@@ -10,12 +10,7 @@ from ai_gateway.gitlab_features import GitLabUnitPrimitive
 __all__ = [
     "UnitPrimitiveToolset",
     "BaseToolsRegistry",
-    "WrongUnitPrimitives",
 ]
-
-
-class WrongUnitPrimitives(Exception):
-    pass
 
 
 class UnitPrimitiveToolset(BaseModel):

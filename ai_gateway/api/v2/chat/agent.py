@@ -15,9 +15,8 @@ from ai_gateway.api.feature_category import feature_category
 from ai_gateway.api.v2.chat.typing import AgentRequest, AgentStreamResponseEvent
 from ai_gateway.async_dependency_resolver import get_container_application
 from ai_gateway.auth.user import GitLabUser, get_current_user
-from ai_gateway.chat import WrongUnitPrimitives
 from ai_gateway.chat.executor import GLAgentRemoteExecutor
-from ai_gateway.gitlab_features import GitLabFeatureCategory
+from ai_gateway.gitlab_features import GitLabFeatureCategory, WrongUnitPrimitives
 
 __all__ = [
     "router",

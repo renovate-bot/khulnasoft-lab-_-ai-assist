@@ -1,9 +1,5 @@
 from ai_gateway.auth import GitLabUser
-from ai_gateway.chat.base import (
-    BaseToolsRegistry,
-    UnitPrimitiveToolset,
-    WrongUnitPrimitives,
-)
+from ai_gateway.chat.base import BaseToolsRegistry, UnitPrimitiveToolset
 from ai_gateway.chat.tools import BaseTool
 from ai_gateway.chat.tools.gitlab import (
     CiEditorAssistant,
@@ -11,7 +7,7 @@ from ai_gateway.chat.tools.gitlab import (
     GitlabDocumentation,
     IssueReader,
 )
-from ai_gateway.gitlab_features import GitLabUnitPrimitive
+from ai_gateway.gitlab_features import GitLabUnitPrimitive, WrongUnitPrimitives
 
 __all__ = ["DuoChatToolsRegistry"]
 

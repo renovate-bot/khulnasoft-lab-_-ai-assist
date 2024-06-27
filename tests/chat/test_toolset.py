@@ -3,7 +3,6 @@ from typing import Type
 import pytest
 
 from ai_gateway.auth import GitLabUser, UserClaims
-from ai_gateway.chat import WrongUnitPrimitives
 from ai_gateway.chat.tools import BaseTool
 from ai_gateway.chat.tools.gitlab import (
     CiEditorAssistant,
@@ -12,7 +11,7 @@ from ai_gateway.chat.tools.gitlab import (
     IssueReader,
 )
 from ai_gateway.chat.toolset import DuoChatToolsRegistry
-from ai_gateway.gitlab_features import GitLabUnitPrimitive
+from ai_gateway.gitlab_features import GitLabUnitPrimitive, WrongUnitPrimitives
 
 
 class TestDuoChatToolRegistry:

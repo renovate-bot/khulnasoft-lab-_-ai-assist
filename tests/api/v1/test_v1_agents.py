@@ -1,5 +1,5 @@
 from typing import Any, List, Optional, Type
-from unittest import mock
+from unittest.mock import patch
 
 import pytest
 from langchain_core.callbacks import CallbackManagerForLLMRun
@@ -34,14 +34,32 @@ class FakeModel(SimpleChatModel):
         return self.response
 
 
-def mock_agent(
-    prompt: str, expected_message: str, response: str, klass: Type[Agent] = Agent
-) -> Agent:
-    model = FakeModel(expected_message=expected_message, response=response)
-    return klass(
-        name="fake_agent",
-        chain=ChatPromptTemplate.from_messages([prompt]) | model,
-    )
+@pytest.fixture
+def mock_agent_klass():
+    yield Agent
+
+
+@pytest.fixture
+def mock_registry_get(mock_agent_klass: Optional[Type[Agent]]):
+    with patch("ai_gateway.agents.registry.LocalAgentRegistry.get") as mock:
+        if mock_agent_klass:
+            model = FakeModel(
+                expected_message="Hi, I'm John and I'm 20 years old",
+                response="Hi John!",
+            )
+
+            mock.return_value = mock_agent_klass(
+                name="fake_agent",
+                chain=ChatPromptTemplate.from_messages(
+                    ["Hi, I'm {name} and I'm {age} years old"]
+                )
+                | model,
+                unit_primitives=[GitLabUnitPrimitive.EXPLAIN_VULNERABILITY],
+            )
+        else:
+            mock.side_effect = KeyError()
+
+        yield mock
 
 
 @pytest.fixture(scope="class")
@@ -62,16 +80,15 @@ def auth_user():
 
 
 class TestAgent:
-    @mock.patch("ai_gateway.agents.registry.LocalAgentRegistry.get")
     @pytest.mark.parametrize(
-        ("klass", "inputs", "expected_status", "expected_response"),
+        ("mock_agent_klass", "inputs", "expected_status", "expected_response"),
         [
             (Agent, {"name": "John", "age": 20}, 200, "Hi John!"),
             (
                 None,
                 {"name": "John", "age": 20},
                 404,
-                {"detail": "Agent 'test' not found for explain_vulnerability"},
+                {"detail": "Agent 'test' not found"},
             ),
             (
                 Agent,
@@ -91,37 +108,24 @@ class TestAgent:
     )
     def test_request(
         self,
+        mock_agent_klass,
         mock_registry_get,
         mock_container,
         mock_client,
-        klass: Optional[Type[Agent]],
         inputs: dict[str, str],
         expected_status: int,
         expected_response: Any,
     ):
-        if klass:
-            mock_registry_get.return_value = mock_agent(
-                prompt="Hi, I'm {name} and I'm {age} years old",
-                expected_message="Hi, I'm John and I'm 20 years old",
-                response="Hi John!",
-                klass=klass,
-            )
-        else:
-            mock_registry_get.side_effect = KeyError("test")
-
         response = mock_client.post(
-            "/agents/invoke",
+            "/agents/test",
             headers={
                 "Authorization": "Bearer 12345",
                 "X-Gitlab-Authentication-Type": "oidc",
-                "X-Gitlab-Unit-Primitive": GitLabUnitPrimitive.EXPLAIN_VULNERABILITY,
             },
-            json={"name": "test", "inputs": inputs},
+            json=inputs,
         )
 
-        mock_registry_get.assert_called_with(
-            GitLabUnitPrimitive.EXPLAIN_VULNERABILITY, "test"
-        )
+        mock_registry_get.assert_called_with("test", None)
         assert response.status_code == expected_status
         assert response.json() == expected_response
 
@@ -134,18 +138,17 @@ class TestUnauthorizedScopes:
             claims=UserClaims(scopes=["unauthorized_scope"]),
         )
 
-    def test_failed_authorization_scope(self, mock_container, mock_client):
+    def test_failed_authorization_scope(
+        self, mock_container, mock_client, mock_registry_get
+    ):
         response = mock_client.post(
-            "/agents/invoke",
+            "/agents/test",
             headers={
                 "Authorization": "Bearer 12345",
                 "X-Gitlab-Authentication-Type": "oidc",
-                "X-Gitlab-Unit-Primitive": GitLabUnitPrimitive.EXPLAIN_VULNERABILITY,
             },
-            json={"name": "test", "inputs": {}},
+            json={},
         )
 
         assert response.status_code == 403
-        assert response.json() == {
-            "detail": "Unauthorized to access explain_vulnerability"
-        }
+        assert response.json() == {"detail": "Unauthorized to access 'test'"}

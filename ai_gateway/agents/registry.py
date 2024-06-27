@@ -22,19 +22,29 @@ class ModelFactoryType(Protocol):
     ) -> BaseChatModel: ...
 
 
-class Key(NamedTuple):
-    use_case: str
-    type: str
+class AgentRegistered(NamedTuple):
+    klass: Type[Agent]
+    config: dict
 
 
 class LocalAgentRegistry(BaseAgentRegistry):
+    key_agent_type_base: str = "base"
+
     def __init__(
         self,
-        agent_definitions: dict[Key, tuple[Type[Agent], dict]],
+        agents_registered: dict[str, AgentRegistered],
         model_factories: dict[ModelProvider, ModelFactoryType],
     ):
-        self.agent_definitions = agent_definitions
+        self.agents_registered = agents_registered
         self.model_factories = model_factories
+
+    def _resolve_id(self, agent_id: str) -> str:
+        _, _, agent_type = agent_id.partition("/")
+        if agent_type:
+            # the `agent_id` value is already in the format of - `first/last`
+            return agent_id
+
+        return f"{agent_id}/{self.key_agent_type_base}"
 
     def _get_model(
         self, provider: str, name: str, **kwargs: Optional[Any]
@@ -44,10 +54,9 @@ class LocalAgentRegistry(BaseAgentRegistry):
 
         raise ValueError(f"unknown provider `{provider}`.")
 
-    def get(
-        self, use_case: str, agent_type: str, options: Optional[dict[str, Any]] = None
-    ) -> Any:
-        klass, config = self.agent_definitions[Key(use_case=use_case, type=agent_type)]
+    def get(self, agent_id: str, options: Optional[dict[str, Any]] = None) -> Any:
+        agent_id = self._resolve_id(agent_id)
+        klass, config = self.agents_registered[agent_id]
 
         # TODO: read model parameters such as `temperature`, `top_k`
         #  and pass them to the model factory via **kwargs.
@@ -65,24 +74,32 @@ class LocalAgentRegistry(BaseAgentRegistry):
         return klass(
             name=config["name"],
             chain=prompt | model,
+            unit_primitives=config["unit_primitives"],
         )
 
     @classmethod
     def from_local_yaml(
         cls,
         model_factories: dict[ModelProvider, ModelFactoryType],
-        class_overrides: dict[Key, Type[Agent]],
+        class_overrides: dict[str, Type[Agent]],
     ) -> "LocalAgentRegistry":
         """Iterate over all agent definition files matching [usecase]/[type].yml,
         and create a corresponding agent for each one. The base Agent class is
         used if no matching override is provided in `class_overrides`.
         """
 
-        agent_definitions = {}
-        for path in Path(__file__).parent.glob("*/*.yml"):
-            key = Key(use_case=path.parent.name, type=path.stem)
-            with open(path, "r") as fp:
-                klass = class_overrides.get(key, Agent)
-                agent_definitions[key] = (klass, yaml.safe_load(fp))
+        agents_definitions_dir = Path(__file__).parent / "definitions"
+        agents_registered = {}
+        for path in agents_definitions_dir.glob("*/*.yml"):
+            agent_id = str(
+                # E.g., "chat/react", "generate_description/base", etc.
+                path.relative_to(agents_definitions_dir).with_suffix("")
+            )
 
-        return cls(agent_definitions, model_factories)
+            with open(path, "r") as fp:
+                klass = class_overrides.get(agent_id, Agent)
+                agents_registered[agent_id] = AgentRegistered(
+                    klass=klass, config=yaml.safe_load(fp)
+                )
+
+        return cls(agents_registered, model_factories)
