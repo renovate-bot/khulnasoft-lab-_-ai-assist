@@ -14,6 +14,7 @@ from ai_gateway.agents.chat.typing import (
     AgentToolAction,
     Context,
 )
+from ai_gateway.gitlab_features import GitLabUnitPrimitive
 
 __all__ = [
     "ReActAgentInputs",
@@ -168,8 +169,12 @@ class ReActAgent(Agent[ReActAgentInputs, TypeReActAgentAction]):
         len_log: int
         len_thought: int
 
-    def __init__(self, *, name: str, chain: Runnable):
-        super().__init__(name, ReActInputParser() | chain | ReActPlainTextParser())
+    def __init__(
+        self, *, name: str, unit_primitives: list[GitLabUnitPrimitive], chain: Runnable
+    ):
+        super().__init__(
+            name, unit_primitives, ReActInputParser() | chain | ReActPlainTextParser()
+        )
 
     async def astream(
         self,

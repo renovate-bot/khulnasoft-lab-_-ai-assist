@@ -19,8 +19,9 @@ from ai_gateway.api.v2.chat.typing import (
     ReActAgentScratchpad,
 )
 from ai_gateway.auth import GitLabUser, User, UserClaims
-from ai_gateway.chat import GLAgentRemoteExecutor, WrongUnitPrimitives
+from ai_gateway.chat import GLAgentRemoteExecutor
 from ai_gateway.container import ContainerApplication
+from ai_gateway.gitlab_features import WrongUnitPrimitives
 
 
 @pytest.fixture(scope="class")

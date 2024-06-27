@@ -38,7 +38,7 @@ async def _assert_agent_invoked(
         agent_scratchpad=agent_scratchpad,
     )
 
-    agent = ReActAgent(name="test", chain=prompt_template | model)
+    agent = ReActAgent(name="test", unit_primitives=[], chain=prompt_template | model)
 
     if stream:
         actual_actions = [action async for action in agent.astream(inputs)]

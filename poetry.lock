@@ -2963,6 +2963,17 @@ toml = ["tomli (>=2.0.1)"]
 yaml = ["pyyaml (>=6.0.1)"]
 
 [[package]]
+name = "pyfakefs"
+version = "5.5.0"
+description = "pyfakefs implements a fake file system that mocks the Python file system modules."
+optional = false
+python-versions = ">=3.7"
+files = [
+    {file = "pyfakefs-5.5.0-py3-none-any.whl", hash = "sha256:8dbf203ab7bef1529f11f7d41b9478b898e95bf9f3b71262163aac07a518cd76"},
+    {file = "pyfakefs-5.5.0.tar.gz", hash = "sha256:7448aaa07142f892d0a4eb52a5ed3206a9f02c6599e686cd97d624c18979c154"},
+]
+
+[[package]]
 name = "pyflakes"
 version = "3.2.0"
 description = "passive checker of Python programs"
@@ -4875,4 +4886,4 @@ testing = ["big-O", "jaraco.functools", "jaraco.itertools", "more-itertools", "p
 [metadata]
 lock-version = "2.0"
 python-versions = "~3.10.0"
-content-hash = "f0ef99c987e5bc3c2c61efa424ac17e8a244ecbe10c353d59ecc422317b80261"
+content-hash = "7ed1edd1cb63c3a9ef1e4e98a628857c07911e945ad9c7a86c5a83216f6ef3ea"

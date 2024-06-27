@@ -24,7 +24,7 @@ def _react_agent_factory(
                 {"context_type": context.type, "context_content": context.content}
             )
 
-        return agent_registry.get("chat", "react", options)
+        return agent_registry.get("chat/react", options)
 
     return _fn
 

@@ -2,6 +2,8 @@
 name: Claude 3 ReAct Chat agent
 provider: anthropic
 model: claude-3-sonnet-20240229
+unit_primitives:
+  - duo_chat
 prompt_template:
   system: |
     {chat_history}
