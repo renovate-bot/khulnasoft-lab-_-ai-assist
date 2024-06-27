@@ -2,30 +2,30 @@ from typing import Iterator
 from unittest.mock import Mock, call
 
 import pytest
+from dependency_injector import containers
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
 from ai_gateway.api import create_fast_api_server
 from ai_gateway.api.monitoring import validated
 from ai_gateway.config import Config, ConfigAuth
-from ai_gateway.container import ContainerApplication
 from ai_gateway.models import ModelAPIError
 
 
 @pytest.fixture
-def container() -> ContainerApplication:
-    return ContainerApplication()
+def mock_config():
+    yield Config(_env_file=None, auth=ConfigAuth())
 
 
 @pytest.fixture
-def fastapi_server_app(container: ContainerApplication) -> Iterator[FastAPI]:
-    config = Config(_env_file=None, auth=ConfigAuth())
-    container.config.from_dict(config.model_dump())
-    yield create_fast_api_server(config)
+def fastapi_server_app(mock_config: Config) -> Iterator[FastAPI]:
+    yield create_fast_api_server(mock_config)
 
 
 @pytest.fixture
-def client(fastapi_server_app: FastAPI) -> TestClient:
+def client(
+    fastapi_server_app: FastAPI, mock_container: containers.Container
+) -> TestClient:
     return TestClient(fastapi_server_app)
 
 

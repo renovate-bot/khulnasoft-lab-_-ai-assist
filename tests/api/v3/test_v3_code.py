@@ -1,5 +1,4 @@
-from typing import AsyncIterator
-from unittest.mock import AsyncMock, Mock
+from unittest.mock import Mock
 
 import pytest
 from dependency_injector import containers
@@ -7,15 +6,6 @@ from fastapi.testclient import TestClient
 
 from ai_gateway.api.v3 import api_router
 from ai_gateway.auth import User, UserClaims
-from ai_gateway.code_suggestions import (
-    CodeCompletions,
-    CodeGenerations,
-    CodeSuggestionsChunk,
-    CodeSuggestionsOutput,
-)
-from ai_gateway.code_suggestions.processing.typing import LanguageId
-from ai_gateway.container import ContainerApplication
-from ai_gateway.models import ModelMetadata
 
 
 @pytest.fixture(scope="class")
