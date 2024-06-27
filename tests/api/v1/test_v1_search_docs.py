@@ -2,7 +2,6 @@ from time import time
 from unittest.mock import patch
 
 import pytest
-from dependency_injector import containers
 from fastapi.testclient import TestClient
 
 from ai_gateway.api.v1 import api_router

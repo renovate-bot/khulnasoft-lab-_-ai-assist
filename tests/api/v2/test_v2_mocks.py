@@ -1,5 +1,4 @@
 import pytest
-from dependency_injector import containers
 from fastapi.testclient import TestClient
 
 from ai_gateway.api.v2 import api_router

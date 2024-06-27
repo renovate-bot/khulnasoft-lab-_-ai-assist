@@ -1,9 +1,7 @@
 from typing import Any, Type
 from unittest.mock import Mock, patch
 
-import pydantic
 import pytest
-from dependency_injector import containers
 from fastapi.testclient import TestClient
 from structlog.testing import capture_logs
 
@@ -17,7 +15,6 @@ from ai_gateway.models import (
     Message,
     ModelAPIError,
 )
-from ai_gateway.models.base_text import TextGenModelChunk, TextGenModelOutput
 
 
 @pytest.fixture(scope="class")

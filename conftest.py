@@ -61,7 +61,7 @@ def test_client(fast_api_router, stub_auth_provider, request):
 
 
 @pytest.fixture
-def mock_client(test_client, stub_auth_provider, auth_user, mock_container, mock_connect_vertex, mock_connect_anthropic):
+def mock_client(test_client, stub_auth_provider, auth_user, mock_container):
     """Setup all the needed mocks to perform requests in the test environment
     """
     with patch.object(stub_auth_provider, "authenticate", return_value=auth_user):
@@ -71,6 +71,12 @@ def mock_client(test_client, stub_auth_provider, auth_user, mock_container, mock
 @pytest.fixture
 def mock_connect_vertex():
     with patch("ai_gateway.models.base.PredictionServiceAsyncClient"):
+        yield
+
+
+@pytest.fixture
+def mock_connect_vertex_search():
+    with patch("ai_gateway.searches.container.discoveryengine.SearchServiceAsyncClient"):
         yield
 
 
@@ -86,7 +92,7 @@ def mock_config():
 
 
 @pytest.fixture
-def mock_container(mock_config: Config):
+def mock_container(mock_config: Config, mock_connect_vertex: Mock, mock_connect_vertex_search: Mock, mock_connect_anthropic: Mock):
     container_application = ContainerApplication()
     container_application.config.from_dict(mock_config.model_dump())
 

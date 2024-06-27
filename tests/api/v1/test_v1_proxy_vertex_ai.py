@@ -4,7 +4,6 @@ import pytest
 
 from ai_gateway.api.v1 import api_router
 from ai_gateway.auth import User, UserClaims
-from ai_gateway.container import ContainerApplication
 from ai_gateway.gitlab_features import GitLabUnitPrimitive
 
 

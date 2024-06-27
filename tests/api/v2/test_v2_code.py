@@ -1,6 +1,6 @@
 import time
-from typing import AsyncIterator, Dict, List, Union
-from unittest.mock import AsyncMock, Mock, patch
+from typing import Dict, List, Union
+from unittest.mock import Mock, patch
 
 import pytest
 from dependency_injector import containers
@@ -12,23 +12,7 @@ from structlog.testing import capture_logs
 
 from ai_gateway.api.v2 import api_router
 from ai_gateway.auth import User, UserClaims
-from ai_gateway.code_suggestions import (
-    CodeCompletions,
-    CodeCompletionsLegacy,
-    CodeGenerations,
-    CodeSuggestionsChunk,
-    CodeSuggestionsOutput,
-)
-from ai_gateway.code_suggestions.processing.base import ModelEngineOutput
-from ai_gateway.code_suggestions.processing.typing import (
-    LanguageId,
-    MetadataCodeContent,
-    MetadataPromptBuilder,
-)
 from ai_gateway.config import Config
-from ai_gateway.experimentation.base import ExperimentTelemetry
-from ai_gateway.models import ModelMetadata
-from ai_gateway.models.base import TokensConsumptionMetadata
 from ai_gateway.models.base_chat import Message, Role
 from ai_gateway.tracking.container import ContainerTracking
 from ai_gateway.tracking.instrumentator import SnowplowInstrumentator
