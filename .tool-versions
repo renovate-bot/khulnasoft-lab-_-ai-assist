@@ -1,4 +1,4 @@
+python 3.10.14 # datasource=github-tags depName=python/cpython
 gcloud 428.0.0 # datasource=github-tags depName=GoogleCloudPlatform/cloud-sdk-docker
 poetry 1.8.3 # datasource=pypi depName=poetry
-python 3.10.14 # datasource=github-tags depName=python/cpython
 ruby 3.2.4 # Temporary dependency until https://gitlab.com/gitlab-org/modelops/applied-ml/code-suggestions/ai-assist/-/issues/447 is done.
