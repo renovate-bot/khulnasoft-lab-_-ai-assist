@@ -19,7 +19,7 @@ def async_client_factory():
         },
         response_json: dict = {"response": "mocked"},
     ):
-        client = AsyncMock()
+        client = Mock(spec=httpx.AsyncClient)
         client.send.return_value = httpx.Response(
             status_code=response_status_code,
             headers=response_headers,
