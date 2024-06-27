@@ -1,10 +1,9 @@
 from time import time
-from unittest import mock
 from unittest.mock import patch
 
 import pytest
+from dependency_injector import containers
 from fastapi.testclient import TestClient
-from structlog.testing import capture_logs
 
 from ai_gateway.api.v1 import api_router
 from ai_gateway.api.v1.search.typing import (
@@ -15,8 +14,6 @@ from ai_gateway.api.v1.search.typing import (
     SearchResult,
 )
 from ai_gateway.auth import User, UserClaims
-from ai_gateway.container import ContainerApplication
-from ai_gateway.searches.search import VertexAISearch
 
 
 @pytest.fixture(scope="class")
@@ -81,12 +78,12 @@ async def test_success(
     request_body: dict,
     search_results: dict,
 ):
-    mock_llm_model = mock.Mock(spec=VertexAISearch)
-    mock_llm_model.search_with_retry = mock.AsyncMock(return_value=search_results)
 
     time_now = time()
-    container = ContainerApplication()
-    with container.searches.vertex_search.override(mock_llm_model):
+    with patch(
+        "ai_gateway.searches.search.VertexAISearch.search_with_retry",
+        return_value=search_results,
+    ) as mock_search_with_retry:
         with patch("time.time", return_value=time_now):
             response = mock_client.post(
                 "/search/gitlab-docs",
@@ -133,7 +130,7 @@ async def test_success(
 
     assert response.json() == expected_response.dict()
 
-    mock_llm_model.search_with_retry.assert_called_once_with(
+    mock_search_with_retry.assert_called_once_with(
         query=request_body["payload"]["query"],
         gl_version=request_body["metadata"]["version"],
         page_size=DEFAULT_PAGE_SIZE,

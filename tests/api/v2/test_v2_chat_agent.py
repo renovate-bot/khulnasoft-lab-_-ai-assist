@@ -1,5 +1,5 @@
 from typing import AsyncIterator
-from unittest import mock
+from unittest.mock import Mock, patch
 
 import pytest
 from starlette.testclient import TestClient
@@ -19,8 +19,6 @@ from ai_gateway.api.v2.chat.typing import (
     ReActAgentScratchpad,
 )
 from ai_gateway.auth import GitLabUser, User, UserClaims
-from ai_gateway.chat import GLAgentRemoteExecutor
-from ai_gateway.container import ContainerApplication
 from ai_gateway.gitlab_features import WrongUnitPrimitives
 
 
@@ -38,12 +36,25 @@ def auth_user():
 
 
 @pytest.fixture()
-def mocked_react_executor():
-    container = ContainerApplication()
+def mocked_stream():
+    with patch("ai_gateway.chat.executor.GLAgentRemoteExecutor.stream") as mock:
+        yield mock
 
-    mocked_executor = mock.Mock(spec=GLAgentRemoteExecutor)
-    with container.chat.gl_agent_remote_executor.override(mocked_executor):
-        yield mocked_executor
+
+@pytest.fixture()
+def mocked_on_behalf():
+    def _on_behalf(user: GitLabUser) -> AsyncIterator[TypeAgentAction]:
+        if len(user.unit_primitives) == 0:
+            # We don't expect any unit primitives allocated by the user
+            raise WrongUnitPrimitives()
+        else:
+            raise Exception("raised exception to catch broken tests")
+
+    with patch(
+        "ai_gateway.chat.executor.GLAgentRemoteExecutor.on_behalf",
+        side_effect=_on_behalf,
+    ) as mock:
+        yield mock
 
 
 class TestReActAgentStream:
@@ -93,7 +104,7 @@ class TestReActAgentStream:
     async def test_success(
         self,
         mock_client: TestClient,
-        mocked_react_executor: mock.Mock,
+        mocked_stream: Mock,
         prompt: str,
         agent_options: AgentRequestOptions,
         actions: list[TypeAgentAction],
@@ -103,7 +114,7 @@ class TestReActAgentStream:
             for action in actions:
                 yield action
 
-        mocked_react_executor.stream = mock.Mock(side_effect=_agent_stream)
+        mocked_stream.side_effect = _agent_stream
 
         response = mock_client.post(
             "/chat/agent",
@@ -143,7 +154,7 @@ class TestReActAgentStream:
 
         assert response.status_code == 200
         assert actual_actions == expected_actions
-        mocked_react_executor.stream.assert_called_once_with(inputs=agent_inputs)
+        mocked_stream.assert_called_once_with(inputs=agent_inputs)
 
     @pytest.mark.asyncio
     @pytest.mark.parametrize(
@@ -154,17 +165,8 @@ class TestReActAgentStream:
         self,
         auth_user: User,
         mock_client: TestClient,
-        mocked_react_executor: mock.Mock,
+        mocked_on_behalf: Mock,
     ):
-        def _on_behalf(user: GitLabUser) -> AsyncIterator[TypeAgentAction]:
-            if len(user.unit_primitives) == 0:
-                # We don't expect any unit primitives allocated by the user
-                raise WrongUnitPrimitives()
-            else:
-                raise Exception("raised exception to catch broken tests")
-
-        mocked_react_executor.on_behalf = mock.Mock(side_effect=_on_behalf)
-
         response = mock_client.post(
             "/chat/agent",
             headers={
@@ -184,4 +186,4 @@ class TestReActAgentStream:
         )
 
         assert response.status_code == 403
-        mocked_react_executor.on_behalf.assert_called_once()
+        mocked_on_behalf.assert_called_once()

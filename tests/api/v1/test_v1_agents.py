@@ -110,7 +110,6 @@ class TestAgent:
         self,
         mock_agent_klass,
         mock_registry_get,
-        mock_container,
         mock_client,
         inputs: dict[str, str],
         expected_status: int,

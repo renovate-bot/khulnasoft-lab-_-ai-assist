@@ -29,7 +29,7 @@ def auth_user():
 class TestXRayLibraries:
     @pytest.mark.parametrize(
         (
-            "model_output_text",
+            "mock_output_text",
             "want_called",
             "want_status",
             "want_prompt",
@@ -46,55 +46,42 @@ class TestXRayLibraries:
     def test_successful_request(
         self,
         mock_client,
-        model_output_text,
+        mock_anthropic,
+        mock_output_text,
         want_called,
         want_status,
         want_prompt,
     ):
-        model_safety_attr = SafetyAttributes(blocked=False)
-        model_output = TextGenModelOutput(
-            text=model_output_text,
-            score=0,
-            safety_attributes=model_safety_attr,
+        response = mock_client.post(
+            "/x-ray/libraries",
+            headers={
+                "Authorization": "Bearer 12345",
+                "X-Gitlab-Authentication-Type": "oidc",
+                "X-GitLab-Instance-Id": "1234",
+                "X-GitLab-Realm": "self-managed",
+            },
+            json={
+                "prompt_components": [
+                    {
+                        "type": "x_ray_package_file_prompt",
+                        "payload": {
+                            "prompt": "Human: Parse Gemfile content: `gem kaminari`. Respond using only valid JSON with list of libraries",
+                            "provider": "anthropic",
+                            "model": "claude-2.0",
+                        },
+                        "metadata": {"scannerVersion": "0.0.1"},
+                    }
+                ]
+            },
         )
 
-        anthropic_model_mock = mock.Mock(spec=AnthropicModel)
-        anthropic_model_mock.generate = mock.AsyncMock(return_value=model_output)
-        container = ContainerApplication()
-
-        with container.x_ray.anthropic_claude.override(anthropic_model_mock):
-            response = mock_client.post(
-                "/x-ray/libraries",
-                headers={
-                    "Authorization": "Bearer 12345",
-                    "X-Gitlab-Authentication-Type": "oidc",
-                    "X-GitLab-Instance-Id": "1234",
-                    "X-GitLab-Realm": "self-managed",
-                },
-                json={
-                    "prompt_components": [
-                        {
-                            "type": "x_ray_package_file_prompt",
-                            "payload": {
-                                "prompt": "Human: Parse Gemfile content: `gem kaminari`. Respond using only valid JSON with list of libraries",
-                                "provider": "anthropic",
-                                "model": "claude-2.0",
-                            },
-                            "metadata": {"scannerVersion": "0.0.1"},
-                        }
-                    ]
-                },
-            )
-
         assert response.status_code == want_status
-        assert anthropic_model_mock.generate.called == want_called
+        assert mock_anthropic.called == want_called
 
         if want_called:
-            anthropic_model_mock.generate.assert_called_with(
-                prefix=want_prompt, _suffix=""
-            )
+            mock_anthropic.assert_called_with(prefix=want_prompt, _suffix="")
 
-        assert response.json() == {"response": model_output_text}
+        assert response.json() == {"response": mock_output_text}
 
 
 class TestUnauthorizedScopes:
@@ -110,32 +97,29 @@ class TestUnauthorizedScopes:
         )
 
     @pytest.mark.parametrize("path", ["/x-ray/libraries"])
-    def test_failed_authorization_scope(self, mock_client, path):
-        container = ContainerApplication()
-
-        with container.x_ray.anthropic_claude.override(mock.Mock()):
-            response = mock_client.post(
-                path,
-                headers={
-                    "Authorization": "Bearer 12345",
-                    "X-Gitlab-Authentication-Type": "oidc",
-                    "X-GitLab-Instance-Id": "1234",
-                    "X-GitLab-Realm": "self-managed",
-                },
-                json={
-                    "prompt_components": [
-                        {
-                            "type": "x_ray_package_file_prompt",
-                            "payload": {
-                                "prompt": "Human: Parse Gemfile content: `gem kaminari`. Respond using only valid JSON with list of libraries",
-                                "provider": "anthropic",
-                                "model": "claude-2.0",
-                            },
-                            "metadata": {"scannerVersion": "0.0.1"},
-                        }
-                    ]
-                },
-            )
+    def test_failed_authorization_scope(self, mock_client, mock_anthropic, path):
+        response = mock_client.post(
+            path,
+            headers={
+                "Authorization": "Bearer 12345",
+                "X-Gitlab-Authentication-Type": "oidc",
+                "X-GitLab-Instance-Id": "1234",
+                "X-GitLab-Realm": "self-managed",
+            },
+            json={
+                "prompt_components": [
+                    {
+                        "type": "x_ray_package_file_prompt",
+                        "payload": {
+                            "prompt": "Human: Parse Gemfile content: `gem kaminari`. Respond using only valid JSON with list of libraries",
+                            "provider": "anthropic",
+                            "model": "claude-2.0",
+                        },
+                        "metadata": {"scannerVersion": "0.0.1"},
+                    }
+                ]
+            },
+        )
 
         assert response.status_code == status.HTTP_403_FORBIDDEN
         assert response.json() == {"detail": "Unauthorized to access X Ray"}
@@ -155,32 +139,29 @@ class TestUnauthorizedIssuer:
         )
 
     @pytest.mark.parametrize("path", ["/x-ray/libraries"])
-    def test_failed_authorization_issuer(self, mock_client, path):
-        container = ContainerApplication()
-
-        with container.x_ray.anthropic_claude.override(mock.Mock()):
-            response = mock_client.post(
-                path,
-                headers={
-                    "Authorization": "Bearer 12345",
-                    "X-Gitlab-Authentication-Type": "oidc",
-                    "X-Gitlab-Global-User-Id": "1234",
-                    "X-GitLab-Realm": "self-managed",
-                },
-                json={
-                    "prompt_components": [
-                        {
-                            "type": "x_ray_package_file_prompt",
-                            "payload": {
-                                "prompt": "Human: Parse Gemfile content: `gem kaminari`. Respond using only valid JSON with list of libraries",
-                                "provider": "anthropic",
-                                "model": "claude-2.0",
-                            },
-                            "metadata": {"scannerVersion": "0.0.1"},
-                        }
-                    ]
-                },
-            )
+    def test_failed_authorization_issuer(self, mock_client, mock_anthropic, path):
+        response = mock_client.post(
+            path,
+            headers={
+                "Authorization": "Bearer 12345",
+                "X-Gitlab-Authentication-Type": "oidc",
+                "X-Gitlab-Global-User-Id": "1234",
+                "X-GitLab-Realm": "self-managed",
+            },
+            json={
+                "prompt_components": [
+                    {
+                        "type": "x_ray_package_file_prompt",
+                        "payload": {
+                            "prompt": "Human: Parse Gemfile content: `gem kaminari`. Respond using only valid JSON with list of libraries",
+                            "provider": "anthropic",
+                            "model": "claude-2.0",
+                        },
+                        "metadata": {"scannerVersion": "0.0.1"},
+                    }
+                ]
+            },
+        )
 
         assert response.status_code == status.HTTP_403_FORBIDDEN
         assert response.json() == {"detail": "Unauthorized to access X Ray"}
