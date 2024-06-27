@@ -24,6 +24,9 @@ ifneq (,$(wildcard docker-compose.override.yaml))
 COMPOSE_FILES += -f docker-compose.override.yaml
 endif
 COMPOSE := docker-compose $(COMPOSE_FILES)
+ifeq (, $(shell command -v $(COMPOSE) 2> /dev/null))
+COMPOSE := docker compose $(COMPOSE_FILES)
+endif
 TEST_PATH_ARG ?=
 
 .PHONY: develop-local
