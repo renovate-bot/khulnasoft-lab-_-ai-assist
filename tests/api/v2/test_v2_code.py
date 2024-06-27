@@ -1,6 +1,6 @@
 import time
 from typing import AsyncIterator, Dict, List, Union
-from unittest import mock
+from unittest.mock import AsyncMock, Mock, patch
 
 import pytest
 from dependency_injector import containers
@@ -25,6 +25,7 @@ from ai_gateway.code_suggestions.processing.typing import (
     MetadataCodeContent,
     MetadataPromptBuilder,
 )
+from ai_gateway.config import Config
 from ai_gateway.experimentation.base import ExperimentTelemetry
 from ai_gateway.models import ModelMetadata
 from ai_gateway.models.base import TokensConsumptionMetadata
@@ -52,6 +53,14 @@ def auth_user():
     )
 
 
+@pytest.fixture
+def mock_config():
+    config = Config()
+    config.custom_models.enabled = True
+
+    yield config
+
+
 class TestCodeCompletions:
     def cleanup(self):
         """Ensure Snowplow cache is reset between tests."""
@@ -59,34 +68,11 @@ class TestCodeCompletions:
         Snowplow.reset()
 
     @pytest.mark.parametrize(
-        ("model_output", "expected_response"),
+        ("mock_completions_legacy_output_text", "expected_response"),
         [
             # non-empty suggestions from model
             (
-                [
-                    ModelEngineOutput(
-                        text="def search",
-                        score=0,
-                        model=ModelMetadata(name="code-gecko", engine="vertex-ai"),
-                        lang_id=LanguageId.PYTHON,
-                        metadata=MetadataPromptBuilder(
-                            components={
-                                "prefix": MetadataCodeContent(
-                                    length=10, length_tokens=2
-                                ),
-                                "suffix": MetadataCodeContent(
-                                    length=10, length_tokens=2
-                                ),
-                            },
-                            experiments=[
-                                ExperimentTelemetry(name="truncate_suffix", variant=1)
-                            ],
-                        ),
-                        tokens_consumption_metadata=TokensConsumptionMetadata(
-                            input_tokens=0, output_tokens=0
-                        ),
-                    )
-                ],
+                "def search",
                 {
                     "id": "id",
                     "model": {
@@ -108,30 +94,7 @@ class TestCodeCompletions:
             ),
             # empty suggestions from model
             (
-                [
-                    ModelEngineOutput(
-                        text="",
-                        score=0,
-                        model=ModelMetadata(name="code-gecko", engine="vertex-ai"),
-                        lang_id=LanguageId.PYTHON,
-                        metadata=MetadataPromptBuilder(
-                            components={
-                                "prefix": MetadataCodeContent(
-                                    length=10, length_tokens=2
-                                ),
-                                "suffix": MetadataCodeContent(
-                                    length=10, length_tokens=2
-                                ),
-                            },
-                            experiments=[
-                                ExperimentTelemetry(name="truncate_suffix", variant=1)
-                            ],
-                        ),
-                        tokens_consumption_metadata=TokensConsumptionMetadata(
-                            input_tokens=0, output_tokens=0
-                        ),
-                    )
-                ],
+                "",
                 {
                     "id": "id",
                     "model": {
@@ -150,34 +113,28 @@ class TestCodeCompletions:
     def test_legacy_successful_response(
         self,
         mock_client: TestClient,
-        mock_container: containers.DeclarativeContainer,
-        model_output: ModelEngineOutput,
+        mock_completions_legacy: Mock,
         expected_response: dict,
     ):
-        code_completions_mock = mock.Mock(spec=CodeCompletionsLegacy)
-        code_completions_mock.execute = mock.AsyncMock(return_value=model_output)
-        with mock_container.code_suggestions.completions.vertex_legacy.override(
-            code_completions_mock
-        ):
-            response = mock_client.post(
-                "/completions",
-                headers={
-                    "Authorization": "Bearer 12345",
-                    "X-Gitlab-Authentication-Type": "oidc",
-                    "X-GitLab-Instance-Id": "1234",
-                    "X-GitLab-Realm": "self-managed",
+        response = mock_client.post(
+            "/completions",
+            headers={
+                "Authorization": "Bearer 12345",
+                "X-Gitlab-Authentication-Type": "oidc",
+                "X-GitLab-Instance-Id": "1234",
+                "X-GitLab-Realm": "self-managed",
+            },
+            json={
+                "prompt_version": 1,
+                "project_path": "gitlab-org/gitlab",
+                "project_id": 278964,
+                "current_file": {
+                    "file_name": "main.py",
+                    "content_above_cursor": "# Create a fast binary search\n",
+                    "content_below_cursor": "\n",
                 },
-                json={
-                    "prompt_version": 1,
-                    "project_path": "gitlab-org/gitlab",
-                    "project_id": 278964,
-                    "current_file": {
-                        "file_name": "main.py",
-                        "content_above_cursor": "# Create a fast binary search\n",
-                        "content_below_cursor": "\n",
-                    },
-                },
-            )
+            },
+        )
 
         assert response.status_code == 200
 
@@ -188,20 +145,12 @@ class TestCodeCompletions:
         assert body["model"] == expected_response["model"]
 
     @pytest.mark.parametrize(
-        ("prompt_version", "model_output", "expected_response"),
+        ("prompt_version", "mock_suggestions_output_text", "expected_response"),
         [
             # non-empty suggestions from model
             (
                 1,
-                CodeSuggestionsOutput(
-                    text="def search",
-                    score=0,
-                    model=ModelMetadata(name="claude-instant-1.2", engine="anthropic"),
-                    lang_id=LanguageId.PYTHON,
-                    metadata=CodeSuggestionsOutput.Metadata(
-                        experiments=[],
-                    ),
-                ),
+                "def search",
                 {
                     "id": "id",
                     "model": {
@@ -223,15 +172,7 @@ class TestCodeCompletions:
             # prompt version 2
             (
                 2,
-                CodeSuggestionsOutput(
-                    text="def search",
-                    score=0,
-                    model=ModelMetadata(name="claude-instant-1.2", engine="anthropic"),
-                    lang_id=LanguageId.PYTHON,
-                    metadata=CodeSuggestionsOutput.Metadata(
-                        experiments=[],
-                    ),
-                ),
+                "def search",
                 {
                     "id": "id",
                     "model": {
@@ -253,15 +194,7 @@ class TestCodeCompletions:
             # empty suggestions from model
             (
                 1,
-                CodeSuggestionsOutput(
-                    text="",
-                    score=0,
-                    model=ModelMetadata(name="claude-instant-1.2", engine="anthropic"),
-                    lang_id=LanguageId.PYTHON,
-                    metadata=CodeSuggestionsOutput.Metadata(
-                        experiments=[],
-                    ),
-                ),
+                "",
                 {
                     "id": "id",
                     "model": {
@@ -280,13 +213,9 @@ class TestCodeCompletions:
         self,
         prompt_version: int,
         mock_client: TestClient,
-        mock_container: containers.DeclarativeContainer,
-        model_output: CodeSuggestionsOutput,
+        mock_completions: Mock,
         expected_response: dict,
     ):
-        code_completions_mock = mock.Mock(spec=CodeCompletions)
-        code_completions_mock.execute = mock.AsyncMock(return_value=model_output)
-
         current_file = {
             "file_name": "main.py",
             "content_above_cursor": "# Create a fast binary search\n",
@@ -311,19 +240,16 @@ class TestCodeCompletions:
                 {"raw_prompt": current_file["content_above_cursor"]}
             )
 
-        with mock_container.code_suggestions.completions.anthropic.override(
-            code_completions_mock
-        ):
-            response = mock_client.post(
-                "/completions",
-                headers={
-                    "Authorization": "Bearer 12345",
-                    "X-Gitlab-Authentication-Type": "oidc",
-                    "X-GitLab-Instance-Id": "1234",
-                    "X-GitLab-Realm": "self-managed",
-                },
-                json=data,
-            )
+        response = mock_client.post(
+            "/completions",
+            headers={
+                "Authorization": "Bearer 12345",
+                "X-Gitlab-Authentication-Type": "oidc",
+                "X-GitLab-Instance-Id": "1234",
+                "X-GitLab-Realm": "self-managed",
+            },
+            json=data,
+        )
 
         assert response.status_code == 200
 
@@ -332,7 +258,7 @@ class TestCodeCompletions:
         assert body["choices"] == expected_response["choices"]
         assert body["model"] == expected_response["model"]
 
-        code_completions_mock.execute.assert_called_with(
+        mock_completions.assert_called_with(
             prefix=current_file["content_above_cursor"],
             suffix=current_file["content_below_cursor"],
             file_name=current_file["file_name"],
@@ -341,52 +267,13 @@ class TestCodeCompletions:
             **code_completions_kwargs,
         )
 
-    @pytest.mark.parametrize(
-        ("prompt_version", "model_output", "expected_response"),
-        [
-            # non-empty suggestions from model
-            (
-                1,
-                CodeSuggestionsOutput(
-                    text="def search",
-                    score=0,
-                    model=ModelMetadata(name="claude-instant-1.2", engine="anthropic"),
-                    lang_id=LanguageId.PYTHON,
-                    metadata=CodeSuggestionsOutput.Metadata(
-                        experiments=[],
-                    ),
-                ),
-                {
-                    "id": "id",
-                    "model": {
-                        "engine": "anthropic",
-                        "name": "claude-instant-1.2",
-                        "lang": "python",
-                    },
-                    "object": "text_completion",
-                    "created": 1695182638,
-                    "choices": [
-                        {
-                            "text": "def search",
-                            "index": 0,
-                            "finish_reason": "length",
-                        }
-                    ],
-                },
-            )
-        ],
-    )
+    @pytest.mark.parametrize("prompt_version", [1])
     def test_request_latency(
         self,
         prompt_version: int,
         mock_client: TestClient,
-        mock_container: containers.DeclarativeContainer,
-        model_output: CodeSuggestionsOutput,
-        expected_response: dict,
+        mock_completions: Mock,
     ):
-        code_completions_mock = mock.Mock(spec=CodeCompletions)
-        code_completions_mock.execute = mock.AsyncMock(return_value=model_output)
-
         current_file = {
             "file_name": "main.py",
             "content_above_cursor": "# Create a fast binary search\n",
@@ -412,69 +299,60 @@ class TestCodeCompletions:
             )
 
         # get valid duration
-        with mock_container.code_suggestions.completions.anthropic.override(
-            code_completions_mock
-        ):
-            with capture_logs() as cap_logs:
-                response = mock_client.post(
-                    "/completions",
-                    headers={
-                        "Authorization": "Bearer 12345",
-                        "X-Gitlab-Authentication-Type": "oidc",
-                        "X-Gitlab-Rails-Send-Start": str(time.time() - 1),
-                        "X-GitLab-Instance-Id": "1234",
-                        "X-GitLab-Realm": "self-managed",
-                    },
-                    json=data,
-                )
-                assert response.status_code == 200
-                assert len(cap_logs) == 3
-                assert cap_logs[-1]["status_code"] == 200
-                assert cap_logs[-1]["method"] == "POST"
-                assert cap_logs[-1]["duration_request"] >= 1
+        with capture_logs() as cap_logs:
+            response = mock_client.post(
+                "/completions",
+                headers={
+                    "Authorization": "Bearer 12345",
+                    "X-Gitlab-Authentication-Type": "oidc",
+                    "X-Gitlab-Rails-Send-Start": str(time.time() - 1),
+                    "X-GitLab-Instance-Id": "1234",
+                    "X-GitLab-Realm": "self-managed",
+                },
+                json=data,
+            )
+            assert response.status_code == 200
+            assert len(cap_logs) == 3
+            assert cap_logs[-1]["status_code"] == 200
+            assert cap_logs[-1]["method"] == "POST"
+            assert cap_logs[-1]["duration_request"] >= 1
 
         # -1 in duration_request indicates invalid X-Gitlab-Rails-Send-Start header
-        with mock_container.code_suggestions.completions.anthropic.override(
-            code_completions_mock
-        ):
-            with capture_logs() as cap_logs:
-                response = mock_client.post(
-                    "/completions",
-                    headers={
-                        "Authorization": "Bearer 12345",
-                        "X-Gitlab-Authentication-Type": "oidc",
-                        "X-Gitlab-Rails-Send-Start": "invalid epoch time",
-                        "X-GitLab-Instance-Id": "1234",
-                        "X-GitLab-Realm": "self-managed",
-                    },
-                    json=data,
-                )
-                assert response.status_code == 200
-                assert len(cap_logs) == 3
-                assert cap_logs[-1]["status_code"] == 200
-                assert cap_logs[-1]["method"] == "POST"
-                assert cap_logs[-1]["duration_request"] == -1
+        with capture_logs() as cap_logs:
+            response = mock_client.post(
+                "/completions",
+                headers={
+                    "Authorization": "Bearer 12345",
+                    "X-Gitlab-Authentication-Type": "oidc",
+                    "X-Gitlab-Rails-Send-Start": "invalid epoch time",
+                    "X-GitLab-Instance-Id": "1234",
+                    "X-GitLab-Realm": "self-managed",
+                },
+                json=data,
+            )
+            assert response.status_code == 200
+            assert len(cap_logs) == 3
+            assert cap_logs[-1]["status_code"] == 200
+            assert cap_logs[-1]["method"] == "POST"
+            assert cap_logs[-1]["duration_request"] == -1
 
         # -1 in duration_request indicates missing X-Gitlab-Rails-Send-Start header
-        with mock_container.code_suggestions.completions.anthropic.override(
-            code_completions_mock
-        ):
-            with capture_logs() as cap_logs:
-                response = mock_client.post(
-                    "/completions",
-                    headers={
-                        "Authorization": "Bearer 12345",
-                        "X-Gitlab-Authentication-Type": "oidc",
-                        "X-GitLab-Instance-Id": "1234",
-                        "X-GitLab-Realm": "self-managed",
-                    },
-                    json=data,
-                )
-                assert response.status_code == 200
-                assert len(cap_logs) == 3
-                assert cap_logs[-1]["status_code"] == 200
-                assert cap_logs[-1]["method"] == "POST"
-                assert cap_logs[-1]["duration_request"] == -1
+        with capture_logs() as cap_logs:
+            response = mock_client.post(
+                "/completions",
+                headers={
+                    "Authorization": "Bearer 12345",
+                    "X-Gitlab-Authentication-Type": "oidc",
+                    "X-GitLab-Instance-Id": "1234",
+                    "X-GitLab-Realm": "self-managed",
+                },
+                json=data,
+            )
+            assert response.status_code == 200
+            assert len(cap_logs) == 3
+            assert cap_logs[-1]["status_code"] == 200
+            assert cap_logs[-1]["method"] == "POST"
+            assert cap_logs[-1]["duration_request"] == -1
 
     @pytest.mark.parametrize(
         (
@@ -484,7 +362,6 @@ class TestCodeCompletions:
             "model_name",
             "model_endpoint",
             "model_api_key",
-            "model_output_text",
             "want_litellm_called",
             "want_status",
             "want_choices",
@@ -498,127 +375,81 @@ class TestCodeCompletions:
                 "codegemma",
                 "http://localhost:4000/",
                 "api-key",
-                "foo",
                 True,
                 200,
-                [{"text": "foo", "index": 0, "finish_reason": "length"}],
+                [{"text": "def search", "index": 0, "finish_reason": "length"}],
             ),
         ],
     )
     def test_non_stream_response(
         self,
         mock_client,
-        mock_container: containers.DeclarativeContainer,
+        mock_completions: Mock,
         prompt_version,
         prefix,
         model_provider,
         model_name,
         model_endpoint,
         model_api_key,
-        model_output_text,
         want_litellm_called,
         want_status,
         want_choices,
     ):
-        model_output = CodeSuggestionsOutput(
-            text=model_output_text,
-            score=0,
-            model=ModelMetadata(name="some-model", engine="some-engine"),
-            lang_id=LanguageId.PYTHON,
-            metadata=CodeSuggestionsOutput.Metadata(
-                experiments=[],
-            ),
-        )
-
-        code_completions_litellm_mock = mock.Mock(spec=CodeCompletions)
-        code_completions_litellm_mock.execute = mock.AsyncMock(
-            return_value=model_output
-        )
-
-        with mock_container.code_suggestions.completions.litellm_factory.override(
-            code_completions_litellm_mock
-        ):
-            response = mock_client.post(
-                "/code/completions",
-                headers={
-                    "Authorization": "Bearer 12345",
-                    "X-Gitlab-Authentication-Type": "oidc",
-                    "X-GitLab-Instance-Id": "1234",
-                    "X-GitLab-Realm": "self-managed",
+        response = mock_client.post(
+            "/code/completions",
+            headers={
+                "Authorization": "Bearer 12345",
+                "X-Gitlab-Authentication-Type": "oidc",
+                "X-GitLab-Instance-Id": "1234",
+                "X-GitLab-Realm": "self-managed",
+            },
+            json={
+                "prompt_version": prompt_version,
+                "project_path": "gitlab-org/gitlab",
+                "project_id": 278964,
+                "current_file": {
+                    "file_name": "main.py",
+                    "content_above_cursor": prefix,
+                    "content_below_cursor": "\n",
                 },
-                json={
-                    "prompt_version": prompt_version,
-                    "project_path": "gitlab-org/gitlab",
-                    "project_id": 278964,
-                    "current_file": {
-                        "file_name": "main.py",
-                        "content_above_cursor": prefix,
-                        "content_below_cursor": "\n",
-                    },
-                    "prompt": "",
-                    "model_provider": model_provider,
-                    "model_name": model_name,
-                    "model_endpoint": model_endpoint,
-                    "model_api_key": model_api_key,
-                },
-            )
+                "prompt": "",
+                "model_provider": model_provider,
+                "model_name": model_name,
+                "model_endpoint": model_endpoint,
+                "model_api_key": model_api_key,
+            },
+        )
 
         assert response.status_code == want_status
-        assert code_completions_litellm_mock.execute.called == want_litellm_called
+        assert mock_completions.called == want_litellm_called
 
         if want_status == 200:
             body = response.json()
             assert body["choices"] == want_choices
 
     @pytest.mark.parametrize(
-        ("model_chunks", "expected_response", "provider", "factory_name"),
+        ("expected_response", "provider", "model"),
         [
             (
-                [
-                    CodeSuggestionsChunk(
-                        text="def search",
-                    ),
-                    CodeSuggestionsChunk(
-                        text=" (query)",
-                    ),
-                ],
-                "def search (query)",
+                "def search",
                 "anthropic",
-                "anthropic",
+                None,
             ),
             (
-                [
-                    CodeSuggestionsChunk(
-                        text="def search",
-                    ),
-                    CodeSuggestionsChunk(
-                        text=" (query)",
-                    ),
-                ],
-                "def search (query)",
+                "def search",
                 "litellm",
-                "litellm_factory",
+                "mistral",
             ),
         ],
     )
     def test_successful_stream_response(
         self,
         mock_client: TestClient,
-        mock_container: containers.DeclarativeContainer,
-        model_chunks: list[CodeSuggestionsChunk],
+        mock_completions_stream: Mock,
         expected_response: str,
         provider: str,
-        factory_name: str,
+        model: str | None,
     ):
-        async def _stream_generator(
-            prefix, suffix, file_name, editor_lang, stream
-        ) -> AsyncIterator[CodeSuggestionsChunk]:
-            for chunk in model_chunks:
-                yield chunk
-
-        code_completions_mock = mock.Mock(spec=CodeCompletions)
-        code_completions_mock.execute = mock.AsyncMock(side_effect=_stream_generator)
-
         current_file = {
             "file_name": "main.py",
             "content_above_cursor": "# Create a fast binary search\n",
@@ -632,28 +463,25 @@ class TestCodeCompletions:
             "current_file": current_file,
             "stream": True,
         }
+        if model:
+            data["model_name"] = model
 
-        provider_factory = getattr(
-            mock_container.code_suggestions.completions, factory_name
+        response = mock_client.post(
+            "/completions",
+            headers={
+                "Authorization": "Bearer 12345",
+                "X-Gitlab-Authentication-Type": "oidc",
+                "X-GitLab-Instance-Id": "1234",
+                "X-GitLab-Realm": "self-managed",
+            },
+            json=data,
         )
-
-        with provider_factory.override(code_completions_mock):
-            response = mock_client.post(
-                "/completions",
-                headers={
-                    "Authorization": "Bearer 12345",
-                    "X-Gitlab-Authentication-Type": "oidc",
-                    "X-GitLab-Instance-Id": "1234",
-                    "X-GitLab-Realm": "self-managed",
-                },
-                json=data,
-            )
 
         assert response.status_code == 200
         assert response.text == expected_response
         assert response.headers["content-type"] == "text/event-stream; charset=utf-8"
 
-        code_completions_mock.execute.assert_called_with(
+        mock_completions_stream.assert_called_with(
             prefix=current_file["content_above_cursor"],
             suffix=current_file["content_below_cursor"],
             file_name=current_file["file_name"],
@@ -711,7 +539,8 @@ class TestCodeCompletions:
     def test_snowplow_tracking(
         self,
         mock_client: TestClient,
-        mock_container: containers.DeclarativeContainer,
+        mock_container: containers.Container,
+        mock_completions_legacy: Mock,
         auth_user: User,
         telemetry: List[Dict[str, Union[str, int, None]]],
         current_file: Dict[str, str],
@@ -744,40 +573,14 @@ class TestCodeCompletions:
             )
         )
 
-        model_output = [
-            ModelEngineOutput(
-                text="def search",
-                score=0,
-                model=ModelMetadata(name="code-gecko", engine="vertex-ai"),
-                lang_id=LanguageId.PYTHON,
-                metadata=MetadataPromptBuilder(
-                    components={
-                        "prefix": MetadataCodeContent(length=10, length_tokens=2),
-                        "suffix": MetadataCodeContent(length=10, length_tokens=2),
-                    },
-                    experiments=[
-                        ExperimentTelemetry(name="truncate_suffix", variant=1)
-                    ],
-                ),
-                tokens_consumption_metadata=TokensConsumptionMetadata(
-                    input_tokens=0, output_tokens=0
-                ),
-            )
-        ]
+        snowplow_instrumentator_mock = Mock(spec=SnowplowInstrumentator)
 
-        code_completions_mock = mock.Mock(spec=CodeCompletionsLegacy)
-        code_completions_mock.execute = mock.AsyncMock(return_value=model_output)
-
-        snowplow_instrumentator_mock = mock.Mock(spec=SnowplowInstrumentator)
-
-        snowplow_container_mock = mock.Mock(spec=ContainerTracking)
-        snowplow_container_mock.instrumentator = mock.Mock(
+        snowplow_container_mock = Mock(spec=ContainerTracking)
+        snowplow_container_mock.instrumentator = Mock(
             return_value=snowplow_instrumentator_mock
         )
 
-        with mock_container.code_suggestions.completions.vertex_legacy.override(
-            code_completions_mock
-        ), mock.patch.object(mock_container, "snowplow", snowplow_container_mock):
+        with patch.object(mock_container, "snowplow", snowplow_container_mock):
             mock_client.post(
                 "/completions",
                 headers={
@@ -835,24 +638,11 @@ class TestCodeCompletions:
     def test_successful_response_with_correct_issuers(
         self,
         mock_client: TestClient,
-        mock_container: containers.DeclarativeContainer,
+        mock_completions: Mock,
         auth_user: User,
         extra_headers: Dict[str, str],
         expected_status_code: int,
     ):
-        code_completions_mock = mock.Mock(spec=CodeCompletions)
-        code_completions_mock.execute = mock.AsyncMock(
-            return_value=CodeSuggestionsOutput(
-                text="def search",
-                score=0,
-                model=ModelMetadata(name="claude-instant-1.2", engine="anthropic"),
-                lang_id=LanguageId.PYTHON,
-                metadata=CodeSuggestionsOutput.Metadata(
-                    experiments=[],
-                ),
-            )
-        )
-
         current_file = {
             "file_name": "main.py",
             "content_above_cursor": "# Create a fast binary search\n",
@@ -866,19 +656,16 @@ class TestCodeCompletions:
             "current_file": current_file,
         }
 
-        with mock_container.code_suggestions.completions.anthropic.override(
-            code_completions_mock
-        ):
-            response = mock_client.post(
-                "/completions",
-                headers={
-                    "Authorization": "Bearer 12345",
-                    "X-Gitlab-Authentication-Type": "oidc",
-                    "X-GitLab-Realm": "self-managed",
-                }
-                | extra_headers,
-                json=data,
-            )
+        response = mock_client.post(
+            "/completions",
+            headers={
+                "Authorization": "Bearer 12345",
+                "X-Gitlab-Authentication-Type": "oidc",
+                "X-GitLab-Realm": "self-managed",
+            }
+            | extra_headers,
+            json=data,
+        )
 
         assert response.status_code == expected_status_code
 
@@ -898,12 +685,11 @@ class TestCodeGenerations:
             "model_name",
             "model_endpoint",
             "model_api_key",
-            "model_output_text",
+            "mock_output_text",
             "want_vertex_called",
             "want_anthropic_called",
             "want_anthropic_chat_called",
-            "want_vertex_prompt_prepared_called",
-            "want_anthropic_prompt_prepared_called",
+            "want_prompt_prepared_called",
             "want_litellm_called",
             "want_status",
             "want_prompt",
@@ -924,10 +710,9 @@ class TestCodeGenerations:
                 False,
                 False,
                 False,
-                False,
                 200,
                 None,
-                [{"text": "foo", "index": 0, "finish_reason": "length"}],
+                [{"text": "\nfoo", "index": 0, "finish_reason": "length"}],
             ),  # v1 without prompt - vertex-ai
             (
                 1,
@@ -940,7 +725,6 @@ class TestCodeGenerations:
                 "foo",
                 False,
                 True,
-                False,
                 False,
                 False,
                 False,
@@ -962,10 +746,9 @@ class TestCodeGenerations:
                 False,
                 False,
                 False,
-                False,
                 200,
                 None,
-                [{"text": "foo", "index": 0, "finish_reason": "length"}],
+                [{"text": "\nfoo", "index": 0, "finish_reason": "length"}],
             ),  # v1 with prompt - vertex-ai
             (
                 1,
@@ -981,10 +764,9 @@ class TestCodeGenerations:
                 False,
                 False,
                 False,
-                False,
                 200,
                 None,
-                [{"text": "foo", "index": 0, "finish_reason": "length"}],
+                [{"text": "\nfoo", "index": 0, "finish_reason": "length"}],
             ),  # v1 with prompt - anthropic
             (
                 1,
@@ -996,7 +778,6 @@ class TestCodeGenerations:
                 None,
                 "",
                 True,
-                False,
                 False,
                 False,
                 False,
@@ -1019,10 +800,9 @@ class TestCodeGenerations:
                 False,
                 True,
                 False,
-                False,
                 200,
                 "bar",
-                [{"text": "foo", "index": 0, "finish_reason": "length"}],
+                [{"text": "\nfoo", "index": 0, "finish_reason": "length"}],
             ),  # v2 with prompt - vertex-ai
             (
                 2,
@@ -1035,7 +815,6 @@ class TestCodeGenerations:
                 "foo",
                 False,
                 True,
-                False,
                 False,
                 True,
                 False,
@@ -1057,7 +836,6 @@ class TestCodeGenerations:
                 False,
                 False,
                 False,
-                False,
                 422,
                 None,
                 None,
@@ -1073,7 +851,6 @@ class TestCodeGenerations:
                 "",
                 False,
                 True,
-                False,
                 False,
                 True,
                 False,
@@ -1096,7 +873,6 @@ class TestCodeGenerations:
                 False,
                 False,
                 True,
-                False,
                 True,
                 False,
                 200,
@@ -1122,21 +898,25 @@ class TestCodeGenerations:
                 False,
                 False,
                 False,
-                False,
                 True,
                 200,
                 [
                     Message(role=Role.SYSTEM, content="foo"),
                     Message(role=Role.USER, content="bar"),
                 ],
-                [{"text": "foo", "index": 0, "finish_reason": "length"}],
+                [{"text": "\nfoo", "index": 0, "finish_reason": "length"}],
             ),  # v3 with prompt - litellm
         ],
     )
     def test_non_stream_response(
         self,
         mock_client,
-        mock_container: containers.DeclarativeContainer,
+        mock_container: containers.Container,
+        mock_code_bison: Mock,
+        mock_anthropic: Mock,
+        mock_anthropic_chat: Mock,
+        mock_llm_chat: Mock,
+        mock_with_prompt_prepared: Mock,
         prompt_version,
         prefix,
         prompt,
@@ -1144,167 +924,84 @@ class TestCodeGenerations:
         model_name,
         model_endpoint,
         model_api_key,
-        model_output_text,
+        mock_output_text,
         want_vertex_called,
         want_anthropic_called,
         want_anthropic_chat_called,
-        want_vertex_prompt_prepared_called,
-        want_anthropic_prompt_prepared_called,
+        want_prompt_prepared_called,
         want_litellm_called,
         want_status,
         want_prompt,
         want_choices,
     ):
-        model_output = CodeSuggestionsOutput(
-            text=model_output_text,
-            score=0,
-            model=ModelMetadata(name="some-model", engine="some-engine"),
-            lang_id=LanguageId.PYTHON,
-        )
-
-        code_generations_vertex_mock = mock.Mock(spec=CodeGenerations)
-        code_generations_vertex_mock.execute = mock.AsyncMock(return_value=model_output)
-
-        code_generations_anthropic_mock = mock.Mock(spec=CodeGenerations)
-        code_generations_anthropic_mock.execute = mock.AsyncMock(
-            return_value=model_output
-        )
-
-        code_generations_anthropic_chat_mock = mock.Mock(spec=CodeGenerations)
-        code_generations_anthropic_chat_mock.execute = mock.AsyncMock(
-            return_value=model_output
-        )
-
-        code_generations_litellm_mock = mock.Mock(spec=CodeGenerations)
-        code_generations_litellm_mock.execute = mock.AsyncMock(
-            return_value=model_output
-        )
-
-        with mock_container.code_suggestions.generations.vertex.override(
-            code_generations_vertex_mock
-        ), mock_container.code_suggestions.generations.anthropic_factory.override(
-            code_generations_anthropic_mock
-        ), mock_container.code_suggestions.generations.anthropic_chat_factory.override(
-            code_generations_anthropic_chat_mock
-        ), mock_container.code_suggestions.generations.litellm_factory.override(
-            code_generations_litellm_mock
-        ):
-            response = mock_client.post(
-                "/code/generations",
-                headers={
-                    "Authorization": "Bearer 12345",
-                    "X-Gitlab-Authentication-Type": "oidc",
-                    "X-GitLab-Instance-Id": "1234",
-                    "X-GitLab-Realm": "self-managed",
+        response = mock_client.post(
+            "/code/generations",
+            headers={
+                "Authorization": "Bearer 12345",
+                "X-Gitlab-Authentication-Type": "oidc",
+                "X-GitLab-Instance-Id": "1234",
+                "X-GitLab-Realm": "self-managed",
+            },
+            json={
+                "prompt_version": prompt_version,
+                "project_path": "gitlab-org/gitlab",
+                "project_id": 278964,
+                "current_file": {
+                    "file_name": "main.py",
+                    "content_above_cursor": prefix,
+                    "content_below_cursor": "\n",
                 },
-                json={
-                    "prompt_version": prompt_version,
-                    "project_path": "gitlab-org/gitlab",
-                    "project_id": 278964,
-                    "current_file": {
-                        "file_name": "main.py",
-                        "content_above_cursor": prefix,
-                        "content_below_cursor": "\n",
-                    },
-                    "prompt": prompt,
-                    "model_provider": model_provider,
-                    "model_name": model_name,
-                    "model_endpoint": model_endpoint,
-                    "model_api_key": model_api_key,
-                },
-            )
+                "prompt": prompt,
+                "model_provider": model_provider,
+                "model_name": model_name,
+                "model_endpoint": model_endpoint,
+                "model_api_key": model_api_key,
+            },
+        )
 
         assert response.status_code == want_status
-        assert code_generations_vertex_mock.execute.called == want_vertex_called
-        assert code_generations_anthropic_mock.execute.called == want_anthropic_called
-        assert code_generations_litellm_mock.execute.called == want_litellm_called
-        assert (
-            code_generations_anthropic_chat_mock.execute.called
-            == want_anthropic_chat_called
-        )
+        assert mock_code_bison.called == want_vertex_called
+        assert mock_anthropic.called == want_anthropic_called
+        assert mock_llm_chat.called == want_litellm_called
+        assert mock_anthropic_chat.called == want_anthropic_chat_called
 
-        if want_vertex_prompt_prepared_called:
-            code_generations_vertex_mock.with_prompt_prepared.assert_called_with(
-                want_prompt
-            )
-
-        if want_anthropic_prompt_prepared_called and want_anthropic_called:
-            code_generations_anthropic_mock.with_prompt_prepared.assert_called_with(
-                want_prompt
-            )
-
-        if want_anthropic_prompt_prepared_called and want_anthropic_chat_called:
-            code_generations_anthropic_chat_mock.with_prompt_prepared.assert_called_with(
-                want_prompt
-            )
+        if want_prompt_prepared_called:
+            mock_with_prompt_prepared.assert_called_with(want_prompt)
 
         if want_status == 200:
             body = response.json()
             assert body["choices"] == want_choices
 
-    @pytest.mark.parametrize(
-        ("model_chunks", "expected_response"),
-        [
-            (
-                [
-                    CodeSuggestionsChunk(
-                        text="def search",
-                    ),
-                    CodeSuggestionsChunk(
-                        text=" (query)",
-                    ),
-                ],
-                "def search (query)",
-            ),
-        ],
-    )
     def test_successful_stream_response(
         self,
         mock_client: TestClient,
-        mock_container: containers.DeclarativeContainer,
-        model_chunks: list[CodeSuggestionsChunk],
-        expected_response: str,
+        mock_generations_stream: Mock,
+        mock_suggestions_output_text: str,
     ):
-        async def _stream_generator(
-            prefix: str,
-            file_name: str,
-            editor_lang: str,
-            model_provider: str,
-            stream: bool,
-        ) -> AsyncIterator[CodeSuggestionsChunk]:
-            for chunk in model_chunks:
-                yield chunk
-
-        code_generations_mock = mock.Mock(spec=CodeGenerations)
-        code_generations_mock.execute = mock.AsyncMock(side_effect=_stream_generator)
-
-        with mock_container.code_suggestions.generations.anthropic_factory.override(
-            code_generations_mock
-        ):
-            response = mock_client.post(
-                "/code/generations",
-                headers={
-                    "Authorization": "Bearer 12345",
-                    "X-Gitlab-Authentication-Type": "oidc",
-                    "X-GitLab-Instance-Id": "1234",
-                    "X-GitLab-Realm": "self-managed",
+        response = mock_client.post(
+            "/code/generations",
+            headers={
+                "Authorization": "Bearer 12345",
+                "X-Gitlab-Authentication-Type": "oidc",
+                "X-GitLab-Instance-Id": "1234",
+                "X-GitLab-Realm": "self-managed",
+            },
+            json={
+                "prompt_version": 2,
+                "project_path": "gitlab-org/gitlab",
+                "project_id": 278964,
+                "current_file": {
+                    "file_name": "main.py",
+                    "content_above_cursor": "# create function",
+                    "content_below_cursor": "\n",
                 },
-                json={
-                    "prompt_version": 2,
-                    "project_path": "gitlab-org/gitlab",
-                    "project_id": 278964,
-                    "current_file": {
-                        "file_name": "main.py",
-                        "content_above_cursor": "# create function",
-                        "content_below_cursor": "\n",
-                    },
-                    "prompt": "# create a function",
-                    "model_provider": "anthropic",
-                },
-            )
+                "prompt": "# create a function",
+                "model_provider": "anthropic",
+            },
+        )
 
         assert response.status_code == 200
-        assert response.text == expected_response
+        assert response.text == mock_suggestions_output_text
         assert response.headers["content-type"] == "text/event-stream; charset=utf-8"
 
     @pytest.mark.parametrize(
@@ -1347,7 +1044,8 @@ class TestCodeGenerations:
     def test_snowplow_tracking(
         self,
         mock_client: TestClient,
-        mock_container: containers.DeclarativeContainer,
+        mock_container: containers.Container,
+        mock_generations: Mock,
         telemetry: List[Dict[str, Union[str, int, None]]],
         current_file: Dict[str, str],
         expected_language: str,
@@ -1379,26 +1077,14 @@ class TestCodeGenerations:
             )
         )
 
-        model_output = CodeSuggestionsOutput(
-            text="some code",
-            score=0,
-            model=ModelMetadata(name="some-model", engine="some-engine"),
-            lang_id=LanguageId.PYTHON,
-        )
+        snowplow_instrumentator_mock = Mock(spec=SnowplowInstrumentator)
 
-        code_generations_vertex_mock = mock.Mock(spec=CodeGenerations)
-        code_generations_vertex_mock.execute = mock.AsyncMock(return_value=model_output)
-
-        snowplow_instrumentator_mock = mock.Mock(spec=SnowplowInstrumentator)
-
-        snowplow_container_mock = mock.Mock(spec=ContainerTracking)
-        snowplow_container_mock.instrumentator = mock.Mock(
+        snowplow_container_mock = Mock(spec=ContainerTracking)
+        snowplow_container_mock.instrumentator = Mock(
             return_value=snowplow_instrumentator_mock
         )
 
-        with mock_container.code_suggestions.generations.vertex.override(
-            code_generations_vertex_mock
-        ), mock.patch.object(mock_container, "snowplow", snowplow_container_mock):
+        with patch.object(mock_container, "snowplow", snowplow_container_mock):
             response = mock_client.post(
                 "/code/generations",
                 headers={

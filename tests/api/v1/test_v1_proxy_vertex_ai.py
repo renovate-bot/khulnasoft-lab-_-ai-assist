@@ -1,4 +1,4 @@
-from unittest import mock
+from unittest.mock import patch
 
 import pytest
 
@@ -26,15 +26,11 @@ def auth_user():
 
 
 class TestProxyVertexAI:
-    def test_successful_request(
-        self,
-        mock_client,
-    ):
-        mock_proxy_client = mock.Mock()
-        mock_proxy_client.proxy = mock.AsyncMock(return_value={"response": "test"})
-        container = ContainerApplication()
-
-        with container.pkg_models.vertex_ai_proxy_client.override(mock_proxy_client):
+    def test_successful_request(self, mock_client):
+        with patch(
+            "ai_gateway.proxy.clients.VertexAIProxyClient.proxy",
+            return_value={"response": "test"},
+        ):
             response = mock_client.post(
                 "/proxy/vertex-ai",
                 headers={
@@ -63,9 +59,7 @@ class TestUnauthorizedScopes:
         )
 
     def test_failed_authorization_scope(self, mock_client):
-        container = ContainerApplication()
-
-        with container.pkg_models.vertex_ai_proxy_client.override(mock.Mock()):
+        with patch("ai_gateway.proxy.clients.VertexAIProxyClient.proxy"):
             response = mock_client.post(
                 "/proxy/vertex-ai",
                 headers={

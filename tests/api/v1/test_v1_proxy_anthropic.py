@@ -1,10 +1,9 @@
-from unittest import mock
+from unittest.mock import patch
 
 import pytest
 
 from ai_gateway.api.v1 import api_router
 from ai_gateway.auth import User, UserClaims
-from ai_gateway.container import ContainerApplication
 from ai_gateway.gitlab_features import GitLabUnitPrimitive
 
 
@@ -26,15 +25,11 @@ def auth_user():
 
 
 class TestProxyAnthropic:
-    def test_successful_request(
-        self,
-        mock_client,
-    ):
-        mock_proxy_client = mock.Mock()
-        mock_proxy_client.proxy = mock.AsyncMock(return_value={"response": "test"})
-        container = ContainerApplication()
-
-        with container.pkg_models.anthropic_proxy_client.override(mock_proxy_client):
+    def test_successful_request(self, mock_client):
+        with patch(
+            "ai_gateway.proxy.clients.AnthropicProxyClient.proxy",
+            return_value={"response": "test"},
+        ):
             response = mock_client.post(
                 "/proxy/anthropic",
                 headers={
@@ -63,9 +58,7 @@ class TestUnauthorizedScopes:
         )
 
     def test_failed_authorization_scope(self, mock_client):
-        container = ContainerApplication()
-
-        with container.pkg_models.anthropic_proxy_client.override(mock.Mock()):
+        with patch("ai_gateway.proxy.clients.AnthropicProxyClient.proxy"):
             response = mock_client.post(
                 "/proxy/anthropic",
                 headers={

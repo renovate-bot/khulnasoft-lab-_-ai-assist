@@ -1,27 +1,21 @@
-from typing import Any, AsyncIterator, Type
-from unittest import mock
-from unittest.mock import AsyncMock, patch
+from typing import Any, Type
+from unittest.mock import Mock, patch
 
 import pydantic
 import pytest
+from dependency_injector import containers
 from fastapi.testclient import TestClient
 from structlog.testing import capture_logs
 
 from ai_gateway.api.v1 import api_router
 from ai_gateway.auth import User, UserClaims
-from ai_gateway.container import ContainerApplication
 from ai_gateway.models import (
     AnthropicAPIConnectionError,
     AnthropicAPIStatusError,
     AnthropicAPITimeoutError,
-    AnthropicChatModel,
-    AnthropicModel,
     KindAnthropicModel,
-    KindLiteLlmModel,
-    LiteLlmChatModel,
     Message,
     ModelAPIError,
-    SafetyAttributes,
 )
 from ai_gateway.models.base_text import TextGenModelChunk, TextGenModelOutput
 
@@ -41,241 +35,98 @@ def auth_user():
     )
 
 
-@pytest.fixture()
-def mock_models():
-    model_output = TextGenModelOutput(
-        text="test completion",
-        score=10000,
-        safety_attributes=SafetyAttributes(),
-    )
-    mock_llm_model = mock.Mock(spec=AnthropicModel)
-    mock_llm_model.generate = AsyncMock(return_value=model_output)
-
-    mock_chat_model = mock.Mock(spec=AnthropicChatModel)
-    mock_chat_model.generate = AsyncMock(return_value=model_output)
-
-    mock_litellm_chat_model = mock.Mock(spec=LiteLlmChatModel)
-    mock_litellm_chat_model.generate = AsyncMock(return_value=model_output)
-
-    container = ContainerApplication()
-    with (
-        container.chat._anthropic_claude_llm_factory.override(mock_llm_model),
-        container.chat._anthropic_claude_chat_factory.override(mock_chat_model),
-        container.chat.litellm_factory.override(mock_litellm_chat_model),
-    ):
-        yield {
-            "llm": mock_llm_model,
-            "anthropic-chat": mock_chat_model,
-            "litellm-chat": mock_litellm_chat_model,
-        }
+@pytest.fixture
+def text_content():
+    return "\n\nHuman: hello, what is your name?\n\nAssistant:"
 
 
-@pytest.fixture()
-def mock_models_stream():
-    async def _stream(*args: Any, **kwargs: Any) -> AsyncIterator[TextGenModelChunk]:
-        for chunk in ["test", " ", "completion"]:
-            yield TextGenModelChunk(text=chunk)
-
-    mock_llm_model = mock.Mock(spec=AnthropicModel)
-    mock_llm_model.generate = AsyncMock(side_effect=_stream)
-
-    mock_chat_model = mock.Mock(spec=AnthropicChatModel)
-    mock_chat_model.generate = AsyncMock(side_effect=_stream)
-
-    container = ContainerApplication()
-    with (
-        container.chat._anthropic_claude_llm_factory.override(mock_llm_model),
-        container.chat._anthropic_claude_chat_factory.override(mock_chat_model),
-    ):
-        yield {"llm": mock_llm_model, "chat": mock_chat_model}
+@pytest.fixture
+def chat_content():
+    return [
+        {
+            "role": "system",
+            "content": "You are a Python engineer",
+        },
+        {
+            "role": "user",
+            "content": "define a function that adds numbers together",
+        },
+    ]
 
 
 class TestAgentSuccessfulRequest:
     @pytest.mark.asyncio
     @pytest.mark.parametrize(
-        "request_body",
+        ("content_fixture", "provider", "model", "params"),
         [
-            {
-                "prompt_components": [
-                    {
-                        "type": "prompt",
-                        "metadata": {
-                            "source": "gitlab-rails-sm",
-                            "version": "16.5.0-ee",
-                        },
-                        "payload": {
-                            "content": "\n\nHuman: hello, what is your name?\n\nAssistant:",
-                            "provider": "anthropic",
-                            "model": "claude-2.0",
-                        },
-                    },
-                ]
-            },
-            {
-                "prompt_components": [
-                    {
-                        "type": "prompt",
-                        "metadata": {
-                            "source": "gitlab-rails-sm",
-                            "version": "16.5.0-ee",
-                        },
-                        "payload": {
-                            "content": "\n\nHuman: hello, what is your name?\n\nAssistant:",
-                            "provider": "anthropic",
-                            "model": "claude-2.1",
-                            "params": {
-                                "temperature": 0.3,
-                                "stop_sequences": ["\n\nHuman", "Observation:"],
-                                "max_tokens_to_sample": 2048,
-                            },
-                        },
-                    },
-                ]
-            },
-            {
-                "prompt_components": [
-                    {
-                        "type": "prompt",
-                        "metadata": {
-                            "source": "gitlab-rails-sm",
-                            "version": "16.5.0-ee",
-                        },
-                        "payload": {
-                            "content": [
-                                {
-                                    "role": "system",
-                                    "content": "You are a Python engineer",
-                                },
-                                {
-                                    "role": "user",
-                                    "content": "define a function that adds numbers together",
-                                },
-                            ],
-                            "provider": "anthropic",
-                            "model": "claude-3-opus-20240229",
-                            "params": {
-                                "temperature": 0.3,
-                                "stop_sequences": ["\n\nHuman", "Observation:"],
-                                "max_tokens_to_sample": 2048,
-                            },
-                        },
-                    },
-                ]
-            },
-            {
-                "prompt_components": [
-                    {
-                        "type": "prompt",
-                        "metadata": {
-                            "source": "gitlab-rails-sm",
-                            "version": "16.5.0-ee",
-                        },
-                        "payload": {
-                            "content": [
-                                {
-                                    "role": "system",
-                                    "content": "You are a Python engineer",
-                                },
-                                {
-                                    "role": "user",
-                                    "content": "define a function that adds numbers together",
-                                },
-                            ],
-                            "provider": "anthropic",
-                            "model": "claude-3-sonnet-20240229",
-                            "params": {
-                                "temperature": 0.3,
-                                "stop_sequences": ["\n\nHuman", "Observation:"],
-                                "max_tokens_to_sample": 2048,
-                            },
-                        },
-                    },
-                ]
-            },
-            {
-                "prompt_components": [
-                    {
-                        "type": "prompt",
-                        "metadata": {
-                            "source": "gitlab-rails-sm",
-                            "version": "16.5.0-ee",
-                        },
-                        "payload": {
-                            "content": [
-                                {
-                                    "role": "system",
-                                    "content": "You are a Python engineer",
-                                },
-                                {
-                                    "role": "user",
-                                    "content": "define a function that adds numbers together",
-                                },
-                            ],
-                            "provider": "anthropic",
-                            "model": "claude-3-haiku-20240307",
-                            "params": {
-                                "temperature": 0.3,
-                                "stop_sequences": ["\n\nHuman", "Observation:"],
-                                "max_tokens_to_sample": 2048,
-                            },
-                        },
-                    },
-                ]
-            },
-            {
-                "prompt_components": [
-                    {
-                        "type": "prompt",
-                        "metadata": {
-                            "source": "gitlab-rails-sm",
-                            "version": "16.5.0-ee",
-                        },
-                        "payload": {
-                            "content": [
-                                {
-                                    "role": "system",
-                                    "content": "You are a Python engineer",
-                                },
-                                {
-                                    "role": "user",
-                                    "content": "define a function that adds numbers together",
-                                },
-                            ],
-                            "provider": "anthropic",
-                            "model": "claude-3-haiku-20240307",
-                        },
-                    },
-                ]
-            },
-            {
-                "prompt_components": [
-                    {
-                        "type": "prompt",
-                        "metadata": {
-                            "source": "gitlab-rails-sm",
-                            "version": "16.5.0-ee",
-                        },
-                        "payload": {
-                            "content": [
-                                {
-                                    "role": "user",
-                                    "content": "define a function that adds numbers together",
-                                },
-                            ],
-                            "provider": "litellm",
-                            "model": "mistral",
-                        },
-                    },
-                ]
-            },
+            ("text_content", "anthropic", "claude-2.0", None),
+            (
+                "text_content",
+                "anthropic",
+                "claude-2.1",
+                {
+                    "temperature": 0.3,
+                    "stop_sequences": ["\n\nHuman", "Observation:"],
+                    "max_tokens_to_sample": 2048,
+                },
+            ),
+            (
+                "chat_content",
+                "anthropic",
+                "claude-3-opus-20240229",
+                {
+                    "temperature": 0.3,
+                    "stop_sequences": ["\n\nHuman", "Observation:"],
+                    "max_tokens_to_sample": 2048,
+                },
+            ),
+            (
+                "chat_content",
+                "anthropic",
+                "claude-3-sonnet-20240229",
+                {
+                    "temperature": 0.3,
+                    "stop_sequences": ["\n\nHuman", "Observation:"],
+                    "max_tokens_to_sample": 2048,
+                },
+            ),
+            (
+                "chat_content",
+                "anthropic",
+                "claude-3-haiku-20240307",
+                {
+                    "temperature": 0.3,
+                    "stop_sequences": ["\n\nHuman", "Observation:"],
+                    "max_tokens_to_sample": 2048,
+                },
+            ),
+            ("chat_content", "anthropic", "claude-3-haiku-20240307", None),
+            ("chat_content", "litellm", "mistral", None),
         ],
     )
     async def test_successful_response(
         self,
+        request,
         mock_client: TestClient,
-        mock_models: dict,
-        request_body: dict,
+        mock_anthropic: Mock,
+        mock_anthropic_chat: Mock,
+        mock_llm_chat: Mock,
+        content_fixture: str,
+        provider: str,
+        model: str,
+        params: dict[str, Any] | None,
     ):
+        content = request.getfixturevalue(content_fixture)
+        payload = {
+            "content": content,
+            "provider": provider,
+            "model": model,
+        }
+        if params:
+            payload["params"] = params
+        else:
+            params = {}
+
         response = mock_client.post(
             "/chat/agent",
             headers={
@@ -284,51 +135,51 @@ class TestAgentSuccessfulRequest:
                 "X-GitLab-Instance-Id": "1234",
                 "X-GitLab-Realm": "self-managed",
             },
-            json=request_body,
+            json={
+                "prompt_components": [
+                    {
+                        "type": "prompt",
+                        "metadata": {
+                            "source": "gitlab-rails-sm",
+                            "version": "16.5.0-ee",
+                        },
+                        "payload": payload,
+                    },
+                ]
+            },
         )
 
         assert response.status_code == 200
         assert response.json()["response"] == "test completion"
 
         response_metadata = response.json()["metadata"]
-        prompt_payload = request_body["prompt_components"][0]["payload"]
-        prompt_params = prompt_payload.get("params", {})
-        provider = prompt_payload["provider"]
 
         assert response_metadata["provider"] == provider
-        assert response_metadata["model"] == prompt_payload["model"]
+        assert response_metadata["model"] == model
 
-        if isinstance(prompt_payload["content"], str):
-            mock_models["llm"].generate.assert_called_with(
-                prefix=prompt_payload["content"], stream=False, **prompt_params
-            )
+        if isinstance(content, str):
+            mock_anthropic.assert_called_with(prefix=content, stream=False, **params)
         else:
-            messages = [Message(**message) for message in prompt_payload["content"]]
-            if max_tokens := prompt_params.pop("max_tokens_to_sample", None):
-                prompt_params["max_tokens"] = max_tokens
+            messages = [Message(**message) for message in content]
+            if max_tokens := params.pop("max_tokens_to_sample", None):
+                params["max_tokens"] = max_tokens
 
-            mock_model = mock_models[f"{provider}-chat"]
-
-            mock_model.generate.assert_called_with(
-                messages=messages, stream=False, **prompt_params
-            )
+            mock = mock_anthropic_chat if provider == "anthropic" else mock_llm_chat
+            mock.assert_called_with(messages=messages, stream=False, **params)
 
 
 class TestAgentSuccessfulStream:
     @pytest.mark.asyncio
-    @pytest.mark.parametrize(
-        "payload_content",
-        [
-            "\n\nHuman: hello, what is your name?\n\nAssistant:",
-            [{"role": "user", "content": "hello, what is your name?"}],
-        ],
-    )
+    @pytest.mark.parametrize("content_fixture", ["text_content", "chat_content"])
     async def test_successful_stream(
         self,
+        request,
         mock_client: TestClient,
-        mock_models_stream: dict,
-        payload_content: str | list[dict],
+        mock_anthropic_stream: Mock,
+        mock_anthropic_chat_stream: Mock,
+        content_fixture: str,
     ):
+        content = request.getfixturevalue(content_fixture)
         response = mock_client.post(
             "/chat/agent",
             headers={
@@ -346,7 +197,7 @@ class TestAgentSuccessfulStream:
                             "version": "16.5.0-ee",
                         },
                         "payload": {
-                            "content": payload_content,
+                            "content": content,
                             "provider": "anthropic",
                             "model": KindAnthropicModel.CLAUDE_2_0.value,
                         },
@@ -360,14 +211,14 @@ class TestAgentSuccessfulStream:
         assert response.text == "test completion"
         assert response.headers["content-type"] == "text/event-stream; charset=utf-8"
 
-        if isinstance(payload_content, str):
-            mock_models_stream["llm"].generate.assert_called_with(
-                prefix=payload_content,
+        if isinstance(content, str):
+            mock_anthropic_stream.assert_called_with(
+                prefix=content,
                 stream=True,
             )
         else:
-            messages = [Message(**content) for content in payload_content]
-            mock_models_stream["chat"].generate.assert_called_with(
+            messages = [Message(**content) for content in content]
+            mock_anthropic_chat_stream.assert_called_with(
                 messages=messages,
                 stream=True,
             )
@@ -377,7 +228,7 @@ class TestAgentUnsupportedProvider:
     def test_invalid_request(
         self,
         mock_client: TestClient,
-        mock_models: dict,
+        text_content: str,
     ):
         response = mock_client.post(
             "/chat/agent",
@@ -396,7 +247,7 @@ class TestAgentUnsupportedProvider:
                             "version": "16.5.0-ee",
                         },
                         "payload": {
-                            "content": "\n\nHuman: hello, what is your name?\n\nAssistant:",
+                            "content": text_content,
                             "provider": "UNSUPPORTED_PROVIDER",
                             "model": "claude-2.0",
                         },
@@ -409,7 +260,7 @@ class TestAgentUnsupportedProvider:
 
 
 class TestAgentUnsupportedModel:
-    def test_invalid_request(self, mock_client: TestClient, mock_models: dict):
+    def test_invalid_request(self, mock_client: TestClient, text_content: str):
         response = mock_client.post(
             "/chat/agent",
             headers={
@@ -427,7 +278,7 @@ class TestAgentUnsupportedModel:
                             "version": "16.5.0-ee",
                         },
                         "payload": {
-                            "content": "\n\nHuman: hello, what is your name?\n\nAssistant:",
+                            "content": text_content,
                             "provider": "anthropic",
                             "model": "UNSUPPORTED_MODEL",
                         },
@@ -454,7 +305,7 @@ class TestAnthropicInvalidScope:
     def test_invalid_scope(
         self,
         mock_client: TestClient,
-        mock_models: dict,
+        text_content: str,
     ):
         response = mock_client.post(
             "/chat/agent",
@@ -473,7 +324,7 @@ class TestAnthropicInvalidScope:
                             "version": "16.5.0-ee",
                         },
                         "payload": {
-                            "content": "\n\nHuman: hello, what is your name?\n\nAssistant:",
+                            "content": text_content,
                             "provider": "anthropic",
                             "model": "claude-2.0",
                         },
@@ -490,7 +341,6 @@ class TestAgentInvalidRequestMissingFields:
     def test_invalid_request_missing_fields(
         self,
         mock_client: TestClient,
-        mock_models: dict,
     ):
         response = mock_client.post(
             "/chat/agent",
@@ -537,7 +387,7 @@ class TestAgentInvalidRequestManyPromptComponents:
     def test_invalid_request_many_prompt_components(
         self,
         mock_client: TestClient,
-        mock_models: dict,
+        text_content: str,
     ):
         response = mock_client.post(
             "/chat/agent",
@@ -556,7 +406,7 @@ class TestAgentInvalidRequestManyPromptComponents:
                             "version": "16.5.0-ee",
                         },
                         "payload": {
-                            "content": "\n\nHuman: hello, what is your name?\n\nAssistant:",
+                            "content": text_content,
                             "provider": "anthropic",
                             "model": "claude-2.0",
                         },
@@ -592,7 +442,7 @@ class TestAgentInvalidRequestManyPromptComponents:
                                 "version": "16.5.0-ee",
                             },
                             "payload": {
-                                "content": "\n\nHuman: hello, what is your name?\n\nAssistant:",
+                                "content": text_content,
                                 "provider": "anthropic",
                                 "model": "claude-2.0",
                             },
@@ -616,20 +466,23 @@ class TestAgentInvalidRequestManyPromptComponents:
 class TestAgentUnsuccessfulAnthropicRequest:
     @pytest.mark.asyncio
     @pytest.mark.parametrize(
-        ("model_class", "model_exception_type"),
+        ("content_fixture", "model_exception_type"),
         [
-            (AnthropicModel, AnthropicAPIStatusError),
-            (AnthropicModel, AnthropicAPITimeoutError),
-            (AnthropicModel, AnthropicAPIConnectionError),
-            (AnthropicChatModel, AnthropicAPIStatusError),
-            (AnthropicChatModel, AnthropicAPITimeoutError),
-            (AnthropicChatModel, AnthropicAPIConnectionError),
+            ("text_content", AnthropicAPIStatusError),
+            ("text_content", AnthropicAPITimeoutError),
+            ("text_content", AnthropicAPIConnectionError),
+            ("chat_content", AnthropicAPIStatusError),
+            ("chat_content", AnthropicAPITimeoutError),
+            ("chat_content", AnthropicAPIConnectionError),
         ],
     )
     async def test_fail_receiving_anthropic_response(
         self,
+        request,
         mock_client: TestClient,
-        model_class: Type[AnthropicModel | AnthropicChatModel],
+        mock_anthropic: Mock,
+        mock_anthropic_chat: Mock,
+        content_fixture: str,
         model_exception_type: Type[ModelAPIError],
     ):
         def _side_effect(*_args, **_kwargs):
@@ -639,14 +492,10 @@ class TestAgentUnsuccessfulAnthropicRequest:
             model_exception_type.code = 404
         exception = model_exception_type("exception message")
 
-        mock_model = mock.Mock(spec=model_class)
-        mock_model.generate = AsyncMock(side_effect=_side_effect)
+        mock_anthropic.side_effect = _side_effect
+        mock_anthropic_chat.side_effect = _side_effect
 
-        container = ContainerApplication()
         with (
-            # override both models at the same time to avoid unnecessary if-else constructions
-            container.chat._anthropic_claude_llm_factory.override(mock_model),
-            container.chat._anthropic_claude_chat_factory.override(mock_model),
             patch("ai_gateway.api.v1.chat.agent.log_exception") as mock_log_exception,
             capture_logs(),
         ):
@@ -667,7 +516,7 @@ class TestAgentUnsuccessfulAnthropicRequest:
                                 "version": "16.5.0-ee",
                             },
                             "payload": {
-                                "content": "\n\nHuman: hello, what is your name?\n\nAssistant:",
+                                "content": request.getfixturevalue(content_fixture),
                                 "provider": "anthropic",
                                 "model": "claude-2.0",
                             },
