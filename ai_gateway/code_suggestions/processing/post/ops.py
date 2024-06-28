@@ -11,7 +11,7 @@ from ai_gateway.code_suggestions.processing.ops import (
     find_non_whitespace_point,
 )
 from ai_gateway.code_suggestions.processing.typing import LanguageId
-from ai_gateway.prompts.parsers import CodeParser
+from ai_gateway.code_suggestions.prompts.parsers import CodeParser
 
 __all__ = [
     "clean_model_reflection",

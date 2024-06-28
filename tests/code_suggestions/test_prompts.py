@@ -1,6 +1,6 @@
 import pytest
 
-from ai_gateway.prompts import PromptTemplate, PromptTemplateFewShot
+from ai_gateway.code_suggestions.prompts import PromptTemplate, PromptTemplateFewShot
 
 
 @pytest.mark.parametrize(
@@ -10,8 +10,8 @@ from ai_gateway.prompts import PromptTemplate, PromptTemplateFewShot
         ("python", ""),
     ],
 )
-def test_prompt_template(tpl_codegen_dir, lang, code):
-    filepath = tpl_codegen_dir / "base.tpl"
+def test_prompt_template(tpl_assets_codegen_dir, lang, code):
+    filepath = tpl_assets_codegen_dir / "base.tpl"
     with open(filepath, "r") as f:
         tpl_raw = f.read()
 
@@ -30,9 +30,9 @@ def test_prompt_template(tpl_codegen_dir, lang, code):
         ("python", "random_prompt", "s = 'hello world'"),
     ],
 )
-def test_prompt_template_few_shot(tpl_codegen_dir, lang, content, example):
-    tpl_filepath = tpl_codegen_dir / "completion.tpl"
-    ex_tpl_filepath = tpl_codegen_dir / "base.tpl"
+def test_prompt_template_few_shot(tpl_assets_codegen_dir, lang, content, example):
+    tpl_filepath = tpl_assets_codegen_dir / "completion.tpl"
+    ex_tpl_filepath = tpl_assets_codegen_dir / "base.tpl"
 
     example_tpl = PromptTemplate.from_local_file(ex_tpl_filepath)
     tpl = PromptTemplateFewShot.from_local_file(

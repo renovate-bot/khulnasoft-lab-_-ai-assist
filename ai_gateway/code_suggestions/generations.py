@@ -14,6 +14,7 @@ from ai_gateway.code_suggestions.processing.post.generations import (
     PostProcessorAnthropic,
 )
 from ai_gateway.code_suggestions.processing.pre import PromptBuilderPrefixBased
+from ai_gateway.code_suggestions.prompts import PromptTemplate
 from ai_gateway.instrumentators import TextGenModelInstrumentator
 from ai_gateway.models import Message, ModelAPICallError, ModelAPIError
 from ai_gateway.models.base_chat import ChatModelBase
@@ -22,7 +23,6 @@ from ai_gateway.models.base_text import (
     TextGenModelChunk,
     TextGenModelOutput,
 )
-from ai_gateway.prompts import PromptTemplate
 from ai_gateway.tracking.instrumentator import SnowplowInstrumentator
 from ai_gateway.tracking.snowplow import SnowplowEvent
 

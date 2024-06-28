@@ -3,7 +3,7 @@ from typing import Callable, Deque, Union
 
 from tree_sitter import Node, Tree
 
-from ai_gateway.prompts.parsers.base import BaseVisitor
+from ai_gateway.code_suggestions.prompts.parsers.base import BaseVisitor
 
 __all__ = [
     "tree_bfs",

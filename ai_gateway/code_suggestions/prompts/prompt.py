@@ -1,7 +1,7 @@
 from pathlib import Path
 from typing import Any
 
-from ai_gateway.prompts.base import PromptTemplateBase
+from ai_gateway.code_suggestions.prompts.base import PromptTemplateBase
 
 __all__ = [
     "PromptTemplate",

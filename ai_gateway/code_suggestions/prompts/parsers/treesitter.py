@@ -10,21 +10,26 @@ from ai_gateway.code_suggestions.processing.ops import (
     convert_point_to_relative_point_in_node,
     split_on_point,
 )
-from ai_gateway.prompts.parsers.base import (
+from ai_gateway.code_suggestions.prompts.parsers.base import (
     BaseCodeParser,
     BaseVisitor,
     CodeContext,
     Point,
 )
-from ai_gateway.prompts.parsers.blocks import ErrorBlocksVisitor, MinAllowedBlockVisitor
-from ai_gateway.prompts.parsers.comments import CommentVisitorFactory
-from ai_gateway.prompts.parsers.context_extractors import ContextVisitorFactory
-from ai_gateway.prompts.parsers.counters import CounterVisitorFactory
-from ai_gateway.prompts.parsers.function_signatures import (
+from ai_gateway.code_suggestions.prompts.parsers.blocks import (
+    ErrorBlocksVisitor,
+    MinAllowedBlockVisitor,
+)
+from ai_gateway.code_suggestions.prompts.parsers.comments import CommentVisitorFactory
+from ai_gateway.code_suggestions.prompts.parsers.context_extractors import (
+    ContextVisitorFactory,
+)
+from ai_gateway.code_suggestions.prompts.parsers.counters import CounterVisitorFactory
+from ai_gateway.code_suggestions.prompts.parsers.function_signatures import (
     FunctionSignatureVisitorFactory,
 )
-from ai_gateway.prompts.parsers.imports import ImportVisitorFactory
-from ai_gateway.prompts.parsers.treetraversal import tree_dfs
+from ai_gateway.code_suggestions.prompts.parsers.imports import ImportVisitorFactory
+from ai_gateway.code_suggestions.prompts.parsers.treetraversal import tree_dfs
 
 
 class CodeParser(BaseCodeParser):
