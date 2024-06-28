@@ -8,6 +8,7 @@ from ai_gateway.gitlab_features import GitLabUnitPrimitive
 from ai_gateway.tracking.errors import log_exception
 
 __all__ = [
+    "SELF_SIGNED_TOKEN_ISSUER",
     "TokenAuthority",
 ]
 
@@ -38,7 +39,7 @@ class TokenAuthority:
 
             token = jwt.encode(claims, self.signing_key, algorithm=self.ALGORITHM)
 
-            return (token, int(expires_at.timestamp()))
+            return token, int(expires_at.timestamp())
         except JWTError as err:
             log_exception(err)
             raise

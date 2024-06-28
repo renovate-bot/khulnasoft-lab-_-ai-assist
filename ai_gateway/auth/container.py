@@ -1,6 +1,8 @@
 from dependency_injector import containers, providers
 
-from ai_gateway.self_signed_jwt.token_authority import TokenAuthority
+from ai_gateway.auth.self_signed_jwt import TokenAuthority
+
+__all__ = ["ContainerSelfSignedJwt"]
 
 
 class ContainerSelfSignedJwt(containers.DeclarativeContainer):
