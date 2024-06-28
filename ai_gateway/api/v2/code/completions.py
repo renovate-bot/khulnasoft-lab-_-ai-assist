@@ -36,6 +36,7 @@ from ai_gateway.async_dependency_resolver import (
     get_code_suggestions_generations_vertex_provider,
     get_snowplow_instrumentator,
 )
+from ai_gateway.auth.self_signed_jwt import SELF_SIGNED_TOKEN_ISSUER
 from ai_gateway.auth.user import GitLabUser, get_current_user
 from ai_gateway.code_suggestions import (
     CodeCompletions,
@@ -47,7 +48,6 @@ from ai_gateway.code_suggestions.processing.ops import lang_from_filename
 from ai_gateway.gitlab_features import GitLabFeatureCategory, GitLabUnitPrimitive
 from ai_gateway.instrumentators.base import TelemetryInstrumentator
 from ai_gateway.models import KindAnthropicModel, KindModelProvider
-from ai_gateway.self_signed_jwt.token_authority import SELF_SIGNED_TOKEN_ISSUER
 from ai_gateway.tracking import SnowplowEvent, SnowplowEventContext
 from ai_gateway.tracking.errors import log_exception
 from ai_gateway.tracking.instrumentator import SnowplowInstrumentator

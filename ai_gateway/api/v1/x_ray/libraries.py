@@ -6,10 +6,10 @@ from fastapi import APIRouter, Depends, HTTPException, Request, status
 from ai_gateway.api.feature_category import feature_category
 from ai_gateway.api.v1.x_ray.typing import XRayRequest, XRayResponse
 from ai_gateway.async_dependency_resolver import get_x_ray_anthropic_claude
+from ai_gateway.auth.self_signed_jwt import SELF_SIGNED_TOKEN_ISSUER
 from ai_gateway.auth.user import GitLabUser, get_current_user
 from ai_gateway.gitlab_features import GitLabFeatureCategory, GitLabUnitPrimitive
 from ai_gateway.models import AnthropicModel
-from ai_gateway.self_signed_jwt.token_authority import SELF_SIGNED_TOKEN_ISSUER
 
 __all__ = [
     "router",

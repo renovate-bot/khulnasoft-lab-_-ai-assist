@@ -2,12 +2,12 @@ from dependency_injector import containers, providers
 from py_grpc_prometheus.prometheus_client_interceptor import PromClientInterceptor
 
 from ai_gateway.agents.container import ContainerAgents
+from ai_gateway.auth.container import ContainerSelfSignedJwt
 from ai_gateway.chat.container import ContainerChat
 from ai_gateway.code_suggestions.container import ContainerCodeSuggestions
 from ai_gateway.models.container import ContainerModels
 from ai_gateway.models.v2.container import ContainerModels as ContainerModelsV2
 from ai_gateway.searches.container import ContainerSearches
-from ai_gateway.self_signed_jwt.container import ContainerSelfSignedJwt
 from ai_gateway.tracking.container import ContainerTracking
 
 __all__ = [
