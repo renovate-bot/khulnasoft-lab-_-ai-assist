@@ -7,8 +7,8 @@ from ai_gateway.code_suggestions.processing.typing import (
     Prompt,
     TokenStrategyBase,
 )
+from ai_gateway.code_suggestions.prompts import PromptTemplateBase
 from ai_gateway.models import Message
-from ai_gateway.prompts import PromptTemplateBase
 
 __all__ = [
     "PromptBuilderBase",

@@ -4,8 +4,8 @@ import pytest
 from tree_sitter import Node
 
 from ai_gateway.code_suggestions.processing.ops import LanguageId
-from ai_gateway.prompts.parsers import CodeParser, tree_bfs, tree_dfs
-from ai_gateway.prompts.parsers.base import BaseVisitor
+from ai_gateway.code_suggestions.prompts.parsers import CodeParser, tree_bfs, tree_dfs
+from ai_gateway.code_suggestions.prompts.parsers.base import BaseVisitor
 
 JAVA_SAMPLE_SOURCE = """
 import org.springframework.boot.SpringApplication;

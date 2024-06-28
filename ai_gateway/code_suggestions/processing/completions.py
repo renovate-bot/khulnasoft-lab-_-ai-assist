@@ -18,6 +18,7 @@ from ai_gateway.code_suggestions.processing.typing import (
     Prompt,
     TokenStrategyBase,
 )
+from ai_gateway.code_suggestions.prompts.parsers import CodeParser
 from ai_gateway.experimentation import ExperimentRegistry, ExperimentTelemetry
 from ai_gateway.instrumentators import TextGenModelInstrumentator
 from ai_gateway.models import (
@@ -26,7 +27,6 @@ from ai_gateway.models import (
     VertexAPIStatusError,
 )
 from ai_gateway.models.base import TokensConsumptionMetadata
-from ai_gateway.prompts.parsers import CodeParser
 
 log = structlog.stdlib.get_logger("codesuggestions")
 

@@ -3,7 +3,7 @@ from typing import List, Optional
 from tree_sitter import Node
 
 from ai_gateway.code_suggestions.processing.ops import LanguageId
-from ai_gateway.prompts.parsers.base import BaseVisitor
+from ai_gateway.code_suggestions.prompts.parsers.base import BaseVisitor
 
 __all__ = [
     "BaseContextVisitor",

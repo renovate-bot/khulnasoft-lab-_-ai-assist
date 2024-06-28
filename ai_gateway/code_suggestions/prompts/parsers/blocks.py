@@ -2,7 +2,7 @@ from typing import List, Optional
 
 from tree_sitter import Node
 
-from ai_gateway.prompts.parsers.base import BaseVisitor, Point
+from ai_gateway.code_suggestions.prompts.parsers.base import BaseVisitor, Point
 
 __all__ = ["MinAllowedBlockVisitor", "ErrorBlocksVisitor"]
 

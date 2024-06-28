@@ -11,7 +11,7 @@ async def variant_1(**kwargs) -> str:
     from structlog import BoundLogger
 
     from ai_gateway.code_suggestions.processing.ops import LanguageId
-    from ai_gateway.prompts.parsers.treesitter import CodeParser
+    from ai_gateway.code_suggestions.prompts.parsers.treesitter import CodeParser
 
     async def _truncate_suffix_context(
         logger: BoundLogger,

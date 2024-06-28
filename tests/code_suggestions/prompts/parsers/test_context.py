@@ -1,14 +1,15 @@
 import pytest
-from tree_sitter import Node
 
 from ai_gateway.code_suggestions.processing.ops import (
     LanguageId,
     find_cursor_position,
     split_on_point,
 )
-from ai_gateway.prompts.parsers import CodeParser
-from ai_gateway.prompts.parsers.context_extractors import BaseContextVisitor
-from ai_gateway.prompts.parsers.treetraversal import tree_dfs
+from ai_gateway.code_suggestions.prompts.parsers import CodeParser
+from ai_gateway.code_suggestions.prompts.parsers.context_extractors import (
+    BaseContextVisitor,
+)
+from ai_gateway.code_suggestions.prompts.parsers.treetraversal import tree_dfs
 
 PYTHON_PREFIX_SAMPLE = """
 from abc import ABC
