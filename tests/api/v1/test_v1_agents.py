@@ -8,9 +8,9 @@ from langchain_core.messages import BaseMessage
 from langchain_core.prompts import ChatPromptTemplate
 
 from ai_gateway.agents import Agent
-from ai_gateway.agents.chat.react import ReActAgent
 from ai_gateway.api.v1 import api_router
 from ai_gateway.auth import User, UserClaims
+from ai_gateway.chat.agents import ReActAgent
 from ai_gateway.gitlab_features import GitLabUnitPrimitive
 
 

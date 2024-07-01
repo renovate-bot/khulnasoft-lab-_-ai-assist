@@ -8,7 +8,7 @@ from langchain_core.runnables import Runnable, RunnableConfig
 from pydantic import BaseModel
 
 from ai_gateway.agents.base import Agent
-from ai_gateway.agents.chat.typing import (
+from ai_gateway.chat.agents.typing import (
     AgentFinalAnswer,
     AgentStep,
     AgentToolAction,

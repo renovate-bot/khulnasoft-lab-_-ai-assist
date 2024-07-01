@@ -3,9 +3,9 @@ from unittest.mock import AsyncMock, Mock
 import pytest
 from langchain_core.runnables import Runnable
 
-from ai_gateway.agents.chat import ReActAgentInputs, ReActAgentToolAction
 from ai_gateway.auth import GitLabUser
 from ai_gateway.chat import BaseToolsRegistry, GLAgentRemoteExecutor, TypeAgentFactory
+from ai_gateway.chat.agents import ReActAgentInputs, ReActAgentToolAction
 from ai_gateway.chat.tools.gitlab import EpicReader, IssueReader
 
 expected_tool_action = ReActAgentToolAction(

@@ -1,12 +1,14 @@
-from typing import Sequence
+from typing import TYPE_CHECKING, Sequence
 
 from dependency_injector import containers, providers
 
-from ai_gateway.agents import BaseAgentRegistry
-from ai_gateway.agents.chat import ReActAgent, ReActAgentInputs, TypeReActAgentAction
+from ai_gateway.chat.agents import ReActAgent, ReActAgentInputs, TypeReActAgentAction
 from ai_gateway.chat.executor import GLAgentRemoteExecutor, TypeAgentFactory
 from ai_gateway.chat.tools import BaseTool
 from ai_gateway.chat.toolset import DuoChatToolsRegistry
+
+if TYPE_CHECKING:
+    from ai_gateway.agents import BaseAgentRegistry
 
 __all__ = [
     "ContainerChat",
@@ -14,7 +16,7 @@ __all__ = [
 
 
 def _react_agent_factory(
-    agent_registry: BaseAgentRegistry,
+    agent_registry: "BaseAgentRegistry",
 ) -> TypeAgentFactory[ReActAgentInputs, TypeReActAgentAction]:
     def _fn(tools: Sequence[BaseTool], inputs: ReActAgentInputs) -> ReActAgent:
         options = {"tools": tools}

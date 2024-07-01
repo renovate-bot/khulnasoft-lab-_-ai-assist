@@ -1,11 +1,8 @@
-from typing import Dict
-from unittest.mock import Mock
-
 import pytest
 from langchain.chat_models.fake import FakeListChatModel
 from langchain_core.prompts import ChatPromptTemplate
 
-from ai_gateway.agents.chat.react import (
+from ai_gateway.chat.agents.react import (
     ReActAgent,
     ReActAgentFinalAnswer,
     ReActAgentInputs,
@@ -16,7 +13,7 @@ from ai_gateway.agents.chat.react import (
     agent_scratchpad_plain_text_renderer,
     chat_history_plain_text_renderer,
 )
-from ai_gateway.agents.chat.typing import AgentStep
+from ai_gateway.chat.agents.typing import AgentStep
 
 
 async def _assert_agent_invoked(
