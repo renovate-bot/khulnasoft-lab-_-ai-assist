@@ -2,8 +2,8 @@ from typing import AsyncIterator, Generic, Protocol, Sequence
 
 from langchain_core.runnables import Runnable
 
-from ai_gateway.agents.chat import TypeAgentAction, TypeAgentInputs
 from ai_gateway.auth import GitLabUser
+from ai_gateway.chat.agents import TypeAgentAction, TypeAgentInputs
 from ai_gateway.chat.base import BaseToolsRegistry
 from ai_gateway.chat.tools import BaseTool
 

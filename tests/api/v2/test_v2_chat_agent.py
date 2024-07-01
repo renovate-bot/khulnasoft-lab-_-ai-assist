@@ -4,14 +4,6 @@ from unittest.mock import Mock, patch
 import pytest
 from starlette.testclient import TestClient
 
-from ai_gateway.agents.chat import (
-    AgentStep,
-    Context,
-    ReActAgentInputs,
-    ReActAgentToolAction,
-    TypeAgentAction,
-    TypeReActAgentAction,
-)
 from ai_gateway.api.v2 import api_router
 from ai_gateway.api.v2.chat.typing import (
     AgentRequestOptions,
@@ -19,6 +11,14 @@ from ai_gateway.api.v2.chat.typing import (
     ReActAgentScratchpad,
 )
 from ai_gateway.auth import GitLabUser, User, UserClaims
+from ai_gateway.chat.agents import (
+    AgentStep,
+    Context,
+    ReActAgentInputs,
+    ReActAgentToolAction,
+    TypeAgentAction,
+    TypeReActAgentAction,
+)
 from ai_gateway.gitlab_features import WrongUnitPrimitives
 
 

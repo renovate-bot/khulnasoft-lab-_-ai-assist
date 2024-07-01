@@ -1,7 +1,7 @@
 from dependency_injector import containers, providers
 
-from ai_gateway.agents import chat
 from ai_gateway.agents.registry import LocalAgentRegistry
+from ai_gateway.chat import agents as chat
 
 __all__ = [
     "ContainerAgents",
