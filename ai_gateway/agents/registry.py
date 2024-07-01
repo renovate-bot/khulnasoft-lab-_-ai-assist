@@ -1,19 +1,15 @@
-from enum import Enum
 from pathlib import Path
 from typing import Any, NamedTuple, Optional, Protocol, Type
 
 import yaml
+from langchain_community.chat_models import ChatLiteLLM
 from langchain_core.language_models.chat_models import BaseChatModel
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.runnables import Runnable
 
 from ai_gateway.agents.base import Agent, BaseAgentRegistry
 
-__all__ = ["LocalAgentRegistry", "ModelProvider"]
-
-
-class ModelProvider(str, Enum):
-    ANTHROPIC = "anthropic"
+__all__ = ["LocalAgentRegistry"]
 
 
 class ModelFactoryType(Protocol):
@@ -33,10 +29,8 @@ class LocalAgentRegistry(BaseAgentRegistry):
     def __init__(
         self,
         agents_registered: dict[str, AgentRegistered],
-        model_factories: dict[ModelProvider, ModelFactoryType],
     ):
         self.agents_registered = agents_registered
-        self.model_factories = model_factories
 
     def _resolve_id(self, agent_id: str) -> str:
         _, _, agent_type = agent_id.partition("/")
@@ -49,10 +43,7 @@ class LocalAgentRegistry(BaseAgentRegistry):
     def _get_model(
         self, provider: str, name: str, **kwargs: Optional[Any]
     ) -> BaseChatModel:
-        if model_factory := self.model_factories.get(ModelProvider(provider), None):
-            return model_factory(model=name, **kwargs)
-
-        raise ValueError(f"unknown provider `{provider}`.")
+        return ChatLiteLLM(model=name, custom_llm_provider=provider)
 
     def get(self, agent_id: str, options: Optional[dict[str, Any]] = None) -> Any:
         agent_id = self._resolve_id(agent_id)
@@ -80,7 +71,6 @@ class LocalAgentRegistry(BaseAgentRegistry):
     @classmethod
     def from_local_yaml(
         cls,
-        model_factories: dict[ModelProvider, ModelFactoryType],
         class_overrides: dict[str, Type[Agent]],
     ) -> "LocalAgentRegistry":
         """Iterate over all agent definition files matching [usecase]/[type].yml,
@@ -102,4 +92,4 @@ class LocalAgentRegistry(BaseAgentRegistry):
                     klass=klass, config=yaml.safe_load(fp)
                 )
 
-        return cls(agents_registered, model_factories)
+        return cls(agents_registered)

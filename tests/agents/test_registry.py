@@ -2,7 +2,6 @@ from pathlib import Path
 from typing import Sequence, Type
 
 import pytest
-from langchain_anthropic import ChatAnthropic
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.prompts.chat import MessageLikeRepresentation
 from pyfakefs.fake_filesystem import FakeFilesystem
@@ -12,19 +11,11 @@ from ai_gateway.agents.registry import (
     AgentRegistered,
     LocalAgentRegistry,
     ModelFactoryType,
-    ModelProvider,
 )
 
 
 class MockAgentClass(Agent):
     pass
-
-
-@pytest.fixture
-def model_factories():
-    yield {
-        ModelProvider.ANTHROPIC: lambda model, **model_kwargs: ChatAnthropic(model=model)  # type: ignore[call-arg]
-    }
 
 
 @pytest.fixture
@@ -96,12 +87,9 @@ class TestLocalAgentRegistry:
     def test_from_local_yaml(
         self,
         mock_fs: FakeFilesystem,
-        model_factories: dict[ModelProvider, ModelFactoryType],
         agents_registered: dict[str, AgentRegistered],
     ):
-        registry = LocalAgentRegistry.from_local_yaml(
-            model_factories, {"chat/react": MockAgentClass}
-        )
+        registry = LocalAgentRegistry.from_local_yaml({"chat/react": MockAgentClass})
 
         assert registry.agents_registered == agents_registered
 
@@ -143,7 +131,6 @@ class TestLocalAgentRegistry:
     )
     def test_get(
         self,
-        model_factories: dict[ModelProvider, ModelFactoryType],
         agents_registered: dict[str, AgentRegistered],
         agent_id: str,
         expected_name: str,
@@ -154,7 +141,6 @@ class TestLocalAgentRegistry:
     ):
         registry = LocalAgentRegistry(
             agents_registered=agents_registered,
-            model_factories=model_factories,
         )
 
         agent = registry.get(agent_id)
