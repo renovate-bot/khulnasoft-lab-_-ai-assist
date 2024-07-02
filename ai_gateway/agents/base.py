@@ -103,7 +103,8 @@ class BaseAgentRegistry(ABC):
     ) -> Agent:
         agent = self.get(agent_id, options)
 
-        if not set(agent.unit_primitives).issubset(user.unit_primitives):
-            raise WrongUnitPrimitives
+        for unit_primitive in agent.unit_primitives:
+            if not user.can(unit_primitive):
+                raise WrongUnitPrimitives
 
         return agent
