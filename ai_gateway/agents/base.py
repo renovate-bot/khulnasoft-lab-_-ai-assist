@@ -1,15 +1,21 @@
 from abc import ABC, abstractmethod
-from typing import Any, Generic, Optional, Sequence, Tuple, TypeVar
+from typing import Annotated, Any, Generic, Optional, Sequence, Tuple, TypeVar
 
 from jinja2 import BaseLoader, Environment
 from langchain_core.prompts.chat import MessageLikeRepresentation
 from langchain_core.runnables import Runnable, RunnableBinding
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from ai_gateway.auth.user import GitLabUser
 from ai_gateway.gitlab_features import GitLabUnitPrimitive, WrongUnitPrimitives
 
-__all__ = ["Agent", "BaseAgentRegistry", "BaseAgentConfig", "AgentConfig"]
+__all__ = [
+    "Agent",
+    "BaseAgentRegistry",
+    "BaseAgentConfig",
+    "AgentConfig",
+    "Model",
+]
 
 Input = TypeVar("Input")
 Output = TypeVar("Output")
@@ -27,13 +33,29 @@ def _format_str(content: str, options: dict[str, Any]) -> str:
     return jinja_env.from_string(content).render(options)
 
 
-class BaseAgentConfig(BaseModel, Generic[TypeUnitPrimitive]):
+class Model(BaseModel):
+    class Params(BaseModel):
+        temperature: float
+        timeout: Annotated[
+            float | tuple[float, float] | None,
+            Field(serialization_alias="request_timeout"),
+        ] = None
+        top_p: float | None = None
+        top_k: int | None = None
+        max_tokens: Optional[int] = 2_048
+        max_retries: Optional[int] = 1
+
     name: str
     provider: str
-    model: str
+    params: Params | None = None
+
+
+class BaseAgentConfig(BaseModel, Generic[TypeUnitPrimitive]):
+    name: str
+    model: Model
     unit_primitives: list[TypeUnitPrimitive]
     prompt_template: dict[str, str]
-    stop: Optional[list[str]] = None
+    stop: list[str] | None = None
 
 
 class AgentConfig(BaseAgentConfig):

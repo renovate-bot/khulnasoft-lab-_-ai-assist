@@ -6,7 +6,13 @@ from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.prompts.chat import MessageLikeRepresentation
 from pyfakefs.fake_filesystem import FakeFilesystem
 
-from ai_gateway.agents import Agent, AgentConfig, AgentRegistered, LocalAgentRegistry
+from ai_gateway.agents import (
+    Agent,
+    AgentConfig,
+    AgentRegistered,
+    LocalAgentRegistry,
+    Model,
+)
 
 
 class MockAgentClass(Agent):
@@ -23,8 +29,9 @@ def mock_fs(fs: FakeFilesystem):
         contents="""
 ---
 name: Test agent
-provider: anthropic
-model: claude-2.1
+model:
+  name: claude-2.1
+  provider: anthropic
 unit_primitives:
   - explain_code
 prompt_template:
@@ -36,8 +43,16 @@ prompt_template:
         contents="""
 ---
 name: Chat react agent
-provider: anthropic
-model: claude-3-haiku-20240307
+model: 
+  name: claude-3-haiku-20240307
+  provider: anthropic
+  params:
+    temperature: 0.1
+    timeout: 60
+    top_p: 0.8
+    top_k: 40
+    max_tokens: 256
+    max_retries: 6
 unit_primitives:
   - duo_chat
 prompt_template:
@@ -58,8 +73,7 @@ def agents_registered():
             klass=Agent,
             config=AgentConfig(
                 name="Test agent",
-                provider="anthropic",
-                model="claude-2.1",
+                model=Model(name="claude-2.1", provider="anthropic"),
                 unit_primitives=["explain_code"],
                 prompt_template={"system": "Template1"},
             ),
@@ -68,8 +82,18 @@ def agents_registered():
             klass=MockAgentClass,
             config=AgentConfig(
                 name="Chat react agent",
-                provider="anthropic",
-                model="claude-3-haiku-20240307",
+                model=Model(
+                    name="claude-3-haiku-20240307",
+                    provider="anthropic",
+                    params=Model.Params(
+                        temperature=0.1,
+                        timeout=60,
+                        top_p=0.8,
+                        top_k=40,
+                        max_tokens=256,
+                        max_retries=6,
+                    ),
+                ),
                 unit_primitives=["duo_chat"],
                 prompt_template={"system": "Template1", "user": "Template2"},
                 stop=["Foo", "Bar"],
@@ -96,6 +120,7 @@ class TestLocalAgentRegistry:
             "expected_messages",
             "expected_model",
             "expected_kwargs",
+            "expected_model_params",
         ),
         [
             (
@@ -105,6 +130,7 @@ class TestLocalAgentRegistry:
                 [("system", "Template1")],
                 "claude-2.1",
                 None,
+                None,
             ),
             (
                 "test/base",
@@ -112,6 +138,7 @@ class TestLocalAgentRegistry:
                 Agent,
                 [("system", "Template1")],
                 "claude-2.1",
+                None,
                 None,
             ),
             (
@@ -121,6 +148,14 @@ class TestLocalAgentRegistry:
                 [("system", "Template1"), ("user", "Template2")],
                 "claude-3-haiku-20240307",
                 {"stop": ["Foo", "Bar"]},
+                {
+                    "temperature": 0.1,
+                    "request_timeout": 60,  # accessed by alias
+                    "top_p": 0.8,
+                    "top_k": 40,
+                    "max_tokens": 256,
+                    "max_retries": 6,
+                },
             ),
         ],
     )
@@ -133,6 +168,7 @@ class TestLocalAgentRegistry:
         expected_messages: Sequence[MessageLikeRepresentation],
         expected_model: str,
         expected_kwargs: dict,
+        expected_model_params: dict | None,
     ):
         registry = LocalAgentRegistry(
             agents_registered=agents_registered,
@@ -154,3 +190,11 @@ class TestLocalAgentRegistry:
 
         if expected_kwargs:
             assert actual_model.kwargs == expected_kwargs
+
+        if expected_model_params:
+            actual_model_params = {
+                key: value
+                for key, value in dict(actual_model.bound).items()
+                if key in expected_model_params
+            }
+            assert actual_model_params == expected_model_params
