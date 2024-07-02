@@ -6,12 +6,7 @@ from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.prompts.chat import MessageLikeRepresentation
 from pyfakefs.fake_filesystem import FakeFilesystem
 
-from ai_gateway.agents.base import Agent
-from ai_gateway.agents.registry import (
-    AgentRegistered,
-    LocalAgentRegistry,
-    ModelFactoryType,
-)
+from ai_gateway.agents import Agent, AgentConfig, AgentRegistered, LocalAgentRegistry
 
 
 class MockAgentClass(Agent):
@@ -61,24 +56,24 @@ def agents_registered():
     yield {
         "test/base": AgentRegistered(
             klass=Agent,
-            config={
-                "name": "Test agent",
-                "provider": "anthropic",
-                "model": "claude-2.1",
-                "unit_primitives": ["explain_code"],
-                "prompt_template": {"system": "Template1"},
-            },
+            config=AgentConfig(
+                name="Test agent",
+                provider="anthropic",
+                model="claude-2.1",
+                unit_primitives=["explain_code"],
+                prompt_template={"system": "Template1"},
+            ),
         ),
         "chat/react": AgentRegistered(
             klass=MockAgentClass,
-            config={
-                "name": "Chat react agent",
-                "provider": "anthropic",
-                "model": "claude-3-haiku-20240307",
-                "unit_primitives": ["duo_chat"],
-                "prompt_template": {"system": "Template1", "user": "Template2"},
-                "stop": ["Foo", "Bar"],
-            },
+            config=AgentConfig(
+                name="Chat react agent",
+                provider="anthropic",
+                model="claude-3-haiku-20240307",
+                unit_primitives=["duo_chat"],
+                prompt_template={"system": "Template1", "user": "Template2"},
+                stop=["Foo", "Bar"],
+            ),
         ),
     }
 
