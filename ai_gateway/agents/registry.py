@@ -7,7 +7,7 @@ from langchain_core.language_models.chat_models import BaseChatModel
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.runnables import Runnable
 
-from ai_gateway.agents.base import Agent, AgentConfig, BaseAgentRegistry
+from ai_gateway.agents.base import Agent, AgentConfig, BaseAgentRegistry, Model
 
 __all__ = ["LocalAgentRegistry", "AgentRegistered"]
 
@@ -34,21 +34,11 @@ class LocalAgentRegistry(BaseAgentRegistry):
 
         return f"{agent_id}/{self.key_agent_type_base}"
 
-    def _get_model(
-        self, provider: str, name: str, **kwargs: Optional[Any]
-    ) -> BaseChatModel:
-        return ChatLiteLLM(model=name, custom_llm_provider=provider)
-
     def get(self, agent_id: str, options: Optional[dict[str, Any]] = None) -> Any:
         agent_id = self._resolve_id(agent_id)
         klass, config = self.agents_registered[agent_id]
 
-        # TODO: read model parameters such as `temperature`, `top_k`
-        #  and pass them to the model factory via **kwargs.
-        model: Runnable = self._get_model(
-            name=config.model,
-            provider=config.provider,
-        )
+        model: Runnable = _get_model(config.model)
 
         if config.stop:
             model = model.bind(stop=config.stop)
@@ -87,3 +77,17 @@ class LocalAgentRegistry(BaseAgentRegistry):
                 )
 
         return cls(agents_registered)
+
+
+def _get_model(model: Model) -> BaseChatModel:
+    model_params = (
+        model.params.model_dump(exclude_none=True, by_alias=True)
+        if model.params
+        else {}
+    )
+
+    return ChatLiteLLM(
+        model=model.name,
+        custom_llm_provider=model.provider,
+        **model_params,
+    )
