@@ -99,6 +99,11 @@ async def code_completion(
         code_context=code_context,
     )
 
+    # v3 doesn't support multiple choices in response yet
+    # https://gitlab.com/gitlab-org/modelops/applied-ml/code-suggestions/ai-assist/-/issues/490
+    if isinstance(suggestion, list):
+        suggestion = suggestion[0]
+
     if isinstance(suggestion, AsyncIterator):
         return await _handle_stream(suggestion)
 
