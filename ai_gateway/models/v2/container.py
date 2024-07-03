@@ -2,6 +2,7 @@ from typing import Iterator
 
 from anthropic import AsyncAnthropic
 from dependency_injector import containers, providers
+from langchain_community.chat_models import ChatLiteLLM
 
 from ai_gateway.models.v2.anthropic_claude import ChatAnthropic
 
@@ -30,3 +31,5 @@ class ContainerModels(containers.DeclarativeContainer):
         ChatAnthropic,
         async_client=http_async_client_anthropic,
     )
+
+    lite_llm_chat_fn = providers.Factory(ChatLiteLLM)
