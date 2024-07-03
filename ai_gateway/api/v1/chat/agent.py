@@ -6,6 +6,7 @@ from dependency_injector.providers import Factory, FactoryAggregate
 from fastapi import APIRouter, Depends, HTTPException, Request, status
 
 from ai_gateway.api.feature_category import feature_category
+from ai_gateway.api.v1.chat.auth import ChatInvokable, authorize_with_unit_primitive
 from ai_gateway.api.v1.chat.typing import (
     ChatRequest,
     ChatResponse,
@@ -36,24 +37,35 @@ log = structlog.stdlib.get_logger("chat")
 
 router = APIRouter()
 
+CHAT_INVOKABLES = [
+    ChatInvokable(name="explain_code", unit_primitive=GitLabUnitPrimitive.DUO_CHAT),
+    ChatInvokable(name="write_tests", unit_primitive=GitLabUnitPrimitive.DUO_CHAT),
+    ChatInvokable(name="refactor_code", unit_primitive=GitLabUnitPrimitive.DUO_CHAT),
+    ChatInvokable(
+        name="explain_vulnerability",
+        unit_primitive=GitLabUnitPrimitive.EXPLAIN_VULNERABILITY,
+    ),
+    # Deprecated. Added for backward compatibility.
+    # Please, refer to `v2/chat/agent` for additional details.
+    ChatInvokable(name="agent", unit_primitive=GitLabUnitPrimitive.DUO_CHAT),
+]
 
-@router.post("/agent", response_model=ChatResponse, status_code=status.HTTP_200_OK)
+
+@router.post(
+    "/{chat_invokable}", response_model=ChatResponse, status_code=status.HTTP_200_OK
+)
 @feature_category(GitLabFeatureCategory.DUO_CHAT)
+@authorize_with_unit_primitive("chat_invokable", chat_invokables=CHAT_INVOKABLES)
 async def chat(
     request: Request,
     chat_request: ChatRequest,
+    chat_invokable: str,
     current_user: Annotated[GitLabUser, Depends(get_current_user)],
     anthropic_claude_factory: FactoryAggregate = Depends(
         get_chat_anthropic_claude_factory_provider
     ),
     litellm_factory: Factory = Depends(get_chat_litellm_factory_provider),
 ):
-    if not current_user.can(GitLabUnitPrimitive.DUO_CHAT):
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Unauthorized to access duo chat",
-        )
-
     prompt_component = chat_request.prompt_components[0]
     payload = prompt_component.payload
 

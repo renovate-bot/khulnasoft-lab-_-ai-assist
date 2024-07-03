@@ -10,7 +10,6 @@ from fastapi import FastAPI
 from fastapi.routing import APIRoute
 from fastapi.testclient import TestClient
 from starlette.exceptions import HTTPException as StarletteHTTPException
-from starlette.requests import Request
 
 from ai_gateway.api import create_fast_api_server, server
 from ai_gateway.api.server import (
@@ -25,7 +24,7 @@ from ai_gateway.models import ModelAPIError
 from ai_gateway.structured_logging import setup_logging
 
 _ROUTES_V1 = [
-    ("/v1/chat/agent", ["POST"]),
+    ("/v1/chat/{chat_invokable}", ["POST"]),
     ("/v1/x-ray/libraries", ["POST"]),
 ]
 
@@ -129,7 +128,7 @@ def test_setup_router():
     app = FastAPI()
     server.setup_router(app)
 
-    assert any(route.path == "/v1/chat/agent" for route in app.routes)
+    assert any(route.path == "/v1/chat/{chat_invokable}" for route in app.routes)
     assert any(route.path == "/v2/code/completions" for route in app.routes)
     assert any(route.path == "/v3/code/completions" for route in app.routes)
     assert any(route.path == "/monitoring/healthz" for route in app.routes)

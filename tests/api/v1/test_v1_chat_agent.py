@@ -1,12 +1,16 @@
 from typing import Any, Type
+from unittest import mock
 from unittest.mock import Mock, patch
 
 import pytest
+from fastapi import HTTPException, Request
 from fastapi.testclient import TestClient
 from structlog.testing import capture_logs
 
 from ai_gateway.api.v1 import api_router
-from ai_gateway.auth import User, UserClaims
+from ai_gateway.api.v1.chat.auth import ChatInvokable, authorize_with_unit_primitive
+from ai_gateway.auth import GitLabUser, User, UserClaims
+from ai_gateway.gitlab_features import GitLabUnitPrimitive
 from ai_gateway.models import (
     AnthropicAPIConnectionError,
     AnthropicAPIStatusError,
@@ -331,7 +335,7 @@ class TestAnthropicInvalidScope:
         )
 
         assert response.status_code == 403
-        assert response.json() == {"detail": "Unauthorized to access duo chat"}
+        assert response.json() == {"detail": "Unauthorized to access duo_chat"}
 
 
 class TestAgentInvalidRequestMissingFields:
@@ -533,3 +537,74 @@ class TestAgentUnsuccessfulAnthropicRequest:
         else:
             assert response.status_code == 502
             assert response.json()["detail"] == "Anthropic API Connection Error."
+
+
+@pytest.mark.asyncio
+class TestAuthorizeWithUnitPrimitive:
+    @pytest.fixture
+    def mock_request(self):
+        request = mock.Mock(spec=Request)
+        request.headers = {}
+        request.path_params = {}
+        request.user = mock.Mock(spec=GitLabUser)
+        return request
+
+    async def test_not_found(self, mock_request: mock.Mock):
+        # Simulate the user request to `v1/chat/unknown_invokable`
+        # when `v1/chat/agent` is supported only
+        mock_request.path_params["chat_invokable"] = "unknown_invokable"
+
+        @authorize_with_unit_primitive(
+            "chat_invokable",
+            chat_invokables=[
+                ChatInvokable(name="agent", unit_primitive=GitLabUnitPrimitive.DUO_CHAT)
+            ],
+        )
+        async def dummy_func(request):
+            return "Success"
+
+        with pytest.raises(HTTPException) as exc_info:
+            await dummy_func(mock_request)
+
+        assert exc_info.value.status_code == 404
+        assert exc_info.value.detail == "Not found"
+
+    async def test_forbidden(self, mock_request: mock.Mock):
+        # Simulate the user request to `v1/chat/agent`
+        mock_request.path_params["chat_invokable"] = "agent"
+        # User doesn't have enough permissions
+        mock_request.user.can.return_value = False
+
+        @authorize_with_unit_primitive(
+            "chat_invokable",
+            chat_invokables=[
+                ChatInvokable(name="agent", unit_primitive=GitLabUnitPrimitive.DUO_CHAT)
+            ],
+        )
+        async def dummy_func(request):
+            return "Success"
+
+        with pytest.raises(HTTPException) as exc_info:
+            await dummy_func(mock_request)
+
+        assert exc_info.value.status_code == 403
+        assert exc_info.value.detail == "Unauthorized to access duo_chat"
+
+    async def test_authorize(self, mock_request: mock.Mock):
+        # Simulate the user request to `v1/chat/agent`
+        mock_request.path_params["chat_invokable"] = "agent"
+        # User has all required permissions
+        mock_request.user.can.return_value = True
+
+        @authorize_with_unit_primitive(
+            "chat_invokable",
+            chat_invokables=[
+                ChatInvokable(name="agent", unit_primitive=GitLabUnitPrimitive.DUO_CHAT)
+            ],
+        )
+        async def dummy_func(request):
+            return "Success"
+
+        response = await dummy_func(mock_request)
+
+        assert response == "Success"
