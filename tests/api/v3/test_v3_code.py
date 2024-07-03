@@ -25,7 +25,7 @@ def auth_user():
 
 class TestEditorContentCompletion:
     @pytest.mark.parametrize(
-        ("mock_suggestions_output_text", "expected_response"),
+        ("mock_completions_legacy_output_text", "expected_response"),
         [
             # non-empty suggestions from model
             (
@@ -34,8 +34,8 @@ class TestEditorContentCompletion:
                     "response": "def search",
                     "metadata": {
                         "model": {
-                            "engine": "anthropic",
-                            "name": "claude-instant-1.2",
+                            "engine": "vertex-ai",
+                            "name": "code-gecko",
                             "lang": "python",
                         },
                     },
@@ -48,8 +48,8 @@ class TestEditorContentCompletion:
                     "response": "",
                     "metadata": {
                         "model": {
-                            "engine": "anthropic",
-                            "name": "claude-instant-1.2",
+                            "engine": "vertex-ai",
+                            "name": "code-gecko",
                             "lang": "python",
                         },
                     },
@@ -60,7 +60,7 @@ class TestEditorContentCompletion:
     def test_successful_response(
         self,
         mock_client: TestClient,
-        mock_completions: Mock,
+        mock_completions_legacy: Mock,
         mock_suggestions_output_text: str,
         expected_response: dict,
     ):
@@ -69,8 +69,6 @@ class TestEditorContentCompletion:
             "content_above_cursor": "# Create a fast binary search\n",
             "content_below_cursor": "\n",
             "language_identifier": "python",
-            # FIXME: forcing anthropic as vertex-ai is not working
-            "model_provider": "anthropic",
         }
 
         prompt_component = {
@@ -103,7 +101,7 @@ class TestEditorContentCompletion:
 
         assert body["metadata"]["timestamp"] > 0
 
-        mock_completions.assert_called_with(
+        mock_completions_legacy.assert_called_with(
             prefix=payload["content_above_cursor"],
             suffix=payload["content_below_cursor"],
             file_name=payload["file_name"],
@@ -115,17 +113,16 @@ class TestEditorContentCompletion:
     @pytest.mark.parametrize(
         ("model_provider", "expected_code", "expected_response", "expected_model"),
         [
-            # FIXME: vertex-ai is not working
-            # (
-            #     "vertex-ai",
-            #     200,
-            #     "vertex response",
-            #     {
-            #         "engine": "vertex-ai",
-            #         "name": "code-gecko",
-            #         "lang": "python",
-            #     },
-            # ),
+            (
+                "vertex-ai",
+                200,
+                "test completion",
+                {
+                    "engine": "vertex-ai",
+                    "name": "code-gecko@002",
+                    "lang": "python",
+                },
+            ),
             (
                 "anthropic",
                 200,
@@ -136,18 +133,17 @@ class TestEditorContentCompletion:
                     "lang": "python",
                 },
             ),
-            # FIXME: vertex-ai is not working
             # default provider
-            # (
-            #     "",
-            #     200,
-            #     "test completion",
-            #     {
-            #         "engine": "vertex-ai",
-            #         "name": "code-gecko",
-            #         "lang": "python",
-            #     },
-            # ),
+            (
+                "",
+                200,
+                "test completion",
+                {
+                    "engine": "vertex-ai",
+                    "name": "code-gecko@002",
+                    "lang": "python",
+                },
+            ),
             # unknown provider
             (
                 "some-provider",
