@@ -316,3 +316,4 @@ infrastructure/ai-assist/charts
 
 # Docker Compose
 docker-compose.override.yaml
+tmp/

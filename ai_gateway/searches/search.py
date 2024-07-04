@@ -1,6 +1,12 @@
+import json
+import os.path
 import re
-from typing import Any
+import sqlite3
+from abc import abstractmethod
+from typing import Any, Dict, List
 
+import structlog
+from fastapi import HTTPException, status
 from google.api_core.exceptions import GoogleAPIError, NotFound
 from google.cloud import discoveryengine
 from google.protobuf.json_format import MessageToDict
@@ -8,9 +14,11 @@ from google.protobuf.json_format import MessageToDict
 from ai_gateway.models import ModelAPIError
 from ai_gateway.tracking import log_exception
 
-__all__ = ["VertexAISearch", "VertexAPISearchError", "DataStoreNotFound"]
+__all__ = ["VertexAISearch", "Searcher", "SqliteSearch"]
 
 SEARCH_APP_NAME = "gitlab-docs"
+
+log = structlog.stdlib.get_logger("chat")
 
 
 def _convert_version(version: str) -> str:
@@ -51,7 +59,26 @@ class DataStoreNotFound(Exception):
         self.input = input
 
 
-class VertexAISearch:
+class Searcher:
+    async def search_with_retry(self, *args, **kwargs):
+        return await self.search(*args, **kwargs)
+
+    @abstractmethod
+    async def search(
+        self,
+        query: str,
+        gl_version: str,
+        page_size: int = 20,
+        **kwargs: Any,
+    ) -> List[Dict[Any, Any]]:
+        pass
+
+    @abstractmethod
+    def provider(self):
+        pass
+
+
+class VertexAISearch(Searcher):
     def __init__(
         self,
         client: discoveryengine.SearchServiceAsyncClient,
@@ -66,18 +93,28 @@ class VertexAISearch:
 
     async def search_with_retry(self, *args, **kwargs):
         try:
-            return await self.search(*args, **kwargs)
-        except DataStoreNotFound as ex:
-            log_exception(ex, extra={"input": ex.input})
+            try:
+                return await self.search(*args, **kwargs)
+            except DataStoreNotFound as ex:
+                log_exception(ex, extra={"input": ex.input})
 
-        # Retry with the fallback datastore version
-        kwargs["gl_version"] = self.fallback_datastore_version
+            # Retry with the fallback datastore version
+            kwargs["gl_version"] = self.fallback_datastore_version
 
-        try:
-            return await self.search(*args, **kwargs)
-        except DataStoreNotFound as ex:
-            log_exception(ex, extra={"input": ex.input})
-            raise
+            try:
+                return await self.search(*args, **kwargs)
+            except DataStoreNotFound as ex:
+                log_exception(ex, extra={"input": ex.input})
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="Data store not found.",
+                )
+        except VertexAPISearchError as ex:
+            log_exception(ex)
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Vertex API Search Error.",
+            )
 
     async def search(
         self,
@@ -85,13 +122,13 @@ class VertexAISearch:
         gl_version: str,
         page_size: int = 20,
         **kwargs: Any,
-    ) -> dict:
+    ) -> List[Dict[Any, Any]]:
         try:
             data_store_id = _get_data_store_id(gl_version)
         except ValueError as ex:
             raise DataStoreNotFound(str(ex), input=gl_version)
 
-        # The full resource name of the search engine serving config
+        # The full resource name of the searches engine serving config
         # e.g. projects/{project_id}/locations/{location}/dataStores/{data_store_id}/servingConfigs/{serving_config_id}
         serving_config = self.client.serving_config_path(
             project=self.project,
@@ -122,4 +159,73 @@ class VertexAISearch:
         except GoogleAPIError as ex:
             raise VertexAPISearchError.from_exception(ex)
 
-        return MessageToDict(response._pb)
+        return self._parse_response(MessageToDict(response._pb))
+
+    def provider(self):
+        return "vertex-ai"
+
+    def _parse_response(self, response):
+        results = []
+
+        if "results" in response:
+            for r in response["results"]:
+                search_result = {
+                    "id": r["document"]["id"],
+                    "content": r["document"]["structData"]["content"],
+                    "metadata": r["document"]["structData"]["metadata"],
+                }
+                results.append(search_result)
+
+        return results
+
+
+class SqliteSearch(Searcher):
+
+    def __init__(self, *args, **kwargs):
+        db_path = os.path.join("tmp/docs.db")
+        if os.path.isfile(db_path):
+            self.conn = sqlite3.connect(db_path)
+            self.indexer = self.conn.cursor()
+        else:
+            self.conn = None
+            self.indexer = None
+
+    async def search(
+        self,
+        query: str,
+        gl_version: str,
+        page_size: int = 20,
+        **kwargs: Any,
+    ) -> List[Dict[Any, Any]]:
+        if self.indexer:
+            # We need to remove punctuation because table was created with FTS5
+            # see https://stackoverflow.com/questions/46525854/sqlite3-fts5-error-when-using-punctuation
+            sanitized_query = re.sub(r"[^\w\s]", "", query, flags=re.UNICODE)
+
+            data = self.indexer.execute(
+                "SELECT metadata, content FROM doc_index WHERE processed MATCH ? ORDER BY bm25(doc_index) LIMIT ?",
+                (sanitized_query, page_size),
+            )
+
+            return self._parse_response(data)
+
+        log.warning("SqliteSearch: No database found for documentation searches.")
+        return []
+
+    def provider(self):
+        return "sqlite"
+
+    def _parse_response(self, response):
+        results = []
+
+        for r in response:
+            metadata = json.loads(r[0])
+            search_result = {
+                "id": metadata["filename"],
+                "content": r[1],
+                "metadata": metadata,
+            }
+            results.append(search_result)
+
+        self.conn.close()
+        return results
