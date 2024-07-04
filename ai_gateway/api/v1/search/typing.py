@@ -6,6 +6,7 @@ __all__ = [
     "SearchRequest",
     "SearchResponseMetadata",
     "SearchResponse",
+    "SearchResponseDetails",
 ]
 
 DEFAULT_PAGE_SIZE = 4

@@ -13,6 +13,7 @@ from ai_gateway.api.v1.search.typing import (
     SearchResult,
 )
 from ai_gateway.auth import User, UserClaims
+from ai_gateway.config import Config
 
 
 @pytest.fixture(scope="class")
@@ -39,36 +40,25 @@ def request_body():
 
 @pytest.fixture
 def search_results():
-    return {
-        "results": [
-            {
-                "document": {
-                    "id": "doc_id_1",
-                    "structData": {
-                        "content": "GitLab's mission is to make software development easier and more efficient.",
-                        "metadata": {
-                            "source": "GitLab Docs",
-                            "version": "17.0.0",
-                            "source_url": "https://docs.gitlab.com/ee/foo",
-                        },
-                    },
-                }
+    return [
+        {
+            "id": "doc_id_1",
+            "content": "GitLab's mission is to make software development easier and more efficient.",
+            "metadata": {
+                "source": "GitLab Docs",
+                "version": "17.0.0",
+                "source_url": "https://docs.gitlab.com/ee/foo",
             },
-            {
-                "document": {
-                    "id": "doc_id_2",
-                    "structData": {
-                        "content": "GitLab's mission is to provide a single application for the entire DevOps lifecycle.",
-                        "metadata": {
-                            "source": "GitLab Docs",
-                            "version": "17.0.0",
-                            "source_url": "https://docs.gitlab.com/ee/bar",
-                        },
-                    },
-                }
-            },
-        ]
-    }
+        }
+    ]
+
+
+@pytest.fixture
+def mock_config():
+    config = Config()
+    config.custom_models.enabled = False
+
+    yield config
 
 
 @pytest.mark.asyncio
@@ -95,30 +85,15 @@ async def test_success(
 
     assert response.status_code == 200
 
-    doc1 = search_results["results"][0]["document"]
-    doc2 = search_results["results"][1]["document"]
-
     expected_response = SearchResponse(
         response=SearchResponseDetails(
             results=[
                 SearchResult(
-                    id=doc1["id"],
-                    content=doc1["structData"]["content"],
-                    metadata={
-                        "source": doc1["structData"]["metadata"]["source"],
-                        "version": doc1["structData"]["metadata"]["version"],
-                        "source_url": doc1["structData"]["metadata"]["source_url"],
-                    },
-                ),
-                SearchResult(
-                    id=doc2["id"],
-                    content=doc2["structData"]["content"],
-                    metadata={
-                        "source": doc2["structData"]["metadata"]["source"],
-                        "version": doc2["structData"]["metadata"]["version"],
-                        "source_url": doc2["structData"]["metadata"]["source_url"],
-                    },
-                ),
+                    id=result["id"],
+                    content=result["content"],
+                    metadata=result["metadata"],
+                )
+                for result in search_results
             ]
         ),
         metadata=SearchResponseMetadata(
