@@ -2,10 +2,10 @@
 name: Claude 3 ReAct Chat agent
 model:
   name: claude-3-sonnet-20240229
-  provider: anthropic
   params:
+    model_class_provider: anthropic
     temperature: 0.0
-    timeout: 0.2
+    timeout: 60
     max_tokens: 2_048
     max_retries: 1
 unit_primitives:

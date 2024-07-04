@@ -1,10 +1,9 @@
 from abc import ABC, abstractmethod
-from typing import Annotated, Any, Generic, Optional, Sequence, Tuple, TypeVar
+from typing import Any, Optional, Sequence, Tuple, TypeVar
 
 from jinja2 import BaseLoader, Environment
 from langchain_core.prompts.chat import MessageLikeRepresentation
 from langchain_core.runnables import Runnable, RunnableBinding
-from pydantic import BaseModel, Field
 
 from ai_gateway.auth.user import GitLabUser
 from ai_gateway.gitlab_features import GitLabUnitPrimitive, WrongUnitPrimitives
@@ -12,54 +11,16 @@ from ai_gateway.gitlab_features import GitLabUnitPrimitive, WrongUnitPrimitives
 __all__ = [
     "Agent",
     "BaseAgentRegistry",
-    "BaseAgentConfig",
-    "AgentConfig",
-    "Model",
 ]
 
 Input = TypeVar("Input")
 Output = TypeVar("Output")
-
-# Agents may operate with unit primitives in various ways.
-# Basic agents typically use plain strings as unit primitives.
-# More sophisticated agents, like Duo Chat, assign unit primitives to specific tools.
-# Creating a generic UnitPrimitiveType enables storage of unit primitives in any desired format.
-TypeUnitPrimitive = TypeVar("TypeUnitPrimitive")
 
 jinja_env = Environment(loader=BaseLoader())
 
 
 def _format_str(content: str, options: dict[str, Any]) -> str:
     return jinja_env.from_string(content).render(options)
-
-
-class Model(BaseModel):
-    class Params(BaseModel):
-        temperature: float
-        timeout: Annotated[
-            float | tuple[float, float] | None,
-            Field(serialization_alias="request_timeout"),
-        ] = None
-        top_p: float | None = None
-        top_k: int | None = None
-        max_tokens: Optional[int] = 2_048
-        max_retries: Optional[int] = 1
-
-    name: str
-    provider: str
-    params: Params | None = None
-
-
-class BaseAgentConfig(BaseModel, Generic[TypeUnitPrimitive]):
-    name: str
-    model: Model
-    unit_primitives: list[TypeUnitPrimitive]
-    prompt_template: dict[str, str]
-    stop: list[str] | None = None
-
-
-class AgentConfig(BaseAgentConfig):
-    unit_primitives: list[GitLabUnitPrimitive]
 
 
 class Agent(RunnableBinding[Input, Output]):

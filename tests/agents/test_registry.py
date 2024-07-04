@@ -2,17 +2,21 @@ from pathlib import Path
 from typing import Sequence, Type
 
 import pytest
+from langchain_anthropic import ChatAnthropic
+from langchain_community.chat_models import ChatLiteLLM
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.prompts.chat import MessageLikeRepresentation
 from pyfakefs.fake_filesystem import FakeFilesystem
 
-from ai_gateway.agents import (
-    Agent,
+from ai_gateway.agents import Agent, AgentRegistered, LocalAgentRegistry
+from ai_gateway.agents.config import (
     AgentConfig,
-    AgentRegistered,
-    LocalAgentRegistry,
-    Model,
+    ChatAnthropicParams,
+    ChatLiteLLMParams,
+    ModelClassProvider,
+    ModelConfig,
 )
+from ai_gateway.agents.registry import TypeModelFactory
 
 
 class MockAgentClass(Agent):
@@ -31,7 +35,14 @@ def mock_fs(fs: FakeFilesystem):
 name: Test agent
 model:
   name: claude-2.1
-  provider: anthropic
+  params:
+    model_class_provider: lite_llm
+    timeout: 100.
+    top_p: 0.1
+    top_k: 50
+    max_tokens: 256
+    max_retries: 10
+    custom_llm_provider: vllm
 unit_primitives:
   - explain_code
 prompt_template:
@@ -45,14 +56,17 @@ prompt_template:
 name: Chat react agent
 model: 
   name: claude-3-haiku-20240307
-  provider: anthropic
   params:
+    model_class_provider: anthropic
     temperature: 0.1
     timeout: 60
     top_p: 0.8
     top_k: 40
     max_tokens: 256
     max_retries: 6
+    default_headers:
+      header1: "Header1 value"
+      header2: "Header2 value"
 unit_primitives:
   - duo_chat
 prompt_template:
@@ -67,13 +81,34 @@ stop:
 
 
 @pytest.fixture
+def model_factories():
+    yield {
+        ModelClassProvider.ANTHROPIC: lambda model, **kwargs: ChatAnthropic(model=model, **kwargs),  # type: ignore[call-arg]
+        ModelClassProvider.LITE_LLM: lambda model, **kwargs: ChatLiteLLM(
+            model=model, **kwargs
+        ),
+    }
+
+
+@pytest.fixture
 def agents_registered():
     yield {
         "test/base": AgentRegistered(
             klass=Agent,
             config=AgentConfig(
                 name="Test agent",
-                model=Model(name="claude-2.1", provider="anthropic"),
+                model=ModelConfig(
+                    name="claude-2.1",
+                    params=ChatLiteLLMParams(
+                        model_class_provider=ModelClassProvider.LITE_LLM,
+                        timeout=100.0,
+                        top_p=0.1,
+                        top_k=50,
+                        max_tokens=256,
+                        max_retries=10,
+                        custom_llm_provider="vllm",
+                    ),
+                ),
                 unit_primitives=["explain_code"],
                 prompt_template={"system": "Template1"},
             ),
@@ -82,16 +117,21 @@ def agents_registered():
             klass=MockAgentClass,
             config=AgentConfig(
                 name="Chat react agent",
-                model=Model(
+                model=ModelConfig(
                     name="claude-3-haiku-20240307",
                     provider="anthropic",
-                    params=Model.Params(
+                    params=ChatAnthropicParams(
+                        model_class_provider=ModelClassProvider.ANTHROPIC,
                         temperature=0.1,
                         timeout=60,
                         top_p=0.8,
                         top_k=40,
                         max_tokens=256,
                         max_retries=6,
+                        default_headers={
+                            "header1": "Header1 value",
+                            "header2": "Header2 value",
+                        },
                     ),
                 ),
                 unit_primitives=["duo_chat"],
@@ -106,9 +146,13 @@ class TestLocalAgentRegistry:
     def test_from_local_yaml(
         self,
         mock_fs: FakeFilesystem,
+        model_factories: dict[ModelClassProvider, TypeModelFactory],
         agents_registered: dict[str, AgentRegistered],
     ):
-        registry = LocalAgentRegistry.from_local_yaml({"chat/react": MockAgentClass})
+        registry = LocalAgentRegistry.from_local_yaml(
+            class_overrides={"chat/react": MockAgentClass},
+            model_factories=model_factories,
+        )
 
         assert registry.agents_registered == agents_registered
 
@@ -139,7 +183,14 @@ class TestLocalAgentRegistry:
                 [("system", "Template1")],
                 "claude-2.1",
                 None,
-                None,
+                {
+                    "request_timeout": 100.0,  # accessed by alias
+                    "top_p": 0.1,
+                    "top_k": 50,
+                    "max_tokens": 256,
+                    "max_retries": 10,
+                    "custom_llm_provider": "vllm",
+                },
             ),
             (
                 "chat/react",
@@ -150,11 +201,15 @@ class TestLocalAgentRegistry:
                 {"stop": ["Foo", "Bar"]},
                 {
                     "temperature": 0.1,
-                    "request_timeout": 60,  # accessed by alias
+                    "default_request_timeout": 60,  # accessed by alias
                     "top_p": 0.8,
                     "top_k": 40,
                     "max_tokens": 256,
                     "max_retries": 6,
+                    "default_headers": {
+                        "header1": "Header1 value",
+                        "header2": "Header2 value",
+                    },
                 },
             ),
         ],
@@ -162,6 +217,7 @@ class TestLocalAgentRegistry:
     def test_get(
         self,
         agents_registered: dict[str, AgentRegistered],
+        model_factories: dict[ModelClassProvider, TypeModelFactory],
         agent_id: str,
         expected_name: str,
         expected_class: Type[Agent],
@@ -171,6 +227,7 @@ class TestLocalAgentRegistry:
         expected_model_params: dict | None,
     ):
         registry = LocalAgentRegistry(
+            model_factories=model_factories,
             agents_registered=agents_registered,
         )
 
@@ -191,10 +248,13 @@ class TestLocalAgentRegistry:
         if expected_kwargs:
             assert actual_model.kwargs == expected_kwargs
 
+        actual_model = (
+            actual_model.bound if getattr(actual_model, "bound", None) else actual_model
+        )
         if expected_model_params:
             actual_model_params = {
                 key: value
-                for key, value in dict(actual_model.bound).items()
+                for key, value in dict(actual_model).items()
                 if key in expected_model_params
             }
             assert actual_model_params == expected_model_params
