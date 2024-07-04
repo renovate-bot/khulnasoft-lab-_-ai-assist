@@ -72,6 +72,13 @@ prompt_template:
     Final Answer: the final answer to the original input question.
 
     When concluding your response, provide the final answer as "Final Answer:" as soon as the answer is recognized.
+    {%- if current_file_context %}
+    User selected code below enclosed in <code></code> tags in file {{ current_file_context.file_name }} to work with:
+
+    <code>
+      {{ current_file_context.selected_text }}
+    </code>
+    {%- endif %}
 
     If no tool is needed, give a final answer with "Action: DirectAnswer" for the Action parameter and skip writing an Observation.
 
