@@ -71,6 +71,7 @@ async def chat(
         chat_history=agent_request.options.chat_history,
         agent_scratchpad=scratchpad,
         context=agent_request.options.context,
+        current_file_context=agent_request.options.current_file_context,
     )
 
     try:
