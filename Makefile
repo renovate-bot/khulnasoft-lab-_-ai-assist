@@ -4,14 +4,12 @@ LINTS_DIR := ${ROOT_DIR}/lints
 SCRIPTS_DIR := ${ROOT_DIR}/scripts
 TESTS_DIR := ${ROOT_DIR}/tests
 INTEGRATION_TESTS_DIR := ${ROOT_DIR}/integration_tests
-AUTOGRAPH_DIR := ${ROOT_DIR}/autograph
 
 LINT_WORKING_DIR ?= ${AI_GATEWAY_DIR} \
 	${LINTS_DIR} \
 	${SCRIPTS_DIR} \
 	${TESTS_DIR} \
-	${INTEGRATION_TESTS_DIR} \
-	${AUTOGRAPH_DIR}
+	${INTEGRATION_TESTS_DIR}
 
 MYPY_LINT_TODO_DIR ?= --exclude "ai_gateway/api/*" \
 	--exclude "ai_gateway/auth/*" \
