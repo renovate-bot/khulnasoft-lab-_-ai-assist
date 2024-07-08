@@ -14,6 +14,9 @@ You'll need:
 - Docker
 - `docker compose` >= 1.28
 - [`gcloud` CLI](https://cloud.google.com/docs/authentication/provide-credentials-adc#how-to)
+- `mise` (recommended) or `asdf`
+  - [More information](https://gitlab.com/gitlab-org/gitlab-development-kit/-/blob/main/doc/howto/mise.md) on why `mise` is recommended over `asdf`
+  - To install `mise`, see [instructions here](https://mise.jdx.dev/getting-started.html).
 
 ### Google Cloud SDK
 
@@ -88,8 +91,7 @@ See [Application settings doc](./docs/application_settings.md)
 ## How to run the server locally
 
 1. Clone project and change to project directory.
-1. Run `mise install` (recommended) or `asdf install`.
-   - To install `mise`, see [instruction](https://mise.jdx.dev/getting-started.html).
+1. Depending on [the version manager you are using](#prerequisites), run `mise install` or `asdf install`.
 1. Init shell: `poetry shell`.
 1. [Activate virtualenv](#how-to-manually-activate-the-virtualenv).
 1. Install dependencies: `poetry install`.
@@ -105,7 +107,32 @@ See [Application settings doc](./docs/application_settings.md)
 1. Start the model-gateway server locally: `poetry run ai_gateway`.
 1. Open `http://localhost:5052/docs` in your browser and run any requests to the model.
 
-### Troubleshooting
+## Troubleshooting
+
+### Installation of Poetry 1.8.3 fails
+
+You might encounter a known symlink failure when installing `poetry` during `mise install`.
+
+The error may look something like:
+
+```sh
+Error output:
+dyld[87914]: Library not loaded: @executable_path/../lib/libpython3.10.dylib
+  Referenced from: <4C4C4415-5555-3144-A171-523C428CAE71> /Users/yourusername/Code/ai-assist/.venv/bin/python
+  Reason: tried: '/Users/yourusername/Code/ai-assist/.venv/lib/libpython3.10.dylib' (no such file)
+```
+
+To fix the issue, locate the `libpython3.10.dylib` on your system. Once you have located the file, use the `ln -s ` command to create a symbolic link from the location where `poetry` expects it to be to where it is actually located.
+
+Example command:
+
+```sh
+ln -s /Users/yourusername/.local/share/mise/installs/python/3.10.14/lib/libpython3.10.dylib /Users/yourusername/Code/ai-assist/.venv/lib/libpython3.10.dylib
+```
+
+Next, try installing `poetry` again.
+
+### glcoud setup fails during asdf install
 
 If `gcloud` setup fails with `ModuleNotFoundError: No module named 'imp'`, during `asdf install` run:
 
