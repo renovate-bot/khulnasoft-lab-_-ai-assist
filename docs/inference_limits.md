@@ -7,10 +7,9 @@ entire engine.
 At the time of writing, only Anthropic limits the concurrent
 inferences. We have a larger allowed concurrency for `claude-2.1` than
 we do for `claude-2.0`, and the enforced limit across all models is
-equal to that of `claude-2.0`. The metrics [for
-Anthropic](#anthropic-metrics) are emitted from the application and
-need to be kept up-to-date if when we receive increases or start using
-new models.
+equal to that of `claude-2.0`. The metrics [for Anthropic](#anthropic-metrics)
+are emitted from the application and need to be kept up-to-date if when we
+receive increases or start using new models.
 
 Vertex limits the number of inferences we can run per minute. But has
 no limit on the concurrent requests. These metrics are available
@@ -20,12 +19,13 @@ models or have increases.
 ## Observability of utilization
 
 Like all of the metrics for the AI-gateway. These saturation metrics
-are also visible on the [service overview
-dashboard](https://dashboards.gitlab.net/d/ai-gateway-main/ai-gateway3a-overview?orgId=1). The
-saturation panel on the top right contains all saturation components
+are also visible on the
+[service overview dashboard](https://dashboards.gitlab.net/d/ai-gateway-main/ai-gateway3a-overview?orgId=1).
+The saturation panel on the top right contains all saturation components
 that apply to the AI-gateway.
 
 The components regarding limits enforced by model engines are:
+
 - [`max_concurrent_inferences`](https://dashboards.gitlab.net/d/alerts-max_concurrent_inferences/154abead-92ad-5cd7-9112-fd8418ba289b?var-environment=gprd&var-type=ai-gateway&var-stage=main&var-component=max_concurrent_inferences&orgId=1):
   Per model concurrent requests, enforced by Anthropic.
 - [`concurrent_inferences_per_engine`](https://dashboards.gitlab.net/d/alerts-max_inferences_per_engine/bd1e5cca-760c-55b0-98fa-4501e273af2a?var-environment=gprd&var-type=ai-gateway&var-stage=main&var-component=max_concurrent_inferences_per_engine&orgId=1):
@@ -74,10 +74,9 @@ For example for Anthropic (these are not our actual limits):
 ```
 
 Because we don't want to share the limits we got from providers, this
-environment variable is configured in vault. [Similar to other secrets
-in
-Runway](https://gitlab.com/gitlab-com/gl-infra/platform/runway/docs/-/blob/master/secrets-management.md?ref_type=heads). So
-in this case the variable is available at the following locations:
+environment variable is configured in vault.
+[Similar to other secrets in Runway](https://gitlab.com/gitlab-com/gl-infra/platform/runway/docs/-/blob/master/secrets-management.md?ref_type=heads).
+So in this case the variable is available at the following locations:
 
 - Production: [`env/production/service/ai-gateway/AIGW_MODEL_ENGINE_CONCURRENCY_LIMITS`](https://vault.gitlab.net/ui/vault/secrets/runway/kv/env%252Fproduction%252Fservice%252Fai-gateway%252FAIGW_MODEL_ENGINE_CONCURRENCY_LIMITS/details)
 - Staging: [`env/staging/service/ai-gateway/AIGW_MODEL_ENGINE_CONCURRENCY_LIMITS`](https://vault.gitlab.net/ui/vault/secrets/runway/kv/env%2Fstaging%2Fservice%2Fai-gateway%2FAIGW_MODEL_ENGINE_CONCURRENCY_LIMITS/details?version=1)

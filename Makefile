@@ -66,7 +66,10 @@ isort: install-lint-deps
 format: black isort
 
 .PHONY: lint
-lint: flake8 check-black check-isort check-pylint check-mypy
+lint: lint-code lint-doc
+
+.PHONY: lint-code
+lint-code: flake8 check-black check-isort check-pylint check-mypy
 
 .PHONY: flake8
 flake8: install-lint-deps
@@ -127,6 +130,14 @@ test-coverage-ci: install-test-deps
 test-integration: install-test-deps
 	@echo "Running integration tests..."
 	@poetry run pytest integration_tests/
+
+.PHONY: lint-doc
+lint-doc: vale
+
+.PHONY: vale
+vale:
+	@echo "Running vale..."
+	@vale --minAlertLevel error docs *.md
 
 .PHONY: ingest
 ingest:
