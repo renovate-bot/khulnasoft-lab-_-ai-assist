@@ -66,3 +66,10 @@ Open a new terminal and run the following command:
 export AI_GATEWAY_URL=http://localhost:5052
 make test-integration
 ```
+
+## Code guidelines
+
+- Avoid using [provider overriding](https://python-dependency-injector.ets-labs.org/providers/overriding.html),
+since it can lead to divergences between test and runtime behavior. See
+[this issue](https://gitlab.com/gitlab-org/modelops/applied-ml/code-suggestions/ai-assist/-/issues/511)
+for more details.
