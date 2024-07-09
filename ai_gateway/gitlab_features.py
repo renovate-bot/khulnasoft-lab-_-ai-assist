@@ -28,6 +28,7 @@ class GitLabUnitPrimitive(str, Enum):
     GENERATE_COMMIT_MESSAGE = "generate_commit_message"
     GENERATE_CUBE_QUERY = "generate_cube_query"
     GENERATE_ISSUE_DESCRIPTION = "generate_issue_description"
+    GLAB_ASK_GIT_COMMAND = "glab_ask_git_command"
     RESOLVE_VULNERABILITY = "resolve_vulnerability"
     REVIEW_MERGE_REQUEST = "review_merge_request"
     SEMANTIC_SEARCH_ISSUE = "semantic_search_issue"
@@ -52,6 +53,7 @@ FEATURE_CATEGORIES_FOR_PROXY_ENDPOINTS = {
     GitLabUnitPrimitive.GENERATE_COMMIT_MESSAGE: GitLabFeatureCategory.CODE_REVIEW_WORKFLOW,
     GitLabUnitPrimitive.GENERATE_CUBE_QUERY: GitLabFeatureCategory.PRODUCT_ANALYTICS_VISUALIZATION,
     GitLabUnitPrimitive.GENERATE_ISSUE_DESCRIPTION: GitLabFeatureCategory.TEAM_PLANNING,
+    GitLabUnitPrimitive.GLAB_ASK_GIT_COMMAND: GitLabFeatureCategory.CODE_REVIEW_WORKFLOW,
     GitLabUnitPrimitive.RESOLVE_VULNERABILITY: GitLabFeatureCategory.VULNERABILITY_MANAGEMENT,
     GitLabUnitPrimitive.REVIEW_MERGE_REQUEST: GitLabFeatureCategory.CODE_REVIEW_WORKFLOW,
     GitLabUnitPrimitive.SEMANTIC_SEARCH_ISSUE: GitLabFeatureCategory.GLOBAL_SEARCH,
