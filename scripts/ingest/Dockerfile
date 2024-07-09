@@ -32,9 +32,11 @@ RUN asdf plugin-add python
 RUN asdf install python
 RUN ln -sf /root/.asdf/shims/python /root/.asdf/shims/python3
 
-RUN asdf plugin-add poetry https://github.com/asdf-community/asdf-poetry.git
-RUN asdf plugin-add ruby https://github.com/asdf-vm/asdf-ruby.git
+RUN asdf plugin-add poetry https://github.com/asdf-community/asdf-poetry
+RUN asdf plugin-add ruby https://github.com/asdf-vm/asdf-ruby
 RUN asdf plugin-add gcloud https://github.com/jthegedus/asdf-gcloud
+RUN asdf plugin add vale https://github.com/pdemagny/asdf-vale
+
 RUN asdf install
 
 # Install python dependencies

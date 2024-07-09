@@ -103,7 +103,7 @@ Here is a [preview app for GitLab documentations](https://console.cloud.google.c
 
 1. `POST /v1/search/(search-app-name)` is requested.
 1. If the search app depends on GitLab version:
-   1. Get the GitLab version from `metadata.version` param.
+   1. Get the GitLab version from `metadata.version` parameter.
    1. Convert the GitLab version to datastore version `<major>-<minor>`. For example, `17.0.0-pre` becomes
       `17-0`.
    1. Construct the data store ID `<name>-<version>`. App name is same with this. For example,

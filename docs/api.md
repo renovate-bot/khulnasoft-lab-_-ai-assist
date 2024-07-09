@@ -41,7 +41,7 @@ POST /v3/code/completions
 
 ```shell
 curl --request POST \
-  --url 'http://localhost:5052/v3/code/completions' \
+  --url "http://localhost:5052/v3/code/completions" \
   --header 'Authorization: Bearer <access_token>' \
   --header 'X-Gitlab-Authentication-Type: oidc' \
   --header 'Content-Type: application/json' \
@@ -98,7 +98,7 @@ Example response:
 
 ```shell
 curl --request POST \
-  --url 'http://localhost:5052/v3/code/completions' \
+  --url "http://localhost:5052/v3/code/completions" \
   --header 'Authorization: Bearer <access_token>' \
   --header 'X-Gitlab-Authentication-Type: oidc' \
   --header 'Content-Type: application/json' \
@@ -190,7 +190,7 @@ third-party model provider.
 
 ```shell
 curl --request POST \
-  --url 'http://localhost:5052/v2/code/completions' \
+  --url "http://localhost:5052/v2/code/completions" \
   --header 'Authorization: Bearer <access_token>' \
   --header 'X-Gitlab-Authentication-Type: oidc' \
   --header 'Content-Type: application/json' \
@@ -285,7 +285,7 @@ This accepts prebuilt `prompt` and forwards it directly to third-party provider.
 
 ```shell
 curl --request POST \
-  --url 'http://localhost:5052/v2/code/completions' \
+  --url "http://localhost:5052/v2/code/completions" \
   --header 'Authorization: Bearer <access_token>' \
   --header 'X-Gitlab-Authentication-Type: oidc' \
   --header 'Content-Type: application/json' \
@@ -395,7 +395,7 @@ third-party model provider.
 
 ```shell
 curl --request POST \
-  --url 'http://localhost:5052/v2/code/generations' \
+  --url "http://localhost:5052/v2/code/generations" \
   --header 'Authorization: Bearer <access_token>' \
   --header 'X-Gitlab-Authentication-Type: oidc' \
   --header 'Content-Type: application/json' \
@@ -484,7 +484,7 @@ This accepts prebuilt `prompt` and forwards it directly to third-party provider.
 
 ```shell
 curl --request POST \
-  --url 'http://localhost:5052/v2/code/generations' \
+  --url "http://localhost:5052/v2/code/generations" \
   --header 'Authorization: Bearer <access_token>' \
   --header 'X-Gitlab-Authentication-Type: oidc' \
   --header 'Content-Type: application/json' \
@@ -576,7 +576,7 @@ POST /v1/agent/chat
 
 ```shell
 curl --request POST \
-  --url 'http://localhost:5052/v1/chat/agent \
+  --url "http://localhost:5052/v1/chat/agent" \
   --header 'Authorization: Bearer <access_token>' \
   --header 'X-Gitlab-Authentication-Type: oidc' \
   --header 'Content-Type: application/json' \
@@ -637,9 +637,9 @@ POST /v1/x-ray/libraries
 | `prompt_components.payload.model`    | string | yes      | The AI model for which the prompt is designed for.                                                                                              | `claude-2.0`                          |
 | `prompt_components.metadata`         | hash   | no       | The metadata of the prompt component. Only string - string key value pairs are accepted (max_len: **10**).                                      |                                       |
 
-````shell
+```shell
 curl --request POST \
-  --url 'http://localhost:5052/v1/x-ray/libraries' \
+  --url "http://localhost:5052/v1/x-ray/libraries" \
   --header 'Authorization: Bearer <access_token>' \
   --header 'X-Gitlab-Authentication-Type: oidc' \
   --header 'Content-Type: application/json' \

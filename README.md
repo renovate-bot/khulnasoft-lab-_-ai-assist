@@ -24,7 +24,7 @@ Set up a Google Cloud project with access to the Vertex AI API and authenticate 
 
 ## Testing
 
-See [test doc](./docs/tests.md).
+See [test doc](docs/tests.md).
 
 ## Linting
 
@@ -86,7 +86,7 @@ Middlewares are hosted at `ai_gateway/api/middleware.py` and interact with the `
 
 ## Application settings
 
-See [Application settings doc](./docs/application_settings.md)
+See [Application settings doc](docs/application_settings.md)
 
 ## How to run the server locally
 
@@ -115,7 +115,7 @@ You might encounter a known symlink failure when installing `poetry` during `mis
 
 The error may look something like:
 
-```sh
+```shell
 Error output:
 dyld[87914]: Library not loaded: @executable_path/../lib/libpython3.10.dylib
   Referenced from: <4C4C4415-5555-3144-A171-523C428CAE71> /Users/yourusername/Code/ai-assist/.venv/bin/python
@@ -126,7 +126,7 @@ To fix the issue, locate the `libpython3.10.dylib` on your system. Once you have
 
 Example command:
 
-```sh
+```shell
 ln -s /Users/yourusername/.local/share/mise/installs/python/3.10.14/lib/libpython3.10.dylib /Users/yourusername/Code/ai-assist/.venv/lib/libpython3.10.dylib
 ```
 
@@ -136,7 +136,7 @@ Next, try installing `poetry` again.
 
 If `gcloud` setup fails with `ModuleNotFoundError: No module named 'imp'`, during `asdf install` run:
 
-```sh
+```shell
 export CLOUDSDK_PYTHON=$(which python3.11)
 ```
 
@@ -190,7 +190,7 @@ In VS Code code, we need to set the `MODEL_GATEWAY_AI_ASSISTED_CODE_SUGGESTIONS_
 
 Since the feature is only for SaaS, you need to run GDK in SaaS mode:
 
-```bash
+```shell
 export GITLAB_SIMULATE_SAAS=1
 gdk restart
 ```
@@ -202,7 +202,7 @@ go to `/admin/groups` select `Edit` on the group you are using, set `Plan` to `U
 
 ## Authentication
 
-See [authentication and authorization doc](./docs/auth.md).
+See [authentication and authorization doc](docs/auth.md).
 
 ## Component overview
 
@@ -245,7 +245,7 @@ For more information and assistance, please check out:
 
 ## Release
 
-See [release doc](./docs/release.md).
+See [release doc](docs/release.md).
 
 ## Rate limiting
 

@@ -2,7 +2,7 @@ lint:
   extends: .poetry
   stage: lint
   script:
-    - make lint
+    - make lint-code
     - poetry lock --no-update
     - git diff --exit-code
   after_script:
@@ -12,6 +12,16 @@ lint:
       BOLD=$(printf '\e[1m')
       RESET=$(printf '\e[0m')
       echo "${MAGENTA}Run ${BOLD}make format${RESET}${MAGENTA} to fix formatting issues.${RESET}"
+
+lint:doc:
+  stage: lint
+  image: registry.gitlab.com/gitlab-org/gitlab-docs/lint-markdown:alpine-3.20-vale-3.4.2-markdownlint2-0.13.0-lychee-0.15.1
+  rules:
+    - changes:
+        - "**/*.{md}"
+        - "{doc}/**/*"
+  script:
+    - make lint-doc
 
 lint:commit:
   stage: lint
@@ -23,6 +33,7 @@ lint:commit:
     - |
       echo "module.exports = { extends: ['@commitlint/config-conventional'] };" > commitlint.config.js
   script:
-    - npx commitlint --from="$CI_MERGE_REQUEST_DIFF_BASE_SHA" --help-url 'https://www.conventionalcommits.org/en'
+    - npx commitlint --from="$CI_MERGE_REQUEST_DIFF_BASE_SHA" --help-url
+      'https://www.conventionalcommits.org/en'
   rules:
     - if: "$CI_MERGE_REQUEST_DIFF_BASE_SHA"
