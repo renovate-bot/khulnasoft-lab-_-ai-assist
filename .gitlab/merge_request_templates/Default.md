@@ -30,7 +30,7 @@ Example below:
 - [ ] Tests added for new functionality. If not, please raise an issue to follow up.
 - [ ] Documentation added/updated, if needed.
 
-/label ~"Category:Code Suggestions"
+/label ~"group::ai framework"
 
 <!-- Select a type -->
 <!-- /label ~"type::bug" -->

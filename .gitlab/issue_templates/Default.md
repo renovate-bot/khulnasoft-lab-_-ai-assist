@@ -30,7 +30,7 @@ understand the problem better.
 
 ## Links / references
 
-/label ~"Category:Code Suggestions"
+/label ~"group::ai framework"
 
 <!-- Select a type -->
 <!-- /label ~"type::bug" -->
