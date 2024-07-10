@@ -3,7 +3,8 @@ from typing import Iterator, Optional
 from dependency_injector import containers, providers
 from google.cloud import discoveryengine
 
-from .search import SqliteSearch, VertexAISearch
+from .search import VertexAISearch
+from .sqlite_search import SqliteSearch
 
 __all__ = ["ContainerSearches"]
 

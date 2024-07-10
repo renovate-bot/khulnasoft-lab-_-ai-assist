@@ -10,7 +10,7 @@ from google.cloud import discoveryengine as discoveryengine
 from google.protobuf.json_format import ParseDict
 from google.protobuf.struct_pb2 import Struct
 
-from ai_gateway.searches.search import DataStoreNotFound, SqliteSearch, VertexAISearch
+from ai_gateway.searches.search import DataStoreNotFound, VertexAISearch
 
 
 @pytest.fixture
@@ -71,59 +71,6 @@ def vertex_ai_search_factory():
         )
 
     return create
-
-
-@pytest.fixture
-def mock_sqlite_search_struct_data():
-    return {
-        "id": "tmp/gitlab-master-doc/doc/topics/git/lfs/index.md",
-        "metadata": {
-            "Header1": "Git Large File Storage (LFS)",
-            "Header2": "Add a file with Git LFS",
-            "Header3": "Add a file type to Git LFS",
-            "filename": "tmp/gitlab-master-doc/doc/topics/git/lfs/index.md",
-        },
-    }
-
-
-@pytest.fixture
-def mock_sqlite_search_response():
-    return [
-        json.dumps(
-            {
-                "Header1": "Tutorial: Set up issue boards for team hand-off",
-                "filename": "tmp/gitlab-master-doc/doc/foo/index.md",
-            }
-        ),
-        "GitLab's mission is to make software development easier and more efficient.",
-    ]
-
-
-@pytest.fixture
-def sqlite_search_factory():
-    def create() -> SqliteSearch:
-        return SqliteSearch()
-
-    return create
-
-
-@pytest.fixture
-def mock_os_path_to_db():
-    current_dir = os.path.dirname(__file__)
-    local_docs_example_path = current_dir.replace(
-        "searches", "_assets/tpl/tools/searches/local_docs_example.db"
-    )
-    with patch("posixpath.join", return_value=local_docs_example_path) as mock:
-        yield mock
-
-
-@pytest.fixture
-def mock_sqlite_connection(mock_sqlite_search_response):
-    with patch("sqlite3.connect") as mock:
-        mock.return_value.cursor.return_value.execute.return_value = [
-            mock_sqlite_search_response
-        ]
-        yield mock
 
 
 @pytest.mark.asyncio
@@ -230,54 +177,6 @@ async def test_vertex_ai_search(
     mock_search_service_client.search.assert_called_once_with(
         mock_vertex_search_request.return_value
     )
-
-
-@pytest.mark.asyncio
-@pytest.mark.parametrize(
-    "gl_version",
-    [
-        ("1.2.3"),
-        ("10.11.12-pre"),
-    ],
-)
-async def test_sqlite_search(
-    mock_sqlite_search_struct_data,
-    mock_os_path_to_db,
-    gl_version,
-    sqlite_search_factory,
-):
-    query = "What is lfs?"
-    page_size = 4
-
-    sqlite_search = sqlite_search_factory()
-
-    result = await sqlite_search.search(query, gl_version, page_size)
-    assert result[0]["id"] == mock_sqlite_search_struct_data["id"]
-    assert result[0]["metadata"] == mock_sqlite_search_struct_data["metadata"]
-
-    mock_os_path_to_db.assert_called_once_with("tmp/docs.db")
-
-
-@pytest.mark.asyncio
-@pytest.mark.parametrize(
-    "gl_version",
-    [
-        ("1.2.3"),
-        ("10.11.12-pre"),
-    ],
-)
-async def test_sqlite_search_with_no_db(
-    gl_version,
-    sqlite_search_factory,
-):
-    query = "What is lfs?"
-    page_size = 4
-
-    with patch("os.path.isfile", return_value=False) as mock:
-        sqlite_search = sqlite_search_factory()
-
-        result = await sqlite_search.search(query, gl_version, page_size)
-        assert result == []
 
 
 @pytest.mark.asyncio
