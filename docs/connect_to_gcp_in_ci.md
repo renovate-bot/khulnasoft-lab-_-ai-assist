@@ -5,7 +5,7 @@ We use OpenID Connect with GCP Workload Identity Federation for authentication a
 
 ## Setup
 
-Here is how to setup service account, workload identity pool/provider and IAM permissions in a GCP project:
+Here is how to set up service account, workload identity pool/provider and IAM permissions in a GCP project:
 
 Create a service account:
 
