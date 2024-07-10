@@ -45,6 +45,10 @@ CHAT_INVOKABLES = [
         name="explain_vulnerability",
         unit_primitive=GitLabUnitPrimitive.EXPLAIN_VULNERABILITY,
     ),
+    ChatInvokable(
+        name="summarize_comments",
+        unit_primitive=GitLabUnitPrimitive.SUMMARIZE_COMMENTS,
+    ),
     # Deprecated. Added for backward compatibility.
     # Please, refer to `v2/chat/agent` for additional details.
     ChatInvokable(name="agent", unit_primitive=GitLabUnitPrimitive.DUO_CHAT),

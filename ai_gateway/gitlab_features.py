@@ -35,6 +35,7 @@ class GitLabUnitPrimitive(str, Enum):
     SUMMARIZE_MERGE_REQUEST = "summarize_merge_request"
     SUMMARIZE_REVIEW = "summarize_review"
     SUMMARIZE_SUBMITTED_REVIEW = "summarize_submitted_review"
+    SUMMARIZE_COMMENTS = "summarize_comments"
 
 
 class WrongUnitPrimitives(Exception):
