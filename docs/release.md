@@ -49,4 +49,4 @@ This job automatically calculates the next version based on [the commit messages
 
 You can customize the release workflow via the configuration file `.releaserc.yml`. See [configuration page](https://github.com/semantic-release/semantic-release?tab=readme-ov-file#documentation).
 
-If you want to setup maintenance/backport releases, see [this recipe](https://github.com/semantic-release/semantic-release/blob/master/docs/recipes/release-workflow/maintenance-releases.md).
+If you want to set up maintenance/backport releases, see [this recipe](https://github.com/semantic-release/semantic-release/blob/master/docs/recipes/release-workflow/maintenance-releases.md).
