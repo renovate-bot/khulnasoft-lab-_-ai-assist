@@ -58,6 +58,7 @@ class ContainerApplication(containers.DeclarativeContainer):
     pkg_agents = providers.Container(
         ContainerAgents,
         models=pkg_models_v2,
+        config=config,
     )
 
     code_suggestions = providers.Container(
