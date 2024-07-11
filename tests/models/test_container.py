@@ -15,11 +15,27 @@ from ai_gateway.models.container import (
     ("args", "expected_init"),
     [
         (
-            {"endpoint": "test", "mock_model_responses": False},
+            {
+                "endpoint": "test",
+                "mock_model_responses": False,
+                "custom_models_enabled": False,
+            },
             True,
         ),
         (
-            {"endpoint": "test", "mock_model_responses": True},
+            {
+                "endpoint": "test",
+                "mock_model_responses": False,
+                "custom_models_enabled": True,
+            },
+            False,
+        ),
+        (
+            {
+                "endpoint": "test",
+                "mock_model_responses": True,
+                "custom_models_enabled": False,
+            },
             False,
         ),
     ],
