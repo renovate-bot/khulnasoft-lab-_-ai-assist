@@ -10,7 +10,7 @@ __all__ = [
     "TypeAgentInputs",
     "TypeAgentAction",
     "Context",
-    "CurrentFileContext",
+    "CurrentFile",
 ]
 
 
@@ -41,6 +41,7 @@ class Context(BaseModel, frozen=True):  # type: ignore[call-arg]
     content: str
 
 
-class CurrentFileContext(BaseModel):
-    file_name: str
-    selected_text: str
+class CurrentFile(BaseModel):
+    file_path: str
+    data: str
+    selected_code: bool

@@ -26,8 +26,8 @@ def _react_agent_factory(
                 {"context_type": context.type, "context_content": context.content}
             )
 
-        if context := inputs.current_file_context:
-            options.update({"current_file_context": context})
+        if file := inputs.current_file:
+            options.update({"current_file": file})
 
         return agent_registry.get("chat/react", options, inputs.model_metadata)
 
