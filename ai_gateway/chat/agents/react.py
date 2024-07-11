@@ -8,6 +8,7 @@ from langchain_core.runnables import Runnable, RunnableConfig
 from pydantic import BaseModel
 
 from ai_gateway.agents.base import Agent
+from ai_gateway.agents.typing import ModelMetadata
 from ai_gateway.chat.agents.typing import (
     AgentFinalAnswer,
     AgentStep,
@@ -49,6 +50,7 @@ class ReActAgentInputs(BaseModel):
     agent_scratchpad: list[AgentStep[TypeReActAgentAction]]
     context: Optional[Context] = None
     current_file_context: Optional[CurrentFileContext] = None
+    model_metadata: Optional[ModelMetadata] = None
 
 
 class ReActInputParser(Runnable[ReActAgentInputs, dict]):

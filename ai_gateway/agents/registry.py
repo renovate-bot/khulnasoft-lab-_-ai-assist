@@ -8,8 +8,9 @@ from langchain_core.runnables import Runnable
 
 from ai_gateway.agents.base import Agent, BaseAgentRegistry
 from ai_gateway.agents.config import AgentConfig, ModelClassProvider, ModelConfig
+from ai_gateway.agents.typing import ModelMetadata
 
-__all__ = ["LocalAgentRegistry", "AgentRegistered"]
+__all__ = ["LocalAgentRegistry", "AgentRegistered", "CustomModelsAgentRegistry"]
 
 
 class TypeModelFactory(Protocol):
@@ -40,7 +41,11 @@ class LocalAgentRegistry(BaseAgentRegistry):
 
         return f"{agent_id}/{self.key_agent_type_base}"
 
-    def _get_model(self, config_model: ModelConfig) -> BaseChatModel:
+    def _get_model(
+        self,
+        config_model: ModelConfig,
+        model_metadata: Optional[ModelMetadata] = None,
+    ) -> BaseChatModel:
         model_class_provider = config_model.params.model_class_provider
         if model_factory := self.model_factories.get(model_class_provider, None):
             return model_factory(
@@ -52,11 +57,16 @@ class LocalAgentRegistry(BaseAgentRegistry):
 
         raise ValueError(f"unrecognized model class provider `{model_class_provider}`.")
 
-    def get(self, agent_id: str, options: Optional[dict[str, Any]] = None) -> Any:
+    def get(
+        self,
+        agent_id: str,
+        options: Optional[dict[str, Any]] = None,
+        model_metadata: Optional[ModelMetadata] = None,
+    ) -> Agent:
         agent_id = self._resolve_id(agent_id)
         klass, config = self.agents_registered[agent_id]
 
-        model: Runnable = self._get_model(config.model)
+        model: Runnable = self._get_model(config.model, model_metadata)
 
         if config.stop:
             model = model.bind(stop=config.stop)
@@ -96,3 +106,33 @@ class LocalAgentRegistry(BaseAgentRegistry):
                 )
 
         return cls(agents_registered, model_factories)
+
+
+class CustomModelsAgentRegistry(LocalAgentRegistry):
+    def _get_model(
+        self,
+        config_model: ModelConfig,
+        model_metadata: Optional[ModelMetadata] = None,
+    ) -> BaseChatModel:
+        chat_model = super()._get_model(config_model)
+
+        if model_metadata is None:
+            return chat_model
+
+        return chat_model.bind(
+            model=model_metadata.name,
+            api_base=str(model_metadata.endpoint),
+            custom_llm_provider=model_metadata.provider,
+            api_key=model_metadata.api_key,
+        )
+
+    def get(
+        self,
+        agent_id: str,
+        options: Optional[dict[str, Any]] = None,
+        model_metadata: Optional[ModelMetadata] = None,
+    ) -> Agent:
+        if model_metadata is not None:
+            agent_id = f"{agent_id}-custom"
+
+        return super().get(agent_id, options, model_metadata)

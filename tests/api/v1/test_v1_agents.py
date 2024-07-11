@@ -11,6 +11,7 @@ from ai_gateway.agents import Agent
 from ai_gateway.api.v1 import api_router
 from ai_gateway.auth import User, UserClaims
 from ai_gateway.chat.agents import ReActAgent
+from ai_gateway.config import Config
 from ai_gateway.gitlab_features import GitLabUnitPrimitive
 
 
@@ -37,6 +38,14 @@ class FakeModel(SimpleChatModel):
 @pytest.fixture
 def mock_agent_klass():
     yield Agent
+
+
+@pytest.fixture
+def mock_config():
+    config = Config()
+    config.custom_models.enabled = False
+
+    yield config
 
 
 @pytest.fixture

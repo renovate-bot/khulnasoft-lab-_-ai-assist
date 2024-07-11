@@ -29,7 +29,7 @@ def _react_agent_factory(
         if context := inputs.current_file_context:
             options.update({"current_file_context": context})
 
-        return agent_registry.get("chat/react", options)
+        return agent_registry.get("chat/react", options, inputs.model_metadata)
 
     return _fn
 

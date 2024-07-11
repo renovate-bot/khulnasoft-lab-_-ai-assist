@@ -5,6 +5,7 @@ from jinja2 import BaseLoader, Environment
 from langchain_core.prompts.chat import MessageLikeRepresentation
 from langchain_core.runnables import Runnable, RunnableBinding
 
+from ai_gateway.agents.typing import ModelMetadata
 from ai_gateway.auth.user import GitLabUser
 from ai_gateway.gitlab_features import GitLabUnitPrimitive, WrongUnitPrimitives
 
@@ -56,7 +57,12 @@ class Agent(RunnableBinding[Input, Output]):
 
 class BaseAgentRegistry(ABC):
     @abstractmethod
-    def get(self, agent_id: str, options: Optional[dict[str, Any]] = None) -> Agent:
+    def get(
+        self,
+        agent_id: str,
+        options: Optional[dict[str, Any]] = None,
+        model_metadata: Optional[ModelMetadata] = None,
+    ) -> Agent:
         pass
 
     def get_on_behalf(
