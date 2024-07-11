@@ -23,9 +23,11 @@ __all__ = [
 
 
 def _init_vertex_grpc_client(
-    endpoint: str, mock_model_responses: bool
+    endpoint: str,
+    mock_model_responses: bool,
+    custom_models_enabled: bool,
 ) -> Iterator[Optional[PredictionServiceAsyncClient]]:
-    if mock_model_responses:
+    if mock_model_responses or custom_models_enabled:
         yield None
         return
 
@@ -91,6 +93,7 @@ class ContainerModels(containers.DeclarativeContainer):
         _init_vertex_grpc_client,
         endpoint=config.vertex_text_model.endpoint,
         mock_model_responses=config.mock_model_responses,
+        custom_models_enabled=config.custom_models.enabled,
     )
 
     http_client_anthropic = providers.Resource(

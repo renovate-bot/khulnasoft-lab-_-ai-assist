@@ -11,8 +11,9 @@ __all__ = ["ContainerSearches"]
 
 def _init_vertex_search_service_client(
     mock_model_responses: bool,
+    custom_models_enabled: bool,
 ) -> Iterator[Optional[discoveryengine.SearchServiceAsyncClient]]:
-    if mock_model_responses:
+    if mock_model_responses or custom_models_enabled:
         yield None
         return
 
@@ -36,6 +37,7 @@ class ContainerSearches(containers.DeclarativeContainer):
     grpc_client_vertex = providers.Resource(
         _init_vertex_search_service_client,
         mock_model_responses=config.mock_model_responses,
+        custom_models_enabled=config.custom_models.enabled,
     )
 
     search_provider = providers.Selector(
