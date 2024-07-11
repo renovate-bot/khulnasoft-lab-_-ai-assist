@@ -23,6 +23,7 @@ STUBBED_API_KEY = "stubbed-api-key"
 class KindLiteLlmModel(str, Enum):
     CODE_GEMMA = "codegemma"
     CODE_LLAMA = "codellama"
+    CODE_LLAMA_CODE = "codellama:code"
     CODESTRAL = "codestral"
     MISTRAL = "mistral"
     MIXTRAL = "mixtral"
