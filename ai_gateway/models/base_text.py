@@ -12,8 +12,8 @@ __all__ = ["TextGenModelOutput", "TextGenModelChunk", "TextGenModelBase"]
 
 class TextGenModelOutput(NamedTuple):
     text: str
-    score: float
-    safety_attributes: SafetyAttributes
+    score: Optional[float] = None
+    safety_attributes: Optional[SafetyAttributes] = None
     metadata: Optional[TokensConsumptionMetadata] = None
 
 

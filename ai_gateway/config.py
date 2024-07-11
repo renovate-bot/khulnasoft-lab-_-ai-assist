@@ -83,6 +83,11 @@ class ConfigCustomModels(BaseModel):
     enabled: bool = False
 
 
+class ConfigAbuseDetection(BaseModel):
+    enabled: bool = False
+    sampling_rate: float = 0.1  # 1/10 of requests are sampled
+
+
 def _build_location(default: str = "us-central1") -> str:
     """
     Reads the GCP region from the environment.
@@ -181,6 +186,9 @@ class Config(BaseSettings):
     model_engine_concurrency_limits: Annotated[
         ConfigModelConcurrency, Field(default_factory=ConfigModelConcurrency)
     ] = ConfigModelConcurrency()
+    abuse_detection: Annotated[
+        ConfigAbuseDetection, Field(default_factory=ConfigAbuseDetection)
+    ] = ConfigAbuseDetection()
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)

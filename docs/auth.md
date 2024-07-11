@@ -161,3 +161,29 @@ async def awesome_feature(
             detail=f"Unauthorized to access awesome feature",
         )
 ```
+
+### Use `x-gitlab-unit-primitive` header
+
+As an alternative approach to the [fine-grained authorization](#get-current-user-and-check-permission),
+you can also enable authorization on a specific endpoint with `authorize_with_unit_primitive_header`.
+This decorator reads the `x-gitlab-unit-primitive` header from requests and
+checks if the user has permission to access the unit primitive. Example:
+
+```python
+from ai_gateway.auth.request import authorize_with_unit_primitive_header
+
+@router.post("/awesome_feature")
+@authorize_with_unit_primitive_header()
+async def awesome_feature(
+    request: Request,
+):
+    # Do something
+```
+
+This decorator also validates that the request is not modified at client side.
+If a client attempts to use a unit primitive for a different purpose,
+the request is flagged as an abused request, which reported to
+the `abuse_request_probabilities` Prometheus metric and `abuse_detection` log.
+For such requests, GitLab may conduct further investigation and 
+block the requests in Cloud Connector LB or AI Gateway middleware.
+See [this issue](https://gitlab.com/gitlab-com/legal-and-compliance/-/issues/2176) (Internal Only) for more information.

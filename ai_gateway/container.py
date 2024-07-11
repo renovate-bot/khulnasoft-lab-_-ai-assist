@@ -1,6 +1,7 @@
 from dependency_injector import containers, providers
 from py_grpc_prometheus.prometheus_client_interceptor import PromClientInterceptor
 
+from ai_gateway.abuse_detection.container import ContainerAbuseDetection
 from ai_gateway.agents.container import ContainerAgents
 from ai_gateway.auth.container import ContainerSelfSignedJwt
 from ai_gateway.chat.container import ContainerChat
@@ -78,4 +79,9 @@ class ContainerApplication(containers.DeclarativeContainer):
     self_signed_jwt = providers.Container(
         ContainerSelfSignedJwt,
         config=config,
+    )
+    abuse_detection = providers.Container(
+        ContainerAbuseDetection,
+        config=config.abuse_detection,
+        models=pkg_models,
     )

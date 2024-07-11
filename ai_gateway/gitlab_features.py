@@ -62,3 +62,25 @@ FEATURE_CATEGORIES_FOR_PROXY_ENDPOINTS = {
     GitLabUnitPrimitive.SUMMARIZE_REVIEW: GitLabFeatureCategory.CODE_REVIEW_WORKFLOW,
     GitLabUnitPrimitive.SUMMARIZE_SUBMITTED_REVIEW: GitLabFeatureCategory.CODE_REVIEW_WORKFLOW,
 }
+
+# TODO: Move these metadata to cloud connector yamls, which are accessible via the cloud connector python client.
+# See https://gitlab.com/gitlab-org/gitlab/-/issues/465221
+# TODO: Ask stage groups to give better descriptions for these UPs.
+UNIT_PRIMITIVE_AND_DESCRIPTION_MAPPING = {
+    GitLabUnitPrimitive.ANALYZE_CI_JOB_FAILURE: "Explain why a GitLab CI job failed and suggest a fix for it",
+    GitLabUnitPrimitive.CATEGORIZE_DUO_CHAT_QUESTION: "Categorize user's question to GitLab Duo Chat for internal telemetry purpose",
+    GitLabUnitPrimitive.DOCUMENTATION_SEARCH: "Perform semantic search on gitlab documentations for a given query.",
+    GitLabUnitPrimitive.DUO_CHAT: "Ask various GitLab-related questions and tasks.",
+    GitLabUnitPrimitive.EXPLAIN_CODE: "Explain function or method of the selected code",
+    GitLabUnitPrimitive.EXPLAIN_VULNERABILITY: "Explain a security vulnerability of the given CVE or code.",
+    GitLabUnitPrimitive.FILL_IN_MERGE_REQUEST_TEMPLATE: "Fill code change summary in a description of new merge request.",
+    GitLabUnitPrimitive.GENERATE_COMMIT_MESSAGE: "Generate a Git commit message.",
+    GitLabUnitPrimitive.GENERATE_CUBE_QUERY: "Convert plain text questions about event data in to a structured query in JSON format.",
+    GitLabUnitPrimitive.GENERATE_ISSUE_DESCRIPTION: "Generate an issue description.",
+    GitLabUnitPrimitive.RESOLVE_VULNERABILITY: "Write code that fixes the vulnerability.",
+    GitLabUnitPrimitive.REVIEW_MERGE_REQUEST: "Review new hunk and old hunk of a merge request diff.",
+    GitLabUnitPrimitive.SUMMARIZE_ISSUE_DISCUSSIONS: "Summarize discussions of the issue from the comments.",
+    GitLabUnitPrimitive.SUMMARIZE_MERGE_REQUEST: "Summarize merge request from the comments.",
+    GitLabUnitPrimitive.SUMMARIZE_REVIEW: "Summarize open reviews in merge requests.",
+    GitLabUnitPrimitive.SUMMARIZE_SUBMITTED_REVIEW: "Summarize submitted reviews of the merge request.",
+}
