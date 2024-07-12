@@ -14,7 +14,8 @@ class CiEditorAssistant(BaseRemoteTool):
 
     description: str = """Useful tool when you need to provide suggestions regarding anything related
         to ".gitlab-ci.yml" file. It helps with questions related to deploying code, configuring CI/CD pipelines,
-        defining CI jobs, or environments."""
+        defining CI jobs, or environments.
+        It can not help with writing code in general or questions about software development."""
 
     example: str = """Question: Please create a deployment configuration for a node.js application.
         Thought: You have asked a question related to deployment of an application or CI/CD pipelines.
@@ -27,16 +28,27 @@ class IssueReader(BaseRemoteTool):
     name: str = "issue_reader"
     resource: str = "issues"
 
-    description: str = """Gets the content of the current issue (also referenced as this or that) the user sees
-        or a specific issue identified by an ID or a URL. In this context, word `issue` means core building block
-        in GitLab that enable collaboration, discussions, planning and tracking of work.
-        Action Input for this tool should be the original question or issue identifier."""
+    description: str = """This tool retrieves the content of a specific issue
+        ONLY if the user question fulfills the strict usage conditions below.
+
+        **Strict Usage Conditions:**
+        * **Condition 1: Issue ID Provided:** This tool MUST be used ONLY when the user provides a valid issue ID.
+        * **Condition 2: Issue URL Context:** This tool MUST be used ONLY when the user is actively viewing a specific
+          issue URL or a specific URL is provided by the user.
+
+        **Do NOT** attempt to search for or identify issues based on descriptions, keywords, or user questions.
+
+        **Action Input:**
+        * The original question asked by the user.
+
+        **Important:**  Reject any input that does not strictly adhere to the usage conditions above.
+        Return a message stating you are unable to search for issues without a valid identifier."""
 
     example: str = """Question: Please identify the author of #123 issue
         Thought: You have access to the same resources as user who asks a question.
-            Question is about the content of an issue, so you need to use "issue_reader" tool to retrieve and read issue.
-            Based on this information you can present final answer about issue.
-        Action: issue_reader"
+          Question is about the content of an issue, so you need to use "issue_reader" tool to retrieve and read issue.
+          Based on this information you can present final answer about issue.
+        Action: issue_reader
         Action Input: Please identify the author of #123 issue"""
 
 
@@ -58,10 +70,21 @@ class EpicReader(BaseRemoteTool):
     name: str = "epic_reader"
     resource: str = "epics"
 
-    description: str = """Useful tool when you need to retrieve information about a specific epic.
-        In this context, word `epic` means high-level building block in GitLab that encapsulates high-level plans
-        and discussions. Epic can contain multiple issues. Action Input for this tool should be the original
-        question or epic identifier."""
+    description: str = """This tool retrieves the content of a specific epic
+        ONLY if the user question fulfills the strict usage conditions below.
+
+        **Strict Usage Conditions:**
+        * **Condition 1: epic ID Provided:** This tool MUST be used ONLY when the user provides a valid epic ID.
+        * **Condition 2: epic URL Context:** This tool MUST be used ONLY when the user is actively viewing
+          a specific epic URL or a specific URL is provided by the user.
+
+        **Do NOT** attempt to search for or identify epics based on descriptions, keywords, or user questions.
+
+        **Action Input:**
+        * The original question asked by the user.
+
+        **Important:**  Reject any input that does not strictly adhere to the usage conditions above.
+        Return a message stating you are unable to search for epics without a valid identifier."""
 
     example: str = """Question: Please identify the author of &123 epic.
         Thought: You have access to the same resources as user who asks a question.
