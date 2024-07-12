@@ -3,7 +3,7 @@ name: Custom ReAct Chat agent
 model:
   name: custom
   params:
-    model_class_provider: lite_llm
+    model_class_provider: litellm
     temperature: 0.0
     timeout: 60
     max_tokens: 2_048

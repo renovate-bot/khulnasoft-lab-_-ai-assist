@@ -2,6 +2,7 @@ import asyncio
 import os
 from contextlib import asynccontextmanager
 
+import litellm
 from fastapi import APIRouter, FastAPI
 from fastapi.exception_handlers import http_exception_handler
 from fastapi.middleware.cors import CORSMiddleware
@@ -12,6 +13,7 @@ from starlette.requests import Request
 from starlette_context import context
 from starlette_context.middleware import RawContextMiddleware
 
+from ai_gateway.agents.instrumentator import AgentInstrumentator
 from ai_gateway.api.middleware import (
     MiddlewareAuthentication,
     MiddlewareLogRequest,
@@ -50,6 +52,8 @@ async def lifespan(app: FastAPI):
                 loop, interval=config.instrumentator.thread_monitoring_interval
             )
         )
+
+    setup_litellm()
 
     yield
 
@@ -122,6 +126,10 @@ async def model_api_exception_handler(request: Request, exc: ModelAPIError):
 def setup_custom_exception_handlers(app: FastAPI):
     app.add_exception_handler(StarletteHTTPException, custom_http_exception_handler)
     app.add_exception_handler(ModelAPIError, model_api_exception_handler)
+
+
+def setup_litellm():
+    litellm.callbacks = [AgentInstrumentator()]
 
 
 def setup_router(app: FastAPI):
