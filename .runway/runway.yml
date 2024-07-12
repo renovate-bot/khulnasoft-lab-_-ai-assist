@@ -1,5 +1,5 @@
 # https://gitlab-com.gitlab.io/gl-infra/platform/runway/runwayctl/manifest.schema.html
-apiVersion: runway/v1.0.0-beta
+apiVersion: runway/v1
 kind: RunwayService
 metadata:
   name: ai_gateway
@@ -39,3 +39,6 @@ spec:
       memory: 8G
   network_policies:
     cloudflare: true
+  load_balancing:
+    external_load_balancer:
+      backend_protocol: HTTPS
