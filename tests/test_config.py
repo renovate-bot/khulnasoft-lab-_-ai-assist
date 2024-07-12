@@ -36,8 +36,7 @@ from ai_gateway.config import (
                 gitlab_url="http://gitlab.test",
                 gitlab_api_url="http://api.gitlab.test",
                 customer_portal_url="http://customer.gitlab.test",
-                # pydantic-settings does not allow omitting the prefix if validation_alias is set for the field
-                aigw_mock_model_responses=True,  # type: ignore[call-arg]
+                mock_model_responses=True,
             ),
         ),
     ],
@@ -56,24 +55,6 @@ def test_config_base(values: dict, expected: Config):
         actual = config.model_dump(include=keys)
         assert actual == expected.model_dump(include=keys)
         assert len(actual) == len(keys)
-
-
-@pytest.mark.parametrize(
-    ("values", "expected"),
-    [
-        # pydantic-settings does not allow omitting the prefix if validation_alias is set for the field
-        ({"AIGW_MOCK_MODEL_RESPONSES": "true"}, Config(aigw_mock_model_responses=True)),  # type: ignore[call-arg]
-        (
-            {"AIGW_USE_FAKE_MODELS": "true"},
-            Config(aigw_mock_model_responses=True),  # type: ignore[call-arg]
-        ),
-    ],
-)
-def test_mock_model_responses_b_compatibility(values: dict, expected: Config):
-    with mock.patch.dict(os.environ, values, clear=True):
-        config = Config(_env_file=None)  # type: ignore[call-arg]
-
-        assert config.mock_model_responses == expected.mock_model_responses
 
 
 @pytest.mark.parametrize(

@@ -23,7 +23,7 @@ def auth_user():
 
 @pytest.fixture
 def mock_config():
-    yield Config(aigw_mock_model_responses=True)
+    yield Config(mock_model_responses=True)
 
 
 class TestMockedModels:

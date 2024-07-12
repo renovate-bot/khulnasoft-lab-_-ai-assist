@@ -2,7 +2,7 @@ import os
 from typing import Annotated, Optional
 
 from dotenv import find_dotenv
-from pydantic import AliasChoices, BaseModel, Field, RootModel
+from pydantic import BaseModel, Field, RootModel
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 __all__ = [
@@ -142,14 +142,7 @@ class Config(BaseSettings):
     gitlab_url: str = "https://gitlab.com"
     gitlab_api_url: str = "https://gitlab.com/api/v4/"
     customer_portal_url: str = "https://customers.gitlab.com"
-
-    mock_model_responses: bool = Field(
-        validation_alias=AliasChoices(
-            f"{ENV_PREFIX.lower()}_mock_model_responses",
-            f"{ENV_PREFIX.lower()}_use_fake_models",  # Backward compatibility with the GitLab QA tests
-        ),
-        default=False,
-    )
+    mock_model_responses: bool = False
 
     logging: Annotated[ConfigLogging, Field(default_factory=ConfigLogging)] = (
         ConfigLogging()
