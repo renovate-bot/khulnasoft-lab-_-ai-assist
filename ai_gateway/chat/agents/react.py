@@ -14,7 +14,7 @@ from ai_gateway.chat.agents.typing import (
     AgentStep,
     AgentToolAction,
     Context,
-    CurrentFileContext,
+    CurrentFile,
 )
 from ai_gateway.gitlab_features import GitLabUnitPrimitive
 
@@ -49,7 +49,7 @@ class ReActAgentInputs(BaseModel):
     chat_history: str | list[str]
     agent_scratchpad: list[AgentStep[TypeReActAgentAction]]
     context: Optional[Context] = None
-    current_file_context: Optional[CurrentFileContext] = None
+    current_file: Optional[CurrentFile] = None
     model_metadata: Optional[ModelMetadata] = None
 
 
@@ -63,7 +63,7 @@ class ReActInputParser(Runnable[ReActAgentInputs, dict]):
             "agent_scratchpad": agent_scratchpad_plain_text_renderer(
                 input.agent_scratchpad
             ),
-            "current_file_context": input.current_file_context,
+            "current_file": input.current_file,
         }
 
 

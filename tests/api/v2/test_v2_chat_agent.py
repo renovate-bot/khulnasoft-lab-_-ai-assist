@@ -15,7 +15,7 @@ from ai_gateway.auth import GitLabUser, User, UserClaims
 from ai_gateway.chat.agents import (
     AgentStep,
     Context,
-    CurrentFileContext,
+    CurrentFile,
     ReActAgentInputs,
     ReActAgentToolAction,
     TypeAgentAction,
@@ -80,8 +80,10 @@ class TestReActAgentStream:
                         ],
                     ),
                     context=Context(type="issue", content="issue content"),
-                    current_file_context=CurrentFileContext(
-                        file_name="main.py", selected_text="def main()"
+                    current_file=CurrentFile(
+                        file_path="main.py",
+                        data="def main()",
+                        selected_code=True,
                     ),
                 ),
                 [
@@ -163,7 +165,7 @@ class TestReActAgentStream:
             chat_history=agent_options.chat_history,
             agent_scratchpad=agent_scratchpad,
             context=agent_options.context,
-            current_file_context=agent_options.current_file_context,
+            current_file=agent_options.current_file,
             model_metadata=model_metadata,
         )
 
