@@ -13,7 +13,7 @@ __all__ = [
 
 
 class ModelClassProvider(str, Enum):
-    LITE_LLM = "lite_llm"
+    LITE_LLM = "litellm"
     ANTHROPIC = "anthropic"
 
 

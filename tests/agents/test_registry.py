@@ -42,7 +42,7 @@ name: Test agent
 model:
   name: claude-2.1
   params:
-    model_class_provider: lite_llm
+    model_class_provider: litellm
     timeout: 100.
     top_p: 0.1
     top_k: 50
@@ -91,7 +91,7 @@ name: Chat react custom agent
 model:
   name: custom
   params:
-    model_class_provider: lite_llm
+    model_class_provider: litellm
     temperature: 0.1
     timeout: 60
     top_p: 0.8

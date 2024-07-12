@@ -5,12 +5,14 @@ from typing import Iterator, cast
 from unittest import mock
 from unittest.mock import MagicMock, patch
 
+import litellm
 import pytest
 from fastapi import FastAPI
 from fastapi.routing import APIRoute
 from fastapi.testclient import TestClient
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
+from ai_gateway.agents.instrumentator import AgentInstrumentator
 from ai_gateway.api import create_fast_api_server, server
 from ai_gateway.api.server import (
     custom_http_exception_handler,
@@ -172,6 +174,8 @@ async def test_lifespan(config, app, unused_port, monkeypatch):
 
         if config.instrumentator.thread_monitoring_enabled:
             asyncio.get_running_loop.assert_called_once()
+
+        assert isinstance(litellm.callbacks[0], AgentInstrumentator)
 
     assert mock_container_app.return_value.shutdown_resources.called_once()
 
