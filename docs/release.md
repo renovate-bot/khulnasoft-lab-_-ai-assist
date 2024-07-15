@@ -20,9 +20,9 @@ In CI pipelines in AI Gateway:
   - `lint:commit` job runs to validate the commits in the feature branch if they are following Conventional Commits.
   - `publish-dryrun` job runs to make sure the commits are releasable via semantic-release.
 - On `main` branch:
-  - `publish` job can run manually to cut a new release/git-tag. This requires Maintainer+ access in AI Gateway project.
-- On git-tags:
-  - `release-docker-image:tag` job runs to pushes a new docker image.
+  - `publish` job can run manually to cut a new release and Git tag. This requires Maintainer+ access in AI Gateway project.
+- On Git tags:
+  - `release-docker-image:tag` job runs to pushes a new Docker image.
 
 In addition, we have [the expectations on backward compatibility](https://docs.gitlab.com/ee/architecture/blueprints/ai_gateway/#basic-stable-api-for-the-ai-gateway).
 Tl;dr;
@@ -35,7 +35,7 @@ Tl;dr;
 To view released versions of AI Gateway, visit the following links:
 
 - [Releases](https://gitlab.com/gitlab-org/modelops/applied-ml/code-suggestions/ai-assist/-/releases): This page lists the released versions and changelogs.
-- [Container Registry](https://gitlab.com/gitlab-org/modelops/applied-ml/code-suggestions/ai-assist/container_registry): This page lists the released docker images e.g. `registry.gitlab.com/gitlab-org/modelops/applied-ml/code-suggestions/ai-assist/model-gateway:v1.0.0`
+- [Container Registry](https://gitlab.com/gitlab-org/modelops/applied-ml/code-suggestions/ai-assist/container_registry): This page lists the released Docker images e.g. `registry.gitlab.com/gitlab-org/modelops/applied-ml/code-suggestions/ai-assist/model-gateway:v1.0.0`
 
 ## Release a new version of AI Gateway
 
@@ -43,7 +43,7 @@ To view released versions of AI Gateway, visit the following links:
 1. Select a pipeline that you want to publish.
 1. Play `publish` job. This requires Maintainer+ access in AI Gateway project. If you're seeking for a help, ping a maintainer from [the dashboard](https://gitlab-org.gitlab.io/gitlab-roulette/?currentProject=ai-gateway).
 
-This job automatically calculates the next version based on [the commit messages](https://www.conventionalcommits.org/en), cut a new git-tag and create a release.
+This job automatically calculates the next version based on [the commit messages](https://www.conventionalcommits.org/en), cut a new Git tag and create a release.
 
 ## Configure release workflow
 

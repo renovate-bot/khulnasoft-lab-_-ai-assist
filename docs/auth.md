@@ -34,7 +34,7 @@ Participants:
 
 Process flow:
 
-1. A client requests to an OIDC provider to issue a JWT (Json Web Token).
+1. A client requests to an OIDC provider to issue a JWT (JSON Web Token).
 1. The OIDC provider authenticates the request and returns JWT.
 1. The client requests to the AI Gateway to access a feature with the JWT.
 1. AI Gateway attempts to decode the JWT with JWKS provided by trusted OIDC providers.
@@ -95,8 +95,8 @@ This ensures we always have a key in place to sign and validate tokens.
 
 ### JWK signing key rotation
 
-The `AIGW_SELF_SIGNED_JWT__SIGNING_KEY` and `AIGW_SELF_SIGNED_JWT__VALIDATION_KEY` private keys should be rotated yearly. 
-There is an issue created to remind us of this: https://gitlab.com/gitlab-org/modelops/applied-ml/code-suggestions/ai-assist/-/issues/514.
+The `AIGW_SELF_SIGNED_JWT__SIGNING_KEY` and `AIGW_SELF_SIGNED_JWT__VALIDATION_KEY` private keys should be rotated yearly.
+There is an issue created to remind us of this: <https://gitlab.com/gitlab-org/modelops/applied-ml/code-suggestions/ai-assist/-/issues/514>.
 
 #### Keep already issued tokens valid during the key rotation
 
@@ -120,7 +120,7 @@ Since we have to update values in the Vault, and the keys are sensitive data, ce
 
 ## Authorization in AI Gateway
 
-AI Gateway uses `scopes` custom claim in JWT to check user permissions, which was decoded in [the previous authentication process](#authentication-overview).
+AI Gateway uses `scopes` custom claim in JWT to check user permissions, which was decoded in [the previous authentication process](#authentication-in-ai-gateway).
 
 For example, if a decoded token contains the following `scopes`, the user can access to `code_suggestions` and `duo_chat` features:
 

@@ -23,7 +23,7 @@ Input:
 
 Process:
 
-1. Download gitlab-doc from `GITLAB_DOCS_REPO` and `GITLAB_DOCS_REPO_REF` to `GITLAB_DOCS_CLONE_DIR`.
+1. Download GitLab doc from `GITLAB_DOCS_REPO` and `GITLAB_DOCS_REPO_REF` to `GITLAB_DOCS_CLONE_DIR`.
 1. Parse docs and export as JSONL file to `GITLAB_DOCS_JSONL_EXPORT_PATH`.
 1. Read the GitLab version from `VERSION` file. For example, `17.0.0-pre`.
 1. Convert the GitLab version to datastore version `<major>-<minor>`. For example, `17.0.0-pre` becomes
@@ -35,7 +35,7 @@ Process:
 1. Create a new BigQuery table from the JSONL file exported to `GITLAB_DOCS_JSONL_EXPORT_PATH`.
 1. Create a new data store in Vertex AI Search that imports the BigQuery table. If the data store already
    exists, import the BigQuery table with incremental or full update. See
-   https://cloud.google.com/generative-ai-app-builder/docs/refresh-data.
+   <https://cloud.google.com/generative-ai-app-builder/docs/refresh-data>.
 1. Create a new search app in Vertex AI Search that connects to the data store. If the search app already exists, skip this step.
 
 As a result, the search app `gitlab-docs-17-0` is connected to the data store `gitlab-docs-17-0`, which was imported from the bigquery table `ai-enablement-dev-69497ba7.gitlab_docs_17_0.2024-04-25-12-43-30`. 
@@ -69,7 +69,7 @@ export GITLAB_DOCS_WEB_ROOT_URL="https://gitlab.com/help"
 make ingest
 ```
 
-or use docker image:
+or use Docker image:
 
 ```shell
 docker run \
@@ -97,7 +97,7 @@ Here is a [preview app for GitLab documentations](https://console.cloud.google.c
 ### Further iteration
 
 - [Generalize ingestion process for any public data](https://gitlab.com/gitlab-org/modelops/applied-ml/code-suggestions/ai-assist/-/issues/446).
-- [Replace ruby parser by python parser](https://gitlab.com/gitlab-org/modelops/applied-ml/code-suggestions/ai-assist/-/issues/447).
+- [Replace Ruby parser by Python parser](https://gitlab.com/gitlab-org/modelops/applied-ml/code-suggestions/ai-assist/-/issues/447).
 
 ## Search API in AI Gateway
 
@@ -112,7 +112,7 @@ Here is a [preview app for GitLab documentations](https://console.cloud.google.c
    1. If the request encountered an error, it falls back to a stable data store which is hard-coded in AI
       Gateway. This process would be improved in the future to be more resilient. Example scenarios:
       1. The data store ID doesn't exist yet (for example, GitLab-Rails bump the `VERSION` and its deployed to
-         gitlab.com, but the ingestion pipeline has not run yet).
+         GitLab.com, but the ingestion pipeline has not run yet).
       1. The data is still being processed/indexed by Vertex AI Search, which usually takes 5-10 minutes.
 
 ## Check usage quota in GCP console

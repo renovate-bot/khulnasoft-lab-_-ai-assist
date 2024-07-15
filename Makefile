@@ -132,12 +132,17 @@ test-integration: install-test-deps
 	@poetry run pytest integration_tests/
 
 .PHONY: lint-doc
-lint-doc: vale
+lint-doc: vale markdownlint
 
 .PHONY: vale
 vale:
 	@echo "Running vale..."
 	@vale --minAlertLevel error docs *.md
+
+.PHONY: markdownlint
+markdownlint:
+	@echo "Running markdownlint..."
+	@markdownlint-cli2 "docs/**/*.md" *.md
 
 .PHONY: ingest
 ingest:

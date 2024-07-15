@@ -3,3 +3,4 @@ gcloud 428.0.0 # datasource=github-tags depName=GoogleCloudPlatform/cloud-sdk-do
 poetry 1.8.3 # datasource=pypi depName=poetry
 ruby 3.2.4 # Temporary dependency until https://gitlab.com/gitlab-org/modelops/applied-ml/code-suggestions/ai-assist/-/issues/447 is done.
 vale 3.6.0 # datasource=github-releases depName=errata-ai/vale
+markdownlint-cli2 0.13.0 # datasource=github-tags depName=DavidAnson/markdownlint-cli2

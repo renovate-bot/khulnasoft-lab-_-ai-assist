@@ -15,7 +15,7 @@ with a specific format.
 We are using [Pydantic Settings](https://docs.pydantic.dev/latest/concepts/pydantic_settings/)
 to parse the dotenv file into pydantic objects. The environment variables are formatted in the following way:
 
-```
+```plaintext
 AIGW_{group-of-setting}__{name-of-setting}
 ```
 
@@ -60,16 +60,21 @@ awesome_feature = AwesomeFeature(
 Instead, you should do:
 
 1. Add the application setting to `example.env` and `.env`.
+
    ```shell
    AIGW_AWESOME_FEATURE__MAX_TOKENS=100
    ```
+
 1. Add the config group for the feature:
+
    ```python
    # ai_gateway/config.py
    class ConfigAwesomeFeature(BaseModel):
       max_tokens: int = 0
    ```
+
 1. Declare dependencies for the feature:
+
    ```python
    # ai_gateway/container.py
    class ContainerAwesomeFeature(containers.DeclarativeContainer):
@@ -80,7 +85,9 @@ Instead, you should do:
          max_tokens=config.awesome_client.max_tokens, # This value is fetched from `.env`.
       )
    ```
+
 1. Add an endpoint to access the feature:
+
    ```python
    # ai_gateway/api/v1/awesome_feature.py
    @router.post("/awesome_feature")

@@ -12,7 +12,9 @@ RUN apt-get update && apt-get install -y \
     # For asdf Python https://github.com/pyenv/pyenv/wiki#suggested-build-environment
     build-essential libssl-dev zlib1g-dev libbz2-dev libreadline-dev libsqlite3-dev libncursesw5-dev xz-utils tk-dev libffi-dev liblzma-dev \
     # For asdf Ruby https://github.com/rbenv/ruby-build/wiki#suggested-build-environment
-    autoconf patch rustc libyaml-dev libreadline6-dev libgmp-dev libgdbm6 libgdbm-dev libdb-dev uuid-dev
+    autoconf patch rustc libyaml-dev libreadline6-dev libgmp-dev libgdbm6 libgdbm-dev libdb-dev uuid-dev \
+    # For asdf markdownlint-cli2
+    nodejs npm
 
 # Set the locale UTF8
 ENV LANG C.UTF-8
@@ -36,6 +38,7 @@ RUN asdf plugin-add poetry https://github.com/asdf-community/asdf-poetry
 RUN asdf plugin-add ruby https://github.com/asdf-vm/asdf-ruby
 RUN asdf plugin-add gcloud https://github.com/jthegedus/asdf-gcloud
 RUN asdf plugin add vale https://github.com/pdemagny/asdf-vale
+RUN asdf plugin add markdownlint-cli2 https://github.com/paulo-ferraz-oliveira/asdf-markdownlint-cli2
 
 RUN asdf install
 
