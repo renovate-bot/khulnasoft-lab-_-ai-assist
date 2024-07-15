@@ -5,9 +5,9 @@ the GitLab extension installed post Milestone ["Code Suggestions Gated MVC"](htt
 
 1. Install the GitLab VSCode [extension](https://marketplace.visualstudio.com/items?itemName=GitLab.gitlab-workflow).
    This guide assumes that we're installing a version `>=3.59.2`.
-2. For Mac users: open the command palette by pressing `Shift+Command+P` and type `GitLab: Add account to VS Code`.
-3. Insert the URL to your GitLab instance and the personal access token with scopes: `read_user`, `read_api`.
-4. Go to the GitLab extension settings and click on `Enable code completion`.
-5. For Mac users: open the command palette by pressing `Shift+Command+P` and type `Git: Clone`.
-6. Insert the repository URL address that you want to clone from GitLab.
-7. Voila! Open the cloned project in VSCode and get code completions in newly created or existing files.
+1. For Mac users: open the command palette by pressing `Shift+Command+P` and type `GitLab: Add account to VS Code`.
+1. Insert the URL to your GitLab instance and the personal access token with scopes: `read_user`, `read_api`.
+1. Go to the GitLab extension settings and click on `Enable code completion`.
+1. For Mac users: open the command palette by pressing `Shift+Command+P` and type `Git: Clone`.
+1. Insert the repository URL address that you want to clone from GitLab.
+1. Voila! Open the cloned project in VSCode and get code completions in newly created or existing files.

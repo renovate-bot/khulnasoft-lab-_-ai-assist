@@ -1,6 +1,6 @@
 # API
 
-An interactive API documentation site is available at http://127.0.0.1:5001/docs.
+An interactive API documentation site is available at <http://127.0.0.1:5001/docs>.
 For more information, please see the official FastAPI [doc](https://fastapi.tiangolo.com/tutorial/first-steps/?h=interactive+api+docs#interactive-api-docs).
 
 ## Authentication
@@ -169,7 +169,7 @@ third-party model provider.
 | ----------------------------------- | ------ | -------- | ---------------------------------------------------------------------------------------------------------------- | ------------------------- |
 | `prompt_version`                    | int    | yes      | The version of the prompt.                                                                                       | `1`                       |
 | `project_path`                      | string | no       | The name of the project (max_len: **255**).                                                                      | `gitlab-orb/gitlab-shell` |
-| `project_id`                        | int    | no       | The id of the project.                                                                                           | `33191677`                |
+| `project_id`                        | int    | no       | The ID of the project.                                                                                           | `33191677`                |
 | `model_provider`                    | string | no       | The name of the model provider. Valid values are: `anthropic` and `vertex-ai`.                                   | `vertex-ai`               |
 | `current_file`                      | hash   | yes      | The data of the current file.                                                                                    |                           |
 | `current_file.file_name`            | string | yes      | The name of the current file (max_len: **255**).                                                                 | `README.md`               |
@@ -264,7 +264,7 @@ This accepts prebuilt `prompt` and forwards it directly to third-party provider.
 | ----------------------------------- | ------ | -------- | ------------------------------------------------------------------------------ | ------------------------------------ |
 | `prompt_version`                    | int    | yes      | The version of the prompt                                                      | `2`                                  |
 | `project_path`                      | string | no       | The name of the project (max_len: **255**)                                     | `gitlab-orb/gitlab-shell`            |
-| `project_id`                        | int    | no       | The id of the project                                                          | `33191677`                           |
+| `project_id`                        | int    | no       | The ID of the project                                                          | `33191677`                           |
 | `model_provider`                    | string | no       | The name of the model provider. Valid values are: `anthropic` and `vertex-ai`. | `anthropic`                          |
 | `current_file`                      | hash   | yes      | The data of the current file                                                   |                                      |
 | `current_file.file_name`            | string | yes      | The name of the current file (max_len: **255**)                                | `README.md`                          |
@@ -375,7 +375,7 @@ third-party model provider.
 | ----------------------------------- | ------ | -------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------- |
 | `prompt_version`                    | int    | yes      | The version of the prompt.                                                                                                                                                             | `1`                       |
 | `project_path`                      | string | no       | The name of the project (max_len: **255**).                                                                                                                                            | `gitlab-orb/gitlab-shell` |
-| `project_id`                        | int    | no       | The id of the project.                                                                                                                                                                 | `33191677`                |
+| `project_id`                        | int    | no       | The ID of the project.                                                                                                                                                                 | `33191677`                |
 | `model_provider`                    | string | no       | The name of the model provider. Valid values are: `anthropic` and `vertex-ai`.                                                                                                         | `vertex-ai`               |
 | `model_name`                        | string | no       | The name of the model name. Valid values are: `claude-2`, `claude-2.0`, `claude-2.1` if model_provider is `anthropic`.`code-bison`, `code-bison@002` if model_provider is `vertex-ai`. | `code-bison@002`          |
 | `current_file`                      | hash   | yes      | The data of the current file.                                                                                                                                                          |                           |
@@ -463,7 +463,7 @@ This accepts prebuilt `prompt` and forwards it directly to third-party provider.
 | ----------------------------------- | ------ | -------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------ |
 | `prompt_version`                    | int    | yes      | The version of the prompt                                                                                                                                                              | `2`                                  |
 | `project_path`                      | string | no       | The name of the project (max_len: **255**)                                                                                                                                             | `gitlab-orb/gitlab-shell`            |
-| `project_id`                        | int    | no       | The id of the project                                                                                                                                                                  | `33191677`                           |
+| `project_id`                        | int    | no       | The ID of the project                                                                                                                                                                  | `33191677`                           |
 | `model_provider`                    | string | no       | The name of the model provider. Valid values are: `anthropic` and `vertex-ai`. Default to `vertex-ai`.                                                                                 | `anthropic`                          |
 | `model_name`                        | string | no       | The name of the model name. Valid values are: `claude-2`, `claude-2.0`, `claude-2.1` if model_provider is `anthropic`.`code-bison`, `code-bison@002` if model_provider is `vertex-ai`. | `claude-2.1`                         |
 | `current_file`                      | hash   | yes      | The data of the current file                                                                                                                                                           |                                      |
@@ -564,7 +564,7 @@ POST /v1/agent/chat
 
 | Attribute                                      | Type   | Required | Description                                                                                                                                     | Example                                               |
 | ---------------------------------------------- | ------ | -------- | ----------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------- |
-| `prompt_components`                            | array  | yes      | The list of prompt components compliant with https://docs.gitlab.com/ee/architecture/blueprints/ai_gateway/index.html#protocol (max_len: **1**). |                                                       |
+| `prompt_components`                            | array  | yes      | The list of prompt components compliant with <https://docs.gitlab.com/ee/architecture/blueprints/ai_gateway/index.html#protocol> (max_len: **1**). |                                                       |
 | `prompt_components.type`                       | string | yes      | The type of the prompt component (max_len: **255**).                                                                                            | `prompt`                                              |
 | `prompt_components.payload`                    | hash   | yes      | The data of the current prompt component.                                                                                                       |                                                       |
 | `prompt_components.payload.content`            | string | yes      | The complete AI prompt (max_len: **400 000**).                                                                                                  | `Human: Tell me a fun fact about ducks\n\nAssistant:` |
@@ -629,7 +629,7 @@ POST /v1/x-ray/libraries
 
 | Attribute                            | Type   | Required | Description                                                                                                                                     | Example                               |
 | ------------------------------------ | ------ | -------- | ----------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------- |
-| `prompt_components`                  | array  | yes      | The list of prompt components compliant with https://docs.gitlab.com/ee/architecture/blueprints/ai_gateway/index.html#protocol (max_len: **1**). |                                       |
+| `prompt_components`                  | array  | yes      | The list of prompt components compliant with <https://docs.gitlab.com/ee/architecture/blueprints/ai_gateway/index.html#protocol> (max_len: **1**). |                                       |
 | `prompt_components.type`             | string | yes      | The type of the prompt component (max_len: **255**).                                                                                            | `x_ray_package_file_prompt`           |
 | `prompt_components.payload`          | hash   | yes      | The data of the prompt component.                                                                                                               |                                       |
 | `prompt_components.payload.prompt`   | string | yes      | The complete AI prompt.                                                                                                                         | `Human: Tell me fun fact about ducks` |
