@@ -212,16 +212,16 @@ In above diagram, the main components are shown.
 
 The Client has the following functions:
 
-1. Determine input parameters
-   1. Stop sequences
-   1. Gather code for the prompt
+1. Determine input parameters.
+   1. Stop sequences.
+   1. Gather code for the prompt.
 1. Send the input parameters to the AI Gateway API.
 1. Parse results from AI Gateway and present them as `inlineCompletions`.
 
 We are supporting the following clients:
 
-- [GitLab VS Code Extension](https://gitlab.com/gitlab-org/gitlab-vscode-extension)
-- [GitLab Language Server for Code Suggestions](https://gitlab.com/gitlab-org/editor-extensions/gitlab-language-server-for-code-suggestions)
+- [GitLab VS Code Extension](https://gitlab.com/gitlab-org/gitlab-vscode-extension).
+- [GitLab Language Server for Code Suggestions](https://gitlab.com/gitlab-org/editor-extensions/gitlab-language-server-for-code-suggestions).
 
 ## Deployment
 
@@ -237,10 +237,10 @@ The service overview dashboard is available at [https://dashboards.gitlab.net/d/
 
 For more information and assistance, please check out:
 
-- [Runway - Handbook](https://about.gitlab.com/handbook/engineering/infrastructure/platforms/tools/runway/)
-- [Runway - Group](https://gitlab.com/gitlab-com/gl-infra/platform/runway)
-- [Runway - Docs](https://gitlab.com/gitlab-com/gl-infra/platform/runway/docs)
-- [Runway - Issue Tracker](https://gitlab.com/groups/gitlab-com/gl-infra/platform/runway/-/issues)
+- [Runway - Handbook](https://about.gitlab.com/handbook/engineering/infrastructure/platforms/tools/runway/).
+- [Runway - Group](https://gitlab.com/gitlab-com/gl-infra/platform/runway).
+- [Runway - Docs](https://gitlab.com/gitlab-com/gl-infra/platform/runway/docs).
+- [Runway - Issue Tracker](https://gitlab.com/groups/gitlab-com/gl-infra/platform/runway/-/issues).
 - `#f_runway` in Slack.
 
 ## Release
