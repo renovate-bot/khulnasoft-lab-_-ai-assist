@@ -2,7 +2,14 @@ import json
 
 import pytest
 
-from ai_gateway.models import Message, ModelMetadata, Role, SafetyAttributes, mock
+from ai_gateway.models import (
+    Message,
+    ModelMetadata,
+    Role,
+    SafetyAttributes,
+    TextGenModelOutput,
+    mock,
+)
 
 
 @pytest.mark.asyncio
@@ -25,6 +32,8 @@ class TestLLM:
         model = mock.LLM()
 
         response = await model.generate(prefix, suffix, stream=False, **kwargs)
+        assert isinstance(response, TextGenModelOutput)
+
         expected_substrings = [prefix, suffix] if suffix else [prefix]
         expected_substrings += [json.dumps(kwargs)]
 
@@ -38,6 +47,8 @@ class TestLLM:
         model = mock.LLM()
 
         response = await model.generate(prefix, suffix, stream=True, **kwargs)
+        assert isinstance(response, mock.AsyncStream)
+
         actual_text = "".join([chunk.text async for chunk in response])
         expected_substrings = [prefix, suffix] if suffix else [prefix]
         expected_substrings += [json.dumps(kwargs)]
@@ -69,6 +80,8 @@ class TestChatModel:
         model = mock.ChatModel()
 
         response = await model.generate(messages, stream=False, **kwargs)
+        assert isinstance(response, TextGenModelOutput)
+
         messages = [message.model_dump(mode="json") for message in messages]
         expected_substrings = [json.dumps(s) for s in (messages, kwargs)]
 
@@ -82,6 +95,8 @@ class TestChatModel:
         model = mock.ChatModel()
 
         response = await model.generate(messages, stream=True, **kwargs)
+        assert isinstance(response, mock.AsyncStream)
+
         actual_text = "".join([chunk.text async for chunk in response])
 
         messages = [message.model_dump(mode="json") for message in messages]
