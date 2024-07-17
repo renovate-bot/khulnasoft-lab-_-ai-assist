@@ -37,7 +37,7 @@ class AgentStep(BaseModel, Generic[TypeAgentAction]):
 
 
 class Context(BaseModel, frozen=True):  # type: ignore[call-arg]
-    type: Literal["issue", "epic"]
+    type: Literal["issue", "epic", "merge_request"]
     content: str
 
 
