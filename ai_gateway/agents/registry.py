@@ -33,11 +33,13 @@ class LocalAgentRegistry(BaseAgentRegistry):
         self.agents_registered = agents_registered
         self.model_factories = model_factories
 
-    def _resolve_id(self, agent_id: str) -> str:
-        _, _, agent_type = agent_id.partition("/")
-        if agent_type:
-            # the `agent_id` value is already in the format of - `first/last`
-            return agent_id
+    def _resolve_id(
+        self,
+        agent_id: str,
+        model_metadata: Optional[ModelMetadata] = None,
+    ) -> str:
+        if model_metadata is not None:
+            return f"{agent_id}/{model_metadata.name}"
 
         return f"{agent_id}/{self.key_agent_type_base}"
 
@@ -45,7 +47,7 @@ class LocalAgentRegistry(BaseAgentRegistry):
         self,
         config_model: ModelConfig,
         model_metadata: Optional[ModelMetadata] = None,
-    ) -> BaseChatModel:
+    ) -> Runnable:
         model_class_provider = config_model.params.model_class_provider
         if model_factory := self.model_factories.get(model_class_provider, None):
             return model_factory(
@@ -63,10 +65,10 @@ class LocalAgentRegistry(BaseAgentRegistry):
         options: Optional[dict[str, Any]] = None,
         model_metadata: Optional[ModelMetadata] = None,
     ) -> Agent:
-        agent_id = self._resolve_id(agent_id)
+        agent_id = self._resolve_id(agent_id, model_metadata)
         klass, config = self.agents_registered[agent_id]
 
-        model: Runnable = self._get_model(config.model, model_metadata)
+        model = self._get_model(config.model, model_metadata)
 
         if config.stop:
             model = model.bind(stop=config.stop)
@@ -93,15 +95,19 @@ class LocalAgentRegistry(BaseAgentRegistry):
 
         agents_definitions_dir = Path(__file__).parent / "definitions"
         agents_registered = {}
-        for path in agents_definitions_dir.glob("*/*.yml"):
-            agent_id = str(
-                # E.g., "chat/react", "generate_description/base", etc.
+
+        for path in agents_definitions_dir.glob("**/*.yml"):
+            agent_id_with_model_name = str(
+                # E.g., "chat/react/base", "generate_description/mistral", etc.
                 path.relative_to(agents_definitions_dir).with_suffix("")
             )
 
+            # Remove model name, for example: to receive "chat/react" from "chat/react/mistral"
+            agent_id, _, _ = agent_id_with_model_name.rpartition("/")
+
             with open(path, "r") as fp:
                 klass = class_overrides.get(agent_id, Agent)
-                agents_registered[agent_id] = AgentRegistered(
+                agents_registered[agent_id_with_model_name] = AgentRegistered(
                     klass=klass, config=AgentConfig(**yaml.safe_load(fp))
                 )
 
@@ -113,7 +119,7 @@ class CustomModelsAgentRegistry(LocalAgentRegistry):
         self,
         config_model: ModelConfig,
         model_metadata: Optional[ModelMetadata] = None,
-    ) -> BaseChatModel:
+    ) -> Runnable:
         chat_model = super()._get_model(config_model)
 
         if model_metadata is None:
@@ -125,14 +131,3 @@ class CustomModelsAgentRegistry(LocalAgentRegistry):
             custom_llm_provider=model_metadata.provider,
             api_key=model_metadata.api_key,
         )
-
-    def get(
-        self,
-        agent_id: str,
-        options: Optional[dict[str, Any]] = None,
-        model_metadata: Optional[ModelMetadata] = None,
-    ) -> Agent:
-        if model_metadata is not None:
-            agent_id = f"{agent_id}-custom"
-
-        return super().get(agent_id, options, model_metadata)

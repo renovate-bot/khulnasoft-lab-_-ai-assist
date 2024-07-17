@@ -1,7 +1,7 @@
 ---
-name: Custom ReAct Chat agent
+name: Mistral ReAct Chat agent
 model:
-  name: custom
+  name: mistral
   params:
     model_class_provider: litellm
     temperature: 0.0

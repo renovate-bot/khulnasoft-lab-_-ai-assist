@@ -22,7 +22,6 @@ class ContainerAgents(containers.DeclarativeContainer):
         },
         "class_overrides": {
             "chat/react": chat.ReActAgent,
-            "chat/react-custom": chat.ReActAgent,
         },
     }
 
