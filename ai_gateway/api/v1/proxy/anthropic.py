@@ -22,8 +22,8 @@ router = APIRouter()
 
 
 @router.post(f"/{KindModelProvider.ANTHROPIC.value}" + "/{path:path}")
-@feature_categories(FEATURE_CATEGORIES_FOR_PROXY_ENDPOINTS)
 @authorize_with_unit_primitive_header()
+@feature_categories(FEATURE_CATEGORIES_FOR_PROXY_ENDPOINTS)
 async def anthropic(
     request: Request,
     background_tasks: BackgroundTasks,
