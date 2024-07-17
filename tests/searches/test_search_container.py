@@ -26,7 +26,7 @@ def test_init_vertex_search_service_client(args, expected_init):
     with patch(
         "google.cloud.discoveryengine.SearchServiceAsyncClient"
     ) as mock_search_client:
-        next(_init_vertex_search_service_client(**args))
+        _init_vertex_search_service_client(**args)
 
         if expected_init:
             mock_search_client.assert_called_once()

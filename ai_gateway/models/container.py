@@ -1,5 +1,3 @@
-from typing import Iterator, Optional
-
 import httpx
 from anthropic import AsyncAnthropic
 from dependency_injector import containers, providers
@@ -26,56 +24,44 @@ def _init_vertex_grpc_client(
     endpoint: str,
     mock_model_responses: bool,
     custom_models_enabled: bool,
-) -> Iterator[Optional[PredictionServiceAsyncClient]]:
+) -> PredictionServiceAsyncClient | None:
     if mock_model_responses or custom_models_enabled:
-        yield None
-        return
+        return None
 
-    client = grpc_connect_vertex({"api_endpoint": endpoint})
-    yield client
-    client.transport.close()
+    return grpc_connect_vertex({"api_endpoint": endpoint})
 
 
 def _init_anthropic_client(
     mock_model_responses: bool,
-) -> Iterator[Optional[AsyncAnthropic]]:
+) -> AsyncAnthropic | None:
     if mock_model_responses:
-        yield None
-        return
+        return None
 
-    client = connect_anthropic()
-    yield client
-    client.close()
+    return connect_anthropic()
 
 
-async def _init_anthropic_proxy_client(
+def _init_anthropic_proxy_client(
     mock_model_responses: bool,
-):
+) -> httpx.AsyncClient | mock.AsyncClient:
     if mock_model_responses:
-        yield mock.AsyncClient()
-        return
+        return mock.AsyncClient()
 
-    client = httpx.AsyncClient(
+    return httpx.AsyncClient(
         base_url="https://api.anthropic.com/", timeout=httpx.Timeout(timeout=60.0)
     )
-    yield client
-    await client.aclose()
 
 
-async def _init_vertex_ai_proxy_client(
+def _init_vertex_ai_proxy_client(
     mock_model_responses: bool,
     endpoint: str,
-):
+) -> httpx.AsyncClient | None:
     if mock_model_responses:
-        yield None
-        return
+        return None
 
-    client = httpx.AsyncClient(
+    return httpx.AsyncClient(
         base_url=f"https://{endpoint}/",
         timeout=httpx.Timeout(timeout=60.0),
     )
-    yield client
-    await client.aclose()
 
 
 class ContainerModels(containers.DeclarativeContainer):
@@ -89,24 +75,24 @@ class ContainerModels(containers.DeclarativeContainer):
         config.mock_model_responses,
     )
 
-    grpc_client_vertex = providers.Resource(
+    grpc_client_vertex = providers.Singleton(
         _init_vertex_grpc_client,
         endpoint=config.vertex_text_model.endpoint,
         mock_model_responses=config.mock_model_responses,
         custom_models_enabled=config.custom_models.enabled,
     )
 
-    http_client_anthropic = providers.Resource(
+    http_client_anthropic = providers.Singleton(
         _init_anthropic_client,
         mock_model_responses=config.mock_model_responses,
     )
 
-    http_client_anthropic_proxy = providers.Resource(
+    http_client_anthropic_proxy = providers.Singleton(
         _init_anthropic_proxy_client,
         mock_model_responses=config.mock_model_responses,
     )
 
-    http_client_vertex_ai_proxy = providers.Resource(
+    http_client_vertex_ai_proxy = providers.Singleton(
         _init_vertex_ai_proxy_client,
         mock_model_responses=config.mock_model_responses,
         endpoint=config.vertex_text_model.endpoint,

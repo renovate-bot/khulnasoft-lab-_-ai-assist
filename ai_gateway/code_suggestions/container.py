@@ -137,7 +137,7 @@ class ContainerCodeSuggestions(containers.DeclarativeContainer):
 
     config = providers.Configuration(strict=True)
 
-    tokenizer = providers.Resource(init_tokenizer)
+    tokenizer = providers.Singleton(init_tokenizer)
 
     snowplow = providers.DependenciesContainer()
 

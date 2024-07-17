@@ -45,7 +45,7 @@ def test_init_vertex_grpc_client(args, expected_init):
         # "google.cloud.aiplatform.gapic.PredictionServiceAsyncClient"
         "ai_gateway.models.container.grpc_connect_vertex"
     ) as mock_grpc_client:
-        next(_init_vertex_grpc_client(**args))
+        _init_vertex_grpc_client(**args)
 
         if expected_init:
             mock_grpc_client.assert_called_once_with({"api_endpoint": args["endpoint"]})
@@ -66,10 +66,9 @@ def test_init_vertex_grpc_client(args, expected_init):
         ),
     ],
 )
-@pytest.mark.asyncio
-async def test_anthropic_proxy_client(args, expected_init):
+def test_anthropic_proxy_client(args, expected_init):
     with patch("httpx.AsyncClient") as mock_httpx_client:
-        await _init_anthropic_proxy_client(**args).__anext__()
+        _init_anthropic_proxy_client(**args)
 
         if expected_init:
             mock_httpx_client.assert_called_once_with(
@@ -99,10 +98,9 @@ async def test_anthropic_proxy_client(args, expected_init):
         ),
     ],
 )
-@pytest.mark.asyncio
-async def test_vertex_ai_proxy_client(args, expected_init):
+def test_vertex_ai_proxy_client(args, expected_init):
     with patch("httpx.AsyncClient") as mock_httpx_client:
-        await _init_vertex_ai_proxy_client(**args).__anext__()
+        _init_vertex_ai_proxy_client(**args)
 
         if expected_init:
             mock_httpx_client.assert_called_once_with(

@@ -34,7 +34,7 @@ class ContainerApplication(containers.DeclarativeContainer):
 
     config = providers.Configuration(strict=True)
 
-    interceptor: providers.Resource = providers.Resource(
+    interceptor: providers.Singleton = providers.Singleton(
         PromClientInterceptor,
         enable_client_handling_time_histogram=True,
         enable_client_stream_receive_time_histogram=True,
