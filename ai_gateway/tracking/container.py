@@ -24,10 +24,10 @@ def _init_snowplow_client(
 class ContainerTracking(containers.DeclarativeContainer):
     config = providers.Configuration(strict=True)
 
-    client = providers.Resource(
+    client = providers.Singleton(
         _init_snowplow_client,
         enabled=config.enabled,
-        configuration=providers.Resource(
+        configuration=providers.Singleton(
             SnowplowClientConfiguration,
             endpoint=config.endpoint,
             batch_size=config.batch_size,
@@ -35,7 +35,7 @@ class ContainerTracking(containers.DeclarativeContainer):
         ),
     )
 
-    instrumentator = providers.Resource(
+    instrumentator = providers.Singleton(
         SnowplowInstrumentator,
         client=client,
     )

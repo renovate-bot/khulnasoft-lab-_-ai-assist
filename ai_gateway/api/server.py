@@ -43,7 +43,6 @@ async def lifespan(app: FastAPI):
     config = app.extra["extra"]["config"]
     container_application = ContainerApplication()
     container_application.config.from_dict(config.model_dump())
-    container_application.init_resources()
 
     if config.instrumentator.thread_monitoring_enabled:
         loop = asyncio.get_running_loop()
@@ -56,8 +55,6 @@ async def lifespan(app: FastAPI):
     setup_litellm()
 
     yield
-
-    container_application.shutdown_resources()
 
 
 def create_fast_api_server(config: Config):
