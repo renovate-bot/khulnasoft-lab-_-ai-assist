@@ -6,6 +6,7 @@ from langchain_anthropic import ChatAnthropic
 from langchain_community.chat_models import ChatLiteLLM
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.prompts.chat import MessageLikeRepresentation
+from pydantic import HttpUrl
 from pyfakefs.fake_filesystem import FakeFilesystem
 
 from ai_gateway.agents import (
@@ -56,7 +57,7 @@ prompt_template:
 """,
     )
     fs.create_file(
-        agents_definitions_dir / "chat" / "react.yml",
+        agents_definitions_dir / "chat" / "react" / "base.yml",
         contents="""
 ---
 name: Chat react agent
@@ -84,7 +85,7 @@ stop:
 """,
     )
     fs.create_file(
-        agents_definitions_dir / "chat" / "react-custom.yml",
+        agents_definitions_dir / "chat" / "react" / "custom.yml",
         contents="""
 ---
 name: Chat react custom agent
@@ -144,7 +145,7 @@ def agents_registered():
                 prompt_template={"system": "Template1"},
             ),
         ),
-        "chat/react": AgentRegistered(
+        "chat/react/base": AgentRegistered(
             klass=MockAgentClass,
             config=AgentConfig(
                 name="Chat react agent",
@@ -170,7 +171,7 @@ def agents_registered():
                 stop=["Foo", "Bar"],
             ),
         ),
-        "chat/react-custom": AgentRegistered(
+        "chat/react/custom": AgentRegistered(
             klass=MockAgentClass,
             config=AgentConfig(
                 name="Chat react custom agent",
@@ -205,7 +206,6 @@ class TestLocalAgentRegistry:
         registry = LocalAgentRegistry.from_local_yaml(
             class_overrides={
                 "chat/react": MockAgentClass,
-                "chat/react-custom": MockAgentClass,
             },
             model_factories=model_factories,
         )
@@ -225,15 +225,6 @@ class TestLocalAgentRegistry:
         [
             (
                 "test",
-                "Test agent",
-                Agent,
-                [("system", "Template1")],
-                "claude-2.1",
-                None,
-                None,
-            ),
-            (
-                "test/base",
                 "Test agent",
                 Agent,
                 [("system", "Template1")],
@@ -326,7 +317,6 @@ class TestCustomModelsAgentRegistry:
         registry = LocalAgentRegistry.from_local_yaml(
             class_overrides={
                 "chat/react": MockAgentClass,
-                "chat/react-custom": MockAgentClass,
             },
             model_factories=model_factories,
         )
@@ -365,8 +355,8 @@ class TestCustomModelsAgentRegistry:
             (
                 "chat/react",
                 ModelMetadata(
-                    name="mistral",
-                    endpoint="http://localhost:4000/",
+                    name="custom",
+                    endpoint=HttpUrl("http://localhost:4000/"),
                     api_key="token",
                     provider="openai",
                 ),
@@ -376,7 +366,7 @@ class TestCustomModelsAgentRegistry:
                 "custom",
                 {
                     "stop": ["Foo", "Bar"],
-                    "model": "mistral",
+                    "model": "custom",
                     "custom_llm_provider": "openai",
                     "api_key": "token",
                     "api_base": "http://localhost:4000/",
