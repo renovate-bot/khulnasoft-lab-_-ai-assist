@@ -12,9 +12,7 @@ RUN apt-get update && apt-get install -y \
     # For asdf Python https://github.com/pyenv/pyenv/wiki#suggested-build-environment
     build-essential libssl-dev zlib1g-dev libbz2-dev libreadline-dev libsqlite3-dev libncursesw5-dev xz-utils tk-dev libffi-dev liblzma-dev \
     # For asdf Ruby https://github.com/rbenv/ruby-build/wiki#suggested-build-environment
-    autoconf patch rustc libyaml-dev libreadline6-dev libgmp-dev libgdbm6 libgdbm-dev libdb-dev uuid-dev \
-    # For asdf markdownlint-cli2
-    nodejs npm
+    autoconf patch rustc libyaml-dev libreadline6-dev libgmp-dev libgdbm6 libgdbm-dev libdb-dev uuid-dev
 
 # Set the locale UTF8
 ENV LANG C.UTF-8
@@ -39,6 +37,11 @@ RUN asdf plugin-add ruby https://github.com/asdf-vm/asdf-ruby
 RUN asdf plugin-add gcloud https://github.com/jthegedus/asdf-gcloud
 RUN asdf plugin add vale https://github.com/pdemagny/asdf-vale
 RUN asdf plugin add markdownlint-cli2 https://github.com/paulo-ferraz-oliveira/asdf-markdownlint-cli2
+RUN asdf plugin add nodejs https://github.com/asdf-vm/asdf-nodejs
+
+# Install nodejs first since markdownlint-cli2 needs it.
+# This can be dropped once asdf installs dependencies in order: https://github.com/asdf-vm/asdf/pull/1723
+RUN asdf install nodejs
 
 RUN asdf install
 
