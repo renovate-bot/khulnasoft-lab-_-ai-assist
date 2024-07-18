@@ -49,6 +49,10 @@ CHAT_INVOKABLES = [
         name="summarize_comments",
         unit_primitive=GitLabUnitPrimitive.SUMMARIZE_COMMENTS,
     ),
+    ChatInvokable(
+        name="troubleshoot_job",
+        unit_primitive=GitLabUnitPrimitive.TROUBLESHOOT_JOB,
+    ),
     # Deprecated. Added for backward compatibility.
     # Please, refer to `v2/chat/agent` for additional details.
     ChatInvokable(name="agent", unit_primitive=GitLabUnitPrimitive.DUO_CHAT),
