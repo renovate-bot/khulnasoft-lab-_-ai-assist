@@ -121,10 +121,15 @@ async def completions(
         # We support the prompt version 2 only with the Anthropic models
         if payload.prompt_version == 2:
             kwargs.update({"raw_prompt": payload.prompt})
-    elif payload.model_provider == KindModelProvider.LITELLM:
+    elif payload.model_provider in (
+        KindModelProvider.LITELLM,
+        KindModelProvider.MISTRALAI,
+    ):
         code_completions = completions_litellm_factory(
             model__name=payload.model_name,
             model__endpoint=payload.model_endpoint,
+            model__api_key=payload.model_api_key,
+            model__provider=payload.model_provider,
         )
     else:
         code_completions = completions_legacy_factory()

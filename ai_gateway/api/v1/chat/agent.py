@@ -74,11 +74,12 @@ async def chat(
     payload = prompt_component.payload
 
     try:
-        if payload.provider == KindModelProvider.LITELLM:
+        if payload.provider in (KindModelProvider.LITELLM, KindModelProvider.MISTRALAI):
             model = litellm_factory(
                 name=payload.model,
                 endpoint=payload.model_endpoint,
                 api_key=payload.model_api_key,
+                provider=payload.provider,
             )
 
             completion = await model.generate(

@@ -167,6 +167,7 @@ class ContainerModels(containers.DeclarativeContainer):
         original=providers.Factory(
             LiteLlmTextGenModel.from_model_name,
             custom_models_enabled=config.custom_models.enabled,
+            provider_keys=config.model_keys,
         ),
         mocked=providers.Factory(mock.ChatModel),
     )
@@ -176,6 +177,7 @@ class ContainerModels(containers.DeclarativeContainer):
         original=providers.Factory(
             LiteLlmChatModel.from_model_name,
             custom_models_enabled=config.custom_models.enabled,
+            provider_keys=config.model_keys,
         ),
         mocked=providers.Factory(mock.ChatModel),
     )

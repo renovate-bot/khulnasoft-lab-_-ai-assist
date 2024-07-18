@@ -30,13 +30,19 @@ class KindLiteLlmModel(str, Enum):
 
     # Chat models hosted behind openai proxies should be prefixed with "openai/":
     # https://docs.litellm.ai/docs/providers/openai_compatible
-    def chat_model(self) -> str:
-        return "openai/" + self.value
+    def _provider_prefix(self, provider):
+        if provider == KindModelProvider.LITELLM:
+            return "openai"
+
+        return provider.value
+
+    def chat_model(self, provider=KindModelProvider.LITELLM) -> str:
+        return f"{self._provider_prefix(provider)}/{self.value}"
 
     # Text completion models hosted behind openai proxies should be prefixed with "text-completion-openai/":
     # https://docs.litellm.ai/docs/providers/openai_compatible
-    def text_model(self) -> str:
-        return "text-completion-openai/" + self.value
+    def text_model(self, provider=KindModelProvider.LITELLM) -> str:
+        return f"text-completion-{self._provider_prefix(provider)}/{self.value}"
 
 
 MODEL_STOP_TOKENS = {
@@ -60,15 +66,17 @@ class LiteLlmChatModel(ChatModelBase):
         model_name: KindLiteLlmModel = KindLiteLlmModel.MISTRAL,
         endpoint: Optional[str] = None,
         api_key: Optional[str] = None,
+        provider: Optional[KindModelProvider] = KindModelProvider.LITELLM,
     ):
         if api_key is None:
             api_key = STUBBED_API_KEY
 
         self.api_key = api_key
         self.endpoint = endpoint
+        self.provider = provider
         self._metadata = ModelMetadata(
-            name=model_name.chat_model(),
-            engine=KindModelProvider.LITELLM.value,
+            name=model_name.chat_model(provider),
+            engine=provider.value,
         )
         self.stop_tokens = MODEL_STOP_TOKENS.get(model_name, [])
 
@@ -142,17 +150,24 @@ class LiteLlmChatModel(ChatModelBase):
         custom_models_enabled: bool = False,
         endpoint: Optional[str] = None,
         api_key: Optional[str] = None,
+        provider: Optional[KindModelProvider] = KindModelProvider.LITELLM,
+        provider_keys: Optional[dict] = None,
     ):
-        if not custom_models_enabled:
+        if not custom_models_enabled and provider == KindModelProvider.LITELLM:
             if endpoint is not None or api_key is not None:
                 raise ValueError("specifying custom models endpoint is disabled")
+
+        if provider == KindModelProvider.MISTRALAI:
+            api_key = provider_keys.get("mistral_api_key")
 
         try:
             kind_model = KindLiteLlmModel(name)
         except ValueError:
             raise ValueError(f"no model found by the name '{name}'")
 
-        return cls(model_name=kind_model, endpoint=endpoint, api_key=api_key)
+        return cls(
+            model_name=kind_model, endpoint=endpoint, api_key=api_key, provider=provider
+        )
 
 
 class LiteLlmTextGenModel(TextGenModelBase):
@@ -161,15 +176,17 @@ class LiteLlmTextGenModel(TextGenModelBase):
         model_name: KindLiteLlmModel = KindLiteLlmModel.CODE_GEMMA,
         endpoint: Optional[str] = None,
         api_key: Optional[str] = None,
+        provider: Optional[KindModelProvider] = KindModelProvider.LITELLM,
     ):
         if api_key is None:
             api_key = STUBBED_API_KEY
 
         self.api_key = api_key
         self.endpoint = endpoint
+        self.provider = provider
         self._metadata = ModelMetadata(
-            name=model_name.text_model(),
-            engine=KindModelProvider.LITELLM.value,
+            name=model_name.text_model(provider),
+            engine=provider.value,
         )
         self.stop_tokens = MODEL_STOP_TOKENS.get(model_name, [])
 
@@ -238,14 +255,21 @@ class LiteLlmTextGenModel(TextGenModelBase):
         custom_models_enabled: bool = False,
         endpoint: Optional[str] = None,
         api_key: Optional[str] = None,
+        provider: Optional[KindModelProvider] = KindModelProvider.LITELLM,
+        provider_keys: Optional[dict] = None,
     ):
-        if not custom_models_enabled:
+        if not custom_models_enabled and provider == KindModelProvider.LITELLM:
             if endpoint is not None or api_key is not None:
                 raise ValueError("specifying custom models endpoint is disabled")
+
+        if provider == KindModelProvider.MISTRALAI:
+            api_key = provider_keys.get("mistral_api_key")
 
         try:
             kind_model = KindLiteLlmModel(name)
         except ValueError:
             raise ValueError(f"no model found by the name '{name}'")
 
-        return cls(model_name=kind_model, endpoint=endpoint, api_key=api_key)
+        return cls(
+            model_name=kind_model, endpoint=endpoint, api_key=api_key, provider=provider
+        )
