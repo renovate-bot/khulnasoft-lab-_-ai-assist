@@ -37,6 +37,7 @@ class GitLabUnitPrimitive(str, Enum):
     SUMMARIZE_REVIEW = "summarize_review"
     SUMMARIZE_SUBMITTED_REVIEW = "summarize_submitted_review"
     SUMMARIZE_COMMENTS = "summarize_comments"
+    TROUBLESHOOT_JOB = "troubleshoot_job"
 
 
 class WrongUnitPrimitives(Exception):
@@ -62,6 +63,7 @@ FEATURE_CATEGORIES_FOR_PROXY_ENDPOINTS = {
     GitLabUnitPrimitive.SUMMARIZE_MERGE_REQUEST: GitLabFeatureCategory.CODE_REVIEW_WORKFLOW,
     GitLabUnitPrimitive.SUMMARIZE_REVIEW: GitLabFeatureCategory.CODE_REVIEW_WORKFLOW,
     GitLabUnitPrimitive.SUMMARIZE_SUBMITTED_REVIEW: GitLabFeatureCategory.CODE_REVIEW_WORKFLOW,
+    GitLabUnitPrimitive.TROUBLESHOOT_JOB: GitLabFeatureCategory.CONTINUOUS_INTEGRATION,
 }
 
 # TODO: Move these metadata to cloud connector yamls, which are accessible via the cloud connector python client.
@@ -84,4 +86,5 @@ UNIT_PRIMITIVE_AND_DESCRIPTION_MAPPING = {
     GitLabUnitPrimitive.SUMMARIZE_MERGE_REQUEST: "Summarize merge request from the comments.",
     GitLabUnitPrimitive.SUMMARIZE_REVIEW: "Summarize open reviews in merge requests.",
     GitLabUnitPrimitive.SUMMARIZE_SUBMITTED_REVIEW: "Summarize submitted reviews of the merge request.",
+    GitLabUnitPrimitive.TROUBLESHOOT_JOB: "Troubleshoot why a GitLab CI job failed and suggest a fix for it.",
 }
