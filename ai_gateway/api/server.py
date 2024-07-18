@@ -63,8 +63,8 @@ async def lifespan(app: FastAPI):
 def create_fast_api_server(config: Config):
 
     fastapi_app = FastAPI(
-        title="GitLab Code Suggestions",
-        description="GitLab Code Suggestions API to serve code completion predictions",
+        title="GitLab AI Gateway",
+        description="GitLab AI Gateway API to execute AI actions",
         openapi_url=config.fastapi.openapi_url,
         docs_url=config.fastapi.docs_url,
         redoc_url=config.fastapi.redoc_url,
