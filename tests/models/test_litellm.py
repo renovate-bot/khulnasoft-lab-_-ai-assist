@@ -4,6 +4,7 @@ from unittest.mock import AsyncMock, Mock, patch
 import pytest
 
 from ai_gateway.models import KindLiteLlmModel, LiteLlmChatModel
+from ai_gateway.models.base import KindModelProvider
 from ai_gateway.models.base_chat import Message, Role
 from ai_gateway.models.base_text import TextGenModelChunk, TextGenModelOutput
 from ai_gateway.models.litellm import LiteLlmTextGenModel
@@ -14,11 +15,24 @@ class TestKindLiteLlmModel:
         assert KindLiteLlmModel.MISTRAL.chat_model() == "openai/mistral"
         assert KindLiteLlmModel.MIXTRAL.chat_model() == "openai/mixtral"
         assert KindLiteLlmModel.CODE_GEMMA.chat_model() == "openai/codegemma"
+        assert KindLiteLlmModel.CODESTRAL.chat_model() == "openai/codestral"
+        assert (
+            KindLiteLlmModel.CODESTRAL.chat_model(provider=KindModelProvider.MISTRALAI)
+            == "codestral/codestral"
+        )
 
     def test_text_model(self):
         assert (
             KindLiteLlmModel.CODE_GEMMA.text_model()
             == "text-completion-openai/codegemma"
+        )
+        assert (
+            KindLiteLlmModel.CODESTRAL.text_model()
+            == "text-completion-openai/codestral"
+        )
+        assert (
+            KindLiteLlmModel.CODESTRAL.text_model(provider=KindModelProvider.MISTRALAI)
+            == "text-completion-codestral/codestral"
         )
 
 
@@ -40,29 +54,92 @@ class TestLiteLlmChatMode:
             custom_models_enabled=True,
         )
 
-    @pytest.mark.parametrize("model_name", ["mistral", "mixtral"])
-    def test_from_model_name(self, model_name: str, endpoint):
+    @pytest.mark.parametrize(
+        (
+            "model_name",
+            "provider",
+            "custom_models_enabled",
+            "provider_keys",
+            "expected_name",
+            "expected_api_key",
+            "expected_engine",
+        ),
+        [
+            (
+                "mistral",
+                KindModelProvider.LITELLM,
+                True,
+                {},
+                "openai/mistral",
+                "stubbed-api-key",
+                "litellm",
+            ),
+            (
+                "mixtral",
+                KindModelProvider.LITELLM,
+                True,
+                {},
+                "openai/mixtral",
+                "stubbed-api-key",
+                "litellm",
+            ),
+            (
+                "codestral",
+                KindModelProvider.MISTRALAI,
+                True,
+                {},
+                "codestral/codestral",
+                "stubbed-api-key",
+                "codestral",
+            ),
+            (
+                "codestral",
+                KindModelProvider.MISTRALAI,
+                True,
+                {"mistral_api_key": "stubbed-mistral-api-key"},
+                "codestral/codestral",
+                "stubbed-mistral-api-key",
+                "codestral",
+            ),
+        ],
+    )
+    def test_from_model_name(
+        self,
+        model_name: str,
+        provider: KindModelProvider,
+        custom_models_enabled: bool,
+        provider_keys: dict,
+        expected_name: str,
+        expected_api_key: str,
+        expected_engine: str,
+        endpoint,
+    ):
         model = LiteLlmChatModel.from_model_name(
-            name=model_name, endpoint=endpoint, custom_models_enabled=True
+            name=model_name,
+            endpoint=endpoint,
+            custom_models_enabled=custom_models_enabled,
+            provider=provider,
+            provider_keys=provider_keys,
         )
 
-        assert model.metadata.name == f"openai/{model_name}"
+        assert model.metadata.name == expected_name
         assert model.endpoint == endpoint
-        assert model.api_key == "stubbed-api-key"
-        assert model.metadata.engine == "litellm"
+        assert model.api_key == expected_api_key
+        assert model.metadata.engine == expected_engine
 
         model = LiteLlmChatModel.from_model_name(name=model_name, api_key=None)
 
         assert model.endpoint == None
         assert model.api_key == "stubbed-api-key"
 
-        with pytest.raises(ValueError) as exc:
-            LiteLlmChatModel.from_model_name(name=model_name, endpoint=endpoint)
-        assert str(exc.value) == "specifying custom models endpoint is disabled"
+        if provider == KindModelProvider.LITELLM:
+            with pytest.raises(ValueError) as exc:
+                LiteLlmChatModel.from_model_name(name=model_name, endpoint=endpoint)
+            assert str(exc.value) == "specifying custom models endpoint is disabled"
 
-        with pytest.raises(ValueError) as exc:
-            LiteLlmChatModel.from_model_name(name=model_name, api_key="api-key")
-        assert str(exc.value) == "specifying custom models endpoint is disabled"
+            with pytest.raises(ValueError) as exc:
+                LiteLlmChatModel.from_model_name(name=model_name, api_key="api-key")
+            assert str(exc.value) == "specifying custom models endpoint is disabled"
 
     @pytest.mark.asyncio
     async def test_generate(self, lite_llm_chat_model, endpoint, api_key):
@@ -199,29 +276,83 @@ class TestLiteLlmTextGenModel:
             custom_models_enabled=True,
         )
 
-    @pytest.mark.parametrize("model_name", ["codegemma"])
-    def test_from_model_name(self, model_name: str, endpoint):
+    @pytest.mark.parametrize(
+        (
+            "model_name",
+            "provider",
+            "custom_models_enabled",
+            "provider_keys",
+            "expected_name",
+            "expected_api_key",
+            "expected_engine",
+        ),
+        [
+            (
+                "codegemma",
+                KindModelProvider.LITELLM,
+                True,
+                {},
+                "text-completion-openai/codegemma",
+                "stubbed-api-key",
+                "litellm",
+            ),
+            (
+                "codestral",
+                KindModelProvider.MISTRALAI,
+                True,
+                {},
+                "text-completion-codestral/codestral",
+                "stubbed-api-key",
+                "codestral",
+            ),
+            (
+                "codestral",
+                KindModelProvider.MISTRALAI,
+                True,
+                {"mistral_api_key": "stubbed-mistral-api-key"},
+                "text-completion-codestral/codestral",
+                "stubbed-mistral-api-key",
+                "codestral",
+            ),
+        ],
+    )
+    def test_from_model_name(
+        self,
+        model_name: str,
+        provider: KindModelProvider,
+        custom_models_enabled: bool,
+        provider_keys: dict,
+        expected_name: str,
+        expected_api_key: str,
+        expected_engine: str,
+        endpoint,
+    ):
         model = LiteLlmTextGenModel.from_model_name(
-            name=model_name, endpoint=endpoint, custom_models_enabled=True
+            name=model_name,
+            endpoint=endpoint,
+            custom_models_enabled=custom_models_enabled,
+            provider=provider,
+            provider_keys=provider_keys,
         )
 
-        assert model.metadata.name == f"text-completion-openai/{model_name}"
+        assert model.metadata.name == expected_name
         assert model.endpoint == endpoint
-        assert model.api_key == "stubbed-api-key"
-        assert model.metadata.engine == "litellm"
+        assert model.api_key == expected_api_key
+        assert model.metadata.engine == expected_engine
 
         model = LiteLlmTextGenModel.from_model_name(name=model_name, api_key=None)
 
         assert model.endpoint == None
         assert model.api_key == "stubbed-api-key"
 
-        with pytest.raises(ValueError) as exc:
-            LiteLlmTextGenModel.from_model_name(name=model_name, endpoint=endpoint)
-        assert str(exc.value) == "specifying custom models endpoint is disabled"
+        if provider == KindModelProvider.LITELLM:
+            with pytest.raises(ValueError) as exc:
+                LiteLlmTextGenModel.from_model_name(name=model_name, endpoint=endpoint)
+            assert str(exc.value) == "specifying custom models endpoint is disabled"
 
-        with pytest.raises(ValueError) as exc:
-            LiteLlmTextGenModel.from_model_name(name=model_name, api_key="api-key")
-        assert str(exc.value) == "specifying custom models endpoint is disabled"
+            with pytest.raises(ValueError) as exc:
+                LiteLlmTextGenModel.from_model_name(name=model_name, api_key="api-key")
+            assert str(exc.value) == "specifying custom models endpoint is disabled"
 
     @pytest.mark.asyncio
     async def test_generate(self, lite_llm_text_model, endpoint, api_key):

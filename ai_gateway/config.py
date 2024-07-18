@@ -18,6 +18,7 @@ __all__ = [
     "ConfigVertexTextModel",
     "ConfigModelConcurrency",
     "ConfigCustomModels",
+    "ConfigModelKeys",
 ]
 
 ENV_PREFIX = "AIGW"
@@ -86,6 +87,10 @@ class ConfigCustomModels(BaseModel):
 class ConfigAbuseDetection(BaseModel):
     enabled: bool = False
     sampling_rate: float = 0.1  # 1/10 of requests are sampled
+
+
+class ConfigModelKeys(BaseModel):
+    mistral_api_key: Optional[str] = None
 
 
 def _build_location(default: str = "us-central1") -> str:
@@ -170,6 +175,9 @@ class Config(BaseSettings):
     custom_models: Annotated[
         ConfigCustomModels, Field(default_factory=ConfigCustomModels)
     ] = ConfigCustomModels()
+    model_keys: Annotated[ConfigModelKeys, Field(default_factory=ConfigModelKeys)] = (
+        ConfigModelKeys()
+    )
     vertex_text_model: Annotated[
         ConfigVertexTextModel, Field(default_factory=ConfigVertexTextModel)
     ] = ConfigVertexTextModel()
