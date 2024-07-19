@@ -1,8 +1,10 @@
 import pytest
 from langchain_core.runnables import chain
+from pydantic import HttpUrl
 from pydantic.v1.error_wrappers import ValidationError
 
 from ai_gateway.agents.base import Agent
+from ai_gateway.agents.typing import STUBBED_API_KEY, ModelMetadata
 from ai_gateway.gitlab_features import GitLabUnitPrimitive
 
 
@@ -37,3 +39,18 @@ class TestAgent:
         )
 
         assert messages == [("system", "Hi, I'm Duo"), ("user", "What's up?")]
+
+
+class TestModelMetadata:
+    def test_stubbing_empty_api_key(self):
+        params = {
+            "endpoint": HttpUrl("http://example.com"),
+            "name": "mistral",
+            "provider": "litellm",
+        }
+
+        metadata = ModelMetadata(**params)
+        assert metadata.api_key == STUBBED_API_KEY
+
+        metadata = ModelMetadata(**params, api_key="")
+        assert metadata.api_key == STUBBED_API_KEY

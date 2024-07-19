@@ -5,6 +5,7 @@ from google.cloud.aiplatform.gapic import PredictionServiceAsyncClient
 
 from ai_gateway.config import ConfigModelConcurrency
 from ai_gateway.models import mock
+from ai_gateway.models.agent_model import AgentModel
 from ai_gateway.models.anthropic import AnthropicChatModel, AnthropicModel
 from ai_gateway.models.base import connect_anthropic, grpc_connect_vertex
 from ai_gateway.models.litellm import LiteLlmChatModel, LiteLlmTextGenModel
@@ -166,6 +167,12 @@ class ContainerModels(containers.DeclarativeContainer):
             provider_keys=config.model_keys,
         ),
         mocked=providers.Factory(mock.ChatModel),
+    )
+
+    agent_model = providers.Selector(
+        _mock_selector,
+        original=providers.Factory(AgentModel),
+        mocked=providers.Factory(mock.LLM),
     )
 
     anthropic_proxy_client = providers.Factory(

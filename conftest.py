@@ -172,6 +172,18 @@ def mock_llm_chat(mock_output: TextGenModelOutput):
 
 
 @pytest.fixture
+def mock_llm_text(mock_output: TextGenModelOutput):
+    with _mock_generate("ai_gateway.models.litellm.LiteLlmTextGenModel", mock_output) as mock:
+        yield mock
+
+
+@pytest.fixture
+def mock_agent_model(mock_output: TextGenModelOutput):
+    with _mock_generate("ai_gateway.models.agent_model.AgentModel", mock_output) as mock:
+        yield mock
+
+
+@pytest.fixture
 def mock_completions_legacy_output_text():
     yield "def search"
 
