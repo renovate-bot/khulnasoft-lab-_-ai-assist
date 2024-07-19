@@ -1,0 +1,20 @@
+---
+name: Codegemma Code Completions
+model:
+  name: codegemma
+  params:
+    model_class_provider: litellm
+    timeout: 60
+    temperature: 0.95
+    max_tokens: 128
+    max_retries: 1
+unit_primitives:
+  - code_suggestions
+prompt_template:
+  user: |
+    <|fim_prefix|>{prefix}<|fim_suffix|>{suffix}<|fim_middle|>
+stop:
+  - <|fim_prefix|>
+  - <|fim_suffix|>
+  - <|fim_middle|>
+  - <|file_separator|>

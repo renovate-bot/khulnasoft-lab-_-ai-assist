@@ -341,12 +341,13 @@ class TestCodeCompletions:
     @pytest.mark.parametrize(
         (
             "prompt_version",
-            "prefix",
+            "prompt",
             "model_provider",
             "model_name",
             "model_endpoint",
             "model_api_key",
             "want_litellm_called",
+            "want_agent_called",
             "want_status",
             "want_choices",
         ),
@@ -360,22 +361,49 @@ class TestCodeCompletions:
                 "http://localhost:4000/",
                 "api-key",
                 True,
+                False,
                 200,
-                [{"text": "def search", "index": 0, "finish_reason": "length"}],
+                [{"text": "test completion", "index": 0, "finish_reason": "length"}],
+            ),
+            (
+                2,
+                "",
+                "litellm",
+                "codegemma",
+                "http://localhost:4000/",
+                "api-key",
+                False,
+                True,
+                200,
+                [{"text": "test completion", "index": 0, "finish_reason": "length"}],
+            ),
+            (
+                2,
+                None,
+                "litellm",
+                "codegemma",
+                "http://localhost:4000/",
+                "api-key",
+                False,
+                True,
+                200,
+                [{"text": "test completion", "index": 0, "finish_reason": "length"}],
             ),
         ],
     )
     def test_non_stream_response(
         self,
         mock_client,
-        mock_completions: Mock,
+        mock_llm_text: Mock,
+        mock_agent_model: Mock,
         prompt_version,
-        prefix,
+        prompt,
         model_provider,
         model_name,
         model_endpoint,
         model_api_key,
         want_litellm_called,
+        want_agent_called,
         want_status,
         want_choices,
     ):
@@ -393,10 +421,10 @@ class TestCodeCompletions:
                 "project_id": 278964,
                 "current_file": {
                     "file_name": "main.py",
-                    "content_above_cursor": prefix,
+                    "content_above_cursor": "foo",
                     "content_below_cursor": "\n",
                 },
-                "prompt": "",
+                "prompt": prompt,
                 "model_provider": model_provider,
                 "model_name": model_name,
                 "model_endpoint": model_endpoint,
@@ -405,7 +433,8 @@ class TestCodeCompletions:
         )
 
         assert response.status_code == want_status
-        assert mock_completions.called == want_litellm_called
+        assert mock_llm_text.called == want_litellm_called
+        assert mock_agent_model.called == want_agent_called
 
         if want_status == 200:
             body = response.json()

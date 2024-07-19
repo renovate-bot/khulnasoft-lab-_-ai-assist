@@ -38,7 +38,7 @@ class LocalAgentRegistry(BaseAgentRegistry):
         agent_id: str,
         model_metadata: Optional[ModelMetadata] = None,
     ) -> str:
-        if model_metadata is not None:
+        if model_metadata:
             return f"{agent_id}/{model_metadata.name}"
 
         return f"{agent_id}/{self.key_agent_type_base}"

@@ -7,6 +7,8 @@ from dependency_injector.providers import Factory
 from fastapi import APIRouter, Body, Depends, HTTPException, Request, status
 from starlette.datastructures import CommaSeparatedStrings
 
+from ai_gateway.agents import BaseAgentRegistry
+from ai_gateway.agents.typing import ModelMetadata
 from ai_gateway.api.feature_category import feature_category
 from ai_gateway.api.middleware import (
     X_GITLAB_GLOBAL_USER_ID_HEADER,
@@ -27,6 +29,7 @@ from ai_gateway.api.v2.code.typing import (
     SuggestionsResponse,
 )
 from ai_gateway.async_dependency_resolver import (
+    get_code_suggestions_completions_agent_factory_provider,
     get_code_suggestions_completions_anthropic_provider,
     get_code_suggestions_completions_litellm_factory_provider,
     get_code_suggestions_completions_vertex_legacy_provider,
@@ -34,6 +37,7 @@ from ai_gateway.async_dependency_resolver import (
     get_code_suggestions_generations_anthropic_factory_provider,
     get_code_suggestions_generations_litellm_factory_provider,
     get_code_suggestions_generations_vertex_provider,
+    get_container_application,
     get_snowplow_instrumentator,
 )
 from ai_gateway.auth.self_signed_jwt import SELF_SIGNED_TOKEN_ISSUER
@@ -71,6 +75,12 @@ GenerationsRequestWithVersion = Annotated[
     Body(discriminator="prompt_version"),
 ]
 
+COMPLETIONS_AGENT_ID = "code_suggestions/completions"
+
+
+async def get_agent_registry():
+    yield get_container_application().pkg_agents.agent_registry()
+
 
 @router.post("/completions")
 @router.post("/code/completions")
@@ -79,6 +89,7 @@ async def completions(
     request: Request,
     payload: CompletionsRequestWithVersion,
     current_user: Annotated[GitLabUser, Depends(get_current_user)],
+    agent_registry: Annotated[BaseAgentRegistry, Depends(get_agent_registry)],
     completions_legacy_factory: Factory[CodeCompletionsLegacy] = Depends(
         get_code_suggestions_completions_vertex_legacy_provider
     ),
@@ -87,6 +98,9 @@ async def completions(
     ),
     completions_litellm_factory: Factory[CodeCompletions] = Depends(
         get_code_suggestions_completions_litellm_factory_provider
+    ),
+    completions_agent_factory: Factory[CodeCompletions] = Depends(
+        get_code_suggestions_completions_agent_factory_provider
     ),
     snowplow_instrumentator: SnowplowInstrumentator = Depends(
         get_snowplow_instrumentator
@@ -125,12 +139,28 @@ async def completions(
         KindModelProvider.LITELLM,
         KindModelProvider.MISTRALAI,
     ):
-        code_completions = completions_litellm_factory(
-            model__name=payload.model_name,
-            model__endpoint=payload.model_endpoint,
-            model__api_key=payload.model_api_key,
-            model__provider=payload.model_provider,
-        )
+        if payload.prompt_version == 2 and not payload.prompt:
+            model_metadata = ModelMetadata(
+                name=payload.model_name,
+                endpoint=payload.model_endpoint,
+                api_key=payload.model_api_key,
+                provider="text-completion-openai",
+            )
+
+            agent = agent_registry.get_on_behalf(
+                current_user, COMPLETIONS_AGENT_ID, None, model_metadata
+            )
+
+            code_completions = completions_agent_factory(
+                model__agent=agent,
+            )
+        else:
+            code_completions = completions_litellm_factory(
+                model__name=payload.model_name,
+                model__endpoint=payload.model_endpoint,
+                model__api_key=payload.model_api_key,
+                model__provider=payload.model_provider,
+            )
     else:
         code_completions = completions_legacy_factory()
         if payload.choices_count > 0:

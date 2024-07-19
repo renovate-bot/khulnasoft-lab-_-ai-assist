@@ -133,7 +133,7 @@ class TestAgent:
             json=inputs,
         )
 
-        mock_registry_get.assert_called_with("test", None)
+        mock_registry_get.assert_called_with("test", None, None)
         assert response.status_code == expected_status
         assert response.json() == expected_response
 

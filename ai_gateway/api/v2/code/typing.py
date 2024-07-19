@@ -98,7 +98,7 @@ class GenerationsRequestV1(GenerationsRequest):
 
 class CompletionsRequestV2(CompletionsRequest):
     prompt_version: Literal[2]
-    prompt: str
+    prompt: Optional[str] = None
 
 
 class GenerationsRequestV2(GenerationsRequest):

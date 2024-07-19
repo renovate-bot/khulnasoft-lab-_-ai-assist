@@ -66,9 +66,13 @@ class BaseAgentRegistry(ABC):
         pass
 
     def get_on_behalf(
-        self, user: GitLabUser, agent_id: str, options: Optional[dict[str, Any]] = None
+        self,
+        user: GitLabUser,
+        agent_id: str,
+        options: Optional[dict[str, Any]] = None,
+        model_metadata: Optional[ModelMetadata] = None,
     ) -> Agent:
-        agent = self.get(agent_id, options)
+        agent = self.get(agent_id, options, model_metadata)
 
         for unit_primitive in agent.unit_primitives:
             if not user.can(unit_primitive):
