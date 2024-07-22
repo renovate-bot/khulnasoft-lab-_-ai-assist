@@ -29,6 +29,7 @@ from ai_gateway.auth import AuthProvider, UserClaims
 from ai_gateway.auth.self_signed_jwt import SELF_SIGNED_TOKEN_ISSUER
 from ai_gateway.auth.user import GitLabUser
 from ai_gateway.instrumentators.base import Telemetry, TelemetryInstrumentator
+from ai_gateway.internal_events import EventContext, current_event_context
 from ai_gateway.tracking.errors import log_exception
 
 __all__ = [
@@ -286,6 +287,38 @@ class MiddlewareAuthentication(Middleware):
             ),
             on_error=MiddlewareAuthentication.on_auth_error,
         )
+
+
+class InternalEventMiddleware:
+    def __init__(self, app, skip_endpoints, enabled, environment):
+        self.app = app
+        self.enabled = enabled
+        self.environment = environment
+        self.path_resolver = _PathResolver.from_optional_list(skip_endpoints)
+
+    async def __call__(self, scope, receive, send):
+        if scope["type"] != "http" or not self.enabled:
+            await self.app(scope, receive, send)
+            return
+
+        request = Request(scope)
+
+        if self.path_resolver.skip_path(request.url.path):
+            await self.app(scope, receive, send)
+            return
+
+        context = EventContext(
+            environment=self.environment,
+            source=request.headers.get("User-Agent"),
+            realm=request.headers.get(X_GITLAB_REALM_HEADER),
+            instance_id=request.headers.get(X_GITLAB_INSTANCE_ID_HEADER),
+            host_name=request.headers.get(X_GITLAB_HOST_NAME_HEADER),
+            instance_version=request.headers.get(X_GITLAB_VERSION_HEADER),
+            global_user_id=request.headers.get(X_GITLAB_GLOBAL_USER_ID_HEADER),
+        )
+        current_event_context.set(context)
+
+        await self.app(scope, receive, send)
 
 
 class MiddlewareModelTelemetry(Middleware):

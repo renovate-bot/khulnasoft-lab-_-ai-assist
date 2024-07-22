@@ -1,4 +1,5 @@
 AIGW_FASTAPI__API_PORT: "8080"
+AIGW_ENVIRONMENT: "staging"
 AIGW_GITLAB_URL: "https://staging.gitlab.com"
 AIGW_GITLAB_API_URL: "https://staging.gitlab.com/api/v4/"
 AIGW_CUSTOMER_PORTAL_URL: "https://customers.staging.gitlab.com"
