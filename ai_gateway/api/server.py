@@ -15,6 +15,7 @@ from starlette_context.middleware import RawContextMiddleware
 
 from ai_gateway.agents.instrumentator import AgentInstrumentator
 from ai_gateway.api.middleware import (
+    InternalEventMiddleware,
     MiddlewareAuthentication,
     MiddlewareLogRequest,
     MiddlewareModelTelemetry,
@@ -91,6 +92,12 @@ def create_fast_api_server(config: Config):
                 bypass_auth=config.auth.bypass_external,
                 bypass_auth_with_header=config.auth.bypass_external_with_header,
                 skip_endpoints=_SKIP_ENDPOINTS,
+            ),
+            Middleware(
+                InternalEventMiddleware,
+                skip_endpoints=_SKIP_ENDPOINTS,
+                enabled=config.snowplow.enabled,
+                environment=config.environment,
             ),
             MiddlewareModelTelemetry(skip_endpoints=_SKIP_ENDPOINTS),
         ],

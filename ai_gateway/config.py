@@ -144,6 +144,7 @@ class Config(BaseSettings):
         extra="ignore",
     )
 
+    environment: str = "production"
     gitlab_url: str = "https://gitlab.com"
     gitlab_api_url: str = "https://gitlab.com/api/v4/"
     customer_portal_url: str = "https://customers.gitlab.com"
