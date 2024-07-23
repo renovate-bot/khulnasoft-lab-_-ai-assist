@@ -123,13 +123,13 @@ files = [
 
 [[package]]
 name = "anthropic"
-version = "0.30.1"
+version = "0.31.0"
 description = "The official Python library for the anthropic API"
 optional = false
 python-versions = ">=3.7"
 files = [
-    {file = "anthropic-0.30.1-py3-none-any.whl", hash = "sha256:a58a8c3865a3df21e3b10e5fbd1a54b84cb01386f3e9fea9c65334b3cb306c6f"},
-    {file = "anthropic-0.30.1.tar.gz", hash = "sha256:e082aa2601834a8a374f8bb45bca68493d892b2a03a1c44cfcc38465550c9b8b"},
+    {file = "anthropic-0.31.0-py3-none-any.whl", hash = "sha256:77f7a428e1723b79a571c2427ae885d9257c68f700726dff7ce684c3972d6598"},
+    {file = "anthropic-0.31.0.tar.gz", hash = "sha256:14f8f65231859a65ec9aacbbea070e412c8bd41a5d3f36793dac4292c3c78d3a"},
 ]
 
 [package.dependencies]
@@ -4850,4 +4850,4 @@ test = ["big-O", "importlib-resources", "jaraco.functools", "jaraco.itertools", 
 [metadata]
 lock-version = "2.0"
 python-versions = "~3.10.0"
-content-hash = "8bd273626f02d271ab5c9db71bab8e2fc0d5179a28ce24ac1d8e54fc88766c7b"
+content-hash = "383686923acc00e0ef005c8ef01a556945257a34ddc1f27cc82968133fabbd48"
