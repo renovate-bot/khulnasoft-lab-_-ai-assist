@@ -3031,6 +3031,20 @@ pytest = ">=4.6"
 testing = ["fields", "hunter", "process-tests", "pytest-xdist", "virtualenv"]
 
 [[package]]
+name = "pytest-randomly"
+version = "3.15.0"
+description = "Pytest plugin to randomly order tests and control random.seed."
+optional = false
+python-versions = ">=3.8"
+files = [
+    {file = "pytest_randomly-3.15.0-py3-none-any.whl", hash = "sha256:0516f4344b29f4e9cdae8bce31c4aeebf59d0b9ef05927c33354ff3859eeeca6"},
+    {file = "pytest_randomly-3.15.0.tar.gz", hash = "sha256:b908529648667ba5e54723088edd6f82252f540cc340d748d1fa985539687047"},
+]
+
+[package.dependencies]
+pytest = "*"
+
+[[package]]
 name = "pytest-watcher"
 version = "0.4.2"
 description = "Automatically rerun your tests on file modifications"
@@ -4850,4 +4864,4 @@ test = ["big-O", "importlib-resources", "jaraco.functools", "jaraco.itertools", 
 [metadata]
 lock-version = "2.0"
 python-versions = "~3.10.0"
-content-hash = "383686923acc00e0ef005c8ef01a556945257a34ddc1f27cc82968133fabbd48"
+content-hash = "8a772b68e6d6af86fb29db2e1511153afd1edb426363e1ec9ea79b1556599df4"
