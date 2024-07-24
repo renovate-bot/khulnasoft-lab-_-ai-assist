@@ -1,6 +1,7 @@
 import logging
 import time
 import traceback
+from datetime import datetime
 from typing import Optional, Tuple
 
 import structlog
@@ -309,12 +310,14 @@ class InternalEventMiddleware:
 
         context = EventContext(
             environment=self.environment,
-            source=request.headers.get("User-Agent"),
+            source="ai-gateway-python",
             realm=request.headers.get(X_GITLAB_REALM_HEADER),
             instance_id=request.headers.get(X_GITLAB_INSTANCE_ID_HEADER),
             host_name=request.headers.get(X_GITLAB_HOST_NAME_HEADER),
             instance_version=request.headers.get(X_GITLAB_VERSION_HEADER),
             global_user_id=request.headers.get(X_GITLAB_GLOBAL_USER_ID_HEADER),
+            context_generated_at=datetime.now().isoformat(),
+            correlation_id=correlation_id.get(),
         )
         current_event_context.set(context)
 

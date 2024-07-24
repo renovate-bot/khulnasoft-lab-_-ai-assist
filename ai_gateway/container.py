@@ -6,6 +6,7 @@ from ai_gateway.agents.container import ContainerAgents
 from ai_gateway.auth.container import ContainerSelfSignedJwt
 from ai_gateway.chat.container import ContainerChat
 from ai_gateway.code_suggestions.container import ContainerCodeSuggestions
+from ai_gateway.internal_events import ContainerInternalEvent
 from ai_gateway.models.container import ContainerModels
 from ai_gateway.models.v2.container import ContainerModels as ContainerModelsV2
 from ai_gateway.searches.container import ContainerSearches
@@ -47,6 +48,10 @@ class ContainerApplication(containers.DeclarativeContainer):
     )
 
     snowplow = providers.Container(ContainerTracking, config=config.snowplow)
+
+    internal_event = providers.Container(
+        ContainerInternalEvent, config=config.internal_event
+    )
 
     pkg_models = providers.Container(
         ContainerModels,
