@@ -7,13 +7,13 @@ from ai_gateway.internal_events.context import EventContext, current_event_conte
 
 def test_event_context_default_values():
     context = EventContext()
-    assert context.environment == "unknown"
-    assert context.source == "unknown"
+    assert context.environment == "development"
+    assert context.source == "ai-gateway-python"
     assert context.realm is None
-    assert context.instance_id == "unknown"
-    assert context.host_name == "unknown"
-    assert context.instance_version == "unknown"
-    assert context.global_user_id == "unknown"
+    assert context.instance_id is None
+    assert context.host_name is None
+    assert context.instance_version is None
+    assert context.global_user_id is None
 
 
 def test_event_context_custom_values():
@@ -38,7 +38,7 @@ def test_event_context_custom_values():
 def test_current_event_context_default():
     assert isinstance(current_event_context, ContextVar)
     assert isinstance(current_event_context.get(), EventContext)
-    assert current_event_context.get().environment == "unknown"
+    assert current_event_context.get().environment == "development"
 
 
 def test_current_event_context_set_and_reset():
@@ -61,4 +61,4 @@ def test_event_context_model_validation():
 def test_event_context_optional_fields():
     context = EventContext(environment="test")
     assert context.environment == "test"
-    assert context.source == "unknown"
+    assert context.source == "ai-gateway-python"

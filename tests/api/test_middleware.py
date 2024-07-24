@@ -101,12 +101,15 @@ async def test_middleware_set_context(middleware):
 
         expected_context = EventContext(
             environment="test",
-            source="TestAgent",
+            source="ai-gateway-python",
             realm="test-realm",
             instance_id="test-instance",
             host_name="test-host",
             instance_version="test-version",
             global_user_id="test-user",
+            context_generated_at=mock_event_context.set.call_args[0][
+                0
+            ].context_generated_at,
         )
         mock_event_context.set.assert_called_once_with(expected_context)
 
@@ -133,12 +136,15 @@ async def test_middleware_missing_headers(middleware):
 
         expected_context = EventContext(
             environment="test",
-            source="TestAgent",
+            source="ai-gateway-python",
             realm=None,
             instance_id=None,
             host_name=None,
             instance_version=None,
             global_user_id=None,
+            context_generated_at=mock_event_context.set.call_args[0][
+                0
+            ].context_generated_at,
         )
         mock_event_context.set.assert_called_once_with(expected_context)
 

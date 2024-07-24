@@ -73,7 +73,18 @@ class FFlags(BaseSettings):
     ] = FFlagsCodeSuggestions()
 
 
-class ConfigSnowplow(BaseModel):
+class ConfigInternalEvent(BaseModel):
+    enabled: bool = False
+    app_id: str = "gitlab_ai_gateway"
+    namespace: str = "gl"
+    endpoint: Optional[str] = None
+    batch_size: Optional[int] = 10
+    thread_count: Optional[int] = 1
+
+
+# TODO: Migrate to InternalEvent
+# See https://gitlab.com/gitlab-org/modelops/applied-ml/code-suggestions/ai-assist/-/issues/491
+class ConfigSnowplow(ConfigInternalEvent):
     enabled: bool = False
     endpoint: Optional[str] = None
     batch_size: Optional[int] = 10
@@ -170,6 +181,9 @@ class Config(BaseSettings):
     snowplow: Annotated[ConfigSnowplow, Field(default_factory=ConfigSnowplow)] = (
         ConfigSnowplow()
     )
+    internal_event: Annotated[
+        ConfigInternalEvent, Field(default_factory=ConfigInternalEvent)
+    ] = ConfigInternalEvent()
     google_cloud_platform: Annotated[
         ConfigGoogleCloudPlatform, Field(default_factory=ConfigGoogleCloudPlatform)
     ] = ConfigGoogleCloudPlatform()

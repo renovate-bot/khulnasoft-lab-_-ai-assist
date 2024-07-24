@@ -99,6 +99,13 @@ async def get_vertex_ai_proxy_client(
 
 
 @inject
+async def get_internal_event_client(
+    internal_event_client=Provide[ContainerApplication.internal_event.client],
+):
+    return internal_event_client
+
+
+@inject
 async def get_abuse_detector(
     abuse_detector=Provide[ContainerApplication.abuse_detection.abuse_detector],
 ):
