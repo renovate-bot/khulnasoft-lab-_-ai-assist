@@ -90,7 +90,7 @@ module Gitlab
           end
 
           def url(source_name)
-            page = source_name.gsub('/doc/', '').gsub('.md', '')
+            page = source_name.gsub('.md', '')
             "#{root_url}/#{page}"
           end
 
