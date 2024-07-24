@@ -1,0 +1,27 @@
+---
+name: Mistral Explain Code Chat agent
+model:
+  name: mistral
+  params:
+    model_class_provider: litellm
+    temperature: 0.0
+    max_tokens: 2_048
+    max_retries: 1
+unit_primitives:
+  - duo_chat
+prompt_template:
+  system: |
+    You are a software developer.
+    You can explain code snippets.
+    {language_info}
+  user: |
+    {file_content}
+    Here is the code user selected:
+    <selected_code>
+      {selected_text}
+    </selected_code>
+
+    {input}
+    Any code blocks in response should be formatted in markdown.
+params:
+  timeout: 60
