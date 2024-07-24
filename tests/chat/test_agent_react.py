@@ -6,7 +6,6 @@ from ai_gateway.chat.agents.react import (
     ReActAgent,
     ReActAgentFinalAnswer,
     ReActAgentInputs,
-    ReActAgentMessage,
     ReActAgentToolAction,
     ReActPlainTextParser,
     TypeReActAgentAction,
@@ -89,9 +88,7 @@ def test_chat_history_plain_text_renderer(chat_history: str | list[str], expecte
                     observation="observation2",
                 ),
                 AgentStep(
-                    action=ReActAgentFinalAnswer(
-                        text="final_answer", thought="thought3"
-                    ),
+                    action=ReActAgentFinalAnswer(text="final_answer"),
                     observation="observation3",
                 ),
             ],
@@ -124,7 +121,6 @@ class TestReActPlainTextParser:
                 "thought1\nAction: tool1\nAction Input: tool_input1\n",
                 ReActAgentToolAction(
                     thought="thought1",
-                    log="Thought: thought1\nAction: tool1\nAction Input: tool_input1",
                     tool="tool1",
                     tool_input="tool_input1",
                 ),
@@ -132,14 +128,12 @@ class TestReActPlainTextParser:
             (
                 "thought1\nFinal Answer: final answer\n",
                 ReActAgentFinalAnswer(
-                    thought="thought1",
-                    log="Thought: thought1\nFinal Answer: final answer",
                     text="final answer",
                 ),
             ),
         ],
     )
-    def test_agent_message(self, text: str, expected: ReActAgentMessage):
+    def test_agent_message(self, text: str, expected: ReActAgentToolAction):
         parser = ReActPlainTextParser()
         actual = parser.parse(text)
 
@@ -160,6 +154,7 @@ class TestReActAgent:
             "question",
             "chat_history",
             "agent_scratchpad",
+            "model_response",
             "expected_action",
         ),
         [
@@ -167,33 +162,33 @@ class TestReActAgent:
                 "What's the title of this epic?",
                 "",
                 [],
+                "Thought: I'm thinking...\nAction: ci_issue_reader\nAction Input: random input",
                 ReActAgentToolAction(
                     thought="I'm thinking...",
                     tool="ci_issue_reader",
                     tool_input="random input",
-                    log="Thought: I'm thinking...\nAction: ci_issue_reader\nAction Input: random input",
                 ),
             ),
             (
                 "What's the title of this issue?",
                 ["User: what's the description of this issue", "AI: PoC ReAct"],
                 [],
+                "Thought: I'm thinking...\nAction: ci_issue_reader\nAction Input: random input",
                 ReActAgentToolAction(
                     thought="I'm thinking...",
                     tool="ci_issue_reader",
                     tool_input="random input",
-                    log="Thought: I'm thinking...\nAction: ci_issue_reader\nAction Input: random input",
                 ),
             ),
             (
                 "What's the title of this issue?",
                 ["User: what's the description of this issue", "AI: PoC ReAct"],
                 [],
+                "Thought: I'm thinking...\nAction: ci_issue_reader\nAction Input: random input",
                 ReActAgentToolAction(
                     thought="I'm thinking...",
                     tool="ci_issue_reader",
                     tool_input="random input",
-                    log="Thought: I'm thinking...\nAction: ci_issue_reader\nAction Input: random input",
                 ),
             ),
             (
@@ -209,10 +204,9 @@ class TestReActAgent:
                         observation="observation",
                     )
                 ],
+                "Thought: I'm thinking...\nFinal Answer: Paris",
                 ReActAgentFinalAnswer(
-                    thought="I'm thinking...",
                     text="Paris",
-                    log="Thought: I'm thinking...\nFinal Answer: Paris",
                 ),
             ),
         ],
@@ -223,10 +217,11 @@ class TestReActAgent:
         question: str,
         chat_history: list[str] | str,
         agent_scratchpad: list[AgentStep],
+        model_response: str,
         expected_action: TypeReActAgentAction,
     ):
         await _assert_agent_invoked(
-            model_response=expected_action.log,
+            model_response=model_response,
             prompt_template=prompt_template,
             question=question,
             chat_history=chat_history,
@@ -253,7 +248,6 @@ class TestReActAgent:
                 [
                     ReActAgentToolAction(
                         thought="I'm thinking...",
-                        log="Thought: I'm thinking...\nAction: ci_issue_reader\nAction Input: random input",
                         tool="ci_issue_reader",
                         tool_input="random input",
                     ),
@@ -275,12 +269,10 @@ class TestReActAgent:
                 "Thought: I'm thinking...\nFinal Answer: Bar",
                 [
                     ReActAgentFinalAnswer(
-                        thought="I'm thinking...",
-                        log="Thought: I'm thinking...\nFinal Answer: B",
                         text="B",
                     ),
-                    ReActAgentFinalAnswer(thought="", log="a", text="a"),
-                    ReActAgentFinalAnswer(thought="", log="r", text="r"),
+                    ReActAgentFinalAnswer(text="a"),
+                    ReActAgentFinalAnswer(text="r"),
                 ],
             ),
         ],
