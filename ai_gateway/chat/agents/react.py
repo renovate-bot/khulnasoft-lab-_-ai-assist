@@ -20,7 +20,6 @@ from ai_gateway.gitlab_features import GitLabUnitPrimitive
 
 __all__ = [
     "ReActAgentInputs",
-    "ReActAgentMessage",
     "ReActAgentToolAction",
     "ReActAgentFinalAnswer",
     "TypeReActAgentAction",
@@ -29,15 +28,11 @@ __all__ = [
 ]
 
 
-class ReActAgentMessage(BaseModel):
-    thought: str
-
-
-class ReActAgentToolAction(AgentToolAction, ReActAgentMessage):
+class ReActAgentToolAction(AgentToolAction):
     pass
 
 
-class ReActAgentFinalAnswer(AgentFinalAnswer, ReActAgentMessage):
+class ReActAgentFinalAnswer(AgentFinalAnswer):
     pass
 
 
@@ -144,8 +139,6 @@ class ReActPlainTextParser(BaseCumulativeTransformOutputParser):
         if message is None:
             raise ValueError("incorrect `TypeReActAgentAction` schema output")
 
-        message.log = text
-
         return message
 
     def parse_result(
@@ -171,7 +164,6 @@ class ReActAgent(Agent[ReActAgentInputs, TypeReActAgentAction]):
     class _StreamState(TypedDict):
         tool_action: Optional[ReActAgentToolAction]
         len_final_answer: int
-        len_log: int
         len_thought: int
 
     def __init__(
@@ -190,7 +182,6 @@ class ReActAgent(Agent[ReActAgentInputs, TypeReActAgentAction]):
         state = ReActAgent._StreamState(
             tool_action=None,
             len_final_answer=0,
-            len_log=0,
             len_thought=0,
         )
 
@@ -205,14 +196,10 @@ class ReActAgent(Agent[ReActAgentInputs, TypeReActAgentAction]):
                 and len(action.text) > 0
             ):
                 yield ReActAgentFinalAnswer(
-                    thought=action.thought[state["len_thought"] :],
                     text=action.text[state["len_final_answer"] :],
-                    log=action.log and action.log[state["len_log"] :],
                 )
 
-                state["len_thought"] = len(action.thought)
                 state["len_final_answer"] = len(action.text)
-                state["len_log"] = len(action.log) if action.log else 0
 
         if tool_action := state.get("tool_action", None):
             yield tool_action

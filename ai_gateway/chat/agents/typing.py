@@ -1,9 +1,8 @@
-from typing import Generic, Literal, Optional, TypeVar
+from typing import Generic, Literal, TypeVar
 
 from pydantic import BaseModel
 
 __all__ = [
-    "AgentMessage",
     "AgentToolAction",
     "AgentFinalAnswer",
     "AgentStep",
@@ -14,16 +13,13 @@ __all__ = [
 ]
 
 
-class AgentMessage(BaseModel):
-    log: Optional[str] = None
-
-
-class AgentToolAction(AgentMessage):
+class AgentToolAction(BaseModel):
+    thought: str
     tool: str
     tool_input: str
 
 
-class AgentFinalAnswer(AgentMessage):
+class AgentFinalAnswer(BaseModel):
     text: str
 
 

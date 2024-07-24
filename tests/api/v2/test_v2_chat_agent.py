@@ -91,7 +91,6 @@ class TestReActAgentStream:
                         thought="thought",
                         tool="tool",
                         tool_input="tool_input",
-                        log="log",
                     )
                 ],
                 ModelMetadata(
@@ -107,7 +106,6 @@ class TestReActAgentStream:
                             thought="thought",
                             tool="tool",
                             tool_input="tool_input",
-                            log="log",
                         ),
                     )
                 ],
