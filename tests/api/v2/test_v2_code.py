@@ -52,11 +52,11 @@ class TestCodeCompletions:
         Snowplow.reset()
 
     @pytest.mark.parametrize(
-        ("mock_completions_legacy_output_text", "expected_response"),
+        ("mock_completions_legacy_output_texts", "expected_response"),
         [
             # non-empty suggestions from model
             (
-                "def search",
+                ["def search", "println"],
                 {
                     "id": "id",
                     "model": {
@@ -72,13 +72,18 @@ class TestCodeCompletions:
                             "text": "def search",
                             "index": 0,
                             "finish_reason": "length",
-                        }
+                        },
+                        {
+                            "text": "println",
+                            "index": 0,
+                            "finish_reason": "length",
+                        },
                     ],
                 },
             ),
             # empty suggestions from model
             (
-                "",
+                [""],
                 {
                     "id": "id",
                     "model": {

@@ -184,34 +184,37 @@ def mock_agent_model(mock_output: TextGenModelOutput):
 
 
 @pytest.fixture
-def mock_completions_legacy_output_text():
-    yield "def search"
+def mock_completions_legacy_output_texts():
+    yield ["def search"]
 
 
 @pytest.fixture
-def mock_completions_legacy_output(mock_completions_legacy_output_text: str):
-    yield [
-        ModelEngineOutput(
-            text=mock_completions_legacy_output_text,
-            score=0,
-            model=ModelMetadata(name="code-gecko", engine="vertex-ai"),
-            lang_id=LanguageId.PYTHON,
-            metadata=MetadataPromptBuilder(
-                components={
-                    "prefix": MetadataCodeContent(length=10, length_tokens=2),
-                    "suffix": MetadataCodeContent(length=10, length_tokens=2),
-                },
-                experiments=[
-                    ExperimentTelemetry(name="truncate_suffix", variant=1)
-                ],
+def mock_completions_legacy_output(mock_completions_legacy_output_texts: str):
+    output = []
+    for text in mock_completions_legacy_output_texts:
+        output.append(
+            ModelEngineOutput(
+                text=text,
+                score=0,
+                model=ModelMetadata(name="code-gecko", engine="vertex-ai"),
+                lang_id=LanguageId.PYTHON,
+                metadata=MetadataPromptBuilder(
+                    components={
+                        "prefix": MetadataCodeContent(length=10, length_tokens=2),
+                        "suffix": MetadataCodeContent(length=10, length_tokens=2),
+                    },
+                    experiments=[
+                        ExperimentTelemetry(name="truncate_suffix", variant=1)
+                    ],
 
-            ),
-            tokens_consumption_metadata=TokensConsumptionMetadata(
-                input_tokens=1, output_tokens=2
-            ),
+                ),
+                tokens_consumption_metadata=TokensConsumptionMetadata(
+                    input_tokens=1, output_tokens=2
+                ),
+            )
         )
-    ]
 
+    yield output
 
 @pytest.fixture
 def mock_suggestions_output_text():

@@ -45,7 +45,7 @@ class EditorContentPayload(BaseModel):
 
 
 class EditorContentCompletionPayload(EditorContentPayload):
-    pass
+    choices_count: Optional[int] = 0
 
 
 class EditorContentGenerationPayload(EditorContentPayload):
@@ -100,7 +100,12 @@ class ResponseMetadataBase(BaseModel):
 
 
 class CompletionResponse(BaseModel):
-    response: Optional[str] = None
+    class Choice(BaseModel):
+        text: str
+        index: int = 0
+        finish_reason: str = "length"
+
+    choices: list[Choice]
     metadata: Optional[ResponseMetadataBase] = None
 
 
