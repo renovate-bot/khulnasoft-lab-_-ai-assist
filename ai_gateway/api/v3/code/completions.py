@@ -90,34 +90,58 @@ async def code_completion(
     else:
         engine = completions_legacy_factory()
 
-    suggestion = await engine.execute(
+    kwargs = {}
+    if payload.choices_count > 0:
+        kwargs.update({"candidate_count": payload.choices_count})
+
+    suggestions = await engine.execute(
         prefix=payload.content_above_cursor,
         suffix=payload.content_below_cursor,
         file_name=payload.file_name,
         editor_lang=payload.language_identifier,
         stream=payload.stream,
         code_context=code_context,
+        **kwargs,
     )
 
-    # v3 doesn't support multiple choices in response yet
-    # https://gitlab.com/gitlab-org/modelops/applied-ml/code-suggestions/ai-assist/-/issues/490
-    if isinstance(suggestion, list):
-        suggestion = suggestion[0]
+    if not isinstance(suggestions, list):
+        suggestions = [suggestions]
 
-    if isinstance(suggestion, AsyncIterator):
-        return await _handle_stream(suggestion)
+    if isinstance(suggestions[0], AsyncIterator):
+        return await _handle_stream(suggestions[0])
 
     return CompletionResponse(
-        response=suggestion.text,
+        choices=_completion_suggestion_choices(suggestions),
         metadata=ResponseMetadataBase(
             timestamp=int(time()),
             model=ModelMetadata(
-                engine=suggestion.model.engine,
-                name=suggestion.model.name,
-                lang=suggestion.lang,
+                engine=suggestions[0].model.engine,
+                name=suggestions[0].model.name,
+                lang=suggestions[0].lang,
             ),
         ),
     )
+
+
+def _completion_suggestion_choices(suggestions: list) -> list:
+    if len(suggestions) == 0:
+        return []
+
+    choices = []
+    for suggestion in suggestions:
+        log.debug(
+            "code completion suggestion:",
+            suggestion=suggestion,
+            score=suggestion.score,
+            language=suggestion.lang,
+        )
+
+        if not suggestion.text:
+            continue
+
+        choices.append(CompletionResponse.Choice(text=suggestion.text))
+
+    return choices
 
 
 @inject
@@ -150,8 +174,12 @@ async def code_generation(
     if isinstance(suggestion, AsyncIterator):
         return await _handle_stream(suggestion)
 
+    choices = (
+        [CompletionResponse.Choice(text=suggestion.text)] if suggestion.text else []
+    )
+
     return CompletionResponse(
-        response=suggestion.text,
+        choices=choices,
         metadata=ResponseMetadataBase(
             timestamp=int(time()),
             model=ModelMetadata(

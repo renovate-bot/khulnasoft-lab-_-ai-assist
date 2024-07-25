@@ -25,13 +25,24 @@ def auth_user():
 
 class TestEditorContentCompletion:
     @pytest.mark.parametrize(
-        ("mock_completions_legacy_output_text", "expected_response"),
+        ("mock_completions_legacy_output_texts", "expected_response"),
         [
             # non-empty suggestions from model
             (
-                "def search",
+                ["def search", "println"],
                 {
-                    "response": "def search",
+                    "choices": [
+                        {
+                            "text": "def search",
+                            "index": 0,
+                            "finish_reason": "length",
+                        },
+                        {
+                            "text": "println",
+                            "index": 0,
+                            "finish_reason": "length",
+                        },
+                    ],
                     "metadata": {
                         "model": {
                             "engine": "vertex-ai",
@@ -43,9 +54,9 @@ class TestEditorContentCompletion:
             ),
             # empty suggestions from model
             (
-                "",
+                [""],
                 {
-                    "response": "",
+                    "choices": [],
                     "metadata": {
                         "model": {
                             "engine": "vertex-ai",
@@ -61,7 +72,7 @@ class TestEditorContentCompletion:
         self,
         mock_client: TestClient,
         mock_completions_legacy: Mock,
-        mock_suggestions_output_text: str,
+        mock_completions_legacy_output_texts: str,
         expected_response: dict,
     ):
         payload = {
@@ -69,6 +80,7 @@ class TestEditorContentCompletion:
             "content_above_cursor": "# Create a fast binary search\n",
             "content_below_cursor": "\n",
             "language_identifier": "python",
+            "choices_count": 3,
         }
 
         prompt_component = {
@@ -95,7 +107,7 @@ class TestEditorContentCompletion:
 
         body = response.json()
 
-        assert body["response"] == expected_response["response"]
+        assert body["choices"] == expected_response["choices"]
 
         assert body["metadata"]["model"] == expected_response["metadata"]["model"]
 
@@ -108,6 +120,7 @@ class TestEditorContentCompletion:
             editor_lang=payload["language_identifier"],
             stream=False,
             code_context=None,
+            candidate_count=3,
         )
 
     @pytest.mark.parametrize(
@@ -116,7 +129,15 @@ class TestEditorContentCompletion:
             (
                 "vertex-ai",
                 200,
-                "test completion",
+                {
+                    "choices": [
+                        {
+                            "text": "test completion",
+                            "index": 0,
+                            "finish_reason": "length",
+                        }
+                    ]
+                },
                 {
                     "engine": "vertex-ai",
                     "name": "code-gecko@002",
@@ -126,7 +147,15 @@ class TestEditorContentCompletion:
             (
                 "anthropic",
                 200,
-                "test completion",
+                {
+                    "choices": [
+                        {
+                            "text": "test completion",
+                            "index": 0,
+                            "finish_reason": "length",
+                        }
+                    ]
+                },
                 {
                     "engine": "anthropic",
                     "name": "claude-instant-1.2",
@@ -137,7 +166,15 @@ class TestEditorContentCompletion:
             (
                 "",
                 200,
-                "test completion",
+                {
+                    "choices": [
+                        {
+                            "text": "test completion",
+                            "index": 0,
+                            "finish_reason": "length",
+                        }
+                    ]
+                },
                 {
                     "engine": "vertex-ai",
                     "name": "code-gecko@002",
@@ -199,7 +236,7 @@ class TestEditorContentCompletion:
 
         body = response.json()
 
-        assert body["response"] == expected_response
+        assert body["choices"] == expected_response["choices"]
 
         assert body["metadata"]["model"] == expected_model
 
@@ -271,7 +308,13 @@ class TestEditorContentGeneration:
                 "code-gecko",
                 "vertex-ai",
                 {
-                    "response": "def search",
+                    "choices": [
+                        {
+                            "text": "def search",
+                            "index": 0,
+                            "finish_reason": "length",
+                        }
+                    ],
                     "metadata": {
                         "model": {
                             "engine": "vertex-ai",
@@ -287,7 +330,7 @@ class TestEditorContentGeneration:
                 "code-gecko",
                 "vertex-ai",
                 {
-                    "response": "",
+                    "choices": [],
                     "metadata": {
                         "model": {
                             "engine": "vertex-ai",
@@ -337,7 +380,7 @@ class TestEditorContentGeneration:
 
         body = response.json()
 
-        assert body["response"] == expected_response["response"]
+        assert body["choices"] == expected_response["choices"]
 
         assert body["metadata"]["model"] == expected_response["metadata"]["model"]
 
@@ -424,7 +467,15 @@ class TestEditorContentGeneration:
             (
                 "vertex-ai",
                 200,
-                "test completion",
+                {
+                    "choices": [
+                        {
+                            "text": "test completion",
+                            "index": 0,
+                            "finish_reason": "length",
+                        }
+                    ]
+                },
                 {
                     "engine": "vertex-ai",
                     "name": "code-bison@002",
@@ -434,7 +485,15 @@ class TestEditorContentGeneration:
             (
                 "anthropic",
                 200,
-                "test completion",
+                {
+                    "choices": [
+                        {
+                            "text": "test completion",
+                            "index": 0,
+                            "finish_reason": "length",
+                        }
+                    ]
+                },
                 {
                     "engine": "anthropic",
                     "name": "claude-2.0",
@@ -445,7 +504,15 @@ class TestEditorContentGeneration:
             (
                 "",
                 200,
-                "test completion",
+                {
+                    "choices": [
+                        {
+                            "text": "test completion",
+                            "index": 0,
+                            "finish_reason": "length",
+                        }
+                    ]
+                },
                 {
                     "engine": "vertex-ai",
                     "name": "code-bison@002",
@@ -507,7 +574,7 @@ class TestEditorContentGeneration:
 
         body = response.json()
 
-        assert body["response"] == expected_response
+        assert body["choices"] == expected_response["choices"]
         assert body["metadata"]["model"] == expected_model
 
     def test_successful_stream_response(

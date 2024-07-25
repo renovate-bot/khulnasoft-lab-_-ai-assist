@@ -30,6 +30,7 @@ POST /v3/code/completions
 | Attribute                                        | Type    | Required | Description                                                                                        | Example                  |
 | ------------------------------------------------ | ------- | -------- | -------------------------------------------------------------------------------------------------- | ------------------------ |
 | `prompt_components.type`                         | string  | yes      | Identifies the prompt_payload type (for completions use `code_editor_completion`)                  | `code_editor_completion` |
+| `prompt_components.payload.choices_count`        | int     | no       | The number of code completion choices to return (max_len: **4**). Only applies for `vertex-ai`. Does not support streaming. | `2`                                   |
 | `prompt_components.payload.file_name`            | string  | yes      | The name of the current file (max_len: **255**)                                                    | `README.md`              |
 | `prompt_components.payload.content_above_cursor` | string  | yes      | The content above cursor (max_len: **100,000**)                                                    | `import numpy as np`     |
 | `prompt_components.payload.content_below_cursor` | string  | yes      | The content below cursor (max_len: **100,000**)                                                    | `def __main__:\n`        |
@@ -54,7 +55,8 @@ curl --request POST \
             "content_above_cursor": "func hello_world(){\n\t",
             "content_below_cursor": "\n}",
             "model_provider": "vertex-ai",
-            "language_identifier": "go"
+            "language_identifier": "go",
+            "choices_count": 3
           },
           "metadata": {
             "source": "Gitlab EE",
@@ -587,7 +589,7 @@ curl --request POST \
       "payload": {
         "content": [
           {
-            "role": "user", 
+            "role": "user",
             "content": "Hi, how are you?"
           }
         ],
