@@ -149,7 +149,7 @@ class ContainerModels(containers.DeclarativeContainer):
         mocked=providers.Factory(mock.ChatModel),
     )
 
-    llmlite = providers.Selector(
+    litellm = providers.Selector(
         _mock_selector,
         original=providers.Factory(
             LiteLlmTextGenModel.from_model_name,
@@ -159,7 +159,7 @@ class ContainerModels(containers.DeclarativeContainer):
         mocked=providers.Factory(mock.ChatModel),
     )
 
-    llmlite_chat = providers.Selector(
+    litellm_chat = providers.Selector(
         _mock_selector,
         original=providers.Factory(
             LiteLlmChatModel.from_model_name,
