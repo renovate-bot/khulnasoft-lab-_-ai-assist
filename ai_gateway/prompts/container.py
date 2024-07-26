@@ -17,6 +17,7 @@ class ContainerPrompts(containers.DeclarativeContainer):
         LocalPromptRegistry.from_local_yaml,
         class_overrides={
             "chat/react": chat.ReActAgent,
+            "chat/react/vertex": chat.ReActAgent,
         },
         model_factories={
             ModelClassProvider.ANTHROPIC: providers.Factory(

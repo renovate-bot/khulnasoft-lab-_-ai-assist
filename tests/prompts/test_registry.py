@@ -99,6 +99,7 @@ prompt_template:
   system: Template1
   user: Template2
 params:
+  vertex_location: us-east1
   timeout: 60
   stop:
     - Foo
@@ -183,7 +184,11 @@ def prompts_registered():
                 ),
                 unit_primitives=["duo_chat"],
                 prompt_template={"system": "Template1", "user": "Template2"},
-                params={"timeout": 60, "stop": ["Foo", "Bar"]},
+                params={
+                    "timeout": 60,
+                    "stop": ["Foo", "Bar"],
+                    "vertex_location": "us-east1",
+                },
             ),
         ),
     }
@@ -291,6 +296,7 @@ class TestLocalPromptRegistry:
                     "custom_llm_provider": "openai",
                     "api_key": "token",
                     "api_base": "http://localhost:4000/",
+                    "vertex_location": "us-east1",
                 },
                 {
                     "temperature": 0.1,
