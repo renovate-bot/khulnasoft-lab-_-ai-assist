@@ -331,3 +331,87 @@ class TestPromptBuilderPrefixBased:
         actual = builder.build()
 
         assert actual == expected_prompt
+
+    @pytest.mark.parametrize(
+        (
+            "prefix",
+            "suffix",
+            "code_context",
+            "suffix_reserved_percent",
+            "total_max_len",
+            "expected_prompt",
+        ),
+        [
+            (
+                "prefix_text",
+                "random_text",
+                ["context_text"],
+                0.5,
+                2048,
+                Prompt(
+                    prefix="context_text\nprefix_text",
+                    suffix="random_text",
+                    metadata=MetadataPromptBuilder(
+                        components={
+                            "prefix": MetadataCodeContent(length=11, length_tokens=3),
+                            "suffix": MetadataCodeContent(length=11, length_tokens=3),
+                            "code_context": MetadataCodeContent(
+                                length=12, length_tokens=3
+                            ),
+                        }
+                    ),
+                ),
+            ),
+            (
+                "prefix_text",
+                "random_text",
+                ["context_text"],
+                0.25,
+                4,
+                Prompt(
+                    prefix="prefix_text",
+                    suffix="random",
+                    metadata=MetadataPromptBuilder(
+                        components={
+                            "prefix": MetadataCodeContent(length=11, length_tokens=3),
+                            "suffix": MetadataCodeContent(length=6, length_tokens=1),
+                            "code_context": MetadataCodeContent(
+                                length=0, length_tokens=0
+                            ),
+                        }
+                    ),
+                ),
+            ),
+        ],
+    )
+    def test_with_code_context(
+        self,
+        prefix: Union[str, list[str]],
+        suffix: str,
+        code_context: list[str],
+        suffix_reserved_percent: float,
+        total_max_len: int,
+        expected_prompt: Prompt,
+    ):
+        builder = PromptBuilderPrefixBased(
+            total_max_len, TokenizerTokenStrategy(self.tokenizer)
+        )
+
+        if isinstance(prefix, str):
+            builder.add_content(
+                prefix,
+                suffix=suffix,
+                suffix_reserved_percent=suffix_reserved_percent,
+                code_context=code_context,
+            )
+        else:
+            builder.add_content(
+                *prefix,
+                suffix=suffix,
+                suffix_reserved_percent=suffix_reserved_percent,
+                code_context=code_context
+            )
+
+        actual = builder.build()
+
+        assert actual == expected_prompt
