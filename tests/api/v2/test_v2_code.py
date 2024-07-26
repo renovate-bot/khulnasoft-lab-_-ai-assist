@@ -697,6 +697,7 @@ class TestCodeGenerations:
     @pytest.mark.parametrize(
         (
             "prompt_version",
+            "agent_id",
             "prefix",
             "prompt",
             "model_provider",
@@ -716,6 +717,7 @@ class TestCodeGenerations:
         [
             (
                 1,
+                None,
                 "foo",
                 None,
                 "vertex-ai",
@@ -734,6 +736,7 @@ class TestCodeGenerations:
             ),  # v1 without prompt - vertex-ai
             (
                 1,
+                None,
                 "foo",
                 None,
                 "anthropic",
@@ -752,6 +755,7 @@ class TestCodeGenerations:
             ),  # v1 without prompt - anthropic
             (
                 1,
+                None,
                 "foo",
                 "bar",
                 "vertex-ai",
@@ -770,6 +774,7 @@ class TestCodeGenerations:
             ),  # v1 with prompt - vertex-ai
             (
                 1,
+                None,
                 "foo",
                 "bar",
                 "vertex-ai",
@@ -788,6 +793,7 @@ class TestCodeGenerations:
             ),  # v1 with prompt - anthropic
             (
                 1,
+                None,
                 "foo",
                 "bar",
                 "vertex-ai",
@@ -806,6 +812,7 @@ class TestCodeGenerations:
             ),  # v1 empty suggestions from model
             (
                 2,
+                None,
                 "foo",
                 "bar",
                 "vertex-ai",
@@ -824,6 +831,7 @@ class TestCodeGenerations:
             ),  # v2 with prompt - vertex-ai
             (
                 2,
+                None,
                 "foo",
                 "bar",
                 "anthropic",
@@ -842,6 +850,7 @@ class TestCodeGenerations:
             ),  # v2 with prompt - anthropic
             (
                 2,
+                None,
                 "foo",
                 None,
                 "anthropic",
@@ -860,6 +869,7 @@ class TestCodeGenerations:
             ),  # v2 without prompt field
             (
                 2,
+                None,
                 "foo",
                 "bar",
                 "anthropic",
@@ -878,6 +888,7 @@ class TestCodeGenerations:
             ),  # v2 empty suggestions from model
             (
                 3,
+                None,
                 "foo",
                 [
                     {"role": "system", "content": "foo"},
@@ -902,6 +913,7 @@ class TestCodeGenerations:
             ),  # v3 with prompt - anthropic
             (
                 3,
+                "",
                 "foo",
                 [
                     {"role": "system", "content": "foo"},
@@ -924,6 +936,28 @@ class TestCodeGenerations:
                 ],
                 [{"text": "\nfoo", "index": 0, "finish_reason": "length"}],
             ),  # v3 with prompt - litellm
+            (
+                2,
+                "code_suggestions/generations",
+                "foo",
+                "prompt",
+                "litellm",
+                "mistral",
+                "http://localhost:11434/v1",
+                "api-key",
+                "foo",
+                False,
+                False,
+                False,
+                False,
+                False,
+                200,
+                [
+                    Message(role=Role.SYSTEM, content="foo"),
+                    Message(role=Role.USER, content="bar"),
+                ],
+                [{"text": "\nfoo", "index": 0, "finish_reason": "length"}],
+            ),
         ],
     )
     def test_non_stream_response(
@@ -934,8 +968,10 @@ class TestCodeGenerations:
         mock_anthropic: Mock,
         mock_anthropic_chat: Mock,
         mock_llm_chat: Mock,
+        mock_agent_model: Mock,
         mock_with_prompt_prepared: Mock,
         prompt_version,
+        agent_id,
         prefix,
         prompt,
         model_provider,
@@ -974,6 +1010,7 @@ class TestCodeGenerations:
                 "model_name": model_name,
                 "model_endpoint": model_endpoint,
                 "model_api_key": model_api_key,
+                "agent_id": agent_id,
             },
         )
 
@@ -982,6 +1019,7 @@ class TestCodeGenerations:
         assert mock_anthropic.called == want_anthropic_called
         assert mock_llm_chat.called == want_litellm_called
         assert mock_anthropic_chat.called == want_anthropic_chat_called
+        assert mock_agent_model.called == (True if agent_id else False)
 
         if want_prompt_prepared_called:
             mock_with_prompt_prepared.assert_called_with(want_prompt)

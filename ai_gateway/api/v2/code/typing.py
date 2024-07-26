@@ -64,6 +64,7 @@ class SuggestionsRequest(BaseModel):
     stream: Optional[bool] = False
     choices_count: Optional[int] = 0
     context: Annotated[List[CodeContextPayload], Field(max_length=100)] = []
+    agent_id: Optional[str] = None
 
 
 class CompletionsRequest(SuggestionsRequest):

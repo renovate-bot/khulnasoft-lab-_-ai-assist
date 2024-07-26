@@ -38,7 +38,7 @@ class TestAgentModel:
 
     @pytest.mark.asyncio
     async def test_generate(self, agent, model, params):
-        response = await model.generate(**params, stream=False)
+        response = await model.generate(params, stream=False)
 
         assert isinstance(response, TextGenModelOutput)
         assert response.text == "whole part"
@@ -47,7 +47,7 @@ class TestAgentModel:
 
     @pytest.mark.asyncio
     async def test_generate_stream(self, agent, model, params):
-        response = await model.generate(**params, stream=True)
+        response = await model.generate(params, stream=True)
 
         content = []
         async for chunk in response:

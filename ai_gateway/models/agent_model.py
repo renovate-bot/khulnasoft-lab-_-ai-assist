@@ -1,4 +1,4 @@
-from typing import AsyncIterator, Optional, Union
+from typing import Any, AsyncIterator, Union
 
 from langchain_core.runnables import Runnable
 
@@ -33,16 +33,9 @@ class AgentModel(TextGenModelBase):
 
     async def generate(
         self,
-        prefix: str,
-        suffix: Optional[str] = "",
+        params: dict[str, Any],
         stream: bool = False,
-        **kwargs,
     ) -> Union[TextGenModelOutput, AsyncIterator[TextGenModelChunk]]:
-
-        params = {
-            "prefix": prefix,
-            "suffix": suffix,
-        }
 
         if stream:
             return self._handle_stream(params)
