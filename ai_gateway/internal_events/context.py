@@ -25,7 +25,7 @@ class EventContext(BaseModel):
     context_generated_at: Optional[str] = None
     extra: Dict[str, Any] = Field(default_factory=dict)
     is_gitlab_team_member: Optional[bool] = None
-    feature_enabled_by_namespace_ids: List[int] = Field(default_factory=list)
+    feature_enabled_by_namespace_ids: Optional[List[int]] = None
     project_id: Optional[int] = None
     namespace_id: Optional[int] = None
     plan: Optional[str] = None
