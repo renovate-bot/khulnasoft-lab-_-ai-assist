@@ -18,6 +18,7 @@ __all__ = [
 class PromptBuilderPrefixBased(PromptBuilderBase):
     KEY_PREFIX = "prefix"
     KEY_SUFFIX = "suffix"
+    KEY_CODE_CONTEXT = "code_context"
 
     # Percentage of tokens reserved for suffix (0 <= value <= 1).
     KEY_SUFFIX_RESERVED_PERCENT = "suffix_reserved_percent"
@@ -28,6 +29,7 @@ class PromptBuilderPrefixBased(PromptBuilderBase):
 
         self.snippets: list[str] = []
         self.suffix: Optional[str] = None
+        self.code_context: Optional[list] = None
         self.opts: dict = {
             self.KEY_SUFFIX_RESERVED_PERCENT: self.DEFAULT_SUFFIX_RESERVED_PERCENT
         }
@@ -42,7 +44,7 @@ class PromptBuilderPrefixBased(PromptBuilderBase):
     ):
         self.snippets.extend(text)
         self.suffix = kwargs.pop(self.KEY_SUFFIX, None) or self.suffix
-
+        self.code_context = kwargs.pop(self.KEY_CODE_CONTEXT, None) or self.code_context
         opts: dict = {}
         if dist := kwargs.pop(self.KEY_SUFFIX_RESERVED_PERCENT, None):
             opts[self.KEY_SUFFIX_RESERVED_PERCENT] = max(0, min(dist, 1))
@@ -59,12 +61,24 @@ class PromptBuilderPrefixBased(PromptBuilderBase):
         suffix = self._build_suffix(max_length_suffix)
         prefix_with_tpl = self._apply_template(prefix.text)
 
+        max_length_code_context = max_length - prefix.length_tokens
+
+        if suffix:
+            max_length_code_context -= suffix.length_tokens
+
+        code_context = self._build_code_context(max_length_code_context)
+
+        if code_context and max_length_code_context > 0:
+            prefix_with_tpl = "\n".join([code_context.text, prefix_with_tpl])
+
         components = {
             name: MetadataCodeContent(
                 length=len(component.text),
                 length_tokens=component.length_tokens,
             )
-            for name, component in zip(["prefix", "suffix"], [prefix, suffix])
+            for name, component in zip(
+                ["prefix", "suffix", "code_context"], [prefix, suffix, code_context]
+            )
             if component is not None
         }
 
@@ -101,6 +115,16 @@ class PromptBuilderPrefixBased(PromptBuilderBase):
 
         truncated = self.tkn_strategy.truncate_content(
             self.suffix, max_length, truncation_side="right"
+        )
+
+        return truncated
+
+    def _build_code_context(self, max_length: int) -> Optional[CodeContent]:
+        if not self.code_context:
+            return None
+
+        truncated = self.tkn_strategy.truncate_content(
+            "\n".join(self.code_context), max_length, truncation_side="right"
         )
 
         return truncated

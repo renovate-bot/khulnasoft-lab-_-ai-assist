@@ -1,5 +1,5 @@
 from enum import Enum
-from typing import AsyncIterator, Callable, Optional, Union
+from typing import AsyncIterator, Callable, Optional, Sequence, Union
 
 from litellm import CustomStreamWrapper, acompletion
 
@@ -61,6 +61,19 @@ MODEL_STOP_TOKENS = {
 
 
 class LiteLlmChatModel(ChatModelBase):
+    @property
+    def MAX_MODEL_LEN(self):  # pylint: disable=invalid-name
+        if self._metadata.name == KindLiteLlmModel.CODE_GEMMA:
+            return 8_192
+
+        if self._metadata.name in (
+            KindLiteLlmModel.CODE_LLAMA,
+            KindLiteLlmModel.CODE_LLAMA_CODE,
+        ):
+            return 16_384
+
+        return 32_768
+
     def __init__(
         self,
         model_name: KindLiteLlmModel = KindLiteLlmModel.MISTRAL,
@@ -92,6 +105,7 @@ class LiteLlmChatModel(ChatModelBase):
         max_output_tokens: int = 2048,
         top_p: float = 0.95,
         top_k: int = 40,
+        code_context: Optional[Sequence[str]] = None,
     ) -> Union[TextGenModelOutput, AsyncIterator[TextGenModelChunk]]:
 
         if isinstance(messages, str):
@@ -171,6 +185,19 @@ class LiteLlmChatModel(ChatModelBase):
 
 
 class LiteLlmTextGenModel(TextGenModelBase):
+    @property
+    def MAX_MODEL_LEN(self):  # pylint: disable=invalid-name
+        if self._metadata.name == KindLiteLlmModel.CODE_GEMMA:
+            return 8_192
+
+        if self._metadata.name in (
+            KindLiteLlmModel.CODE_LLAMA,
+            KindLiteLlmModel.CODE_LLAMA_CODE,
+        ):
+            return 16_384
+
+        return 32_768
+
     def __init__(
         self,
         model_name: KindLiteLlmModel = KindLiteLlmModel.CODE_GEMMA,
@@ -203,6 +230,7 @@ class LiteLlmTextGenModel(TextGenModelBase):
         max_output_tokens: int = 16,
         top_p: float = 0.95,
         top_k: int = 40,
+        code_context: Optional[Sequence[str]] = None,
     ) -> Union[TextGenModelOutput, AsyncIterator[TextGenModelChunk]]:
 
         with self.instrumentator.watch(stream=stream) as watcher:

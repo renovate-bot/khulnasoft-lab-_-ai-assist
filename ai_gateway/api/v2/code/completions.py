@@ -161,6 +161,9 @@ async def completions(
                 model__api_key=payload.model_api_key,
                 model__provider=payload.model_provider,
             )
+
+        if payload.context:
+            kwargs.update({"code_context": [ctx.content for ctx in payload.context]})
     else:
         code_completions = completions_legacy_factory()
         if payload.choices_count > 0:

@@ -127,14 +127,22 @@ class CodeCompletions:
         )
 
     def _get_prompt(
-        self, prefix: str, suffix: str, raw_prompt: Optional[str] = None
+        self,
+        prefix: str,
+        suffix: str,
+        raw_prompt: Optional[str] = None,
+        code_context: Optional[list] = None,
     ) -> Prompt:
         if raw_prompt:
             return self.prompt_builder.wrap(raw_prompt)
 
         self.prompt_builder.add_content(
-            prefix, suffix=suffix, suffix_reserved_percent=self.SUFFIX_RESERVED_PERCENT
+            prefix,
+            suffix=suffix,
+            suffix_reserved_percent=self.SUFFIX_RESERVED_PERCENT,
+            code_context=code_context,
         )
+
         prompt = self.prompt_builder.build()
 
         return prompt
@@ -146,13 +154,16 @@ class CodeCompletions:
         file_name: str,
         editor_lang: Optional[str] = None,
         raw_prompt: Optional[str] = None,
+        code_context: Optional[list] = None,
         stream: bool = False,
         **kwargs: Any,
     ) -> Union[CodeSuggestionsOutput, AsyncIterator[CodeSuggestionsChunk]]:
         lang_id = resolve_lang_id(file_name, editor_lang)
         increment_lang_counter(file_name, lang_id, editor_lang)
 
-        prompt = self._get_prompt(prefix, suffix, raw_prompt=raw_prompt)
+        prompt = self._get_prompt(
+            prefix, suffix, raw_prompt=raw_prompt, code_context=code_context
+        )
 
         with self.instrumentator.watch(prompt) as watch_container:
             try:

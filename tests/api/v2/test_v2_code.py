@@ -117,10 +117,21 @@ class TestCodeCompletions:
                     "content_above_cursor": "# Create a fast binary search\n",
                     "content_below_cursor": "\n",
                 },
+                "context": [
+                    {"content": "test context", "name": "test", "type": "function"}
+                ],
             },
         )
 
         assert response.status_code == 200
+        mock_completions_legacy.assert_called_once_with(
+            prefix="# Create a fast binary search\n",
+            suffix="\n",
+            file_name="main.py",
+            editor_lang=None,
+            stream=False,
+            code_context=["test context"],
+        )
 
         body = response.json()
 
@@ -129,11 +140,20 @@ class TestCodeCompletions:
         assert body["model"] == expected_response["model"]
 
     @pytest.mark.parametrize(
-        ("prompt_version", "mock_suggestions_output_text", "expected_response"),
+        (
+            "prompt_version",
+            "mock_suggestions_engine",
+            "mock_suggestions_model",
+            "mock_suggestions_output_text",
+            "expected_response",
+            "expect_context",
+        ),
         [
             # non-empty suggestions from model
             (
                 1,
+                "anthropic",
+                "claude-instant-1.2",
                 "def search",
                 {
                     "id": "id",
@@ -152,10 +172,13 @@ class TestCodeCompletions:
                         }
                     ],
                 },
+                False,
             ),
             # prompt version 2
             (
                 2,
+                "anthropic",
+                "claude-instant-1.2",
                 "def search",
                 {
                     "id": "id",
@@ -174,10 +197,38 @@ class TestCodeCompletions:
                         }
                     ],
                 },
+                False,
+            ),
+            # codestral
+            (
+                2,
+                "codestral",
+                "codestral",
+                "def search",
+                {
+                    "id": "id",
+                    "model": {
+                        "engine": "codestral",
+                        "name": "codestral",
+                        "lang": "python",
+                    },
+                    "object": "text_completion",
+                    "created": 1695182638,
+                    "choices": [
+                        {
+                            "text": "def search",
+                            "index": 0,
+                            "finish_reason": "length",
+                        }
+                    ],
+                },
+                True,
             ),
             # empty suggestions from model
             (
                 1,
+                "anthropic",
+                "claude-instant-1.2",
                 "",
                 {
                     "id": "id",
@@ -190,15 +241,19 @@ class TestCodeCompletions:
                     "created": 1695182638,
                     "choices": [],
                 },
+                False,
             ),
         ],
     )
     def test_successful_response(
         self,
         prompt_version: int,
+        mock_suggestions_engine: str,
+        mock_suggestions_model: str,
         mock_client: TestClient,
         mock_completions: Mock,
         expected_response: dict,
+        expect_context: bool,
     ):
         current_file = {
             "file_name": "main.py",
@@ -209,20 +264,28 @@ class TestCodeCompletions:
             "prompt_version": prompt_version,
             "project_path": "gitlab-org/gitlab",
             "project_id": 278964,
-            "model_provider": "anthropic",
+            "model_provider": mock_suggestions_engine,
+            "model_name": mock_suggestions_model,
             "current_file": current_file,
+            "context": [
+                {"content": "test context", "name": "test", "type": "function"}
+            ],
         }
 
-        code_completions_kwargs = {}
+        code_completions_kwargs = (
+            {"code_context": ["test context"]} if expect_context else {}
+        )
         if prompt_version == 2:
             data.update(
                 {
                     "prompt": current_file["content_above_cursor"],
                 }
             )
-            code_completions_kwargs.update(
-                {"raw_prompt": current_file["content_above_cursor"]}
-            )
+
+            if mock_suggestions_engine == "anthropic":
+                code_completions_kwargs.update(
+                    {"raw_prompt": current_file["content_above_cursor"]}
+                )
 
         response = mock_client.post(
             "/completions",
