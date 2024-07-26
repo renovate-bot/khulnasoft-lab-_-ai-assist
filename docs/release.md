@@ -23,6 +23,8 @@ In CI pipelines in AI Gateway:
   - `publish` job can run manually to cut a new release and Git tag. This requires Maintainer+ access in AI Gateway project.
 - On Git tags:
   - `release-docker-image:tag` job runs to pushes a new Docker image.
+- On Git tags with format `gitlab-*`:
+  - `release-docker-hub-image:tag` job runs to push a new Docker image to DockerHub. Requires `$DOCKERHUB_USERNAME` and `$DOCKERHUB_PASSWORD` to be set as CI variables.
 
 In addition, we have [the expectations on backward compatibility](https://docs.gitlab.com/ee/architecture/blueprints/ai_gateway/#basic-stable-api-for-the-ai-gateway).
 Tl;dr;
@@ -36,6 +38,15 @@ To view released versions of AI Gateway, visit the following links:
 
 - [Releases](https://gitlab.com/gitlab-org/modelops/applied-ml/code-suggestions/ai-assist/-/releases): This page lists the released versions and changelogs.
 - [Container Registry](https://gitlab.com/gitlab-org/modelops/applied-ml/code-suggestions/ai-assist/container_registry): This page lists the released Docker images e.g. `registry.gitlab.com/gitlab-org/modelops/applied-ml/code-suggestions/ai-assist/model-gateway:v1.0.0`
+- [DockerHub](https://gitlab.com/gitlab-org/modelops/applied-ml/code-suggestions/ai-assist/container_registry): This page lists the released images that match a GitLab version e.g. `docker/gitlab/model-gateway:gitlab-v17.2`
+
+### AI Gateway and GitLab releases compatibility
+
+On each GitLab release, a new tag will be created named `gitlab-{gitlab-release}` on the same commit of the latest 
+AI Gateway release before the cutoff. Users on self-hosted environments can use this to download a version of AI Gateway
+that is compatible with their GitLab installation. These images are available both on 
+[GitLab container registry](https://gitlab.com/gitlab-org/modelops/applied-ml/code-suggestions/ai-assist/container_registry/3809284) 
+and on [DockerHub](https://hub.docker.com/repository/docker/gitlab/model-gateway/tags).
 
 ## Release a new version of AI Gateway
 
