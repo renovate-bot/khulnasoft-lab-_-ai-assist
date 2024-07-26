@@ -23,6 +23,7 @@ from ai_gateway.instrumentators import (
     benchmark,
 )
 from ai_gateway.models import ModelAPICallError, ModelAPIError
+from ai_gateway.models.agent_model import AgentModel
 from ai_gateway.models.base_text import (
     TextGenModelBase,
     TextGenModelChunk,
@@ -158,9 +159,16 @@ class CodeCompletions:
             try:
                 watch_container.register_lang(lang_id, editor_lang)
 
-                if res := await self.model.generate(
-                    prompt.prefix, prompt.suffix, stream, **kwargs
-                ):
+                if isinstance(self.model, AgentModel):
+                    params = {"prefix": prompt.prefix, "suffix": prompt.suffix}
+
+                    res = await self.model.generate(params, stream)
+                else:
+                    res = await self.model.generate(
+                        prompt.prefix, prompt.suffix, stream, **kwargs
+                    )
+
+                if res:
                     if isinstance(res, AsyncIterator):
                         return self._handle_stream(res)
 

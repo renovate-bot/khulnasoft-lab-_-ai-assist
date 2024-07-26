@@ -33,6 +33,7 @@ from ai_gateway.async_dependency_resolver import (
     get_code_suggestions_completions_anthropic_provider,
     get_code_suggestions_completions_litellm_factory_provider,
     get_code_suggestions_completions_vertex_legacy_provider,
+    get_code_suggestions_generations_agent_factory_provider,
     get_code_suggestions_generations_anthropic_chat_factory_provider,
     get_code_suggestions_generations_anthropic_factory_provider,
     get_code_suggestions_generations_litellm_factory_provider,
@@ -76,6 +77,7 @@ GenerationsRequestWithVersion = Annotated[
 ]
 
 COMPLETIONS_AGENT_ID = "code_suggestions/completions"
+GENERATIONS_AGENT_ID = "code_suggestions/generations"
 
 
 async def get_agent_registry():
@@ -193,6 +195,7 @@ async def generations(
     request: Request,
     payload: GenerationsRequestWithVersion,
     current_user: Annotated[GitLabUser, Depends(get_current_user)],
+    agent_registry: Annotated[BaseAgentRegistry, Depends(get_agent_registry)],
     generations_vertex_factory: Factory[CodeGenerations] = Depends(
         get_code_suggestions_generations_vertex_provider
     ),
@@ -204,6 +207,9 @@ async def generations(
     ),
     generations_litellm_factory: Factory[CodeGenerations] = Depends(
         get_code_suggestions_generations_litellm_factory_provider
+    ),
+    generations_agent_factory: Factory[CodeGenerations] = Depends(
+        get_code_suggestions_generations_agent_factory_provider
     ),
     snowplow_instrumentator: SnowplowInstrumentator = Depends(
         get_snowplow_instrumentator
@@ -235,7 +241,11 @@ async def generations(
         api_key="*" * len(payload.model_api_key) if payload.model_api_key else None,
     )
 
-    if payload.model_provider == KindModelProvider.ANTHROPIC:
+    if payload.agent_id:
+        code_generations = _resolve_agent_code_generations(
+            payload, current_user, agent_registry, generations_agent_factory
+        )
+    elif payload.model_provider == KindModelProvider.ANTHROPIC:
         if payload.prompt_version == 3:
             code_generations = _resolve_code_generations_anthropic_chat(
                 payload,
@@ -311,6 +321,26 @@ def _resolve_code_generations_anthropic_chat(
         model__name=payload.model_name,
         model__stop_sequences=["</new_code>"],
     )
+
+
+def _resolve_agent_code_generations(
+    payload: SuggestionsRequest,
+    current_user: GitLabUser,
+    agent_registry: BaseAgentRegistry,
+    generations_agent_factory: Factory[CodeGenerations],
+) -> CodeGenerations:
+    model_metadata = ModelMetadata(
+        name=payload.model_name,
+        endpoint=payload.model_endpoint,
+        api_key=payload.model_api_key,
+        provider="openai",
+    )
+
+    agent = agent_registry.get_on_behalf(
+        current_user, payload.agent_id, None, model_metadata
+    )
+
+    return generations_agent_factory(model__agent=agent)
 
 
 def _completion_suggestion_choices(suggestions: list) -> list:

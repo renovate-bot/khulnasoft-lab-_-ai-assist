@@ -17,6 +17,7 @@ from ai_gateway.code_suggestions.processing.pre import PromptBuilderPrefixBased
 from ai_gateway.code_suggestions.prompts import PromptTemplate
 from ai_gateway.instrumentators import TextGenModelInstrumentator
 from ai_gateway.models import Message, ModelAPICallError, ModelAPIError
+from ai_gateway.models.agent_model import AgentModel
 from ai_gateway.models.base_chat import ChatModelBase
 from ai_gateway.models.base_text import (
     TextGenModelBase,
@@ -110,7 +111,18 @@ class CodeGenerations:
             try:
                 watch_container.register_lang(lang_id, editor_lang)
 
-                if isinstance(self.model, ChatModelBase):
+                if isinstance(self.model, AgentModel):
+                    # The prefix variable here is content-above-cursor, it'll appear as `prefix` field in the template
+                    # The prompt.prefix field is the pre-processed prompt and contains the user's instruction
+                    params = {
+                        "prefix": prefix,
+                        "instruction": prompt.prefix,
+                        "language": editor_lang,
+                        "file_name": file_name,
+                    }
+
+                    res = await self.model.generate(params, stream)
+                elif isinstance(self.model, ChatModelBase):
                     res = await self.model.generate(
                         prompt.prefix, stream=stream, **kwargs
                     )
