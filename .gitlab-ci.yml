@@ -90,8 +90,12 @@ cache:
   image: docker:${DOCKER_VERSION}
   services:
     - docker:${DOCKER_VERSION}-dind
+  variables:
+    REGISTRY_USER: "$CI_REGISTRY_USER"
+    REGISTRY_PASSWORD: "$CI_REGISTRY_PASSWORD"
+    REGISTRY: "$CI_REGISTRY"
   before_script:
-    - docker login -u "$CI_REGISTRY_USER" -p "$CI_REGISTRY_PASSWORD" "$CI_REGISTRY"
+    - docker login -u "$REGISTRY_USER" -p "$REGISTRY_PASSWORD" "$REGISTRY"
 
 install:
   extends: .poetry
