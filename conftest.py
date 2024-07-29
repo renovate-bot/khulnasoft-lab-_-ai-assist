@@ -59,6 +59,10 @@ def test_client(fast_api_router, stub_auth_provider, request):
 
     return client
 
+@pytest.fixture
+def mock_track_internal_event():
+    with patch("ai_gateway.internal_events.InternalEventsClient.track_event") as mock:
+        yield mock
 
 @pytest.fixture
 def mock_client(test_client, stub_auth_provider, auth_user, mock_container):

@@ -98,11 +98,8 @@ async def get_vertex_ai_proxy_client(
     return vertex_ai_proxy_client
 
 
-@inject
-async def get_internal_event_client(
-    internal_event_client=Provide[ContainerApplication.internal_event.client],
-):
-    return internal_event_client
+async def get_internal_event_client():
+    return get_container_application().internal_event.client()
 
 
 @inject

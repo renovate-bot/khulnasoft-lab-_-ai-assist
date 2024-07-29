@@ -14,6 +14,7 @@ from ai_gateway.api.v1.search.typing import (
 )
 from ai_gateway.auth import User, UserClaims
 from ai_gateway.config import Config
+from ai_gateway.internal_events import InternalEventAdditionalProperties
 
 
 @pytest.fixture(scope="class")
@@ -64,6 +65,7 @@ def mock_config():
 @pytest.mark.asyncio
 async def test_success(
     mock_client: TestClient,
+    mock_track_internal_event,
     request_body: dict,
     search_results: dict,
 ):
@@ -108,6 +110,11 @@ async def test_success(
         query=request_body["payload"]["query"],
         gl_version=request_body["metadata"]["version"],
         page_size=DEFAULT_PAGE_SIZE,
+    )
+
+    mock_track_internal_event.assert_called_once_with(
+        "request_documentation_search",
+        category="ai_gateway.api.v1.search.docs",
     )
 
 

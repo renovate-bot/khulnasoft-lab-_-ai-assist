@@ -22,6 +22,7 @@ from ai_gateway.chat.agents import (
     TypeReActAgentAction,
 )
 from ai_gateway.gitlab_features import WrongUnitPrimitives
+from ai_gateway.internal_events import InternalEventAdditionalProperties
 
 
 @pytest.fixture(scope="class")
@@ -116,6 +117,7 @@ class TestReActAgentStream:
         self,
         mock_client: TestClient,
         mocked_stream: Mock,
+        mock_track_internal_event,
         prompt: str,
         agent_options: AgentRequestOptions,
         actions: list[TypeAgentAction],
@@ -170,6 +172,11 @@ class TestReActAgentStream:
         assert response.status_code == 200
         assert actual_actions == expected_actions
         mocked_stream.assert_called_once_with(inputs=agent_inputs)
+
+        mock_track_internal_event.assert_called_once_with(
+            "request_duo_chat",
+            category="ai_gateway.api.v2.chat.agent",
+        )
 
     @pytest.mark.asyncio
     @pytest.mark.parametrize(
