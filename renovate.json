@@ -1,10 +1,17 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
-  "extends": [
-    "gitlab>gitlab-com/gl-infra/common-ci-tasks:renovate-common",
-    ":semanticCommitTypeAll(chore)"
-  ],
+  "extends": ["gitlab>gitlab-com/gl-infra/common-ci-tasks:renovate-common", ":semanticCommitTypeAll(chore)"],
+  "reviewersFromCodeOwners": false,
   "reviewersSampleSize": 2,
-  "additionalReviewers": ["achueshev", "stanhu", "tle_gitlab", "shinya.maeda"],
+  "additionalReviewers": [
+    "achueshev",
+    "bcardoso-",
+    "eduardobonet",
+    "igor.drozdov",
+    "shinya.maeda",
+    "srayner",
+    "stanhu",
+    "tle_gitlab"
+  ],
   "ignoreDeps": ["ruby"]
 }
