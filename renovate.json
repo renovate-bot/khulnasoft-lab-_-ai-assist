@@ -13,5 +13,5 @@
     "stanhu",
     "tle_gitlab"
   ],
-  "ignoreDeps": ["ruby"]
+  "ignoreDeps": ["ruby", "vale"]
 }
