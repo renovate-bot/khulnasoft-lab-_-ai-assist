@@ -11,8 +11,9 @@ from ai_gateway.api.feature_category import (
     current_feature_category,
     feature_categories,
     feature_category,
+    track_metadata,
 )
-from ai_gateway.gitlab_features import GitLabFeatureCategory
+from ai_gateway.gitlab_features import GitLabFeatureCategory, GitLabUnitPrimitive
 
 
 class DummyGitLabFeatureCategory(str, Enum):
@@ -148,3 +149,48 @@ async def test_feature_categories(
                     ),
                 ]
             )
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    (
+        "path_params",
+        "path_param",
+        "path_param_unit_primitive_map",
+        "expected_context",
+    ),
+    [
+        (
+            {"chat_invokable": "troubleshoot_job"},
+            "chat_invokable",
+            {"troubleshoot_job": GitLabUnitPrimitive.TROUBLESHOOT_JOB},
+            {
+                "meta.feature_category": GitLabFeatureCategory.CONTINUOUS_INTEGRATION.value,
+                "meta.unit_primitive": GitLabUnitPrimitive.TROUBLESHOOT_JOB.value,
+            },
+        ),
+        (
+            {"chat_invokable": "explain_vulnerability"},
+            "chat_invokable",
+            {"troubleshoot_job": GitLabUnitPrimitive.TROUBLESHOOT_JOB},
+            {},
+        ),
+    ],
+)
+async def test_track_metadata(
+    path_params: dict,
+    path_param: str,
+    path_param_unit_primitive_map: dict,
+    expected_context: dict,
+):
+    @track_metadata(path_param, path_param_unit_primitive_map)
+    async def to_be_decorated(request: Request):
+        pass
+
+    request = Mock(spec=Request)
+    request.path_params = path_params
+
+    with request_cycle_context({}):
+        await to_be_decorated(request=request)
+
+        assert dict(context) == expected_context

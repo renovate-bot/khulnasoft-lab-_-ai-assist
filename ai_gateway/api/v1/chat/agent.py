@@ -5,7 +5,7 @@ import structlog
 from dependency_injector.providers import Factory, FactoryAggregate
 from fastapi import APIRouter, Depends, HTTPException, Request, status
 
-from ai_gateway.api.feature_category import feature_category
+from ai_gateway.api.feature_category import track_metadata
 from ai_gateway.api.v1.chat.auth import ChatInvokable, authorize_with_unit_primitive
 from ai_gateway.api.v1.chat.typing import (
     ChatRequest,
@@ -20,7 +20,7 @@ from ai_gateway.async_dependency_resolver import (
     get_internal_event_client,
 )
 from ai_gateway.auth.user import GitLabUser, get_current_user
-from ai_gateway.gitlab_features import GitLabFeatureCategory, GitLabUnitPrimitive
+from ai_gateway.gitlab_features import GitLabUnitPrimitive
 from ai_gateway.internal_events import InternalEventsClient
 from ai_gateway.models import (
     AnthropicAPIConnectionError,
@@ -60,14 +60,14 @@ CHAT_INVOKABLES = [
     ChatInvokable(name="agent", unit_primitive=GitLabUnitPrimitive.DUO_CHAT),
 ]
 
-chat_invokable_by_name = {ci.name: ci for ci in CHAT_INVOKABLES}
+path_unit_primitive_map = {ci.name: ci.unit_primitive for ci in CHAT_INVOKABLES}
 
 
 @router.post(
     "/{chat_invokable}", response_model=ChatResponse, status_code=status.HTTP_200_OK
 )
-@feature_category(GitLabFeatureCategory.DUO_CHAT)
 @authorize_with_unit_primitive("chat_invokable", chat_invokables=CHAT_INVOKABLES)
+@track_metadata("chat_invokable", mapping=path_unit_primitive_map)
 async def chat(
     request: Request,
     chat_request: ChatRequest,
@@ -83,7 +83,7 @@ async def chat(
     payload = prompt_component.payload
 
     internal_event_client.track_event(
-        f"request_{chat_invokable_by_name[chat_invokable].unit_primitive}",
+        f"request_{path_unit_primitive_map[chat_invokable]}",
         category=__name__,
     )
 
