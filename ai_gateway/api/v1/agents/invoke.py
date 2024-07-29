@@ -5,9 +5,13 @@ from pydantic import RootModel
 
 from ai_gateway.agents import Agent, BaseAgentRegistry
 from ai_gateway.api.feature_category import feature_category
-from ai_gateway.async_dependency_resolver import get_container_application
+from ai_gateway.async_dependency_resolver import (
+    get_container_application,
+    get_internal_event_client,
+)
 from ai_gateway.auth.user import GitLabUser, get_current_user
 from ai_gateway.gitlab_features import GitLabFeatureCategory, WrongUnitPrimitives
+from ai_gateway.internal_events import InternalEventsClient
 
 
 class AgentRequest(RootModel):
@@ -33,6 +37,7 @@ async def agent(
     agent_id: str,
     current_user: Annotated[GitLabUser, Depends(get_current_user)],
     agent_registry: Annotated[BaseAgentRegistry, Depends(get_agent_registry)],
+    internal_event_client: InternalEventsClient = Depends(get_internal_event_client),
 ):
     try:
         agent = agent_registry.get_on_behalf(current_user, agent_id)
@@ -45,6 +50,12 @@ async def agent(
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail=f"Unauthorized to access '{agent_id}'",
+        )
+
+    for unit_primitive in agent.unit_primitives:
+        internal_event_client.track_event(
+            f"request_{unit_primitive}",
+            category=__name__,
         )
 
     # We don't use `isinstance` because we don't want to match subclasses

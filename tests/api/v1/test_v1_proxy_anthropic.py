@@ -5,6 +5,7 @@ import pytest
 from ai_gateway.api.v1 import api_router
 from ai_gateway.auth import User, UserClaims
 from ai_gateway.gitlab_features import GitLabUnitPrimitive
+from ai_gateway.internal_events import InternalEventAdditionalProperties
 
 
 @pytest.fixture(scope="class")
@@ -25,7 +26,7 @@ def auth_user():
 
 
 class TestProxyAnthropic:
-    def test_successful_request(self, mock_client):
+    def test_successful_request(self, mock_client, mock_track_internal_event):
         with patch(
             "ai_gateway.proxy.clients.AnthropicProxyClient.proxy",
             return_value={"response": "test"},
@@ -47,6 +48,11 @@ class TestProxyAnthropic:
 
         assert response.status_code == 200
         assert response.json() == {"response": "test"}
+
+        mock_track_internal_event.assert_called_once_with(
+            "request_explain_vulnerability",
+            category="ai_gateway.api.v1.proxy.anthropic",
+        )
 
 
 class TestUnauthorizedScopes:

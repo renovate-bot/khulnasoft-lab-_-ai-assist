@@ -11,6 +11,7 @@ from ai_gateway.api.v1 import api_router
 from ai_gateway.api.v1.chat.auth import ChatInvokable, authorize_with_unit_primitive
 from ai_gateway.auth import GitLabUser, User, UserClaims
 from ai_gateway.gitlab_features import GitLabUnitPrimitive
+from ai_gateway.internal_events import InternalEventAdditionalProperties
 from ai_gateway.models import (
     AnthropicAPIConnectionError,
     AnthropicAPIStatusError,
@@ -122,6 +123,7 @@ class TestAgentSuccessfulRequest:
         mock_anthropic: Mock,
         mock_anthropic_chat: Mock,
         mock_llm_chat: Mock,
+        mock_track_internal_event: Mock,
         content_fixture: str,
         provider: str,
         model: str,
@@ -177,6 +179,11 @@ class TestAgentSuccessfulRequest:
 
             mock = mock_anthropic_chat if provider == "anthropic" else mock_llm_chat
             mock.assert_called_with(messages=messages, stream=False, **params)
+
+        mock_track_internal_event.assert_called_once_with(
+            "request_duo_chat",
+            category="ai_gateway.api.v1.chat.agent",
+        )
 
 
 class TestAgentSuccessfulStream:

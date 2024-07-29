@@ -8,7 +8,8 @@ from jose import jwt
 from ai_gateway.api.v1 import api_router
 from ai_gateway.auth import User, UserClaims
 from ai_gateway.auth.providers import CompositeProvider
-from ai_gateway.container import ContainerApplication
+from ai_gateway.config import Config, ConfigAuth, ConfigSelfSignedJwt
+from ai_gateway.internal_events import InternalEventAdditionalProperties
 
 # JSON Web Key can be generated via https://mkjwk.org/
 # Private key: X.509 PEM format
@@ -72,125 +73,121 @@ def auth_user():
     )
 
 
+@pytest.fixture
+def mock_config():
+    yield Config(
+        _env_file=None,
+        auth=ConfigAuth(),
+        self_signed_jwt=ConfigSelfSignedJwt(signing_key=TEST_PRIVATE_KEY),
+    )
+
+
 @pytest.mark.parametrize(
     "gitlab_realm",
     ["self-managed", "saas"],
 )
-def test_user_access_token_success(mock_client: TestClient, gitlab_realm):
-    container = ContainerApplication()
-    with container.self_signed_jwt.config.override(
-        {"self_signed_jwt": {"signing_key": TEST_PRIVATE_KEY}}
-    ):
-        response = mock_client.post(
-            "/code/user_access_token",
-            headers={
-                "X-Gitlab-Global-User-Id": GLOBAL_USER_ID,
-                "Authorization": "Bearer 12345",
-                "X-Gitlab-Authentication-Type": "oidc",
-                "X-GitLab-Instance-Id": "1234",
-                "X-Gitlab-Realm": gitlab_realm,
-            },
-        )
-        assert response.status_code == status.HTTP_200_OK
+def test_user_access_token_success(
+    mock_client: TestClient, mock_track_internal_event, gitlab_realm
+):
+    response = mock_client.post(
+        "/code/user_access_token",
+        headers={
+            "X-Gitlab-Global-User-Id": GLOBAL_USER_ID,
+            "Authorization": "Bearer 12345",
+            "X-Gitlab-Authentication-Type": "oidc",
+            "X-GitLab-Instance-Id": "1234",
+            "X-Gitlab-Realm": gitlab_realm,
+        },
+    )
+    assert response.status_code == status.HTTP_200_OK
 
-        parsed_response = response.json()
-        decoded_token = jwt.decode(
-            parsed_response["token"],
-            TEST_PUBLIC_KEY,
-            audience="gitlab-ai-gateway",
-            algorithms=CompositeProvider.SUPPORTED_ALGORITHMS,
-        )
+    parsed_response = response.json()
+    decoded_token = jwt.decode(
+        parsed_response["token"],
+        TEST_PUBLIC_KEY,
+        audience="gitlab-ai-gateway",
+        algorithms=CompositeProvider.SUPPORTED_ALGORITHMS,
+    )
 
-        current_time = datetime.now(timezone.utc)
-        current_time_posix = int(current_time.timestamp())
+    current_time = datetime.now(timezone.utc)
+    current_time_posix = int(current_time.timestamp())
 
-        assert decoded_token["iss"] == "gitlab-ai-gateway"
-        assert decoded_token["sub"] == GLOBAL_USER_ID
-        assert decoded_token["aud"] == "gitlab-ai-gateway"
-        assert decoded_token["exp"] > current_time_posix
-        assert (decoded_token["exp"]) <= int(
-            (current_time + timedelta(hours=1)).timestamp()
-        )
-        assert decoded_token["nbf"] <= current_time_posix
-        assert decoded_token["iat"] <= current_time_posix
-        assert decoded_token["jti"]
-        assert decoded_token["gitlab_realm"] == gitlab_realm
-        assert decoded_token["scopes"] == ["code_suggestions"]
-        assert parsed_response["expires_at"] == decoded_token["exp"]
+    assert decoded_token["iss"] == "gitlab-ai-gateway"
+    assert decoded_token["sub"] == GLOBAL_USER_ID
+    assert decoded_token["aud"] == "gitlab-ai-gateway"
+    assert decoded_token["exp"] > current_time_posix
+    assert (decoded_token["exp"]) <= int(
+        (current_time + timedelta(hours=1)).timestamp()
+    )
+    assert decoded_token["nbf"] <= current_time_posix
+    assert decoded_token["iat"] <= current_time_posix
+    assert decoded_token["jti"]
+    assert decoded_token["gitlab_realm"] == gitlab_realm
+    assert decoded_token["scopes"] == ["code_suggestions"]
+    assert parsed_response["expires_at"] == decoded_token["exp"]
+
+    mock_track_internal_event.assert_called_once_with(
+        "request_code_suggestions",
+        category="ai_gateway.api.v1.code.user_access_token",
+    )
 
 
 def test_user_access_token_global_user_id_header_empty(mock_client: TestClient):
-    container = ContainerApplication()
-    with container.self_signed_jwt.config.override(
-        {"self_signed_jwt": {"signing_key": TEST_PRIVATE_KEY}}
-    ):
-        response = mock_client.post(
-            "/code/user_access_token",
-            headers={
-                "X-Gitlab-Global-User-Id": "",
-                "Authorization": "Bearer 12345",
-                "X-Gitlab-Authentication-Type": "oidc",
-                "X-GitLab-Instance-Id": "1234",
-                "X-Gitlab-Realm": "self-managed",
-            },
-        )
-        assert response.status_code == status.HTTP_400_BAD_REQUEST
-        assert response.json()["detail"] == "Missing X-Gitlab-Global-User-Id header"
+    response = mock_client.post(
+        "/code/user_access_token",
+        headers={
+            "X-Gitlab-Global-User-Id": "",
+            "Authorization": "Bearer 12345",
+            "X-Gitlab-Authentication-Type": "oidc",
+            "X-GitLab-Instance-Id": "1234",
+            "X-Gitlab-Realm": "self-managed",
+        },
+    )
+    assert response.status_code == status.HTTP_400_BAD_REQUEST
+    assert response.json()["detail"] == "Missing X-Gitlab-Global-User-Id header"
 
 
 def test_user_access_token_global_user_id_header_missing(mock_client: TestClient):
-    container = ContainerApplication()
-    with container.self_signed_jwt.config.override(
-        {"self_signed_jwt": {"signing_key": TEST_PRIVATE_KEY}}
-    ):
-        response = mock_client.post(
-            "/code/user_access_token",
-            headers={
-                "Authorization": "Bearer 12345",
-                "X-Gitlab-Authentication-Type": "oidc",
-                "X-GitLab-Instance-Id": "1234",
-                "X-Gitlab-Realm": "self-managed",
-            },
-        )
-        assert response.status_code == status.HTTP_400_BAD_REQUEST
-        assert response.json()["detail"] == "Missing X-Gitlab-Global-User-Id header"
+    response = mock_client.post(
+        "/code/user_access_token",
+        headers={
+            "Authorization": "Bearer 12345",
+            "X-Gitlab-Authentication-Type": "oidc",
+            "X-GitLab-Instance-Id": "1234",
+            "X-Gitlab-Realm": "self-managed",
+        },
+    )
+    assert response.status_code == status.HTTP_400_BAD_REQUEST
+    assert response.json()["detail"] == "Missing X-Gitlab-Global-User-Id header"
 
 
 def test_user_access_token_gitlab_realm_header_empty(mock_client: TestClient):
-    container = ContainerApplication()
-    with container.self_signed_jwt.config.override(
-        {"self_signed_jwt": {"signing_key": TEST_PRIVATE_KEY}}
-    ):
-        response = mock_client.post(
-            "/code/user_access_token",
-            headers={
-                "X-Gitlab-Global-User-Id": GLOBAL_USER_ID,
-                "Authorization": "Bearer 12345",
-                "X-Gitlab-Authentication-Type": "oidc",
-                "X-GitLab-Instance-Id": "1234",
-                "X-Gitlab-Realm": "",
-            },
-        )
-        assert response.status_code == status.HTTP_400_BAD_REQUEST
-        assert response.json()["detail"] == "Missing X-Gitlab-Realm header"
+    response = mock_client.post(
+        "/code/user_access_token",
+        headers={
+            "X-Gitlab-Global-User-Id": GLOBAL_USER_ID,
+            "Authorization": "Bearer 12345",
+            "X-Gitlab-Authentication-Type": "oidc",
+            "X-GitLab-Instance-Id": "1234",
+            "X-Gitlab-Realm": "",
+        },
+    )
+    assert response.status_code == status.HTTP_400_BAD_REQUEST
+    assert response.json()["detail"] == "Missing X-Gitlab-Realm header"
 
 
 def test_user_access_token_gitlab_realm_header_missing(mock_client: TestClient):
-    container = ContainerApplication()
-    with container.self_signed_jwt.config.override(
-        {"self_signed_jwt": {"signing_key": TEST_PRIVATE_KEY}}
-    ):
-        response = mock_client.post(
-            "/code/user_access_token",
-            headers={
-                "X-Gitlab-Global-User-Id": GLOBAL_USER_ID,
-                "Authorization": "Bearer 12345",
-                "X-Gitlab-Authentication-Type": "oidc",
-                "X-GitLab-Instance-Id": "1234",
-            },
-        )
-        assert response.status_code == status.HTTP_400_BAD_REQUEST
-        assert response.json()["detail"] == "Missing X-Gitlab-Realm header"
+    response = mock_client.post(
+        "/code/user_access_token",
+        headers={
+            "X-Gitlab-Global-User-Id": GLOBAL_USER_ID,
+            "Authorization": "Bearer 12345",
+            "X-Gitlab-Authentication-Type": "oidc",
+            "X-GitLab-Instance-Id": "1234",
+        },
+    )
+    assert response.status_code == status.HTTP_400_BAD_REQUEST
+    assert response.json()["detail"] == "Missing X-Gitlab-Realm header"
 
 
 class TestUnauthorizedIssuer:
@@ -201,36 +198,34 @@ class TestUnauthorizedIssuer:
             claims=UserClaims(scopes=["code_suggestions"], issuer="gitlab-ai-gateway"),
         )
 
-    def test_failed_authorization_issuer(
-        self,
-        mock_client: TestClient,
-    ):
-        container = ContainerApplication()
-        with container.self_signed_jwt.config.override(
-            {"self_signed_jwt": {"signing_key": TEST_PRIVATE_KEY}}
-        ):
-            response = mock_client.post(
-                "/code/user_access_token",
-                headers={
-                    "X-Gitlab-Global-User-Id": GLOBAL_USER_ID,
-                    "Authorization": "Bearer 12345",
-                    "X-Gitlab-Authentication-Type": "oidc",
-                    "X-GitLab-Instance-Id": "1234",
-                    "X-Gitlab-Realm": "self-managed",
-                },
-            )
-            assert response.status_code == status.HTTP_403_FORBIDDEN
-            assert (
-                response.json()["detail"]
-                == "Unauthorized to create user access token for code suggestions"
-            )
+    def test_failed_authorization_issuer(self, mock_client: TestClient):
+        response = mock_client.post(
+            "/code/user_access_token",
+            headers={
+                "X-Gitlab-Global-User-Id": GLOBAL_USER_ID,
+                "Authorization": "Bearer 12345",
+                "X-Gitlab-Authentication-Type": "oidc",
+                "X-GitLab-Instance-Id": "1234",
+                "X-Gitlab-Realm": "self-managed",
+            },
+        )
+        assert response.status_code == status.HTTP_403_FORBIDDEN
+        assert (
+            response.json()["detail"]
+            == "Unauthorized to create user access token for code suggestions"
+        )
 
 
-def test_user_access_token_jwt_generation_failed(mock_client: TestClient):
-    container = ContainerApplication()
-    with container.self_signed_jwt.config.override(
-        {"self_signed_jwt": {"signing_key": "BROKEN_KEY"}}
-    ):
+class TestUserAccessTokenJwtGenerationFailed:
+    @pytest.fixture
+    def mock_config(self):
+        yield Config(
+            _env_file=None,
+            auth=ConfigAuth(),
+            self_signed_jwt=ConfigSelfSignedJwt(signing_key="BROKEN_KEY"),
+        )
+
+    def test_user_access_token_jwt_generation_failed(self, mock_client: TestClient):
         response = mock_client.post(
             "/code/user_access_token",
             headers={

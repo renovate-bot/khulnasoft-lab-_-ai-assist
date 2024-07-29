@@ -13,9 +13,13 @@ from ai_gateway.api.v1.search.typing import (
     SearchResponseMetadata,
     SearchResult,
 )
-from ai_gateway.async_dependency_resolver import get_search_factory_provider
+from ai_gateway.async_dependency_resolver import (
+    get_internal_event_client,
+    get_search_factory_provider,
+)
 from ai_gateway.auth.user import GitLabUser, get_current_user
 from ai_gateway.gitlab_features import GitLabFeatureCategory, GitLabUnitPrimitive
+from ai_gateway.internal_events import InternalEventsClient
 from ai_gateway.searches import Searcher
 
 __all__ = [
@@ -36,12 +40,18 @@ async def docs(
     current_user: Annotated[GitLabUser, Depends(get_current_user)],
     search_request: SearchRequest,
     search_factory: Factory[Searcher] = Depends(get_search_factory_provider),
+    internal_event_client: InternalEventsClient = Depends(get_internal_event_client),
 ):
     if not current_user.can(GitLabUnitPrimitive.DOCUMENTATION_SEARCH):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Unauthorized to search documentations",
         )
+
+    internal_event_client.track_event(
+        f"request_{GitLabUnitPrimitive.DOCUMENTATION_SEARCH}",
+        category=__name__,
+    )
 
     payload = search_request.payload
 

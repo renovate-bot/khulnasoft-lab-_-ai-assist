@@ -13,6 +13,7 @@ from ai_gateway.auth import User, UserClaims
 from ai_gateway.chat.agents import ReActAgent
 from ai_gateway.config import Config
 from ai_gateway.gitlab_features import GitLabUnitPrimitive
+from ai_gateway.internal_events import InternalEventAdditionalProperties
 
 
 class FakeModel(SimpleChatModel):
@@ -120,6 +121,7 @@ class TestAgent:
         mock_agent_klass,
         mock_registry_get,
         mock_client,
+        mock_track_internal_event,
         inputs: dict[str, str],
         expected_status: int,
         expected_response: Any,
@@ -136,6 +138,14 @@ class TestAgent:
         mock_registry_get.assert_called_with("test", None, None)
         assert response.status_code == expected_status
         assert response.json() == expected_response
+
+        if mock_agent_klass:
+            mock_track_internal_event.assert_called_once_with(
+                "request_explain_vulnerability",
+                category="ai_gateway.api.v1.agents.invoke",
+            )
+        else:
+            mock_track_internal_event.assert_not_called()
 
 
 class TestUnauthorizedScopes:

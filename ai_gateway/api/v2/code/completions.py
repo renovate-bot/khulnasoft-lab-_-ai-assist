@@ -39,6 +39,7 @@ from ai_gateway.async_dependency_resolver import (
     get_code_suggestions_generations_litellm_factory_provider,
     get_code_suggestions_generations_vertex_provider,
     get_container_application,
+    get_internal_event_client,
     get_snowplow_instrumentator,
 )
 from ai_gateway.auth.self_signed_jwt import SELF_SIGNED_TOKEN_ISSUER
@@ -52,6 +53,7 @@ from ai_gateway.code_suggestions import (
 from ai_gateway.code_suggestions.processing.ops import lang_from_filename
 from ai_gateway.gitlab_features import GitLabFeatureCategory, GitLabUnitPrimitive
 from ai_gateway.instrumentators.base import TelemetryInstrumentator
+from ai_gateway.internal_events import InternalEventsClient
 from ai_gateway.models import KindAnthropicModel, KindModelProvider
 from ai_gateway.tracking import SnowplowEvent, SnowplowEventContext
 from ai_gateway.tracking.errors import log_exception
@@ -107,12 +109,18 @@ async def completions(
     snowplow_instrumentator: SnowplowInstrumentator = Depends(
         get_snowplow_instrumentator
     ),
+    internal_event_client: InternalEventsClient = Depends(get_internal_event_client),
 ):
     if not current_user.can(GitLabUnitPrimitive.CODE_SUGGESTIONS):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Unauthorized to access code completions",
         )
+
+    internal_event_client.track_event(
+        f"request_{GitLabUnitPrimitive.CODE_SUGGESTIONS}",
+        category=__name__,
+    )
 
     try:
         snowplow_instrumentator.watch(
@@ -217,6 +225,7 @@ async def generations(
     snowplow_instrumentator: SnowplowInstrumentator = Depends(
         get_snowplow_instrumentator
     ),
+    internal_event_client: InternalEventsClient = Depends(get_internal_event_client),
 ):
     if not current_user.can(
         GitLabUnitPrimitive.CODE_SUGGESTIONS,
@@ -226,6 +235,12 @@ async def generations(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Unauthorized to access code generations",
         )
+
+    internal_event_client.track_event(
+        f"request_{GitLabUnitPrimitive.CODE_SUGGESTIONS}",
+        category=__name__,
+    )
+
     try:
         snowplow_instrumentator.watch(
             _suggestion_requested_snowplow_event(request, payload)

@@ -13,6 +13,7 @@ from structlog.testing import capture_logs
 from ai_gateway.api.v2 import api_router
 from ai_gateway.auth import User, UserClaims
 from ai_gateway.config import Config
+from ai_gateway.internal_events import InternalEventAdditionalProperties
 from ai_gateway.models.base_chat import Message, Role
 from ai_gateway.tracking.container import ContainerTracking
 from ai_gateway.tracking.instrumentator import SnowplowInstrumentator
@@ -102,6 +103,7 @@ class TestCodeCompletions:
     def test_legacy_successful_response(
         self,
         mock_client: TestClient,
+        mock_track_internal_event,
         mock_completions_legacy: Mock,
         expected_response: dict,
     ):
@@ -143,6 +145,11 @@ class TestCodeCompletions:
         assert body["choices"] == expected_response["choices"]
         assert body["experiments"] == expected_response["experiments"]
         assert body["model"] == expected_response["model"]
+
+        mock_track_internal_event.assert_called_once_with(
+            "request_code_suggestions",
+            category="ai_gateway.api.v2.code.completions",
+        )
 
     @pytest.mark.parametrize(
         (

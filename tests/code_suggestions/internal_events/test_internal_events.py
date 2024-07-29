@@ -1,4 +1,6 @@
+from enum import Enum
 from unittest import mock
+from unittest.mock import patch
 
 import pytest
 from snowplow_tracker import SelfDescribingJson, Snowplow, StructuredEvent
@@ -64,7 +66,11 @@ class TestInternalEventsClient:
         ],
     )
     def test_track_event(
-        self, event_name, additional_properties, category, expected_extra
+        self,
+        event_name,
+        additional_properties,
+        category,
+        expected_extra,
     ):
         with mock.patch("snowplow_tracker.Tracker.track") as mock_track, mock.patch(
             "snowplow_tracker.events.StructuredEvent.__init__"

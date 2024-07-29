@@ -5,10 +5,14 @@ from fastapi import APIRouter, Depends, Header, HTTPException, Request, status
 
 from ai_gateway.api.feature_category import feature_category
 from ai_gateway.api.v1.code.typing import Token
-from ai_gateway.async_dependency_resolver import get_token_authority
+from ai_gateway.async_dependency_resolver import (
+    get_internal_event_client,
+    get_token_authority,
+)
 from ai_gateway.auth.self_signed_jwt import SELF_SIGNED_TOKEN_ISSUER, TokenAuthority
 from ai_gateway.auth.user import GitLabUser, get_current_user
 from ai_gateway.gitlab_features import GitLabFeatureCategory, GitLabUnitPrimitive
+from ai_gateway.internal_events import InternalEventsClient
 
 __all__ = [
     "router",
@@ -32,6 +36,7 @@ async def user_access_token(
     x_gitlab_realm: Annotated[
         str, Header()
     ] = None,  # This is the value of X_GITLAB_REALM_HEADER
+    internal_event_client: InternalEventsClient = Depends(get_internal_event_client),
 ):
     if not current_user.can(
         GitLabUnitPrimitive.CODE_SUGGESTIONS,
@@ -41,6 +46,11 @@ async def user_access_token(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Unauthorized to create user access token for code suggestions",
         )
+
+    internal_event_client.track_event(
+        f"request_{GitLabUnitPrimitive.CODE_SUGGESTIONS}",
+        category=__name__,
+    )
 
     if not x_gitlab_global_user_id:
         raise HTTPException(

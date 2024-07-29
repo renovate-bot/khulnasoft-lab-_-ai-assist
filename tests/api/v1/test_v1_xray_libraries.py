@@ -6,6 +6,7 @@ from fastapi import status
 from ai_gateway.api.v1 import api_router
 from ai_gateway.api.v1.x_ray.typing import AnyPromptComponent
 from ai_gateway.auth import User, UserClaims
+from ai_gateway.internal_events import InternalEventAdditionalProperties
 
 
 @pytest.fixture(scope="class")
@@ -45,6 +46,7 @@ class TestXRayLibraries:
         mock_client,
         mock_anthropic,
         mock_output_text,
+        mock_track_internal_event,
         want_called,
         want_status,
         want_prompt,
@@ -79,6 +81,11 @@ class TestXRayLibraries:
             mock_anthropic.assert_called_with(prefix=want_prompt, _suffix="")
 
         assert response.json() == {"response": mock_output_text}
+
+        mock_track_internal_event.assert_called_once_with(
+            "request_code_suggestions",
+            category="ai_gateway.api.v1.x_ray.libraries",
+        )
 
 
 class TestUnauthorizedScopes:

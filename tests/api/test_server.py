@@ -24,7 +24,7 @@ from ai_gateway.config import (
     Config,
     ConfigAuth,
     ConfigGoogleCloudPlatform,
-    ConfigSnowplow,
+    ConfigInternalEvent,
 )
 from ai_gateway.container import ContainerApplication
 from ai_gateway.models import ModelAPIError
@@ -221,7 +221,7 @@ def test_middleware_internal_event(test_path, expected):
     config = Config(
         _env_file=None,
         auth=ConfigAuth(bypass_external=True),
-        snowplow=ConfigSnowplow(enabled=True),
+        internal_event=ConfigInternalEvent(enabled=True),
     )
     server = create_fast_api_server(config)
     client = TestClient(server)

@@ -17,9 +17,11 @@ from ai_gateway.api.v1.chat.typing import (
 from ai_gateway.async_dependency_resolver import (
     get_chat_anthropic_claude_factory_provider,
     get_chat_litellm_factory_provider,
+    get_internal_event_client,
 )
 from ai_gateway.auth.user import GitLabUser, get_current_user
 from ai_gateway.gitlab_features import GitLabFeatureCategory, GitLabUnitPrimitive
+from ai_gateway.internal_events import InternalEventsClient
 from ai_gateway.models import (
     AnthropicAPIConnectionError,
     AnthropicAPIStatusError,
@@ -58,6 +60,8 @@ CHAT_INVOKABLES = [
     ChatInvokable(name="agent", unit_primitive=GitLabUnitPrimitive.DUO_CHAT),
 ]
 
+chat_invokable_by_name = {ci.name: ci for ci in CHAT_INVOKABLES}
+
 
 @router.post(
     "/{chat_invokable}", response_model=ChatResponse, status_code=status.HTTP_200_OK
@@ -73,9 +77,15 @@ async def chat(
         get_chat_anthropic_claude_factory_provider
     ),
     litellm_factory: Factory = Depends(get_chat_litellm_factory_provider),
+    internal_event_client: InternalEventsClient = Depends(get_internal_event_client),
 ):
     prompt_component = chat_request.prompt_components[0]
     payload = prompt_component.payload
+
+    internal_event_client.track_event(
+        f"request_{chat_invokable_by_name[chat_invokable].unit_primitive}",
+        category=__name__,
+    )
 
     try:
         if payload.provider in (KindModelProvider.LITELLM, KindModelProvider.MISTRALAI):
