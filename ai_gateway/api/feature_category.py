@@ -4,7 +4,11 @@ import typing
 from fastapi import HTTPException, Request, status
 from starlette_context import context
 
-from ai_gateway.gitlab_features import GitLabFeatureCategory, GitLabUnitPrimitive
+from ai_gateway.gitlab_features import (
+    FEATURE_CATEGORIES_FOR_PROXY_ENDPOINTS,
+    GitLabFeatureCategory,
+    GitLabUnitPrimitive,
+)
 
 X_GITLAB_UNIT_PRIMITIVE = "x-gitlab-unit-primitive"
 
@@ -84,6 +88,46 @@ def feature_categories(mapping: dict[GitLabUnitPrimitive, GitLabFeatureCategory]
 
             context[_CATEGORY_CONTEXT_KEY] = feature_category
             context[_UNIT_PRIMITIVE_CONTEXT_KEY] = unit_primitive
+            return await func(request, *args, **kwargs)
+
+        return wrapper
+
+    return decorator
+
+
+def track_metadata(request_param: str, mapping: dict[str, GitLabUnitPrimitive]):
+    """
+    Track feature category and unit primitive from request path.
+
+    Example:
+
+    ```
+    @track_metadata(
+         "chat_invokable",
+         mapping={
+             "explain_vulnerability": GitLabUnitPrimitive.EXPLAIN_VULNERABILITY,
+             "troubleshoot_job": GitLabUnitPrimitive.TROUBLESHOOT_JOB,
+         }
+    )
+    ```
+    """
+
+    def decorator(func: typing.Callable) -> typing.Callable:
+        @functools.wraps(func)
+        async def wrapper(
+            request: Request, *args: typing.Any, **kwargs: typing.Any
+        ) -> typing.Any:
+            request_param_val = request.path_params[request_param]
+
+            if request_param_val in mapping:
+                unit_primitive = mapping[request_param_val]
+                feature_category = FEATURE_CATEGORIES_FOR_PROXY_ENDPOINTS[
+                    unit_primitive
+                ]
+
+                context[_CATEGORY_CONTEXT_KEY] = feature_category.value
+                context[_UNIT_PRIMITIVE_CONTEXT_KEY] = unit_primitive.value
+
             return await func(request, *args, **kwargs)
 
         return wrapper
