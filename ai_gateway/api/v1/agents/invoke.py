@@ -1,7 +1,8 @@
-from typing import Annotated, Any
+from typing import Annotated, Any, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Request, status
-from pydantic import RootModel
+from pydantic import BaseModel, RootModel
+from starlette.responses import StreamingResponse
 
 from ai_gateway.agents import Agent, BaseAgentRegistry
 from ai_gateway.api.feature_category import feature_category
@@ -14,8 +15,13 @@ from ai_gateway.gitlab_features import GitLabFeatureCategory, WrongUnitPrimitive
 from ai_gateway.internal_events import InternalEventsClient
 
 
-class AgentRequest(RootModel):
+class AgentInputs(RootModel):
     root: dict[str, Any]
+
+
+class AgentRequest(BaseModel):
+    inputs: AgentInputs
+    stream: Optional[bool] = False
 
 
 router = APIRouter()
@@ -66,11 +72,19 @@ async def agent(
         )
 
     try:
-        response = await agent.ainvoke(agent_request.root)
+        if agent_request.stream:
+            response = agent.astream(agent_request.inputs.root)
+
+            async def _handle_stream():
+                async for chunk in response:
+                    yield chunk.content
+
+            return StreamingResponse(_handle_stream(), media_type="text/event-stream")
+
+        response = await agent.ainvoke(agent_request.inputs.root)
+        return response.content
     except KeyError as e:
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
             detail=str(e),
         )
-
-    return response.content

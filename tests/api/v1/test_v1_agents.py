@@ -132,7 +132,9 @@ class TestAgent:
                 "Authorization": "Bearer 12345",
                 "X-Gitlab-Authentication-Type": "oidc",
             },
-            json=inputs,
+            json={
+                "inputs": inputs,
+            },
         )
 
         mock_registry_get.assert_called_with("test", None, None)
@@ -146,6 +148,29 @@ class TestAgent:
             )
         else:
             mock_track_internal_event.assert_not_called()
+
+    @pytest.mark.asyncio
+    async def test_streaming_request(
+        self,
+        mock_client,
+        mock_registry_get,
+    ):
+        response = mock_client.post(
+            "/agents/test",
+            headers={
+                "Authorization": "Bearer 12345",
+                "X-Gitlab-Authentication-Type": "oidc",
+            },
+            json={
+                "inputs": {"name": "John", "age": 20},
+                "stream": True,
+            },
+        )
+
+        mock_registry_get.assert_called_with("test", None, None)
+        assert response.status_code == 200
+        assert response.text == "Hi John!"
+        assert response.headers["content-type"] == "text/event-stream; charset=utf-8"
 
 
 class TestUnauthorizedScopes:
@@ -165,7 +190,7 @@ class TestUnauthorizedScopes:
                 "Authorization": "Bearer 12345",
                 "X-Gitlab-Authentication-Type": "oidc",
             },
-            json={},
+            json={"inputs": {}},
         )
 
         assert response.status_code == 403
