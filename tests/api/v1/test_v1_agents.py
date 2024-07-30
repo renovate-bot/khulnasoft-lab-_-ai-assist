@@ -8,6 +8,7 @@ from langchain_core.messages import BaseMessage
 from langchain_core.prompts import ChatPromptTemplate
 
 from ai_gateway.agents import Agent
+from ai_gateway.agents.typing import ModelMetadata
 from ai_gateway.api.v1 import api_router
 from ai_gateway.auth import User, UserClaims
 from ai_gateway.chat.agents import ReActAgent
@@ -91,18 +92,38 @@ def auth_user():
 
 class TestAgent:
     @pytest.mark.parametrize(
-        ("mock_agent_klass", "inputs", "expected_status", "expected_response"),
+        (
+            "mock_agent_klass",
+            "inputs",
+            "model_metadata",
+            "expected_status",
+            "expected_response",
+        ),
         [
-            (Agent, {"name": "John", "age": 20}, 200, "Hi John!"),
+            (Agent, {"name": "John", "age": 20}, None, 200, "Hi John!"),
+            (
+                Agent,
+                {"name": "John", "age": 20},
+                ModelMetadata(
+                    name="mistral",
+                    provider="litellm",
+                    endpoint="http://localhost:4000",
+                    api_key="token",
+                ),
+                200,
+                "Hi John!",
+            ),
             (
                 None,
                 {"name": "John", "age": 20},
+                None,
                 404,
                 {"detail": "Agent 'test' not found"},
             ),
             (
                 Agent,
                 {"name": "John"},
+                None,
                 422,
                 {
                     "detail": "\"Input to ChatPromptTemplate is missing variables {'age'}.  Expected: ['age', 'name'] Received: ['name']\""
@@ -111,6 +132,7 @@ class TestAgent:
             (
                 ReActAgent,
                 {"name": "John", "age": 20},
+                None,
                 422,
                 {"detail": "Agent 'test' is not supported"},
             ),
@@ -123,6 +145,7 @@ class TestAgent:
         mock_client,
         mock_track_internal_event,
         inputs: dict[str, str],
+        model_metadata: Optional[ModelMetadata],
         expected_status: int,
         expected_response: Any,
     ):
@@ -134,10 +157,12 @@ class TestAgent:
             },
             json={
                 "inputs": inputs,
+                "model_metadata": model_metadata
+                and model_metadata.model_dump(mode="json"),
             },
         )
 
-        mock_registry_get.assert_called_with("test", None, None)
+        mock_registry_get.assert_called_with("test", None, model_metadata)
         assert response.status_code == expected_status
         assert response.json() == expected_response
 
