@@ -1,20 +1,27 @@
 from contextlib import contextmanager
 from pathlib import Path
-from typing import Any, AsyncIterator
+from typing import Any, AsyncIterator, Type
 from unittest.mock import Mock, patch
 
 import pytest
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
+from langchain_core.language_models.chat_models import BaseChatModel
+from langchain.chat_models.fake import FakeListChatModel
 from starlette.middleware import Middleware
 from starlette_context.middleware import RawContextMiddleware
 
+from ai_gateway.agents.base import Agent
+from ai_gateway.agents.config.base import AgentConfig, AgentParams, ModelConfig
+from ai_gateway.agents.config.models import ChatLiteLLMParams, TypeModelParams
+from ai_gateway.agents.typing import TypeModelFactory
 from ai_gateway.api.middleware import MiddlewareAuthentication, MiddlewareLogRequest
 from ai_gateway.code_suggestions.base import CodeSuggestionsChunk, CodeSuggestionsOutput
 from ai_gateway.code_suggestions.processing.base import ModelEngineOutput
 from ai_gateway.code_suggestions.processing.typing import LanguageId, MetadataCodeContent, MetadataPromptBuilder
 from ai_gateway.config import Config
 from ai_gateway.container import ContainerApplication
+from ai_gateway.gitlab_features import GitLabUnitPrimitive
 from ai_gateway.models.base_text import TextGenModelBase, TextGenModelChunk, TextGenModelOutput
 from ai_gateway.experimentation.base import ExperimentTelemetry
 from ai_gateway.models.base import ModelMetadata, SafetyAttributes, TokensConsumptionMetadata
@@ -296,3 +303,88 @@ def mock_completions_stream(mock_suggestions_output: CodeSuggestionsOutput):
 def mock_with_prompt_prepared():
     with patch("ai_gateway.code_suggestions.CodeGenerations.with_prompt_prepared") as mock:
         yield mock
+
+
+@pytest.fixture
+def model_response():
+    yield None
+
+
+@pytest.fixture
+def model(model_response: str):
+    # our default Assistant prompt template already contains "Thought: "
+    text = "" if model_response is None else model_response[len("Thought: ") :]
+
+    yield FakeListChatModel(responses=[text])
+
+
+@pytest.fixture
+def model_factory(model: BaseChatModel):
+    yield lambda *args, **kwargs: model
+
+
+@pytest.fixture
+def model_params():
+    yield ChatLiteLLMParams(model_class_provider="litellm")
+
+
+@pytest.fixture
+def model_config(model_params: TypeModelParams):
+    yield ModelConfig(name="test_model", params=model_params)
+
+
+@pytest.fixture
+def prompt_template():
+    yield {"system": "Hi, I'm {{name}}", "user": "{{content}}"}
+
+
+@pytest.fixture
+def unit_primitives():
+    yield ["analyze_ci_job_failure"]
+
+
+@pytest.fixture
+def agent_params():
+    yield AgentParams()
+
+
+@pytest.fixture
+def agent_config(
+    model_config: ModelConfig,
+    unit_primitives: list[GitLabUnitPrimitive],
+    prompt_template: dict[str, str],
+    agent_params: AgentParams,
+):
+    yield AgentConfig(
+        name="test_agent",
+        model=model_config,
+        unit_primitives=unit_primitives,
+        prompt_template=prompt_template,
+        params=agent_params,
+    )
+
+
+@pytest.fixture
+def agent_options():
+    yield {}
+
+
+@pytest.fixture
+def model_metadata():
+    yield None
+
+
+@pytest.fixture
+def agent_class():
+    yield Agent
+
+
+@pytest.fixture
+def agent(
+    agent_class: Type[Agent],
+    model_factory: TypeModelFactory,
+    agent_config: AgentConfig,
+    model_metadata: ModelMetadata | None,
+    agent_options: dict[str, Any] | None,
+):
+    yield agent_class(model_factory, agent_config, model_metadata, agent_options)

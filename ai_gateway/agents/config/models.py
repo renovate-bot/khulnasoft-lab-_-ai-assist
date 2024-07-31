@@ -1,5 +1,5 @@
 from enum import Enum
-from typing import Annotated, Literal, Mapping, Optional
+from typing import Annotated, Literal, Mapping
 
 from pydantic import BaseModel, Field
 
@@ -18,19 +18,15 @@ class ModelClassProvider(str, Enum):
 
 
 class BaseModelParams(BaseModel):
-    temperature: Optional[float] = 1.0
-    timeout: float | None = None
+    temperature: float | None = None
     top_p: float | None = None
     top_k: int | None = None
-    max_tokens: Optional[int] = 2_048
-    max_retries: Optional[int] = 1
+    max_tokens: int | None = None
+    max_retries: int | None = 1
 
 
 class ChatLiteLLMParams(BaseModelParams):
     model_class_provider: Literal[ModelClassProvider.LITE_LLM]
-    timeout: Annotated[float | None, Field(serialization_alias="request_timeout")] = (
-        None
-    )
     custom_llm_provider: str | None = None
     """Easily switch to huggingface, replicate, together ai, sagemaker, etc.
     Example - https://litellm.vercel.app/docs/providers/vllm#batch-completion"""
@@ -38,10 +34,7 @@ class ChatLiteLLMParams(BaseModelParams):
 
 class ChatAnthropicParams(BaseModelParams):
     model_class_provider: Literal[ModelClassProvider.ANTHROPIC]
-    timeout: Annotated[
-        float | None, Field(serialization_alias="default_request_timeout")
-    ] = None
-    default_headers: Optional[Mapping[str, str]] = None
+    default_headers: Mapping[str, str] | None = None
 
 
 TypeModelParams = Annotated[

@@ -1,6 +1,4 @@
 import pytest
-from langchain.chat_models.fake import FakeListChatModel
-from langchain_core.prompts import ChatPromptTemplate
 
 from ai_gateway.chat.agents.react import (
     ReActAgent,
@@ -15,26 +13,24 @@ from ai_gateway.chat.agents.react import (
 from ai_gateway.chat.agents.typing import AgentStep
 
 
+@pytest.fixture
+def agent_class():
+    yield ReActAgent
+
+
 async def _assert_agent_invoked(
-    model_response: str | None,
-    prompt_template: ChatPromptTemplate,
+    agent: ReActAgent,
     question: str,
     agent_scratchpad: list[AgentStep],
     chat_history: list[str] | str,
     expected_actions: list[ReActAgentToolAction | ReActAgentFinalAnswer],
     stream: bool,
 ):
-    # our default Assistant prompt template already contains "Thought: "
-    text = "" if model_response is None else model_response[len("Thought: ") :]
-    model = FakeListChatModel(responses=[text])
-
     inputs = ReActAgentInputs(
         question=question,
         chat_history=chat_history,
         agent_scratchpad=agent_scratchpad,
     )
-
-    agent = ReActAgent(name="test", unit_primitives=[], chain=prompt_template | model)
 
     if stream:
         actual_actions = [action async for action in agent.astream(inputs)]
@@ -45,16 +41,30 @@ async def _assert_agent_invoked(
 
 
 @pytest.fixture
-def prompt_template() -> ChatPromptTemplate:
-    return ChatPromptTemplate.from_messages(
-        [
-            (
-                "system",
-                "{chat_history}\n\nYou are a DevSecOps Assistant named 'GitLab Duo Chat' created by GitLab.",
-            ),
-            ("user", "{question}"),
-            ("assistant", "{agent_scratchpad}"),
-        ]
+def prompt_template():
+    yield {
+        "system": "{chat_history}\n\nYou are a DevSecOps Assistant named 'GitLab Duo Chat' created by GitLab.",
+        "user": "{question}",
+        "assistant": "{agent_scratchpad}",
+    }
+
+
+@pytest.fixture
+def tool_action(model_response: str):
+    yield ReActAgentToolAction(
+        thought="I'm thinking...",
+        tool="ci_issue_reader",
+        tool_input="random input",
+        log=model_response,
+    )
+
+
+@pytest.fixture
+def final_answer(model_response: str):
+    yield ReActAgentFinalAnswer(
+        thought="I'm thinking...",
+        text="Paris",
+        log=model_response,
     )
 
 
@@ -155,7 +165,7 @@ class TestReActAgent:
             "chat_history",
             "agent_scratchpad",
             "model_response",
-            "expected_action",
+            "expected_action_fixture",
         ),
         [
             (
@@ -163,33 +173,21 @@ class TestReActAgent:
                 "",
                 [],
                 "Thought: I'm thinking...\nAction: ci_issue_reader\nAction Input: random input",
-                ReActAgentToolAction(
-                    thought="I'm thinking...",
-                    tool="ci_issue_reader",
-                    tool_input="random input",
-                ),
+                "tool_action",
             ),
             (
                 "What's the title of this issue?",
                 ["User: what's the description of this issue", "AI: PoC ReAct"],
                 [],
                 "Thought: I'm thinking...\nAction: ci_issue_reader\nAction Input: random input",
-                ReActAgentToolAction(
-                    thought="I'm thinking...",
-                    tool="ci_issue_reader",
-                    tool_input="random input",
-                ),
+                "tool_action",
             ),
             (
                 "What's the title of this issue?",
                 ["User: what's the description of this issue", "AI: PoC ReAct"],
                 [],
                 "Thought: I'm thinking...\nAction: ci_issue_reader\nAction Input: random input",
-                ReActAgentToolAction(
-                    thought="I'm thinking...",
-                    tool="ci_issue_reader",
-                    tool_input="random input",
-                ),
+                "tool_action",
             ),
             (
                 "What's your name?",
@@ -205,24 +203,24 @@ class TestReActAgent:
                     )
                 ],
                 "Thought: I'm thinking...\nFinal Answer: Paris",
-                ReActAgentFinalAnswer(
-                    text="Paris",
-                ),
+                "final_answer",
             ),
         ],
     )
     async def test_invoke(
         self,
-        prompt_template: ChatPromptTemplate,
+        request,
         question: str,
         chat_history: list[str] | str,
         agent_scratchpad: list[AgentStep],
         model_response: str,
-        expected_action: TypeReActAgentAction,
+        expected_action_fixture: str,
+        agent: ReActAgent,
     ):
+        expected_action = request.getfixturevalue(expected_action_fixture)
+
         await _assert_agent_invoked(
-            model_response=model_response,
-            prompt_template=prompt_template,
+            agent=agent,
             question=question,
             chat_history=chat_history,
             agent_scratchpad=agent_scratchpad,
@@ -279,16 +277,15 @@ class TestReActAgent:
     )
     async def test_stream(
         self,
-        prompt_template: ChatPromptTemplate,
         question: str,
         chat_history: list[str] | str,
         agent_scratchpad: list[AgentStep],
         model_response: str,
         expected_actions: list[ReActAgentToolAction | ReActAgentFinalAnswer],
+        agent: ReActAgent,
     ):
         await _assert_agent_invoked(
-            model_response=model_response,
-            prompt_template=prompt_template,
+            agent=agent,
             question=question,
             chat_history=chat_history,
             agent_scratchpad=agent_scratchpad,

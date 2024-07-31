@@ -20,12 +20,20 @@ class ModelConfig(BaseModel):
     params: TypeModelParams
 
 
+class AgentParams(BaseModel):
+    stop: list[str] | None = None
+    # NOTE: In langchain, some providers accept the timeout when initializing the client. However, support
+    # and naming is inconsistent between them. Therefore, we bind the timeout to the agent instead.
+    # See https://gitlab.com/gitlab-org/modelops/applied-ml/code-suggestions/ai-assist/-/merge_requests/1035#note_2020952732
+    timeout: float | None = None
+
+
 class BaseAgentConfig(BaseModel, Generic[TypeUnitPrimitive]):
     name: str
     model: ModelConfig
     unit_primitives: list[TypeUnitPrimitive]
     prompt_template: dict[str, str]
-    stop: list[str] | None = None
+    params: AgentParams | None = None
 
 
 class AgentConfig(BaseAgentConfig):

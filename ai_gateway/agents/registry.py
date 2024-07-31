@@ -1,20 +1,13 @@
 from pathlib import Path
-from typing import Any, NamedTuple, Optional, Protocol, Type
+from typing import Any, NamedTuple, Optional, Type
 
 import yaml
-from langchain_core.language_models.chat_models import BaseChatModel
-from langchain_core.prompts import ChatPromptTemplate
-from langchain_core.runnables import Runnable
 
 from ai_gateway.agents.base import Agent, BaseAgentRegistry
-from ai_gateway.agents.config import AgentConfig, ModelClassProvider, ModelConfig
-from ai_gateway.agents.typing import ModelMetadata
+from ai_gateway.agents.config import AgentConfig, ModelClassProvider
+from ai_gateway.agents.typing import ModelMetadata, TypeModelFactory
 
-__all__ = ["LocalAgentRegistry", "AgentRegistered", "CustomModelsAgentRegistry"]
-
-
-class TypeModelFactory(Protocol):
-    def __call__(self, *, model: str, **kwargs: Optional[Any]) -> BaseChatModel: ...
+__all__ = ["LocalAgentRegistry", "AgentRegistered"]
 
 
 class AgentRegistered(NamedTuple):
@@ -29,9 +22,11 @@ class LocalAgentRegistry(BaseAgentRegistry):
         self,
         agents_registered: dict[str, AgentRegistered],
         model_factories: dict[ModelClassProvider, TypeModelFactory],
+        custom_models_enabled: bool,
     ):
         self.agents_registered = agents_registered
         self.model_factories = model_factories
+        self.custom_models_enabled = custom_models_enabled
 
     def _resolve_id(
         self,
@@ -43,50 +38,39 @@ class LocalAgentRegistry(BaseAgentRegistry):
 
         return f"{agent_id}/{self.key_agent_type_base}"
 
-    def _get_model(
-        self,
-        config_model: ModelConfig,
-        model_metadata: Optional[ModelMetadata] = None,
-    ) -> Runnable:
-        model_class_provider = config_model.params.model_class_provider
-        if model_factory := self.model_factories.get(model_class_provider, None):
-            return model_factory(
-                model=config_model.name,
-                **config_model.params.model_dump(
-                    exclude={"model_class_provider"}, exclude_none=True, by_alias=True
-                ),
-            )
-
-        raise ValueError(f"unrecognized model class provider `{model_class_provider}`.")
-
     def get(
         self,
         agent_id: str,
         options: Optional[dict[str, Any]] = None,
         model_metadata: Optional[ModelMetadata] = None,
     ) -> Agent:
+        if (
+            model_metadata
+            and model_metadata.endpoint
+            and not self.custom_models_enabled
+        ):
+            raise ValueError(
+                "Endpoint override not allowed when custom models are disabled."
+            )
+
         agent_id = self._resolve_id(agent_id, model_metadata)
         klass, config = self.agents_registered[agent_id]
+        model_class_provider = config.model.params.model_class_provider
+        model_factory = self.model_factories.get(model_class_provider, None)
 
-        model = self._get_model(config.model, model_metadata)
+        if not model_factory:
+            raise ValueError(
+                f"unrecognized model class provider `{model_class_provider}`."
+            )
 
-        if config.stop:
-            model = model.bind(stop=config.stop)
-
-        messages = klass.build_messages(config.prompt_template, options or {})
-        prompt = ChatPromptTemplate.from_messages(messages)
-
-        return klass(
-            name=config.name,
-            chain=prompt | model,
-            unit_primitives=config.unit_primitives,
-        )
+        return klass(model_factory, config, model_metadata, options)
 
     @classmethod
     def from_local_yaml(
         cls,
         class_overrides: dict[str, Type[Agent]],
         model_factories: dict[ModelClassProvider, TypeModelFactory],
+        custom_models_enabled: bool = False,
     ) -> "LocalAgentRegistry":
         """Iterate over all agent definition files matching [usecase]/[type].yml,
         and create a corresponding agent for each one. The base Agent class is
@@ -111,23 +95,4 @@ class LocalAgentRegistry(BaseAgentRegistry):
                     klass=klass, config=AgentConfig(**yaml.safe_load(fp))
                 )
 
-        return cls(agents_registered, model_factories)
-
-
-class CustomModelsAgentRegistry(LocalAgentRegistry):
-    def _get_model(
-        self,
-        config_model: ModelConfig,
-        model_metadata: Optional[ModelMetadata] = None,
-    ) -> Runnable:
-        chat_model = super()._get_model(config_model)
-
-        if model_metadata is None:
-            return chat_model
-
-        return chat_model.bind(
-            model=model_metadata.name,
-            api_base=str(model_metadata.endpoint),
-            custom_llm_provider=model_metadata.provider,
-            api_key=model_metadata.api_key,
-        )
+        return cls(agents_registered, model_factories, custom_models_enabled)

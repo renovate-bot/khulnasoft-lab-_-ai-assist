@@ -5,7 +5,6 @@ model:
   params:
     model_class_provider: litellm
     temperature: 0.0
-    timeout: 60
     max_tokens: 2_048
     max_retries: 1
 unit_primitives:
@@ -121,5 +120,7 @@ prompt_template:
     Question: {question}
   assistant: |
     {agent_scratchpad}
-stop:
-  - "Observation:"
+params:
+  timeout: 60
+  stop:
+    - "Observation:"

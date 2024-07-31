@@ -1,11 +1,13 @@
 from abc import ABC, abstractmethod
-from typing import Any, Optional, Sequence, Tuple, TypeVar
+from typing import Any, Optional, Sequence, Tuple, TypeVar, cast
 
 from jinja2 import BaseLoader, Environment
+from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.prompts.chat import MessageLikeRepresentation
 from langchain_core.runnables import Runnable, RunnableBinding
 
-from ai_gateway.agents.typing import ModelMetadata
+from ai_gateway.agents.config.base import AgentConfig, AgentParams, ModelConfig
+from ai_gateway.agents.typing import ModelMetadata, TypeModelFactory
 from ai_gateway.auth.user import GitLabUser
 from ai_gateway.gitlab_features import GitLabUnitPrimitive, WrongUnitPrimitives
 
@@ -29,9 +31,53 @@ class Agent(RunnableBinding[Input, Output]):
     unit_primitives: list[GitLabUnitPrimitive]
 
     def __init__(
-        self, name: str, unit_primitives: list[GitLabUnitPrimitive], chain: Runnable
+        self,
+        model_factory: TypeModelFactory,
+        config: AgentConfig,
+        model_metadata: Optional[ModelMetadata] = None,
+        options: Optional[dict[str, Any]] = None,
     ):
-        super().__init__(name=name, unit_primitives=unit_primitives, bound=chain)  # type: ignore[call-arg]
+        model = self._build_model(
+            model_factory, config.model, config.params, model_metadata
+        )
+        messages = self.build_messages(config.prompt_template, options or {})
+        prompt = ChatPromptTemplate.from_messages(messages)
+        chain = self._build_chain(cast(Runnable[Input, Output], prompt | model))
+
+        super().__init__(name=config.name, unit_primitives=config.unit_primitives, bound=chain)  # type: ignore[call-arg]
+
+    def _build_model(
+        self,
+        model_factory: TypeModelFactory,
+        config: ModelConfig,
+        params: AgentParams | None,
+        model_metadata: Optional[ModelMetadata] | None,
+    ) -> Runnable:
+        model = model_factory(
+            model=config.name,
+            **config.params.model_dump(
+                exclude={"model_class_provider"}, exclude_none=True, by_alias=True
+            )
+        )
+        kwargs = {}
+
+        if params:
+            kwargs.update(params.model_dump())
+
+        if model_metadata:
+            kwargs.update(
+                model=model_metadata.name,
+                api_base=str(model_metadata.endpoint),
+                custom_llm_provider=model_metadata.provider,
+                api_key=model_metadata.api_key,
+            )
+
+        return model.bind(**kwargs)
+
+    # Subclasses can override this method to add steps at either side of the chain
+    @staticmethod
+    def _build_chain(chain: Runnable[Input, Output]) -> Runnable[Input, Output]:
+        return chain
 
     # Assume that the prompt template keys map to roles. Subclasses can
     # override this method to implement more complex logic.
