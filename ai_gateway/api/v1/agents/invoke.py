@@ -5,6 +5,7 @@ from pydantic import BaseModel, RootModel
 from starlette.responses import StreamingResponse
 
 from ai_gateway.agents import Agent, BaseAgentRegistry
+from ai_gateway.agents.typing import ModelMetadata
 from ai_gateway.api.feature_category import feature_category
 from ai_gateway.async_dependency_resolver import (
     get_container_application,
@@ -22,6 +23,7 @@ class AgentInputs(RootModel):
 class AgentRequest(BaseModel):
     inputs: AgentInputs
     stream: Optional[bool] = False
+    model_metadata: Optional[ModelMetadata] = None
 
 
 router = APIRouter()
@@ -46,7 +48,10 @@ async def agent(
     internal_event_client: InternalEventsClient = Depends(get_internal_event_client),
 ):
     try:
-        agent = agent_registry.get_on_behalf(current_user, agent_id)
+
+        agent = agent_registry.get_on_behalf(
+            current_user, agent_id, None, agent_request.model_metadata
+        )
     except KeyError:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
