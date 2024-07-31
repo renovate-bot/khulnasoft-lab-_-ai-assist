@@ -5,7 +5,6 @@ import pytest
 from langchain_core.callbacks import CallbackManagerForLLMRun
 from langchain_core.language_models.chat_models import SimpleChatModel
 from langchain_core.messages import BaseMessage
-from langchain_core.prompts import ChatPromptTemplate
 
 from ai_gateway.agents import Agent
 from ai_gateway.agents.typing import ModelMetadata
@@ -14,7 +13,6 @@ from ai_gateway.auth import User, UserClaims
 from ai_gateway.chat.agents import ReActAgent
 from ai_gateway.config import Config
 from ai_gateway.gitlab_features import GitLabUnitPrimitive
-from ai_gateway.internal_events import InternalEventAdditionalProperties
 
 
 class FakeModel(SimpleChatModel):
@@ -38,11 +36,6 @@ class FakeModel(SimpleChatModel):
 
 
 @pytest.fixture
-def mock_agent_klass():
-    yield Agent
-
-
-@pytest.fixture
 def mock_config():
     config = Config()
     config.custom_models.enabled = False
@@ -51,22 +44,23 @@ def mock_config():
 
 
 @pytest.fixture
-def mock_registry_get(mock_agent_klass: Optional[Type[Agent]]):
-    with patch("ai_gateway.agents.registry.LocalAgentRegistry.get") as mock:
-        if mock_agent_klass:
-            model = FakeModel(
-                expected_message="Hi, I'm John and I'm 20 years old",
-                response="Hi John!",
-            )
+def model_factory():
+    yield lambda model, **kwargs: FakeModel(
+        expected_message="Hi, I'm John and I'm 20 years old",
+        response="Hi John!",
+    )
 
-            mock.return_value = mock_agent_klass(
-                name="fake_agent",
-                chain=ChatPromptTemplate.from_messages(
-                    ["Hi, I'm {name} and I'm {age} years old"]
-                )
-                | model,
-                unit_primitives=[GitLabUnitPrimitive.EXPLAIN_VULNERABILITY],
-            )
+
+@pytest.fixture
+def prompt_template():
+    yield {"system": "Hi, I'm {name} and I'm {age} years old"}
+
+
+@pytest.fixture
+def mock_registry_get(request, agent_class: Optional[Type[Agent]]):
+    with patch("ai_gateway.agents.registry.LocalAgentRegistry.get") as mock:
+        if agent_class:
+            mock.return_value = request.getfixturevalue("agent")
         else:
             mock.side_effect = KeyError()
 
@@ -79,21 +73,19 @@ def fast_api_router():
 
 
 @pytest.fixture
-def auth_user():
-    return User(
-        authenticated=True,
-        claims=UserClaims(
-            scopes=[
-                GitLabUnitPrimitive.EXPLAIN_VULNERABILITY,
-            ]
-        ),
-    )
+def unit_primitives():
+    yield ["explain_vulnerability"]
+
+
+@pytest.fixture
+def auth_user(unit_primitives: list[GitLabUnitPrimitive]):
+    return User(authenticated=True, claims=UserClaims(scopes=unit_primitives))
 
 
 class TestAgent:
     @pytest.mark.parametrize(
         (
-            "mock_agent_klass",
+            "agent_class",
             "inputs",
             "model_metadata",
             "expected_status",
@@ -140,7 +132,7 @@ class TestAgent:
     )
     def test_request(
         self,
-        mock_agent_klass,
+        agent_class,
         mock_registry_get,
         mock_client,
         mock_track_internal_event,
@@ -166,7 +158,7 @@ class TestAgent:
         assert response.status_code == expected_status
         assert response.json() == expected_response
 
-        if mock_agent_klass:
+        if agent_class:
             mock_track_internal_event.assert_called_once_with(
                 "request_explain_vulnerability",
                 category="ai_gateway.api.v1.agents.invoke",

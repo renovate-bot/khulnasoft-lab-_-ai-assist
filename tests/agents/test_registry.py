@@ -1,20 +1,16 @@
 from pathlib import Path
-from typing import Optional, Sequence, Type
+from typing import Sequence, Type, cast
 
 import pytest
 from langchain_anthropic import ChatAnthropic
 from langchain_community.chat_models import ChatLiteLLM
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.prompts.chat import MessageLikeRepresentation
-from pydantic import HttpUrl
+from langchain_core.runnables import RunnableBinding, RunnableSequence
+from pydantic import BaseModel, HttpUrl
 from pyfakefs.fake_filesystem import FakeFilesystem
 
-from ai_gateway.agents import (
-    Agent,
-    AgentRegistered,
-    CustomModelsAgentRegistry,
-    LocalAgentRegistry,
-)
+from ai_gateway.agents import Agent, AgentRegistered, LocalAgentRegistry
 from ai_gateway.agents.config import (
     AgentConfig,
     ChatAnthropicParams,
@@ -22,8 +18,7 @@ from ai_gateway.agents.config import (
     ModelClassProvider,
     ModelConfig,
 )
-from ai_gateway.agents.registry import TypeModelFactory
-from ai_gateway.agents.typing import ModelMetadata
+from ai_gateway.agents.typing import ModelMetadata, TypeModelFactory
 
 
 class MockAgentClass(Agent):
@@ -44,7 +39,6 @@ model:
   name: claude-2.1
   params:
     model_class_provider: litellm
-    timeout: 100.
     top_p: 0.1
     top_k: 50
     max_tokens: 256
@@ -66,7 +60,6 @@ model:
   params:
     model_class_provider: anthropic
     temperature: 0.1
-    timeout: 60
     top_p: 0.8
     top_k: 40
     max_tokens: 256
@@ -79,9 +72,11 @@ unit_primitives:
 prompt_template:
   system: Template1
   user: Template2
-stop:
-  - Foo
-  - Bar
+params:
+  timeout: 60
+  stop:
+    - Foo
+    - Bar
 """,
     )
     fs.create_file(
@@ -94,7 +89,6 @@ model:
   params:
     model_class_provider: litellm
     temperature: 0.1
-    timeout: 60
     top_p: 0.8
     top_k: 40
     max_tokens: 256
@@ -104,9 +98,11 @@ unit_primitives:
 prompt_template:
   system: Template1
   user: Template2
-stop:
-  - Foo
-  - Bar
+params:
+  timeout: 60
+  stop:
+    - Foo
+    - Bar
 """,
     )
     yield fs
@@ -133,7 +129,6 @@ def agents_registered():
                     name="claude-2.1",
                     params=ChatLiteLLMParams(
                         model_class_provider=ModelClassProvider.LITE_LLM,
-                        timeout=100.0,
                         top_p=0.1,
                         top_k=50,
                         max_tokens=256,
@@ -155,7 +150,6 @@ def agents_registered():
                     params=ChatAnthropicParams(
                         model_class_provider=ModelClassProvider.ANTHROPIC,
                         temperature=0.1,
-                        timeout=60,
                         top_p=0.8,
                         top_k=40,
                         max_tokens=256,
@@ -168,7 +162,7 @@ def agents_registered():
                 ),
                 unit_primitives=["duo_chat"],
                 prompt_template={"system": "Template1", "user": "Template2"},
-                stop=["Foo", "Bar"],
+                params={"timeout": 60, "stop": ["Foo", "Bar"]},
             ),
         ),
         "chat/react/custom": AgentRegistered(
@@ -181,7 +175,6 @@ def agents_registered():
                     params=ChatLiteLLMParams(
                         model_class_provider=ModelClassProvider.LITE_LLM,
                         temperature=0.1,
-                        timeout=60,
                         top_p=0.8,
                         top_k=40,
                         max_tokens=256,
@@ -190,10 +183,28 @@ def agents_registered():
                 ),
                 unit_primitives=["duo_chat"],
                 prompt_template={"system": "Template1", "user": "Template2"},
-                stop=["Foo", "Bar"],
+                params={"timeout": 60, "stop": ["Foo", "Bar"]},
             ),
         ),
     }
+
+
+@pytest.fixture
+def custom_models_enabled():
+    yield True
+
+
+@pytest.fixture
+def registry(
+    agents_registered: dict[str, AgentRegistered],
+    model_factories: dict[ModelClassProvider, TypeModelFactory],
+    custom_models_enabled: bool,
+):
+    yield LocalAgentRegistry(
+        model_factories=model_factories,
+        agents_registered=agents_registered,
+        custom_models_enabled=custom_models_enabled,
+    )
 
 
 class TestLocalAgentRegistry:
@@ -208,117 +219,7 @@ class TestLocalAgentRegistry:
                 "chat/react": MockAgentClass,
             },
             model_factories=model_factories,
-        )
-
-        assert registry.agents_registered == agents_registered
-
-    @pytest.mark.parametrize(
-        (
-            "agent_id",
-            "expected_name",
-            "expected_class",
-            "expected_messages",
-            "expected_model",
-            "expected_kwargs",
-            "expected_model_params",
-        ),
-        [
-            (
-                "test",
-                "Test agent",
-                Agent,
-                [("system", "Template1")],
-                "claude-2.1",
-                None,
-                {
-                    "request_timeout": 100.0,  # accessed by alias
-                    "top_p": 0.1,
-                    "top_k": 50,
-                    "max_tokens": 256,
-                    "max_retries": 10,
-                    "custom_llm_provider": "vllm",
-                },
-            ),
-            (
-                "chat/react",
-                "Chat react agent",
-                MockAgentClass,
-                [("system", "Template1"), ("user", "Template2")],
-                "claude-3-haiku-20240307",
-                {"stop": ["Foo", "Bar"]},
-                {
-                    "temperature": 0.1,
-                    "default_request_timeout": 60,  # accessed by alias
-                    "top_p": 0.8,
-                    "top_k": 40,
-                    "max_tokens": 256,
-                    "max_retries": 6,
-                    "default_headers": {
-                        "header1": "Header1 value",
-                        "header2": "Header2 value",
-                    },
-                },
-            ),
-        ],
-    )
-    def test_get(
-        self,
-        agents_registered: dict[str, AgentRegistered],
-        model_factories: dict[ModelClassProvider, TypeModelFactory],
-        agent_id: str,
-        expected_name: str,
-        expected_class: Type[Agent],
-        expected_messages: Sequence[MessageLikeRepresentation],
-        expected_model: str,
-        expected_kwargs: dict,
-        expected_model_params: dict | None,
-    ):
-        registry = LocalAgentRegistry(
-            model_factories=model_factories,
-            agents_registered=agents_registered,
-        )
-
-        agent = registry.get(agent_id, {}, None)
-
-        chain = agent.bound
-        actual_messages = chain.first.messages
-        actual_model = chain.last
-
-        assert agent.name == expected_name
-        assert isinstance(agent, expected_class)
-        assert (
-            actual_messages
-            == ChatPromptTemplate.from_messages(expected_messages).messages
-        )
-        assert actual_model.model == expected_model
-
-        if expected_kwargs:
-            assert actual_model.kwargs == expected_kwargs
-
-        actual_model = (
-            actual_model.bound if getattr(actual_model, "bound", None) else actual_model
-        )
-        if expected_model_params:
-            actual_model_params = {
-                key: value
-                for key, value in dict(actual_model).items()
-                if key in expected_model_params
-            }
-            assert actual_model_params == expected_model_params
-
-
-class TestCustomModelsAgentRegistry:
-    def test_from_local_yaml(
-        self,
-        mock_fs: FakeFilesystem,
-        model_factories: dict[ModelClassProvider, TypeModelFactory],
-        agents_registered: dict[str, AgentRegistered],
-    ):
-        registry = LocalAgentRegistry.from_local_yaml(
-            class_overrides={
-                "chat/react": MockAgentClass,
-            },
-            model_factories=model_factories,
+            custom_models_enabled=False,
         )
 
         assert registry.agents_registered == agents_registered
@@ -336,20 +237,39 @@ class TestCustomModelsAgentRegistry:
         ),
         [
             (
+                "test",
+                None,
+                "Test agent",
+                Agent,
+                [("system", "Template1")],
+                "claude-2.1",
+                {},
+                {
+                    "top_p": 0.1,
+                    "top_k": 50,
+                    "max_tokens": 256,
+                    "max_retries": 10,
+                    "custom_llm_provider": "vllm",
+                },
+            ),
+            (
                 "chat/react",
                 None,
                 "Chat react agent",
                 MockAgentClass,
                 [("system", "Template1"), ("user", "Template2")],
                 "claude-3-haiku-20240307",
-                {"stop": ["Foo", "Bar"]},
+                {"stop": ["Foo", "Bar"], "timeout": 60},
                 {
                     "temperature": 0.1,
-                    "default_request_timeout": 60,  # accessed by alias
                     "top_p": 0.8,
                     "top_k": 40,
                     "max_tokens": 256,
                     "max_retries": 6,
+                    "default_headers": {
+                        "header1": "Header1 value",
+                        "header2": "Header2 value",
+                    },
                 },
             ),
             (
@@ -366,6 +286,7 @@ class TestCustomModelsAgentRegistry:
                 "custom",
                 {
                     "stop": ["Foo", "Bar"],
+                    "timeout": 60,
                     "model": "custom",
                     "custom_llm_provider": "openai",
                     "api_key": "token",
@@ -383,27 +304,23 @@ class TestCustomModelsAgentRegistry:
     )
     def test_get(
         self,
-        agents_registered: dict[str, AgentRegistered],
-        model_factories: dict[ModelClassProvider, TypeModelFactory],
+        registry: LocalAgentRegistry,
         agent_id: str,
-        model_metadata: Optional[ModelMetadata],
+        model_metadata: ModelMetadata | None,
         expected_name: str,
         expected_class: Type[Agent],
         expected_messages: Sequence[MessageLikeRepresentation],
         expected_model: str,
         expected_kwargs: dict,
-        expected_model_params: dict | None,
+        expected_model_params: dict,
     ):
-        registry = CustomModelsAgentRegistry(
-            model_factories=model_factories,
-            agents_registered=agents_registered,
-        )
 
         agent = registry.get(agent_id, {}, model_metadata)
 
-        chain = agent.bound
-        actual_messages = chain.first.messages
-        actual_model = chain.last
+        chain = cast(RunnableSequence, agent.bound)
+        actual_messages = cast(ChatPromptTemplate, chain.first).messages
+        binding = cast(RunnableBinding, chain.last)
+        actual_model = cast(BaseModel, binding.bound)
 
         assert agent.name == expected_name
         assert isinstance(agent, expected_class)
@@ -411,18 +328,29 @@ class TestCustomModelsAgentRegistry:
             actual_messages
             == ChatPromptTemplate.from_messages(expected_messages).messages
         )
-        assert actual_model.model == expected_model
+        assert getattr(binding.bound, "model") == expected_model
+        assert binding.kwargs == expected_kwargs
 
-        if expected_kwargs:
-            assert actual_model.kwargs == expected_kwargs
+        actual_model_params = {
+            key: value
+            for key, value in dict(actual_model).items()
+            if key in expected_model_params
+        }
+        assert actual_model_params == expected_model_params
 
-        actual_model = (
-            actual_model.bound if getattr(actual_model, "bound", None) else actual_model
+    @pytest.mark.parametrize("custom_models_enabled", [False])
+    def test_invalid_get(
+        self, registry: LocalAgentRegistry, custom_models_enabled: bool
+    ):
+        model_metadata = ModelMetadata(
+            name="custom",
+            endpoint=HttpUrl("http://localhost:4000/"),
+            api_key="token",
+            provider="openai",
         )
-        if expected_model_params:
-            actual_model_params = {
-                key: value
-                for key, value in dict(actual_model).items()
-                if key in expected_model_params
-            }
-            assert actual_model_params == expected_model_params
+
+        with pytest.raises(
+            ValueError,
+            match="Endpoint override not allowed when custom models are disabled.",
+        ):
+            registry.get("chat/react", {}, model_metadata)

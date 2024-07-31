@@ -1,5 +1,4 @@
 import pytest
-from langchain_core.runnables import chain
 
 from ai_gateway.agents import Agent, BaseAgentRegistry
 from ai_gateway.auth.user import GitLabUser, UserClaims
@@ -9,14 +8,6 @@ from ai_gateway.gitlab_features import GitLabUnitPrimitive, WrongUnitPrimitives
 @pytest.fixture
 def user(scopes: list[str]):
     yield GitLabUser(authenticated=True, claims=UserClaims(scopes=scopes))
-
-
-@pytest.fixture
-def agent(unit_primitives: list[GitLabUnitPrimitive]):
-    @chain
-    def runnable(*args, **kwargs): ...
-
-    yield Agent(name="test", unit_primitives=unit_primitives, chain=runnable)
 
 
 @pytest.fixture

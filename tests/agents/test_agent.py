@@ -1,37 +1,24 @@
+import os
+from typing import Type
+
 import pytest
-from langchain_core.runnables import chain
+from anthropic import APITimeoutError, AsyncAnthropic
+from langchain_core.language_models.chat_models import BaseChatModel
+from langchain_core.runnables import Runnable
 from pydantic import HttpUrl
-from pydantic.v1.error_wrappers import ValidationError
 
 from ai_gateway.agents.base import Agent
+from ai_gateway.agents.config.base import AgentParams
 from ai_gateway.agents.typing import STUBBED_API_KEY, ModelMetadata
 from ai_gateway.gitlab_features import GitLabUnitPrimitive
-
-
-@pytest.fixture
-def prompt_template() -> dict[str, str]:
-    return {"system": "Hi, I'm {{name}}", "user": "{{content}}"}
+from ai_gateway.models.v2.anthropic_claude import ChatAnthropic
 
 
 class TestAgent:
-    def test_initialize(self):
-        @chain
-        def runnable(): ...
-
-        agent = Agent(
-            name="test", chain=runnable, unit_primitives=["analyze_ci_job_failure"]
-        )
-
-        assert agent.name == "test"
-        assert agent.bound == runnable  # pylint: disable=comparison-with-callable
-        assert agent.unit_primitives == [GitLabUnitPrimitive.ANALYZE_CI_JOB_FAILURE]
-
-    def test_invalid_initialize(self):
-        @chain
-        def runnable(): ...
-
-        with pytest.raises(ValidationError):
-            Agent(name="test", chain=runnable, unit_primitives=["invalid"])
+    def test_initialize(self, agent: Agent, unit_primitives: list[GitLabUnitPrimitive]):
+        assert agent.name == "test_agent"
+        assert agent.unit_primitives == unit_primitives
+        assert isinstance(agent.bound, Runnable)
 
     def test_build_messages(self, prompt_template):
         messages = Agent.build_messages(
@@ -39,6 +26,40 @@ class TestAgent:
         )
 
         assert messages == [("system", "Hi, I'm Duo"), ("user", "What's up?")]
+
+
+@pytest.mark.skipif(
+    # pylint: disable=direct-environment-variable-reference
+    os.getenv("REAL_AI_REQUEST") is None,
+    # pylint: enable=direct-environment-variable-reference
+    reason="3rd party requests not enabled",
+)
+class TestAgentTimeout:
+    @pytest.fixture
+    def agent_options(self):
+        yield {"name": "Duo", "content": "Print pi with 400 decimals"}
+
+    @pytest.fixture
+    def agent_params(self):
+        yield AgentParams(timeout=0.1)
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize(
+        ("model", "expected_exception"),
+        [
+            (
+                ChatAnthropic(
+                    async_client=AsyncAnthropic(), model="claude-3-sonnet-20240229"  # type: ignore[call-arg]
+                ),
+                APITimeoutError,
+            ),
+        ],
+    )
+    async def test_timeout(
+        self, agent: Agent, model: BaseChatModel, expected_exception: Type
+    ):
+        with pytest.raises(expected_exception):
+            await agent.ainvoke({})
 
 
 class TestModelMetadata:

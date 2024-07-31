@@ -1,5 +1,6 @@
-from typing import Annotated, Optional
+from typing import Annotated, Any, Optional, Protocol
 
+from langchain_core.language_models.chat_models import BaseChatModel
 from pydantic import AnyUrl, BaseModel, StringConstraints, UrlConstraints, validator
 
 STUBBED_API_KEY = "<api-key>"
@@ -16,3 +17,7 @@ class ModelMetadata(BaseModel):
     @classmethod
     def set_stubbed_api_key_if_empty(cls, v):
         return v or STUBBED_API_KEY
+
+
+class TypeModelFactory(Protocol):
+    def __call__(self, *, model: str, **kwargs: Optional[Any]) -> BaseChatModel: ...

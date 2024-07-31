@@ -4,7 +4,6 @@ model:
   name: codestral
   params:
     model_class_provider: litellm
-    timeout: 60
     temperature: 0.95
     max_tokens: 128
     max_retries: 1
@@ -13,9 +12,11 @@ unit_primitives:
 prompt_template:
   user: |
       <s>[SUFFIX]{suffix}[PREFIX]{prefix}
-stop:
-  - "[INST]"
-  - "[/INST]"
-  - "[PREFIX]"
-  - "[MIDDLE]"
-  - "[SUFFIX]"
+params:
+  timeout: 60
+  stop:
+    - "[INST]"
+    - "[/INST]"
+    - "[PREFIX]"
+    - "[MIDDLE]"
+    - "[SUFFIX]"
