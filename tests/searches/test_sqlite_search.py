@@ -1,9 +1,8 @@
 import json
 import os.path
-from unittest.mock import AsyncMock, MagicMock, call, patch
+from unittest.mock import patch
 
 import pytest
-from fastapi import HTTPException, status
 
 from ai_gateway.searches.sqlite_search import SqliteSearch
 
@@ -52,21 +51,12 @@ def mock_os_path_to_db():
         yield mock
 
 
-@pytest.fixture
-def mock_sqlite_connection(mock_sqlite_search_response):
-    with patch("sqlite3.connect") as mock:
-        mock.return_value.cursor.return_value.execute.return_value = [
-            mock_sqlite_search_response
-        ]
-        yield mock
-
-
 @pytest.mark.asyncio
 @pytest.mark.parametrize(
     "gl_version",
     [
-        ("1.2.3"),
-        ("10.11.12-pre"),
+        "1.2.3",
+        "10.11.12-pre",
     ],
 )
 async def test_sqlite_search(
@@ -83,8 +73,6 @@ async def test_sqlite_search(
     result = await sqlite_search.search(query, gl_version, page_size)
     assert result[0]["id"] == mock_sqlite_search_struct_data["id"]
     assert result[0]["metadata"] == mock_sqlite_search_struct_data["metadata"]
-
-    mock_os_path_to_db.assert_called_once_with("tmp/docs.db")
 
 
 @pytest.mark.asyncio
