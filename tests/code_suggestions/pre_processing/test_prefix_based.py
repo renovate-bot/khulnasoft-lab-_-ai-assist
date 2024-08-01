@@ -5,6 +5,7 @@ from transformers import AutoTokenizer
 
 from ai_gateway.code_suggestions.processing import (
     MetadataCodeContent,
+    MetadataExtraInfo,
     MetadataPromptBuilder,
     Prompt,
 )
@@ -355,10 +356,12 @@ class TestPromptBuilderPrefixBased:
                         components={
                             "prefix": MetadataCodeContent(length=11, length_tokens=3),
                             "suffix": MetadataCodeContent(length=11, length_tokens=3),
-                            "code_context": MetadataCodeContent(
-                                length=12, length_tokens=3
-                            ),
-                        }
+                        },
+                        code_context=MetadataExtraInfo(
+                            name="code_context",
+                            pre=MetadataCodeContent(length=12, length_tokens=3),
+                            post=MetadataCodeContent(length=12, length_tokens=3),
+                        ),
                     ),
                 ),
             ),
@@ -375,10 +378,12 @@ class TestPromptBuilderPrefixBased:
                         components={
                             "prefix": MetadataCodeContent(length=11, length_tokens=3),
                             "suffix": MetadataCodeContent(length=6, length_tokens=1),
-                            "code_context": MetadataCodeContent(
-                                length=0, length_tokens=0
-                            ),
-                        }
+                        },
+                        code_context=MetadataExtraInfo(
+                            name="code_context",
+                            pre=MetadataCodeContent(length=12, length_tokens=3),
+                            post=MetadataCodeContent(length=0, length_tokens=0),
+                        ),
                     ),
                 ),
             ),

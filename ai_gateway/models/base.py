@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 from enum import Enum
-from typing import Any, NamedTuple
+from typing import Any, NamedTuple, Optional
 
 import structlog
 from anthropic import AsyncAnthropic
@@ -68,9 +68,13 @@ class ModelAPICallError(ModelAPIError):
         super().__init__(f"{self.code} {message}", errors=errors, details=details)
 
 
-class TokensConsumptionMetadata(NamedTuple):
-    input_tokens: int
-    output_tokens: int
+class TokensConsumptionMetadata(BaseModel):
+    input_tokens: Optional[int] = None
+    output_tokens: Optional[int] = None
+    # number of tokens sent to AI Gateway
+    context_tokens_sent: Optional[int] = None
+    # number of tokens from context used in the prompt
+    context_tokens_used: Optional[int] = None
 
 
 class SafetyAttributes(BaseModel):

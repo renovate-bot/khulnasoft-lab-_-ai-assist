@@ -14,7 +14,9 @@ from ai_gateway.code_suggestions.processing.pre import PromptBuilderPrefixBased
 from ai_gateway.code_suggestions.processing.typing import (
     LanguageId,
     MetadataCodeContent,
+    MetadataExtraInfo,
     MetadataPromptBuilder,
+    Prompt,
     TokenStrategyBase,
 )
 from ai_gateway.instrumentators import KnownMetrics, TextGenModelInstrumentator
@@ -350,8 +352,27 @@ class TestCodeCompletions:
     ):
         use_case.model.generate = AsyncMock(
             return_value=TextGenModelOutput(
-                text=expected_output, score=0, safety_attributes=SafetyAttributes()
+                text=expected_output,
+                score=0,
+                safety_attributes=SafetyAttributes(),
+                metadata=Mock(output_tokens=10),
             )
+        )
+
+        use_case.prompt_builder.build.return_value = Prompt(
+            prefix="test_prefix",
+            suffix="test_suffix",
+            metadata=MetadataPromptBuilder(
+                components={
+                    "prefix": MetadataCodeContent(length=10, length_tokens=2),
+                    "suffix": MetadataCodeContent(length=10, length_tokens=2),
+                },
+                code_context=MetadataExtraInfo(
+                    name="code_context",
+                    pre=MetadataCodeContent(length=20, length_tokens=4),
+                    post=MetadataCodeContent(length=15, length_tokens=3),
+                ),
+            ),
         )
 
         actual = await use_case.execute(
@@ -364,6 +385,13 @@ class TestCodeCompletions:
 
         assert expected_output == actual.text
         assert expected_language_id == actual.lang_id
+        assert isinstance(
+            actual.metadata.tokens_consumption_metadata, TokensConsumptionMetadata
+        )
+        assert actual.metadata.tokens_consumption_metadata.input_tokens == 4
+        assert actual.metadata.tokens_consumption_metadata.output_tokens == 10
+        assert actual.metadata.tokens_consumption_metadata.context_tokens_sent == 4
+        assert actual.metadata.tokens_consumption_metadata.context_tokens_used == 3
 
         use_case.model.generate.assert_called_with(
             use_case.prompt_builder.build().prefix,
@@ -459,9 +487,28 @@ class TestCodeCompletions:
     ):
         use_case.model.generate = AsyncMock(
             return_value=TextGenModelOutput(
-                text=expected_output, score=0, safety_attributes=SafetyAttributes()
+                text=expected_output,
+                score=0,
+                safety_attributes=SafetyAttributes(),
+                metadata=Mock(output_tokens=10),
             )
         )
+
+        mock_prompt = Mock(spec=Prompt)
+        mock_prompt.prefix = "test_prefix"
+        mock_prompt.suffix = "test_suffix"
+        mock_prompt.metadata = Mock(spec=MetadataPromptBuilder)
+        mock_prompt.metadata.components = {
+            "prefix": Mock(spec=MetadataCodeContent, length_tokens=2),
+            "suffix": Mock(spec=MetadataCodeContent, length_tokens=2),
+        }
+        mock_prompt.metadata.code_context = Mock(
+            spec=MetadataExtraInfo,
+            pre=Mock(spec=MetadataCodeContent, length_tokens=4),
+            post=Mock(spec=MetadataCodeContent, length_tokens=3),
+        )
+
+        use_case.prompt_builder.wrap.return_value = mock_prompt
 
         actual = await use_case.execute(
             prefix, suffix, file_name, editor_lang=editor_lang, raw_prompt=prompt
@@ -469,12 +516,21 @@ class TestCodeCompletions:
 
         assert expected_output == actual.text
         assert expected_language_id == actual.lang_id
+        assert isinstance(
+            actual.metadata.tokens_consumption_metadata, TokensConsumptionMetadata
+        )
+        assert actual.metadata.tokens_consumption_metadata.input_tokens == 4
+        assert actual.metadata.tokens_consumption_metadata.output_tokens == 10
+        assert actual.metadata.tokens_consumption_metadata.context_tokens_sent == 4
+        assert actual.metadata.tokens_consumption_metadata.context_tokens_used == 3
 
         use_case.model.generate.assert_called_with(
-            use_case.prompt_builder.wrap().prefix,
-            use_case.prompt_builder.wrap().suffix,
+            mock_prompt.prefix,
+            mock_prompt.suffix,
             stream,
         )
+
+        use_case.prompt_builder.wrap.assert_called_with(prompt)
 
     @pytest.mark.parametrize(
         (

@@ -16,6 +16,7 @@ from ai_gateway.models import (
     KindVertexTextModel,
     ModelMetadata,
 )
+from ai_gateway.models.base import TokensConsumptionMetadata
 
 __all__ = [
     "KindUseCase",
@@ -76,6 +77,7 @@ USE_CASES_MODELS_MAP = {
 class CodeSuggestionsOutput(NamedTuple):
     class Metadata(NamedTuple):
         experiments: list[ExperimentTelemetry]
+        tokens_consumption_metadata: Optional[TokensConsumptionMetadata] = None
 
     text: str
     score: float

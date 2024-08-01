@@ -115,6 +115,7 @@ class _PromptBuilder(PromptBuilderBase):
         self, extra_info: _CodeInfo, max_total_length_tokens: int, extra_info_name: str
     ):
         total_length_tokens = 0
+        tokens_used = 0
         total_length = 0
 
         # Only prepend the info if it's not present and we have room
@@ -126,6 +127,7 @@ class _PromptBuilder(PromptBuilderBase):
             total_length_tokens += info.length_tokens
             if max_total_length_tokens - total_length_tokens >= 0:
                 self._prefix = f"{info.text}\n{self._prefix}"
+                tokens_used = total_length_tokens
 
         self._metadata[extra_info_name] = MetadataExtraInfo(
             name=extra_info_name,
@@ -135,7 +137,7 @@ class _PromptBuilder(PromptBuilderBase):
             ),
             post=MetadataCodeContent(
                 length=total_length,
-                length_tokens=total_length_tokens,
+                length_tokens=tokens_used,
             ),
         )
 
@@ -165,6 +167,7 @@ class _PromptBuilder(PromptBuilderBase):
                 imports=self._metadata.get("imports", None),
                 function_signatures=self._metadata.get("function_signatures", None),
                 experiments=self._metadata["experiments"],
+                code_context=self._metadata.get("code_context", None),
             ),
         )
 
@@ -193,6 +196,7 @@ class ModelEngineCompletions(ModelEngineBase):
         stream: bool = False,
         **kwargs: Any,
     ) -> ModelEngineOutput:
+
         prompt = await self._build_prompt(
             prefix, file_name, suffix, lang_id, kwargs.get("code_context")
         )
@@ -241,17 +245,30 @@ class ModelEngineCompletions(ModelEngineBase):
                         else:
                             watch_container.register_is_discarded()
                             completion = ""
+                        context_tokens_sent = 0
+                        context_tokens_used = 0
+                        code_context = prompt.metadata.code_context
+                        if isinstance(code_context, MetadataExtraInfo):
+                            context_tokens_sent = code_context.pre.length_tokens
+                            context_tokens_used = code_context.post.length_tokens
 
                         if res.metadata:
+                            tokens_consumption_metadata = res.metadata
+                            tokens_consumption_metadata.context_tokens_used = (
+                                context_tokens_used
+                            )
+                            tokens_consumption_metadata.context_tokens_sent = (
+                                context_tokens_sent
+                            )
                             log.debug(
                                 "token consumption metadata:",
-                                metadata=res.metadata,
+                                metadata=tokens_consumption_metadata.model_dump(),
                             )
-                            tokens_consumption_metadata = res.metadata
                         else:
                             log.debug(
                                 "code completions: token consumption metadata is not available, using estimates"
                             )
+
                             tokens_consumption_metadata = TokensConsumptionMetadata(
                                 output_tokens=self.tokenization_strategy.estimate_length(
                                     completion
@@ -262,8 +279,13 @@ class ModelEngineCompletions(ModelEngineBase):
                                     md.length_tokens
                                     for md in prompt.metadata.components.values()
                                 ),
+                                context_tokens_used=context_tokens_used,
+                                context_tokens_sent=context_tokens_sent,
                             )
-
+                            log.debug(
+                                "token consumption metadata:",
+                                metadata=tokens_consumption_metadata.model_dump(),
+                            )
                         outputs.append(
                             ModelEngineOutput(
                                 text=completion,

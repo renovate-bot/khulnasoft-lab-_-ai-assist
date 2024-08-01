@@ -5,6 +5,7 @@ from ai_gateway.code_suggestions.processing.pre.base import PromptBuilderBase
 from ai_gateway.code_suggestions.processing.typing import (
     CodeContent,
     MetadataCodeContent,
+    MetadataExtraInfo,
     MetadataPromptBuilder,
     Prompt,
     TokenStrategyBase,
@@ -65,27 +66,30 @@ class PromptBuilderPrefixBased(PromptBuilderBase):
 
         if suffix:
             max_length_code_context -= suffix.length_tokens
+        code_context_info = self._build_code_context(max_length_code_context)
 
-        code_context = self._build_code_context(max_length_code_context)
-
-        if code_context and max_length_code_context > 0:
-            prefix_with_tpl = "\n".join([code_context.text, prefix_with_tpl])
+        if code_context_info and max_length_code_context > 0:
+            _, truncated = code_context_info
+            prefix_with_tpl = "\n".join([truncated.text, prefix_with_tpl])
 
         components = {
             name: MetadataCodeContent(
                 length=len(component.text),
                 length_tokens=component.length_tokens,
             )
-            for name, component in zip(
-                ["prefix", "suffix", "code_context"], [prefix, suffix, code_context]
-            )
+            for name, component in zip(["prefix", "suffix"], [prefix, suffix])
             if component is not None
         }
+
+        code_context_metadata = self._build_code_context_metadata(code_context_info)
 
         return Prompt(
             prefix=prefix_with_tpl,
             suffix=suffix.text if suffix else None,
-            metadata=MetadataPromptBuilder(components=components),
+            metadata=MetadataPromptBuilder(
+                components=components,
+                code_context=code_context_metadata,
+            ),
         )
 
     def _build_prefix(self, max_length: int) -> CodeContent:
@@ -119,15 +123,42 @@ class PromptBuilderPrefixBased(PromptBuilderBase):
 
         return truncated
 
-    def _build_code_context(self, max_length: int) -> Optional[CodeContent]:
+    def _build_code_context(
+        self, max_length: int
+    ) -> Optional[tuple[CodeContent, CodeContent]]:
         if not self.code_context:
             return None
 
-        truncated = self.tkn_strategy.truncate_content(
-            "\n".join(self.code_context), max_length, truncation_side="right"
+        original = CodeContent(
+            text="\n".join(self.code_context),
+            length_tokens=self.tkn_strategy.estimate_length(self.code_context)[0],
         )
 
-        return truncated
+        truncated = self.tkn_strategy.truncate_content(
+            original.text, max_length, truncation_side="right"
+        )
+
+        return original, truncated
+
+    def _build_code_context_metadata(
+        self, code_context_info: Optional[tuple[CodeContent, CodeContent]]
+    ) -> Optional[MetadataExtraInfo]:
+        if not code_context_info:
+            return None
+
+        original, truncated = code_context_info
+
+        return MetadataExtraInfo(
+            name="code_context",
+            pre=MetadataCodeContent(
+                length=len(original.text),
+                length_tokens=original.length_tokens,
+            ),
+            post=MetadataCodeContent(
+                length=len(truncated.text),
+                length_tokens=truncated.length_tokens,
+            ),
+        )
 
     def _apply_template(self, prefix: str) -> str:
         if self.tpl:
