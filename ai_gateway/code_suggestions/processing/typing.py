@@ -47,6 +47,7 @@ class MetadataPromptBuilder(NamedTuple):
     imports: Optional[MetadataExtraInfo] = None
     function_signatures: Optional[MetadataExtraInfo] = None
     experiments: Optional[list[ExperimentTelemetry]] = []
+    code_context: Optional[MetadataExtraInfo] = None
 
 
 class CodeContent(NamedTuple):

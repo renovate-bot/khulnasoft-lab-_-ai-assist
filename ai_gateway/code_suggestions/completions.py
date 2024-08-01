@@ -17,6 +17,7 @@ from ai_gateway.code_suggestions.processing import (
 )
 from ai_gateway.code_suggestions.processing.post.completions import PostProcessor
 from ai_gateway.code_suggestions.processing.pre import PromptBuilderPrefixBased
+from ai_gateway.code_suggestions.processing.typing import MetadataExtraInfo
 from ai_gateway.instrumentators import (
     KnownMetrics,
     TextGenModelInstrumentator,
@@ -24,6 +25,7 @@ from ai_gateway.instrumentators import (
 )
 from ai_gateway.models import ModelAPICallError, ModelAPIError
 from ai_gateway.models.agent_model import AgentModel
+from ai_gateway.models.base import TokensConsumptionMetadata
 from ai_gateway.models.base_text import (
     TextGenModelBase,
     TextGenModelChunk,
@@ -68,9 +70,10 @@ class CodeCompletionsLegacy:
         )
 
         outputs = []
-        output_tokens = 0
+        # Since all metadata objects are the same, take the first one
+        tokens_consumption_metadata = responses[0].tokens_consumption_metadata
+        total_output_tokens = tokens_consumption_metadata.output_tokens
         for response in responses:
-            output_tokens += response.tokens_consumption_metadata.output_tokens
             if not response.text:
                 outputs.append(response)
                 break
@@ -102,7 +105,7 @@ class CodeCompletionsLegacy:
                 context=None,
                 action="tokens_per_user_request_response",
                 label="code_completion",
-                value=output_tokens,
+                value=total_output_tokens,
             )
         )
         return outputs
@@ -183,7 +186,7 @@ class CodeCompletions:
                     if isinstance(res, AsyncIterator):
                         return self._handle_stream(res)
 
-                    return self._handle_sync(res, lang_id, watch_container)
+                    return self._handle_sync(prompt, res, lang_id, watch_container)
             except ModelAPICallError as ex:
                 watch_container.register_model_exception(str(ex), ex.code)
                 raise
@@ -199,6 +202,9 @@ class CodeCompletions:
             lang_id=lang_id,
             metadata=CodeSuggestionsOutput.Metadata(
                 experiments=[],
+                tokens_consumption_metadata=self._get_tokens_consumption_metadata(
+                    prompt
+                ),
             ),
         )
 
@@ -211,6 +217,7 @@ class CodeCompletions:
 
     def _handle_sync(
         self,
+        prompt: Prompt,
         response: TextGenModelOutput,
         lang_id: Optional[LanguageId],
         watch_container: TextGenModelInstrumentator.WatchContainer,
@@ -226,5 +233,40 @@ class CodeCompletions:
             lang_id=lang_id,
             metadata=CodeSuggestionsOutput.Metadata(
                 experiments=[],
+                tokens_consumption_metadata=self._get_tokens_consumption_metadata(
+                    prompt, response
+                ),
             ),
+        )
+
+    def _get_tokens_consumption_metadata(
+        self, prompt: Prompt, response: Optional[TextGenModelOutput] = None
+    ) -> TokensConsumptionMetadata:
+        input_tokens = sum(
+            component.length_tokens for component in prompt.metadata.components.values()
+        )
+
+        if response:
+            output_tokens = (
+                response.metadata.output_tokens
+                if response.metadata and hasattr(response.metadata, "output_tokens")
+                else 0
+            )
+        else:
+            output_tokens = 0
+
+        context_tokens_sent = 0
+        context_tokens_used = 0
+
+        if prompt.metadata.code_context and isinstance(
+            prompt.metadata.code_context, MetadataExtraInfo
+        ):
+            context_tokens_sent = prompt.metadata.code_context.pre.length_tokens
+            context_tokens_used = prompt.metadata.code_context.post.length_tokens
+
+        return TokensConsumptionMetadata(
+            input_tokens=input_tokens,
+            output_tokens=output_tokens,
+            context_tokens_sent=context_tokens_sent,
+            context_tokens_used=context_tokens_used,
         )

@@ -64,6 +64,12 @@ class TestCodeCompletions:
                         "engine": "vertex-ai",
                         "name": "code-gecko",
                         "lang": "python",
+                        "tokens_consumption_metadata": {
+                            "input_tokens": 1,
+                            "output_tokens": 2,
+                            "context_tokens_sent": None,
+                            "context_tokens_used": None,
+                        },
                     },
                     "experiments": [{"name": "truncate_suffix", "variant": 1}],
                     "object": "text_completion",
@@ -91,6 +97,7 @@ class TestCodeCompletions:
                         "engine": "vertex-ai",
                         "name": "code-gecko",
                         "lang": "python",
+                        "tokens_consumption_metadata": None,
                     },
                     "experiments": [{"name": "truncate_suffix", "variant": 1}],
                     "object": "text_completion",
@@ -173,6 +180,7 @@ class TestCodeCompletions:
                         "engine": "anthropic",
                         "name": "claude-instant-1.2",
                         "lang": "python",
+                        "tokens_consumption_metadata": None,
                     },
                     "object": "text_completion",
                     "created": 1695182638,
@@ -198,6 +206,7 @@ class TestCodeCompletions:
                         "engine": "anthropic",
                         "name": "claude-instant-1.2",
                         "lang": "python",
+                        "tokens_consumption_metadata": None,
                     },
                     "object": "text_completion",
                     "created": 1695182638,
@@ -223,6 +232,7 @@ class TestCodeCompletions:
                         "engine": "codestral",
                         "name": "codestral",
                         "lang": "python",
+                        "tokens_consumption_metadata": None,
                     },
                     "object": "text_completion",
                     "created": 1695182638,
@@ -248,6 +258,7 @@ class TestCodeCompletions:
                         "engine": "anthropic",
                         "name": "claude-instant-1.2",
                         "lang": "python",
+                        "tokens_consumption_metadata": None,
                     },
                     "object": "text_completion",
                     "created": 1695182638,
@@ -438,7 +449,13 @@ class TestCodeCompletions:
                 True,
                 False,
                 200,
-                [{"text": "test completion", "index": 0, "finish_reason": "length"}],
+                [
+                    {
+                        "text": "test completion",
+                        "index": 0,
+                        "finish_reason": "length",
+                    }
+                ],
             ),
             (
                 2,
@@ -450,7 +467,13 @@ class TestCodeCompletions:
                 False,
                 True,
                 200,
-                [{"text": "test completion", "index": 0, "finish_reason": "length"}],
+                [
+                    {
+                        "text": "test completion",
+                        "index": 0,
+                        "finish_reason": "length",
+                    }
+                ],
             ),
             (
                 2,
@@ -462,7 +485,13 @@ class TestCodeCompletions:
                 False,
                 True,
                 200,
-                [{"text": "test completion", "index": 0, "finish_reason": "length"}],
+                [
+                    {
+                        "text": "test completion",
+                        "index": 0,
+                        "finish_reason": "length",
+                    }
+                ],
             ),
         ],
     )
@@ -802,7 +831,13 @@ class TestCodeGenerations:
                 False,
                 200,
                 None,
-                [{"text": "\nfoo", "index": 0, "finish_reason": "length"}],
+                [
+                    {
+                        "text": "\nfoo",
+                        "index": 0,
+                        "finish_reason": "length",
+                    }
+                ],
             ),  # v1 without prompt - vertex-ai
             (
                 1,
@@ -821,7 +856,13 @@ class TestCodeGenerations:
                 False,
                 200,
                 None,
-                [{"text": "foo", "index": 0, "finish_reason": "length"}],
+                [
+                    {
+                        "text": "foo",
+                        "index": 0,
+                        "finish_reason": "length",
+                    }
+                ],
             ),  # v1 without prompt - anthropic
             (
                 1,
@@ -840,7 +881,13 @@ class TestCodeGenerations:
                 False,
                 200,
                 None,
-                [{"text": "\nfoo", "index": 0, "finish_reason": "length"}],
+                [
+                    {
+                        "text": "\nfoo",
+                        "index": 0,
+                        "finish_reason": "length",
+                    }
+                ],
             ),  # v1 with prompt - vertex-ai
             (
                 1,
@@ -859,7 +906,13 @@ class TestCodeGenerations:
                 False,
                 200,
                 None,
-                [{"text": "\nfoo", "index": 0, "finish_reason": "length"}],
+                [
+                    {
+                        "text": "\nfoo",
+                        "index": 0,
+                        "finish_reason": "length",
+                    }
+                ],
             ),  # v1 with prompt - anthropic
             (
                 1,
@@ -897,7 +950,13 @@ class TestCodeGenerations:
                 False,
                 200,
                 "bar",
-                [{"text": "\nfoo", "index": 0, "finish_reason": "length"}],
+                [
+                    {
+                        "text": "\nfoo",
+                        "index": 0,
+                        "finish_reason": "length",
+                    }
+                ],
             ),  # v2 with prompt - vertex-ai
             (
                 2,
@@ -916,7 +975,13 @@ class TestCodeGenerations:
                 False,
                 200,
                 "bar",
-                [{"text": "foo", "index": 0, "finish_reason": "length"}],
+                [
+                    {
+                        "text": "foo",
+                        "index": 0,
+                        "finish_reason": "length",
+                    }
+                ],
             ),  # v2 with prompt - anthropic
             (
                 2,
@@ -979,7 +1044,13 @@ class TestCodeGenerations:
                     Message(role=Role.SYSTEM, content="foo"),
                     Message(role=Role.USER, content="bar"),
                 ],
-                [{"text": "foo", "index": 0, "finish_reason": "length"}],
+                [
+                    {
+                        "text": "foo",
+                        "index": 0,
+                        "finish_reason": "length",
+                    }
+                ],
             ),  # v3 with prompt - anthropic
             (
                 3,
@@ -1004,7 +1075,13 @@ class TestCodeGenerations:
                     Message(role=Role.SYSTEM, content="foo"),
                     Message(role=Role.USER, content="bar"),
                 ],
-                [{"text": "\nfoo", "index": 0, "finish_reason": "length"}],
+                [
+                    {
+                        "text": "\nfoo",
+                        "index": 0,
+                        "finish_reason": "length",
+                    }
+                ],
             ),  # v3 with prompt - litellm
             (
                 2,
@@ -1026,7 +1103,13 @@ class TestCodeGenerations:
                     Message(role=Role.SYSTEM, content="foo"),
                     Message(role=Role.USER, content="bar"),
                 ],
-                [{"text": "\nfoo", "index": 0, "finish_reason": "length"}],
+                [
+                    {
+                        "text": "\nfoo",
+                        "index": 0,
+                        "finish_reason": "length",
+                    }
+                ],
             ),
         ],
     )

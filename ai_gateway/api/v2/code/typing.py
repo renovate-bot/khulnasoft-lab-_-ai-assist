@@ -18,6 +18,7 @@ from ai_gateway.code_suggestions import (
 from ai_gateway.experimentation import ExperimentTelemetry
 from ai_gateway.instrumentators.base import Telemetry
 from ai_gateway.models import KindModelProvider, Message
+from ai_gateway.models.base import TokensConsumptionMetadata
 
 __all__ = [
     "CompletionsRequestV1",
@@ -122,6 +123,7 @@ class SuggestionsResponse(BaseModel):
         engine: str
         name: str
         lang: str
+        tokens_consumption_metadata: Optional[TokensConsumptionMetadata] = None
 
     id: str
     model: Model

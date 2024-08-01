@@ -1,5 +1,5 @@
 from time import time
-from typing import Annotated, AsyncIterator, Union
+from typing import Annotated, AsyncIterator, Optional, Tuple, Union
 
 import anthropic
 import structlog
@@ -50,11 +50,14 @@ from ai_gateway.code_suggestions import (
     CodeGenerations,
     CodeSuggestionsChunk,
 )
+from ai_gateway.code_suggestions.base import CodeSuggestionsOutput
+from ai_gateway.code_suggestions.processing.base import ModelEngineOutput
 from ai_gateway.code_suggestions.processing.ops import lang_from_filename
 from ai_gateway.gitlab_features import GitLabFeatureCategory, GitLabUnitPrimitive
 from ai_gateway.instrumentators.base import TelemetryInstrumentator
 from ai_gateway.internal_events import InternalEventsClient
 from ai_gateway.models import KindAnthropicModel, KindModelProvider
+from ai_gateway.models.base import TokensConsumptionMetadata
 from ai_gateway.tracking import SnowplowEvent, SnowplowEventContext
 from ai_gateway.tracking.errors import log_exception
 from ai_gateway.tracking.instrumentator import SnowplowInstrumentator
@@ -186,7 +189,7 @@ async def completions(
 
     if isinstance(suggestions[0], AsyncIterator):
         return await _handle_stream(suggestions[0])
-
+    choices, tokens_consumption_metadata = _completion_suggestion_choices(suggestions)
     return SuggestionsResponse(
         id="id",
         created=int(time()),
@@ -194,9 +197,10 @@ async def completions(
             engine=suggestions[0].model.engine,
             name=suggestions[0].model.name,
             lang=suggestions[0].lang,
+            tokens_consumption_metadata=tokens_consumption_metadata,
         ),
         experiments=suggestions[0].metadata.experiments,
-        choices=_completion_suggestion_choices(suggestions),
+        choices=choices,
     )
 
 
@@ -361,11 +365,15 @@ def _resolve_agent_code_generations(
     return generations_agent_factory(model__agent=agent)
 
 
-def _completion_suggestion_choices(suggestions: list) -> list:
+def _completion_suggestion_choices(
+    suggestions: list,
+) -> Tuple[list[SuggestionsResponse.Choice], Optional[TokensConsumptionMetadata]]:
     if len(suggestions) == 0:
-        return []
+        return [], None
+    choices: list[SuggestionsResponse.Choice] = []
 
     choices = []
+    tokens_consumption_metadata = None
     for suggestion in suggestions:
         log.debug(
             "code completion suggestion:",
@@ -373,13 +381,24 @@ def _completion_suggestion_choices(suggestions: list) -> list:
             score=suggestion.score,
             language=suggestion.lang,
         )
-
         if not suggestion.text:
             continue
 
-        choices.append(SuggestionsResponse.Choice(text=suggestion.text))
+        if tokens_consumption_metadata is None:
+            # We take the first metadata from the suggestions since they are all the same
+            if isinstance(suggestion, ModelEngineOutput):
+                tokens_consumption_metadata = suggestion.tokens_consumption_metadata
+            elif isinstance(suggestion, CodeSuggestionsOutput) and suggestion.metadata:
+                tokens_consumption_metadata = (
+                    suggestion.metadata.tokens_consumption_metadata
+                )
 
-    return choices
+        choices.append(
+            SuggestionsResponse.Choice(
+                text=suggestion.text,
+            )
+        )
+    return choices, tokens_consumption_metadata
 
 
 def _generation_suggestion_choices(text: str) -> list:
@@ -462,5 +481,4 @@ async def _execute_code_completion(
 
     if isinstance(code_completions, CodeCompletions):
         return [output]
-
     return output
