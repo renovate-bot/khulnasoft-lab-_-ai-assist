@@ -13,7 +13,6 @@ from starlette.requests import Request
 from starlette_context import context
 from starlette_context.middleware import RawContextMiddleware
 
-from ai_gateway.agents.instrumentator import AgentInstrumentator
 from ai_gateway.api.middleware import (
     InternalEventMiddleware,
     MiddlewareAuthentication,
@@ -30,6 +29,7 @@ from ai_gateway.container import ContainerApplication
 from ai_gateway.instrumentators.threads import monitor_threads
 from ai_gateway.models import ModelAPIError
 from ai_gateway.profiling import setup_profiling
+from ai_gateway.prompts.instrumentator import PromptInstrumentator
 from ai_gateway.structured_logging import setup_app_logging
 
 __all__ = [
@@ -133,7 +133,7 @@ def setup_custom_exception_handlers(app: FastAPI):
 
 
 def setup_litellm():
-    litellm.callbacks = [AgentInstrumentator()]
+    litellm.callbacks = [PromptInstrumentator()]
 
 
 def setup_router(app: FastAPI):

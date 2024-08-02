@@ -6,14 +6,14 @@ from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.prompts.chat import MessageLikeRepresentation
 from langchain_core.runnables import Runnable, RunnableBinding
 
-from ai_gateway.agents.config.base import AgentConfig, AgentParams, ModelConfig
-from ai_gateway.agents.typing import ModelMetadata, TypeModelFactory
 from ai_gateway.auth.user import GitLabUser
 from ai_gateway.gitlab_features import GitLabUnitPrimitive, WrongUnitPrimitives
+from ai_gateway.prompts.config.base import ModelConfig, PromptConfig, PromptParams
+from ai_gateway.prompts.typing import ModelMetadata, TypeModelFactory
 
 __all__ = [
-    "Agent",
-    "BaseAgentRegistry",
+    "Prompt",
+    "BasePromptRegistry",
 ]
 
 Input = TypeVar("Input")
@@ -26,14 +26,14 @@ def _format_str(content: str, options: dict[str, Any]) -> str:
     return jinja_env.from_string(content).render(options)
 
 
-class Agent(RunnableBinding[Input, Output]):
+class Prompt(RunnableBinding[Input, Output]):
     name: str
     unit_primitives: list[GitLabUnitPrimitive]
 
     def __init__(
         self,
         model_factory: TypeModelFactory,
-        config: AgentConfig,
+        config: PromptConfig,
         model_metadata: Optional[ModelMetadata] = None,
         options: Optional[dict[str, Any]] = None,
     ):
@@ -50,7 +50,7 @@ class Agent(RunnableBinding[Input, Output]):
         self,
         model_factory: TypeModelFactory,
         config: ModelConfig,
-        params: AgentParams | None,
+        params: PromptParams | None,
         model_metadata: Optional[ModelMetadata] | None,
     ) -> Runnable:
         model = model_factory(
@@ -101,27 +101,27 @@ class Agent(RunnableBinding[Input, Output]):
         return messages
 
 
-class BaseAgentRegistry(ABC):
+class BasePromptRegistry(ABC):
     @abstractmethod
     def get(
         self,
-        agent_id: str,
+        prompt_id: str,
         options: Optional[dict[str, Any]] = None,
         model_metadata: Optional[ModelMetadata] = None,
-    ) -> Agent:
+    ) -> Prompt:
         pass
 
     def get_on_behalf(
         self,
         user: GitLabUser,
-        agent_id: str,
+        prompt_id: str,
         options: Optional[dict[str, Any]] = None,
         model_metadata: Optional[ModelMetadata] = None,
-    ) -> Agent:
-        agent = self.get(agent_id, options, model_metadata)
+    ) -> Prompt:
+        prompt = self.get(prompt_id, options, model_metadata)
 
-        for unit_primitive in agent.unit_primitives:
+        for unit_primitive in prompt.unit_primitives:
             if not user.can(unit_primitive):
                 raise WrongUnitPrimitives
 
-        return agent
+        return prompt

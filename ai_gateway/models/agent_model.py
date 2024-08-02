@@ -19,11 +19,11 @@ AGENT = "agent"
 class AgentModel(TextGenModelBase):
     def __init__(
         self,
-        agent: Runnable,  # TODO: should be Agent, but SafetyAttributes complain about model_class_provider from TypeModelParams
+        prompt: Runnable,  # TODO: should be Prompt, but SafetyAttributes complain about model_class_provider from TypeModelParams
     ):
-        self.agent = agent
+        self.prompt = prompt
         self._metadata = ModelMetadata(
-            name=agent.name,
+            name=prompt.name,
             engine=AGENT,
         )
 
@@ -40,7 +40,7 @@ class AgentModel(TextGenModelBase):
         if stream:
             return self._handle_stream(params)
 
-        response = await self.agent.ainvoke(params)
+        response = await self.prompt.ainvoke(params)
 
         return TextGenModelOutput(
             text=response.content,
@@ -53,5 +53,5 @@ class AgentModel(TextGenModelBase):
         self,
         params: dict,
     ) -> AsyncIterator[TextGenModelChunk]:
-        async for chunk in self.agent.astream(params):
+        async for chunk in self.prompt.astream(params):
             yield TextGenModelChunk(text=chunk.content)

@@ -4,7 +4,6 @@ from unittest.mock import Mock, patch
 import pytest
 from starlette.testclient import TestClient
 
-from ai_gateway.agents.typing import ModelMetadata
 from ai_gateway.api.v2 import api_router
 from ai_gateway.api.v2.chat.typing import (
     AgentRequestOptions,
@@ -23,6 +22,7 @@ from ai_gateway.chat.agents import (
 )
 from ai_gateway.gitlab_features import WrongUnitPrimitives
 from ai_gateway.internal_events import InternalEventAdditionalProperties
+from ai_gateway.prompts.typing import ModelMetadata
 
 
 @pytest.fixture(scope="class")

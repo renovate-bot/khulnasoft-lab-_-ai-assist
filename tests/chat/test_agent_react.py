@@ -14,12 +14,12 @@ from ai_gateway.chat.agents.typing import AgentStep
 
 
 @pytest.fixture
-def agent_class():
+def prompt_class():
     yield ReActAgent
 
 
 async def _assert_agent_invoked(
-    agent: ReActAgent,
+    prompt: ReActAgent,
     question: str,
     agent_scratchpad: list[AgentStep],
     chat_history: list[str] | str,
@@ -33,9 +33,9 @@ async def _assert_agent_invoked(
     )
 
     if stream:
-        actual_actions = [action async for action in agent.astream(inputs)]
+        actual_actions = [action async for action in prompt.astream(inputs)]
     else:
-        actual_actions = [await agent.ainvoke(inputs)]
+        actual_actions = [await prompt.ainvoke(inputs)]
 
     assert actual_actions == expected_actions
 
@@ -215,12 +215,12 @@ class TestReActAgent:
         agent_scratchpad: list[AgentStep],
         model_response: str,
         expected_action_fixture: str,
-        agent: ReActAgent,
+        prompt: ReActAgent,
     ):
         expected_action = request.getfixturevalue(expected_action_fixture)
 
         await _assert_agent_invoked(
-            agent=agent,
+            prompt=prompt,
             question=question,
             chat_history=chat_history,
             agent_scratchpad=agent_scratchpad,
@@ -282,10 +282,10 @@ class TestReActAgent:
         agent_scratchpad: list[AgentStep],
         model_response: str,
         expected_actions: list[ReActAgentToolAction | ReActAgentFinalAnswer],
-        agent: ReActAgent,
+        prompt: ReActAgent,
     ):
         await _assert_agent_invoked(
-            agent=agent,
+            prompt=prompt,
             question=question,
             chat_history=chat_history,
             agent_scratchpad=agent_scratchpad,

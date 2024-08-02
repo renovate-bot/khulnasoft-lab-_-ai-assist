@@ -6,13 +6,13 @@ from langchain_core.callbacks import CallbackManagerForLLMRun
 from langchain_core.language_models.chat_models import SimpleChatModel
 from langchain_core.messages import BaseMessage
 
-from ai_gateway.agents import Agent
-from ai_gateway.agents.typing import ModelMetadata
 from ai_gateway.api.v1 import api_router
 from ai_gateway.auth import User, UserClaims
 from ai_gateway.chat.agents import ReActAgent
 from ai_gateway.config import Config
 from ai_gateway.gitlab_features import GitLabUnitPrimitive
+from ai_gateway.prompts import Prompt
+from ai_gateway.prompts.typing import ModelMetadata
 
 
 class FakeModel(SimpleChatModel):
@@ -57,10 +57,10 @@ def prompt_template():
 
 
 @pytest.fixture
-def mock_registry_get(request, agent_class: Optional[Type[Agent]]):
-    with patch("ai_gateway.agents.registry.LocalAgentRegistry.get") as mock:
-        if agent_class:
-            mock.return_value = request.getfixturevalue("agent")
+def mock_registry_get(request, prompt_class: Optional[Type[Prompt]]):
+    with patch("ai_gateway.prompts.registry.LocalPromptRegistry.get") as mock:
+        if prompt_class:
+            mock.return_value = request.getfixturevalue("prompt")
         else:
             mock.side_effect = KeyError()
 
@@ -82,19 +82,19 @@ def auth_user(unit_primitives: list[GitLabUnitPrimitive]):
     return User(authenticated=True, claims=UserClaims(scopes=unit_primitives))
 
 
-class TestAgent:
+class TestPrompt:
     @pytest.mark.parametrize(
         (
-            "agent_class",
+            "prompt_class",
             "inputs",
             "model_metadata",
             "expected_status",
             "expected_response",
         ),
         [
-            (Agent, {"name": "John", "age": 20}, None, 200, "Hi John!"),
+            (Prompt, {"name": "John", "age": 20}, None, 200, "Hi John!"),
             (
-                Agent,
+                Prompt,
                 {"name": "John", "age": 20},
                 ModelMetadata(
                     name="mistral",
@@ -110,10 +110,10 @@ class TestAgent:
                 {"name": "John", "age": 20},
                 None,
                 404,
-                {"detail": "Agent 'test' not found"},
+                {"detail": "Prompt 'test' not found"},
             ),
             (
-                Agent,
+                Prompt,
                 {"name": "John"},
                 None,
                 422,
@@ -126,13 +126,13 @@ class TestAgent:
                 {"name": "John", "age": 20},
                 None,
                 422,
-                {"detail": "Agent 'test' is not supported"},
+                {"detail": "Prompt 'test' is not supported"},
             ),
         ],
     )
     def test_request(
         self,
-        agent_class,
+        prompt_class,
         mock_registry_get,
         mock_client,
         mock_track_internal_event,
@@ -142,7 +142,7 @@ class TestAgent:
         expected_response: Any,
     ):
         response = mock_client.post(
-            "/agents/test",
+            "/prompts/test",
             headers={
                 "Authorization": "Bearer 12345",
                 "X-Gitlab-Authentication-Type": "oidc",
@@ -158,10 +158,10 @@ class TestAgent:
         assert response.status_code == expected_status
         assert response.json() == expected_response
 
-        if agent_class:
+        if prompt_class:
             mock_track_internal_event.assert_called_once_with(
                 "request_explain_vulnerability",
-                category="ai_gateway.api.v1.agents.invoke",
+                category="ai_gateway.api.v1.prompts.invoke",
             )
         else:
             mock_track_internal_event.assert_not_called()
@@ -173,7 +173,7 @@ class TestAgent:
         mock_registry_get,
     ):
         response = mock_client.post(
-            "/agents/test",
+            "/prompts/test",
             headers={
                 "Authorization": "Bearer 12345",
                 "X-Gitlab-Authentication-Type": "oidc",
@@ -202,7 +202,7 @@ class TestUnauthorizedScopes:
         self, mock_container, mock_client, mock_registry_get
     ):
         response = mock_client.post(
-            "/agents/test",
+            "/prompts/test",
             headers={
                 "Authorization": "Bearer 12345",
                 "X-Gitlab-Authentication-Type": "oidc",

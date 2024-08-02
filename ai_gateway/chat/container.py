@@ -8,7 +8,7 @@ from ai_gateway.chat.tools import BaseTool
 from ai_gateway.chat.toolset import DuoChatToolsRegistry
 
 if TYPE_CHECKING:
-    from ai_gateway.agents import BaseAgentRegistry
+    from ai_gateway.prompts import BasePromptRegistry
 
 __all__ = [
     "ContainerChat",
@@ -16,7 +16,7 @@ __all__ = [
 
 
 def _react_agent_factory(
-    agent_registry: "BaseAgentRegistry",
+    prompt_registry: "BasePromptRegistry",
 ) -> TypeAgentFactory[ReActAgentInputs, TypeReActAgentAction]:
     def _fn(tools: Sequence[BaseTool], inputs: ReActAgentInputs) -> ReActAgent:
         options = {"tools": tools}
@@ -29,13 +29,13 @@ def _react_agent_factory(
         if file := inputs.current_file:
             options.update({"current_file": file})
 
-        return agent_registry.get("chat/react", options, inputs.model_metadata)
+        return prompt_registry.get("chat/react", options, inputs.model_metadata)
 
     return _fn
 
 
 class ContainerChat(containers.DeclarativeContainer):
-    agents = providers.DependenciesContainer()
+    prompts = providers.DependenciesContainer()
     models = providers.DependenciesContainer()
 
     # The dependency injector does not allow us to override the FactoryAggregate provider directly.
@@ -45,7 +45,7 @@ class ContainerChat(containers.DeclarativeContainer):
 
     _react_agent_factory = providers.Factory(
         _react_agent_factory,
-        agent_registry=agents.agent_registry,
+        prompt_registry=prompts.prompt_registry,
     )
 
     # We need to resolve the model based on model name provided in request payload

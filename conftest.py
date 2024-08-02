@@ -6,25 +6,37 @@ from unittest.mock import Mock, patch
 import pytest
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
-from langchain_core.language_models.chat_models import BaseChatModel
 from langchain.chat_models.fake import FakeListChatModel
+from langchain_core.language_models.chat_models import BaseChatModel
 from starlette.middleware import Middleware
 from starlette_context.middleware import RawContextMiddleware
 
-from ai_gateway.agents.base import Agent
-from ai_gateway.agents.config.base import AgentConfig, AgentParams, ModelConfig
-from ai_gateway.agents.config.models import ChatLiteLLMParams, TypeModelParams
-from ai_gateway.agents.typing import TypeModelFactory
 from ai_gateway.api.middleware import MiddlewareAuthentication, MiddlewareLogRequest
 from ai_gateway.code_suggestions.base import CodeSuggestionsChunk, CodeSuggestionsOutput
 from ai_gateway.code_suggestions.processing.base import ModelEngineOutput
-from ai_gateway.code_suggestions.processing.typing import LanguageId, MetadataCodeContent, MetadataPromptBuilder
+from ai_gateway.code_suggestions.processing.typing import (
+    LanguageId,
+    MetadataCodeContent,
+    MetadataPromptBuilder,
+)
 from ai_gateway.config import Config
 from ai_gateway.container import ContainerApplication
-from ai_gateway.gitlab_features import GitLabUnitPrimitive
-from ai_gateway.models.base_text import TextGenModelBase, TextGenModelChunk, TextGenModelOutput
 from ai_gateway.experimentation.base import ExperimentTelemetry
-from ai_gateway.models.base import ModelMetadata, SafetyAttributes, TokensConsumptionMetadata
+from ai_gateway.gitlab_features import GitLabUnitPrimitive
+from ai_gateway.models.base import (
+    ModelMetadata,
+    SafetyAttributes,
+    TokensConsumptionMetadata,
+)
+from ai_gateway.models.base_text import (
+    TextGenModelBase,
+    TextGenModelChunk,
+    TextGenModelOutput,
+)
+from ai_gateway.prompts import Prompt
+from ai_gateway.prompts.config.base import ModelConfig, PromptConfig, PromptParams
+from ai_gateway.prompts.config.models import ChatLiteLLMParams, TypeModelParams
+from ai_gateway.prompts.typing import TypeModelFactory
 
 pytest_plugins = ("pytest_asyncio",)
 
@@ -344,28 +356,28 @@ def unit_primitives():
 
 
 @pytest.fixture
-def agent_params():
-    yield AgentParams()
+def prompt_params():
+    yield PromptParams()
 
 
 @pytest.fixture
-def agent_config(
+def prompt_config(
     model_config: ModelConfig,
     unit_primitives: list[GitLabUnitPrimitive],
     prompt_template: dict[str, str],
-    agent_params: AgentParams,
+    prompt_params: PromptParams,
 ):
-    yield AgentConfig(
-        name="test_agent",
+    yield PromptConfig(
+        name="test_prompt",
         model=model_config,
         unit_primitives=unit_primitives,
         prompt_template=prompt_template,
-        params=agent_params,
+        params=prompt_params,
     )
 
 
 @pytest.fixture
-def agent_options():
+def prompt_options():
     yield {}
 
 
@@ -375,16 +387,16 @@ def model_metadata():
 
 
 @pytest.fixture
-def agent_class():
-    yield Agent
+def prompt_class():
+    yield Prompt
 
 
 @pytest.fixture
-def agent(
-    agent_class: Type[Agent],
+def prompt(
+    prompt_class: Type[Prompt],
     model_factory: TypeModelFactory,
-    agent_config: AgentConfig,
+    prompt_config: PromptConfig,
     model_metadata: ModelMetadata | None,
-    agent_options: dict[str, Any] | None,
+    prompt_options: dict[str, Any] | None,
 ):
-    yield agent_class(model_factory, agent_config, model_metadata, agent_options)
+    yield prompt_class(model_factory, prompt_config, model_metadata, prompt_options)

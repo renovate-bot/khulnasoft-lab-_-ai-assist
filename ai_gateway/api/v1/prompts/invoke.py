@@ -4,8 +4,6 @@ from fastapi import APIRouter, Depends, HTTPException, Request, status
 from pydantic import BaseModel, RootModel
 from starlette.responses import StreamingResponse
 
-from ai_gateway.agents import Agent, BaseAgentRegistry
-from ai_gateway.agents.typing import ModelMetadata
 from ai_gateway.api.feature_category import feature_category
 from ai_gateway.async_dependency_resolver import (
     get_container_application,
@@ -14,14 +12,16 @@ from ai_gateway.async_dependency_resolver import (
 from ai_gateway.auth.user import GitLabUser, get_current_user
 from ai_gateway.gitlab_features import GitLabFeatureCategory, WrongUnitPrimitives
 from ai_gateway.internal_events import InternalEventsClient
+from ai_gateway.prompts import BasePromptRegistry, Prompt
+from ai_gateway.prompts.typing import ModelMetadata
 
 
-class AgentInputs(RootModel):
+class PromptInputs(RootModel):
     root: dict[str, Any]
 
 
-class AgentRequest(BaseModel):
-    inputs: AgentInputs
+class PromptRequest(BaseModel):
+    inputs: PromptInputs
     stream: Optional[bool] = False
     model_metadata: Optional[ModelMetadata] = None
 
@@ -29,56 +29,56 @@ class AgentRequest(BaseModel):
 router = APIRouter()
 
 
-async def get_agent_registry():
-    yield get_container_application().pkg_agents.agent_registry()
+async def get_prompt_registry():
+    yield get_container_application().pkg_prompts.prompt_registry()
 
 
 @router.post(
-    "/{agent_id:path}",
+    "/{prompt_id:path}",
     response_model=str,
     status_code=status.HTTP_200_OK,
 )
 @feature_category(GitLabFeatureCategory.AI_ABSTRACTION_LAYER)
-async def agent(
+async def prompt(
     request: Request,
-    agent_request: AgentRequest,
-    agent_id: str,
+    prompt_request: PromptRequest,
+    prompt_id: str,
     current_user: Annotated[GitLabUser, Depends(get_current_user)],
-    agent_registry: Annotated[BaseAgentRegistry, Depends(get_agent_registry)],
+    prompt_registry: Annotated[BasePromptRegistry, Depends(get_prompt_registry)],
     internal_event_client: InternalEventsClient = Depends(get_internal_event_client),
 ):
     try:
 
-        agent = agent_registry.get_on_behalf(
-            current_user, agent_id, None, agent_request.model_metadata
+        prompt = prompt_registry.get_on_behalf(
+            current_user, prompt_id, None, prompt_request.model_metadata
         )
     except KeyError:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Agent '{agent_id}' not found",
+            detail=f"Prompt '{prompt_id}' not found",
         )
     except WrongUnitPrimitives:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail=f"Unauthorized to access '{agent_id}'",
+            detail=f"Unauthorized to access '{prompt_id}'",
         )
 
-    for unit_primitive in agent.unit_primitives:
+    for unit_primitive in prompt.unit_primitives:
         internal_event_client.track_event(
             f"request_{unit_primitive}",
             category=__name__,
         )
 
     # We don't use `isinstance` because we don't want to match subclasses
-    if not type(agent) is Agent:  # pylint: disable=unidiomatic-typecheck
+    if not type(prompt) is Prompt:  # pylint: disable=unidiomatic-typecheck
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-            detail=f"Agent '{agent_id}' is not supported",
+            detail=f"Prompt '{prompt_id}' is not supported",
         )
 
     try:
-        if agent_request.stream:
-            response = agent.astream(agent_request.inputs.root)
+        if prompt_request.stream:
+            response = prompt.astream(prompt_request.inputs.root)
 
             async def _handle_stream():
                 async for chunk in response:
@@ -86,7 +86,7 @@ async def agent(
 
             return StreamingResponse(_handle_stream(), media_type="text/event-stream")
 
-        response = await agent.ainvoke(agent_request.inputs.root)
+        response = await prompt.ainvoke(prompt_request.inputs.root)
         return response.content
     except KeyError as e:
         raise HTTPException(
