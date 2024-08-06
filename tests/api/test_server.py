@@ -234,6 +234,31 @@ def test_middleware_internal_event(test_path, expected):
             mock_event_context.set.assert_not_called()
 
 
+@pytest.mark.parametrize(
+    "test_path,expected", [("/v1/chat/agent", True), ("/monitoring/healthz", False)]
+)
+def test_middleware_distributed_trace(test_path, expected):
+    config = Config(
+        _env_file=None,
+        auth=ConfigAuth(bypass_external=True),
+        environment="development",
+    )
+    server = create_fast_api_server(config)
+    client = TestClient(server)
+
+    with patch("ai_gateway.api.middleware.tracing_context") as mock_tracing_context:
+        client.post(
+            test_path,
+            headers={
+                "langsmith-trace": "20240808T090953171943Z18dfa1db-1dfc-4a48-aaf8-a139960955ce"
+            },
+        )
+        if expected:
+            mock_tracing_context.assert_called_once()
+        else:
+            mock_tracing_context.assert_not_called()
+
+
 def test_setup_custom_exception_handlers(app, monkeypatch):
     mock_add_exception_handler = MagicMock()
     monkeypatch.setattr(app, "add_exception_handler", mock_add_exception_handler)

@@ -11,6 +11,7 @@ from ai_gateway.api.middleware import (
     X_GITLAB_REALM_HEADER,
     X_GITLAB_SAAS_DUO_PRO_NAMESPACE_IDS_HEADER,
     X_GITLAB_VERSION_HEADER,
+    DistributedTraceMiddleware,
     InternalEventMiddleware,
 )
 from ai_gateway.internal_events import EventContext
@@ -22,28 +23,35 @@ def mock_app():
 
 
 @pytest.fixture
-def middleware(mock_app):
+def internal_event_middleware(mock_app):
     return InternalEventMiddleware(
         mock_app, skip_endpoints=["/health"], enabled=True, environment="test"
     )
 
 
+@pytest.fixture
+def distributed_trace_middleware(mock_app):
+    return DistributedTraceMiddleware(
+        mock_app, skip_endpoints=["/health"], environment="development"
+    )
+
+
 @pytest.mark.asyncio
-async def test_middleware_non_http_request(middleware):
+async def test_middleware_non_http_request(internal_event_middleware):
     scope = {"type": "websocket"}
     receive = AsyncMock()
     send = AsyncMock()
 
     with patch("ai_gateway.api.middleware.current_event_context") as mock_event_context:
-        await middleware(scope, receive, send)
+        await internal_event_middleware(scope, receive, send)
         mock_event_context.set.assert_not_called()
 
-    middleware.app.assert_called_once_with(scope, receive, send)
+    internal_event_middleware.app.assert_called_once_with(scope, receive, send)
 
 
 @pytest.mark.asyncio
 async def test_middleware_disabled(mock_app):
-    middleware = InternalEventMiddleware(
+    internal_event_middleware = InternalEventMiddleware(
         mock_app, skip_endpoints=[], enabled=False, environment="test"
     )
     request = Request({"type": "http"})
@@ -52,14 +60,14 @@ async def test_middleware_disabled(mock_app):
     send = AsyncMock()
 
     with patch("ai_gateway.api.middleware.current_event_context") as mock_event_context:
-        await middleware(scope, receive, send)
+        await internal_event_middleware(scope, receive, send)
         mock_event_context.set.assert_not_called()
 
-    middleware.app.assert_called_once_with(scope, receive, send)
+    internal_event_middleware.app.assert_called_once_with(scope, receive, send)
 
 
 @pytest.mark.asyncio
-async def test_middleware_skip_path(middleware):
+async def test_middleware_skip_path(internal_event_middleware):
     request = Request(
         {
             "type": "http",
@@ -72,14 +80,14 @@ async def test_middleware_skip_path(middleware):
     send = AsyncMock()
 
     with patch("ai_gateway.api.middleware.current_event_context") as mock_event_context:
-        await middleware(scope, receive, send)
+        await internal_event_middleware(scope, receive, send)
         mock_event_context.set.assert_not_called()
 
-    middleware.app.assert_called_once_with(scope, receive, send)
+    internal_event_middleware.app.assert_called_once_with(scope, receive, send)
 
 
 @pytest.mark.asyncio
-async def test_middleware_set_context(middleware):
+async def test_middleware_set_context(internal_event_middleware):
     request = Request(
         {
             "type": "http",
@@ -99,7 +107,7 @@ async def test_middleware_set_context(middleware):
     send = AsyncMock()
 
     with patch("ai_gateway.api.middleware.current_event_context") as mock_event_context:
-        await middleware(scope, receive, send)
+        await internal_event_middleware(scope, receive, send)
 
         expected_context = EventContext(
             environment="test",
@@ -116,7 +124,7 @@ async def test_middleware_set_context(middleware):
         )
         mock_event_context.set.assert_called_once_with(expected_context)
 
-    middleware.app.assert_called_once_with(scope, receive, send)
+    internal_event_middleware.app.assert_called_once_with(scope, receive, send)
 
 
 @pytest.mark.asyncio
@@ -162,7 +170,7 @@ async def test_middleware_set_context(middleware):
     ],
 )
 async def test_middleware_set_context_feature_enabled_by_namespace_ids(
-    middleware, headers, expected
+    internal_event_middleware, headers, expected
 ):
     request = Request(
         {
@@ -176,7 +184,7 @@ async def test_middleware_set_context_feature_enabled_by_namespace_ids(
     send = AsyncMock()
 
     with patch("ai_gateway.api.middleware.current_event_context") as mock_event_context:
-        await middleware(scope, receive, send)
+        await internal_event_middleware(scope, receive, send)
 
         expected_context = EventContext(
             environment="test",
@@ -193,11 +201,11 @@ async def test_middleware_set_context_feature_enabled_by_namespace_ids(
         )
         mock_event_context.set.assert_called_once_with(expected_context)
 
-    middleware.app.assert_called_once_with(scope, receive, send)
+    internal_event_middleware.app.assert_called_once_with(scope, receive, send)
 
 
 @pytest.mark.asyncio
-async def test_middleware_missing_headers(middleware):
+async def test_middleware_missing_headers(internal_event_middleware):
     request = Request(
         {
             "type": "http",
@@ -212,7 +220,7 @@ async def test_middleware_missing_headers(middleware):
     send = AsyncMock()
 
     with patch("ai_gateway.api.middleware.current_event_context") as mock_event_context:
-        await middleware(scope, receive, send)
+        await internal_event_middleware(scope, receive, send)
 
         expected_context = EventContext(
             environment="test",
@@ -229,4 +237,28 @@ async def test_middleware_missing_headers(middleware):
         )
         mock_event_context.set.assert_called_once_with(expected_context)
 
-    middleware.app.assert_called_once_with(scope, receive, send)
+    internal_event_middleware.app.assert_called_once_with(scope, receive, send)
+
+
+@pytest.mark.asyncio
+async def test_middleware_distributed_trace(distributed_trace_middleware):
+    current_run_id = "20240808T090953171943Z18dfa1db-1dfc-4a48-aaf8-a139960955ce"
+    request = Request(
+        {
+            "type": "http",
+            "path": "/api/endpoint",
+            "headers": [
+                (b"langsmith-trace", current_run_id.encode()),
+            ],
+        }
+    )
+    scope = request.scope
+    receive = AsyncMock()
+    send = AsyncMock()
+
+    with patch("ai_gateway.api.middleware.tracing_context") as mock_tracing_context:
+        await distributed_trace_middleware(scope, receive, send)
+
+        mock_tracing_context.assert_called_once_with(parent=current_run_id)
+
+    distributed_trace_middleware.app.assert_called_once_with(scope, receive, send)
