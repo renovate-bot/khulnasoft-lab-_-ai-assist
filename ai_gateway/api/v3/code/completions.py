@@ -7,6 +7,7 @@ from dependency_injector.wiring import Provide, inject
 from fastapi import APIRouter, Depends, HTTPException, Request, status
 
 from ai_gateway.api.feature_category import feature_category
+from ai_gateway.api.middleware import X_GITLAB_LANGUAGE_SERVER_VERSION
 from ai_gateway.api.v3.code.typing import (
     CodeContextPayload,
     CodeEditorComponents,
@@ -25,6 +26,7 @@ from ai_gateway.code_suggestions import (
     CodeCompletionsLegacy,
     CodeGenerations,
     CodeSuggestionsChunk,
+    LanguageServerVersion,
     ModelProvider,
 )
 from ai_gateway.container import ContainerApplication
@@ -57,11 +59,15 @@ async def completions(
             detail="Unauthorized to access code suggestions",
         )
 
+    language_server_version = LanguageServerVersion.from_string(
+        request.headers.get(X_GITLAB_LANGUAGE_SERVER_VERSION, None)
+    )
     component = payload.prompt_components[0]
     code_context = [
         component.payload.content
         for component in payload.prompt_components
         if component.type == CodeEditorComponents.CONTEXT
+        and language_server_version.supports_advanced_context()
     ] or None
 
     if component.type == CodeEditorComponents.COMPLETION:
