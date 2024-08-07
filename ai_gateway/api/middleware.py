@@ -54,6 +54,7 @@ X_GITLAB_FEATURE_ENABLED_BY_NAMESPACE_IDS_HEADER = (
     "X-Gitlab-Feature-Enabled-By-Namespace-Ids"
 )
 X_GITLAB_MODEL_GATEWAY_REQUEST_SENT_AT = "X-Gitlab-Rails-Send-Start"
+X_GITLAB_LANGUAGE_SERVER_VERSION = "X-Gitlab-Language-Server-Version"
 
 
 class _PathResolver:
@@ -130,6 +131,9 @@ class MiddlewareLogRequest(Middleware):
                     "duration_request": wait_duration,
                     "cpu_s": cpu_time,
                     "user_agent": request.headers.get("User-Agent"),
+                    "gitlab_language_server_version": request.headers.get(
+                        X_GITLAB_LANGUAGE_SERVER_VERSION
+                    ),
                     "gitlab_instance_id": request.headers.get(
                         X_GITLAB_INSTANCE_ID_HEADER
                     ),

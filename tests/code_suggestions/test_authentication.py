@@ -69,6 +69,7 @@ expected_log_keys = [
     "gitlab_version",
     "gitlab_saas_namespace_ids",
     "gitlab_saas_duo_pro_namespace_ids",
+    "gitlab_language_server_version",
     "duration_request",
 ]
 

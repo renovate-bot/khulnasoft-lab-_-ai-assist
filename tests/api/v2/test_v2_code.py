@@ -144,7 +144,6 @@ class TestCodeCompletions:
             file_name="main.py",
             editor_lang=None,
             stream=False,
-            code_context=["test context"],
         )
 
         body = response.json()
@@ -156,6 +155,71 @@ class TestCodeCompletions:
         mock_track_internal_event.assert_called_once_with(
             "request_code_suggestions",
             category="ai_gateway.api.v2.code.completions",
+        )
+
+    @pytest.mark.parametrize(
+        ("headers", "expected_args"),
+        [
+            # Omitted Language Server Version:
+            (
+                {},
+                {},
+            ),
+            # Supported Language Server Version:
+            (
+                {"X-Gitlab-Language-Server-Version": "4.21.0"},
+                {"code_context": ["import numpy as np"]},
+            ),
+            # Unsupported Language Server Version:
+            (
+                {"X-Gitlab-Language-Server-Version": "4.15.0"},
+                {},
+            ),
+        ],
+    )
+    def test_completions_legacy_advanced_context_support(
+        self,
+        mock_client: TestClient,
+        mock_completions_legacy: Mock,
+        headers: dict,
+        expected_args: dict,
+    ):
+        current_file = {
+            "file_name": "main.py",
+            "content_above_cursor": "# Create a fast binary search\n",
+            "content_below_cursor": "\n",
+        }
+        response = mock_client.post(
+            "/completions",
+            headers={
+                "Authorization": "Bearer 12345",
+                "X-Gitlab-Authentication-Type": "oidc",
+                "X-GitLab-Instance-Id": "1234",
+                "X-GitLab-Realm": "self-managed",
+                **headers,
+            },
+            json={
+                "prompt_version": 1,
+                "project_path": "gitlab-org/gitlab",
+                "project_id": 278964,
+                "current_file": current_file,
+                "context": [
+                    {
+                        "type": "file",
+                        "name": "other.py",
+                        "content": "import numpy as np",
+                    }
+                ],
+            },
+        )
+        assert response.status_code == 200
+        mock_completions_legacy.assert_called_with(
+            prefix=current_file["content_above_cursor"],
+            suffix=current_file["content_below_cursor"],
+            file_name=current_file["file_name"],
+            editor_lang=current_file.get("language_identifier", None),
+            stream=False,
+            **expected_args,
         )
 
     @pytest.mark.parametrize(

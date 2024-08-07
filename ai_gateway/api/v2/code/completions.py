@@ -14,6 +14,7 @@ from ai_gateway.api.middleware import (
     X_GITLAB_GLOBAL_USER_ID_HEADER,
     X_GITLAB_HOST_NAME_HEADER,
     X_GITLAB_INSTANCE_ID_HEADER,
+    X_GITLAB_LANGUAGE_SERVER_VERSION,
     X_GITLAB_REALM_HEADER,
     X_GITLAB_SAAS_DUO_PRO_NAMESPACE_IDS_HEADER,
     X_GITLAB_SAAS_NAMESPACE_IDS_HEADER,
@@ -51,6 +52,7 @@ from ai_gateway.code_suggestions import (
     CodeSuggestionsChunk,
 )
 from ai_gateway.code_suggestions.base import CodeSuggestionsOutput
+from ai_gateway.code_suggestions.language_server import LanguageServerVersion
 from ai_gateway.code_suggestions.processing.base import ModelEngineOutput
 from ai_gateway.code_suggestions.processing.ops import lang_from_filename
 from ai_gateway.gitlab_features import GitLabFeatureCategory, GitLabUnitPrimitive
@@ -182,7 +184,10 @@ async def completions(
         if payload.choices_count > 0:
             kwargs.update({"candidate_count": payload.choices_count})
 
-        if payload.context:
+        language_server_version = LanguageServerVersion.from_string(
+            request.headers.get(X_GITLAB_LANGUAGE_SERVER_VERSION, None)
+        )
+        if language_server_version.supports_advanced_context() and payload.context:
             kwargs.update({"code_context": [ctx.content for ctx in payload.context]})
 
     suggestions = await _execute_code_completion(payload, code_completions, **kwargs)
