@@ -1,14 +1,17 @@
-import os
-from unittest.mock import AsyncMock, Mock, patch
+from typing import cast
+from unittest.mock import patch
 
 import httpx
 import pytest
+from dependency_injector import containers, providers
 
 from ai_gateway.models.container import (
     _init_anthropic_proxy_client,
     _init_vertex_ai_proxy_client,
     _init_vertex_grpc_client,
 )
+from ai_gateway.proxy.clients.anthropic import AnthropicProxyClient
+from ai_gateway.proxy.clients.vertex_ai import VertexAIProxyClient
 
 
 @pytest.mark.parametrize(
@@ -109,3 +112,11 @@ def test_vertex_ai_proxy_client(args, expected_init):
             )
         else:
             mock_httpx_client.assert_not_called()
+
+
+@pytest.mark.asyncio
+async def test_container(mock_container: containers.DeclarativeContainer):
+    models = cast(providers.Container, mock_container.pkg_models)
+
+    assert isinstance(models.anthropic_proxy_client(), AnthropicProxyClient)
+    assert isinstance(models.vertex_ai_proxy_client(), VertexAIProxyClient)

@@ -1,12 +1,11 @@
 import json
 import os.path
-import sqlite3
-from unittest.mock import AsyncMock, MagicMock, call, patch
+from unittest.mock import AsyncMock, call, patch
 
 import pytest
 from fastapi import HTTPException, status
 from google.api_core.exceptions import NotFound
-from google.cloud import discoveryengine as discoveryengine
+from google.cloud import discoveryengine
 from google.protobuf.json_format import ParseDict
 from google.protobuf.struct_pb2 import Struct
 
@@ -188,8 +187,8 @@ async def test_invalid_version(mock_search_service_client, vertex_ai_search_fact
     with pytest.raises(DataStoreNotFound):
         await vertex_search.search(query, gl_version)
 
-    mock_search_service_client.serving_config_path.assert_not_called
-    mock_search_service_client.search.assert_not_called
+    mock_search_service_client.serving_config_path.assert_not_called()
+    mock_search_service_client.search.assert_not_called()
 
 
 @pytest.mark.asyncio

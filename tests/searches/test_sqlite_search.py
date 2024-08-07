@@ -90,7 +90,7 @@ async def test_sqlite_search_with_no_db(
     query = "What is lfs?"
     page_size = 4
 
-    with patch("os.path.isfile", return_value=False) as mock:
+    with patch("os.path.isfile", return_value=False):
         sqlite_search = sqlite_search_factory()
 
         result = await sqlite_search.search(query, gl_version, page_size)
