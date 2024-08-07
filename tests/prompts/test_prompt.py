@@ -7,21 +7,23 @@ from langchain_core.language_models.chat_models import BaseChatModel
 from langchain_core.runnables import Runnable
 from pydantic import HttpUrl
 
-from ai_gateway.agents.base import Agent
-from ai_gateway.agents.config.base import AgentParams
-from ai_gateway.agents.typing import STUBBED_API_KEY, ModelMetadata
 from ai_gateway.gitlab_features import GitLabUnitPrimitive
 from ai_gateway.models.v2.anthropic_claude import ChatAnthropic
+from ai_gateway.prompts.base import Prompt
+from ai_gateway.prompts.config.base import PromptParams
+from ai_gateway.prompts.typing import STUBBED_API_KEY, ModelMetadata
 
 
-class TestAgent:
-    def test_initialize(self, agent: Agent, unit_primitives: list[GitLabUnitPrimitive]):
-        assert agent.name == "test_agent"
-        assert agent.unit_primitives == unit_primitives
-        assert isinstance(agent.bound, Runnable)
+class TestPrompt:
+    def test_initialize(
+        self, prompt: Prompt, unit_primitives: list[GitLabUnitPrimitive]
+    ):
+        assert prompt.name == "test_prompt"
+        assert prompt.unit_primitives == unit_primitives
+        assert isinstance(prompt.bound, Runnable)
 
     def test_build_messages(self, prompt_template):
-        messages = Agent.build_messages(
+        messages = Prompt.build_messages(
             prompt_template, {"name": "Duo", "content": "What's up?"}
         )
 
@@ -34,14 +36,14 @@ class TestAgent:
     # pylint: enable=direct-environment-variable-reference
     reason="3rd party requests not enabled",
 )
-class TestAgentTimeout:
+class TestPromptTimeout:
     @pytest.fixture
-    def agent_options(self):
+    def prompt_options(self):
         yield {"name": "Duo", "content": "Print pi with 400 decimals"}
 
     @pytest.fixture
-    def agent_params(self):
-        yield AgentParams(timeout=0.1)
+    def prompt_params(self):
+        yield PromptParams(timeout=0.1)
 
     @pytest.mark.asyncio
     @pytest.mark.parametrize(
@@ -56,10 +58,10 @@ class TestAgentTimeout:
         ],
     )
     async def test_timeout(
-        self, agent: Agent, model: BaseChatModel, expected_exception: Type
+        self, prompt: Prompt, model: BaseChatModel, expected_exception: Type
     ):
         with pytest.raises(expected_exception):
-            await agent.ainvoke({})
+            await prompt.ainvoke({})
 
 
 class TestModelMetadata:

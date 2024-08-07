@@ -497,7 +497,7 @@ class TestCodeCompletions:
             "model_endpoint",
             "model_api_key",
             "want_litellm_called",
-            "want_agent_called",
+            "want_prompt_called",
             "want_status",
             "want_choices",
         ),
@@ -571,7 +571,7 @@ class TestCodeCompletions:
         model_endpoint,
         model_api_key,
         want_litellm_called,
-        want_agent_called,
+        want_prompt_called,
         want_status,
         want_choices,
     ):
@@ -602,7 +602,7 @@ class TestCodeCompletions:
 
         assert response.status_code == want_status
         assert mock_llm_text.called == want_litellm_called
-        assert mock_agent_model.called == want_agent_called
+        assert mock_agent_model.called == want_prompt_called
 
         if want_status == 200:
             body = response.json()
@@ -860,7 +860,7 @@ class TestCodeGenerations:
     @pytest.mark.parametrize(
         (
             "prompt_version",
-            "agent_id",
+            "prompt_id",
             "prefix",
             "prompt",
             "model_provider",
@@ -1188,7 +1188,7 @@ class TestCodeGenerations:
         mock_agent_model: Mock,
         mock_with_prompt_prepared: Mock,
         prompt_version,
-        agent_id,
+        prompt_id,
         prefix,
         prompt,
         model_provider,
@@ -1227,7 +1227,7 @@ class TestCodeGenerations:
                 "model_name": model_name,
                 "model_endpoint": model_endpoint,
                 "model_api_key": model_api_key,
-                "agent_id": agent_id,
+                "prompt_id": prompt_id,
             },
         )
 
@@ -1236,7 +1236,7 @@ class TestCodeGenerations:
         assert mock_anthropic.called == want_anthropic_called
         assert mock_llm_chat.called == want_litellm_called
         assert mock_anthropic_chat.called == want_anthropic_chat_called
-        assert mock_agent_model.called == (True if agent_id else False)
+        assert mock_agent_model.called == (True if prompt_id else False)
 
         if want_prompt_prepared_called:
             mock_with_prompt_prepared.assert_called_with(want_prompt)

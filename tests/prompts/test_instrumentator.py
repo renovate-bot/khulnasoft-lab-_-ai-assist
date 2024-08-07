@@ -3,15 +3,15 @@ from unittest.mock import call, patch
 
 import pytest
 
-from ai_gateway.agents.instrumentator import AgentInstrumentator
+from ai_gateway.prompts.instrumentator import PromptInstrumentator
 
 
 @pytest.fixture
 def instrumentator():
-    return AgentInstrumentator()
+    return PromptInstrumentator()
 
 
-class TestAgentInstrumentator:
+class TestPromptInstrumentator:
     @patch("prometheus_client.Gauge.labels")
     def test_log_pre_api_call(self, mock_gauges, instrumentator):
         instrumentator.log_pre_api_call("claude", [], {"model": "claude"})

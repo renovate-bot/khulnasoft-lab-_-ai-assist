@@ -1,8 +1,8 @@
 import pytest
 
-from ai_gateway.agents import Agent, BaseAgentRegistry
 from ai_gateway.auth.user import GitLabUser, UserClaims
 from ai_gateway.gitlab_features import GitLabUnitPrimitive, WrongUnitPrimitives
+from ai_gateway.prompts import BasePromptRegistry, Prompt
 
 
 @pytest.fixture
@@ -11,10 +11,10 @@ def user(scopes: list[str]):
 
 
 @pytest.fixture
-def registry(agent: Agent):
-    class Registry(BaseAgentRegistry):
+def registry(prompt: Prompt):
+    class Registry(BasePromptRegistry):
         def get(self, *args, **kwargs):
-            return agent
+            return prompt
 
     yield Registry()
 
@@ -45,15 +45,15 @@ class TestBaseRegistry:
     )
     def test_get_on_behalf(
         self,
-        registry: BaseAgentRegistry,
+        registry: BasePromptRegistry,
         user: GitLabUser,
-        agent: Agent,
+        prompt: Prompt,
         unit_primitives: list[GitLabUnitPrimitive],
         scopes: list[str],
         success: bool,
     ):
         if success:
-            assert registry.get_on_behalf(user=user, agent_id="test") == agent
+            assert registry.get_on_behalf(user=user, prompt_id="test") == prompt
         else:
             with pytest.raises(WrongUnitPrimitives):
-                registry.get_on_behalf(user=user, agent_id="test")
+                registry.get_on_behalf(user=user, prompt_id="test")

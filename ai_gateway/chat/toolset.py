@@ -16,7 +16,7 @@ class DuoChatToolsRegistry(BaseToolsRegistry):
     @property
     def toolsets(self) -> list[UnitPrimitiveToolset]:
         # We can also read the list of tools and associated unit primitives from the file
-        # similar to what we implemented for the Agent Registry
+        # similar to what we implemented for the Prompt Registry
         return [
             UnitPrimitiveToolset(
                 name=GitLabUnitPrimitive.DUO_CHAT,

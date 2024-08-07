@@ -1,20 +1,20 @@
 from dependency_injector import containers, providers
 
-from ai_gateway.agents.config import ModelClassProvider
-from ai_gateway.agents.registry import LocalAgentRegistry
 from ai_gateway.chat import agents as chat
+from ai_gateway.prompts.config import ModelClassProvider
+from ai_gateway.prompts.registry import LocalPromptRegistry
 
 __all__ = [
-    "ContainerAgents",
+    "ContainerPrompts",
 ]
 
 
-class ContainerAgents(containers.DeclarativeContainer):
+class ContainerPrompts(containers.DeclarativeContainer):
     config = providers.Configuration(strict=True)
     models = providers.DependenciesContainer()
 
-    agent_registry = providers.Singleton(
-        LocalAgentRegistry.from_local_yaml,
+    prompt_registry = providers.Singleton(
+        LocalPromptRegistry.from_local_yaml,
         class_overrides={
             "chat/react": chat.ReActAgent,
         },

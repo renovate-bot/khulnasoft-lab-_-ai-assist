@@ -6,7 +6,7 @@ from litellm.integrations.custom_logger import CustomLogger
 from ai_gateway.instrumentators.model_requests import ModelRequestInstrumentator
 
 
-class AgentInstrumentator(CustomLogger):
+class PromptInstrumentator(CustomLogger):
     def log_pre_api_call(self, model, messages, kwargs):
         self._start(kwargs)
 
@@ -20,7 +20,7 @@ class AgentInstrumentator(CustomLogger):
         return ModelRequestInstrumentator.WatchContainer(
             labels={"model_engine": "litellm", "model_name": kwargs["model"]},
             streaming=True,
-            concurrency_limit=None,  # TODO: Plug concurrency limit into agents
+            concurrency_limit=None,  # TODO: Plug concurrency limit into prompts
         )
 
     def _start(self, kwargs: dict[str, Any]):

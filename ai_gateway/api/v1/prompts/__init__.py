@@ -1,6 +1,6 @@
 from fastapi import APIRouter
 
-from ai_gateway.api.v1.agents import invoke
+from ai_gateway.api.v1.prompts import invoke
 
 __all__ = [
     "router",

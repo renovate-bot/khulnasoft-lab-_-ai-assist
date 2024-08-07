@@ -10,31 +10,31 @@ from langchain_core.runnables import RunnableBinding, RunnableSequence
 from pydantic import BaseModel, HttpUrl
 from pyfakefs.fake_filesystem import FakeFilesystem
 
-from ai_gateway.agents import Agent, AgentRegistered, LocalAgentRegistry
-from ai_gateway.agents.config import (
-    AgentConfig,
+from ai_gateway.prompts import LocalPromptRegistry, Prompt, PromptRegistered
+from ai_gateway.prompts.config import (
     ChatAnthropicParams,
     ChatLiteLLMParams,
     ModelClassProvider,
     ModelConfig,
+    PromptConfig,
 )
-from ai_gateway.agents.typing import ModelMetadata, TypeModelFactory
+from ai_gateway.prompts.typing import ModelMetadata, TypeModelFactory
 
 
-class MockAgentClass(Agent):
+class MockPromptClass(Prompt):
     pass
 
 
 @pytest.fixture
 def mock_fs(fs: FakeFilesystem):
-    agents_definitions_dir = (
-        Path(__file__).parent.parent.parent / "ai_gateway" / "agents" / "definitions"
+    prompts_definitions_dir = (
+        Path(__file__).parent.parent.parent / "ai_gateway" / "prompts" / "definitions"
     )
     fs.create_file(
-        agents_definitions_dir / "test" / "base.yml",
+        prompts_definitions_dir / "test" / "base.yml",
         contents="""
 ---
-name: Test agent
+name: Test prompt
 model:
   name: claude-2.1
   params:
@@ -51,10 +51,10 @@ prompt_template:
 """,
     )
     fs.create_file(
-        agents_definitions_dir / "chat" / "react" / "base.yml",
+        prompts_definitions_dir / "chat" / "react" / "base.yml",
         contents="""
 ---
-name: Chat react agent
+name: Chat react prompt
 model:
   name: claude-3-haiku-20240307
   params:
@@ -80,10 +80,10 @@ params:
 """,
     )
     fs.create_file(
-        agents_definitions_dir / "chat" / "react" / "custom.yml",
+        prompts_definitions_dir / "chat" / "react" / "custom.yml",
         contents="""
 ---
-name: Chat react custom agent
+name: Chat react custom prompt
 model:
   name: custom
   params:
@@ -119,12 +119,12 @@ def model_factories():
 
 
 @pytest.fixture
-def agents_registered():
+def prompts_registered():
     yield {
-        "test/base": AgentRegistered(
-            klass=Agent,
-            config=AgentConfig(
-                name="Test agent",
+        "test/base": PromptRegistered(
+            klass=Prompt,
+            config=PromptConfig(
+                name="Test prompt",
                 model=ModelConfig(
                     name="claude-2.1",
                     params=ChatLiteLLMParams(
@@ -140,10 +140,10 @@ def agents_registered():
                 prompt_template={"system": "Template1"},
             ),
         ),
-        "chat/react/base": AgentRegistered(
-            klass=MockAgentClass,
-            config=AgentConfig(
-                name="Chat react agent",
+        "chat/react/base": PromptRegistered(
+            klass=MockPromptClass,
+            config=PromptConfig(
+                name="Chat react prompt",
                 model=ModelConfig(
                     name="claude-3-haiku-20240307",
                     provider="anthropic",
@@ -165,10 +165,10 @@ def agents_registered():
                 params={"timeout": 60, "stop": ["Foo", "Bar"]},
             ),
         ),
-        "chat/react/custom": AgentRegistered(
-            klass=MockAgentClass,
-            config=AgentConfig(
-                name="Chat react custom agent",
+        "chat/react/custom": PromptRegistered(
+            klass=MockPromptClass,
+            config=PromptConfig(
+                name="Chat react custom prompt",
                 model=ModelConfig(
                     name="custom",
                     provider="litellm",
@@ -196,37 +196,37 @@ def custom_models_enabled():
 
 @pytest.fixture
 def registry(
-    agents_registered: dict[str, AgentRegistered],
+    prompts_registered: dict[str, PromptRegistered],
     model_factories: dict[ModelClassProvider, TypeModelFactory],
     custom_models_enabled: bool,
 ):
-    yield LocalAgentRegistry(
+    yield LocalPromptRegistry(
         model_factories=model_factories,
-        agents_registered=agents_registered,
+        prompts_registered=prompts_registered,
         custom_models_enabled=custom_models_enabled,
     )
 
 
-class TestLocalAgentRegistry:
+class TestLocalPromptRegistry:
     def test_from_local_yaml(
         self,
         mock_fs: FakeFilesystem,
         model_factories: dict[ModelClassProvider, TypeModelFactory],
-        agents_registered: dict[str, AgentRegistered],
+        prompts_registered: dict[str, PromptRegistered],
     ):
-        registry = LocalAgentRegistry.from_local_yaml(
+        registry = LocalPromptRegistry.from_local_yaml(
             class_overrides={
-                "chat/react": MockAgentClass,
+                "chat/react": MockPromptClass,
             },
             model_factories=model_factories,
             custom_models_enabled=False,
         )
 
-        assert registry.agents_registered == agents_registered
+        assert registry.prompts_registered == prompts_registered
 
     @pytest.mark.parametrize(
         (
-            "agent_id",
+            "prompt_id",
             "model_metadata",
             "expected_name",
             "expected_class",
@@ -239,8 +239,8 @@ class TestLocalAgentRegistry:
             (
                 "test",
                 None,
-                "Test agent",
-                Agent,
+                "Test prompt",
+                Prompt,
                 [("system", "Template1")],
                 "claude-2.1",
                 {},
@@ -255,8 +255,8 @@ class TestLocalAgentRegistry:
             (
                 "chat/react",
                 None,
-                "Chat react agent",
-                MockAgentClass,
+                "Chat react prompt",
+                MockPromptClass,
                 [("system", "Template1"), ("user", "Template2")],
                 "claude-3-haiku-20240307",
                 {"stop": ["Foo", "Bar"], "timeout": 60},
@@ -280,8 +280,8 @@ class TestLocalAgentRegistry:
                     api_key="token",
                     provider="openai",
                 ),
-                "Chat react custom agent",
-                MockAgentClass,
+                "Chat react custom prompt",
+                MockPromptClass,
                 [("system", "Template1"), ("user", "Template2")],
                 "custom",
                 {
@@ -304,26 +304,26 @@ class TestLocalAgentRegistry:
     )
     def test_get(
         self,
-        registry: LocalAgentRegistry,
-        agent_id: str,
+        registry: LocalPromptRegistry,
+        prompt_id: str,
         model_metadata: ModelMetadata | None,
         expected_name: str,
-        expected_class: Type[Agent],
+        expected_class: Type[Prompt],
         expected_messages: Sequence[MessageLikeRepresentation],
         expected_model: str,
         expected_kwargs: dict,
         expected_model_params: dict,
     ):
 
-        agent = registry.get(agent_id, {}, model_metadata)
+        prompt = registry.get(prompt_id, {}, model_metadata)
 
-        chain = cast(RunnableSequence, agent.bound)
+        chain = cast(RunnableSequence, prompt.bound)
         actual_messages = cast(ChatPromptTemplate, chain.first).messages
         binding = cast(RunnableBinding, chain.last)
         actual_model = cast(BaseModel, binding.bound)
 
-        assert agent.name == expected_name
-        assert isinstance(agent, expected_class)
+        assert prompt.name == expected_name
+        assert isinstance(prompt, expected_class)
         assert (
             actual_messages
             == ChatPromptTemplate.from_messages(expected_messages).messages
@@ -340,7 +340,7 @@ class TestLocalAgentRegistry:
 
     @pytest.mark.parametrize("custom_models_enabled", [False])
     def test_invalid_get(
-        self, registry: LocalAgentRegistry, custom_models_enabled: bool
+        self, registry: LocalPromptRegistry, custom_models_enabled: bool
     ):
         model_metadata = ModelMetadata(
             name="custom",
