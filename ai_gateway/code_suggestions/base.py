@@ -56,6 +56,7 @@ USE_CASES_MODELS_MAP = {
         KindLiteLlmModel.CODE_GEMMA,
         KindLiteLlmModel.CODESTRAL,
         KindLiteLlmModel.CODE_LLAMA_CODE,
+        KindLiteLlmModel.DEEPSEEKCODER,
     },
     KindUseCase.CODE_GENERATIONS: {
         KindAnthropicModel.CLAUDE_2_0,
@@ -70,6 +71,7 @@ USE_CASES_MODELS_MAP = {
         KindLiteLlmModel.CODE_GEMMA,
         KindLiteLlmModel.CODESTRAL,
         KindLiteLlmModel.CODE_LLAMA,
+        KindLiteLlmModel.DEEPSEEKCODER,
     },
 }
 
