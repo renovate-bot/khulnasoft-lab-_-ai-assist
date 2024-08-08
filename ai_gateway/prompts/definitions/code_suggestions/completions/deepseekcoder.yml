@@ -1,0 +1,14 @@
+---
+name: DeepSeekCoder Code Completions
+model:
+  name: deepseekcoder
+  params:
+    model_class_provider: litellm
+    temperature: 0.0
+    timeout: 60
+    max_tokens: 128
+    max_retries: 1
+unit_primitives:
+  - code_suggestions
+prompt_template:
+  user: <｜fim▁begin｜>{prefix}<｜fim▁hole｜>{suffix}<｜fim▁end｜>

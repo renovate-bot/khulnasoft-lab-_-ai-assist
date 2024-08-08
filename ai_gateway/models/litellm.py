@@ -25,6 +25,7 @@ class KindLiteLlmModel(str, Enum):
     CODE_LLAMA = "codellama"
     CODE_LLAMA_CODE = "codellama:code"
     CODESTRAL = "codestral"
+    DEEPSEEKCODER = "deepseekcoder"
     MISTRAL = "mistral"
     MIXTRAL = "mixtral"
 
