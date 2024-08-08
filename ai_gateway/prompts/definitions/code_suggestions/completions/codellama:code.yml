@@ -1,0 +1,22 @@
+---
+name: Codellama Code Completions
+model:
+  name: codellama:code
+  params:
+    model_class_provider: litellm
+    timeout: 60
+    temperature: 0.95
+    max_tokens: 128
+    max_retries: 1
+unit_primitives:
+  - code_suggestions
+prompt_template:
+  user: |
+    <PRE> #{prefix} <SUF> #{suffix} <MID>
+params:
+  timeout: 60
+  stop:
+    - <PRE>
+    - <SUF>
+    - <MID>
+    - <EOT>
