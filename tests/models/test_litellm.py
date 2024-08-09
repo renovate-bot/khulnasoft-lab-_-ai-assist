@@ -1,4 +1,4 @@
-from typing import AsyncIterator
+from typing import AsyncIterator, Optional
 from unittest.mock import AsyncMock, Mock, patch
 
 import pytest
@@ -57,6 +57,7 @@ class TestLiteLlmChatMode:
     @pytest.mark.parametrize(
         (
             "model_name",
+            "api_key",
             "provider",
             "custom_models_enabled",
             "provider_keys",
@@ -67,6 +68,7 @@ class TestLiteLlmChatMode:
         [
             (
                 "mistral",
+                "",
                 KindModelProvider.LITELLM,
                 True,
                 {},
@@ -76,6 +78,7 @@ class TestLiteLlmChatMode:
             ),
             (
                 "mixtral",
+                None,
                 KindModelProvider.LITELLM,
                 True,
                 {},
@@ -85,6 +88,7 @@ class TestLiteLlmChatMode:
             ),
             (
                 "codestral",
+                "",
                 KindModelProvider.MISTRALAI,
                 True,
                 {},
@@ -94,6 +98,7 @@ class TestLiteLlmChatMode:
             ),
             (
                 "codestral",
+                None,
                 KindModelProvider.MISTRALAI,
                 True,
                 {"mistral_api_key": "stubbed-mistral-api-key"},
@@ -106,6 +111,7 @@ class TestLiteLlmChatMode:
     def test_from_model_name(
         self,
         model_name: str,
+        api_key: Optional[str],
         provider: KindModelProvider,
         custom_models_enabled: bool,
         provider_keys: dict,
@@ -116,6 +122,7 @@ class TestLiteLlmChatMode:
     ):
         model = LiteLlmChatModel.from_model_name(
             name=model_name,
+            api_key=api_key,
             endpoint=endpoint,
             custom_models_enabled=custom_models_enabled,
             provider=provider,
@@ -279,6 +286,7 @@ class TestLiteLlmTextGenModel:
     @pytest.mark.parametrize(
         (
             "model_name",
+            "api_key",
             "provider",
             "custom_models_enabled",
             "provider_keys",
@@ -289,6 +297,17 @@ class TestLiteLlmTextGenModel:
         [
             (
                 "codegemma",
+                "",
+                KindModelProvider.LITELLM,
+                True,
+                {},
+                "text-completion-openai/codegemma",
+                "stubbed-api-key",
+                "litellm",
+            ),
+            (
+                "codegemma",
+                None,
                 KindModelProvider.LITELLM,
                 True,
                 {},
@@ -298,6 +317,7 @@ class TestLiteLlmTextGenModel:
             ),
             (
                 "codestral",
+                None,
                 KindModelProvider.MISTRALAI,
                 True,
                 {},
@@ -307,6 +327,7 @@ class TestLiteLlmTextGenModel:
             ),
             (
                 "codestral",
+                "",
                 KindModelProvider.MISTRALAI,
                 True,
                 {"mistral_api_key": "stubbed-mistral-api-key"},
@@ -319,6 +340,7 @@ class TestLiteLlmTextGenModel:
     def test_from_model_name(
         self,
         model_name: str,
+        api_key: Optional[str],
         provider: KindModelProvider,
         custom_models_enabled: bool,
         provider_keys: dict,
@@ -329,6 +351,7 @@ class TestLiteLlmTextGenModel:
     ):
         model = LiteLlmTextGenModel.from_model_name(
             name=model_name,
+            api_key=api_key,
             endpoint=endpoint,
             custom_models_enabled=custom_models_enabled,
             provider=provider,
