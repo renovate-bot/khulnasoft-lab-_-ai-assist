@@ -82,7 +82,7 @@ class LiteLlmChatModel(ChatModelBase):
         api_key: Optional[str] = None,
         provider: Optional[KindModelProvider] = KindModelProvider.LITELLM,
     ):
-        if api_key is None:
+        if not api_key:
             api_key = STUBBED_API_KEY
 
         self.api_key = api_key
@@ -206,7 +206,7 @@ class LiteLlmTextGenModel(TextGenModelBase):
         api_key: Optional[str] = None,
         provider: Optional[KindModelProvider] = KindModelProvider.LITELLM,
     ):
-        if api_key is None:
+        if not api_key:
             api_key = STUBBED_API_KEY
 
         self.api_key = api_key
