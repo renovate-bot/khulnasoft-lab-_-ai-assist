@@ -1,7 +1,7 @@
 ---
-name: Codegemma Code Completions
+name: Codegemma 2B Code Completions
 model:
-  name: codegemma
+  name: codegemma_2b
   params:
     model_class_provider: litellm
     temperature: 0.95

@@ -1,5 +1,5 @@
 ---
-name: Mistral Code Generations
+name: Mistral 7B Code Generations
 model:
   name: mistral
   params:
