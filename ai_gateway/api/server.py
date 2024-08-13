@@ -14,6 +14,7 @@ from starlette_context import context
 from starlette_context.middleware import RawContextMiddleware
 
 from ai_gateway.api.middleware import (
+    DistributedTraceMiddleware,
     InternalEventMiddleware,
     MiddlewareAuthentication,
     MiddlewareLogRequest,
@@ -77,6 +78,11 @@ def create_fast_api_server(config: Config):
                 allow_headers=["*"],
             ),
             MiddlewareLogRequest(skip_endpoints=_SKIP_ENDPOINTS),
+            Middleware(
+                DistributedTraceMiddleware,
+                skip_endpoints=_SKIP_ENDPOINTS,
+                environment=config.environment,
+            ),
             MiddlewareAuthentication(
                 CompositeProvider(
                     [
