@@ -37,6 +37,7 @@ def mock_sleep():  # So we don't have to wait
         yield
 
 
+@pytest.mark.skip(reason="Missing Google Auth stub")
 @pytest.mark.asyncio
 @pytest.mark.parametrize(("response_text"), [('{"error": "something went wrong"}')])
 async def test_ainvoke(
@@ -53,6 +54,7 @@ async def test_ainvoke(
     assert mock_http_handler.post.call_count == 3
 
 
+@pytest.mark.skip(reason="Missing Google Auth stub")
 @pytest.mark.asyncio
 @pytest.mark.parametrize(
     ("response_text"),
