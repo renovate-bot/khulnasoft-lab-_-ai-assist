@@ -13,6 +13,7 @@ class UserClaims(NamedTuple):
     scopes: list = []
     subject: str = ""
     issuer: str = ""
+    duo_seat_count: str = ""
 
 
 class User(NamedTuple):

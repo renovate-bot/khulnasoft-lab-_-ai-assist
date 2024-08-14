@@ -58,6 +58,7 @@ YQIDAQAB
 """
 
 GLOBAL_USER_ID = "777"
+DUO_SEAT_COUNT_CLAIM_TEST_VALUE = "333"
 
 
 @pytest.fixture(scope="class")
@@ -66,11 +67,14 @@ def fast_api_router():
 
 
 @pytest.fixture
-def auth_user():
-    return User(
-        authenticated=True,
-        claims=UserClaims(scopes=["code_suggestions"]),
-    )
+def auth_user(request):
+    duo_seat_count_claim_present = getattr(request, "param", True)
+    claims = UserClaims(scopes=["code_suggestions"])
+    if duo_seat_count_claim_present:
+        claims = UserClaims(
+            scopes=["code_suggestions"], duo_seat_count=DUO_SEAT_COUNT_CLAIM_TEST_VALUE
+        )
+    return User(authenticated=True, claims=claims)
 
 
 @pytest.fixture
@@ -82,23 +86,37 @@ def mock_config():
     )
 
 
+# Third argument ("auth_user") is to parametrize the presence of "duo_seat_count" claim.
+# When we eventually drop the backward compatibility support of older instances, we should always expect this claim.
 @pytest.mark.parametrize(
-    "gitlab_realm",
-    ["self-managed", "saas"],
+    ("gitlab_realm", "duo_seat_count_claim_and_header_are_present", "auth_user"),
+    [
+        ("self-managed", True, True),
+        ("self-managed", False, False),
+        ("saas", True, True),
+        ("saas", False, False),
+    ],
+    indirect=["auth_user"],
 )
 def test_user_access_token_success(
-    mock_client: TestClient, mock_track_internal_event, gitlab_realm
+    mock_client: TestClient,
+    mock_track_internal_event,
+    gitlab_realm,
+    duo_seat_count_claim_and_header_are_present,
+    auth_user,
 ):
-    response = mock_client.post(
-        "/code/user_access_token",
-        headers={
-            "X-Gitlab-Global-User-Id": GLOBAL_USER_ID,
-            "Authorization": "Bearer 12345",
-            "X-Gitlab-Authentication-Type": "oidc",
-            "X-GitLab-Instance-Id": "1234",
-            "X-Gitlab-Realm": gitlab_realm,
-        },
-    )
+    headers = {
+        "X-Gitlab-Global-User-Id": GLOBAL_USER_ID,
+        "Authorization": "Bearer 12345",
+        "X-Gitlab-Authentication-Type": "oidc",
+        "X-GitLab-Instance-Id": "1234",
+        "X-Gitlab-Realm": gitlab_realm,
+    }
+    if duo_seat_count_claim_and_header_are_present:
+        headers["X-Gitlab-Duo-Seat-Count"] = DUO_SEAT_COUNT_CLAIM_TEST_VALUE
+
+    response = mock_client.post("/code/user_access_token", headers=headers)
+
     assert response.status_code == status.HTTP_200_OK
 
     parsed_response = response.json()
@@ -126,6 +144,9 @@ def test_user_access_token_success(
     assert decoded_token["scopes"] == ["code_suggestions"]
     assert parsed_response["expires_at"] == decoded_token["exp"]
 
+    if duo_seat_count_claim_and_header_are_present:
+        assert decoded_token["duo_seat_count"] == DUO_SEAT_COUNT_CLAIM_TEST_VALUE
+
     mock_track_internal_event.assert_called_once_with(
         "request_code_suggestions",
         category="ai_gateway.api.v1.code.user_access_token",
@@ -141,6 +162,7 @@ def test_user_access_token_global_user_id_header_empty(mock_client: TestClient):
             "X-Gitlab-Authentication-Type": "oidc",
             "X-GitLab-Instance-Id": "1234",
             "X-Gitlab-Realm": "self-managed",
+            "X-Gitlab-Duo-Seat-Count": DUO_SEAT_COUNT_CLAIM_TEST_VALUE,
         },
     )
     assert response.status_code == status.HTTP_400_BAD_REQUEST
@@ -155,6 +177,7 @@ def test_user_access_token_global_user_id_header_missing(mock_client: TestClient
             "X-Gitlab-Authentication-Type": "oidc",
             "X-GitLab-Instance-Id": "1234",
             "X-Gitlab-Realm": "self-managed",
+            "X-Gitlab-Duo-Seat-Count": DUO_SEAT_COUNT_CLAIM_TEST_VALUE,
         },
     )
     assert response.status_code == status.HTTP_400_BAD_REQUEST
@@ -169,6 +192,7 @@ def test_user_access_token_gitlab_realm_header_empty(mock_client: TestClient):
             "Authorization": "Bearer 12345",
             "X-Gitlab-Authentication-Type": "oidc",
             "X-GitLab-Instance-Id": "1234",
+            "X-Gitlab-Duo-Seat-Count": DUO_SEAT_COUNT_CLAIM_TEST_VALUE,
             "X-Gitlab-Realm": "",
         },
     )
@@ -184,6 +208,7 @@ def test_user_access_token_gitlab_realm_header_missing(mock_client: TestClient):
             "Authorization": "Bearer 12345",
             "X-Gitlab-Authentication-Type": "oidc",
             "X-GitLab-Instance-Id": "1234",
+            "X-Gitlab-Duo-Seat-Count": DUO_SEAT_COUNT_CLAIM_TEST_VALUE,
         },
     )
     assert response.status_code == status.HTTP_400_BAD_REQUEST
@@ -195,7 +220,11 @@ class TestUnauthorizedIssuer:
     def auth_user(self):
         return User(
             authenticated=True,
-            claims=UserClaims(scopes=["code_suggestions"], issuer="gitlab-ai-gateway"),
+            claims=UserClaims(
+                scopes=["code_suggestions"],
+                issuer="gitlab-ai-gateway",
+                duo_seat_count=DUO_SEAT_COUNT_CLAIM_TEST_VALUE,
+            ),
         )
 
     def test_failed_authorization_issuer(self, mock_client: TestClient):
@@ -207,6 +236,7 @@ class TestUnauthorizedIssuer:
                 "X-Gitlab-Authentication-Type": "oidc",
                 "X-GitLab-Instance-Id": "1234",
                 "X-Gitlab-Realm": "self-managed",
+                "X-Gitlab-Duo-Seat-Count": DUO_SEAT_COUNT_CLAIM_TEST_VALUE,
             },
         )
         assert response.status_code == status.HTTP_403_FORBIDDEN
@@ -234,6 +264,7 @@ class TestUserAccessTokenJwtGenerationFailed:
                 "X-Gitlab-Authentication-Type": "oidc",
                 "X-GitLab-Instance-Id": "1234",
                 "X-Gitlab-Realm": "self-managed",
+                "X-Gitlab-Duo-Seat-Count": DUO_SEAT_COUNT_CLAIM_TEST_VALUE,
             },
         )
         assert response.status_code == status.HTTP_500_INTERNAL_SERVER_ERROR

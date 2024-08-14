@@ -22,7 +22,7 @@ class TokenAuthority:
     def __init__(self, signing_key):
         self.signing_key = signing_key
 
-    def encode(self, sub, gitlab_realm) -> tuple[str, int]:
+    def encode(self, sub, gitlab_realm, current_user) -> tuple[str, int]:
         expires_at = datetime.now(timezone.utc) + timedelta(hours=1)
         try:
             claims = {
@@ -36,6 +36,10 @@ class TokenAuthority:
                 "gitlab_realm": gitlab_realm,
                 "scopes": [GitLabUnitPrimitive.CODE_SUGGESTIONS],
             }
+
+            duo_seat_count = getattr(current_user.claims, "duo_seat_count", "")
+            if duo_seat_count and str(duo_seat_count).strip():
+                claims["duo_seat_count"] = duo_seat_count
 
             token = jwt.encode(claims, self.signing_key, algorithm=self.ALGORITHM)
 

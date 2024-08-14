@@ -14,6 +14,7 @@ from ai_gateway.api.middleware import (
     DistributedTraceMiddleware,
     InternalEventMiddleware,
 )
+from ai_gateway.cloud_connector.auth.validators import X_GITLAB_DUO_SEAT_COUNT_HEADER
 from ai_gateway.internal_events import EventContext
 
 
@@ -99,6 +100,7 @@ async def test_middleware_set_context(internal_event_middleware):
                 (X_GITLAB_HOST_NAME_HEADER.lower().encode(), b"test-host"),
                 (X_GITLAB_VERSION_HEADER.lower().encode(), b"test-version"),
                 (X_GITLAB_GLOBAL_USER_ID_HEADER.lower().encode(), b"test-user"),
+                (X_GITLAB_DUO_SEAT_COUNT_HEADER.lower().encode(), b"100"),
             ],
         }
     )
@@ -117,6 +119,7 @@ async def test_middleware_set_context(internal_event_middleware):
             host_name="test-host",
             instance_version="test-version",
             global_user_id="test-user",
+            duo_seat_count="100",
             feature_enabled_by_namespace_ids=[],
             context_generated_at=mock_event_context.set.call_args[0][
                 0
@@ -230,6 +233,7 @@ async def test_middleware_missing_headers(internal_event_middleware):
             host_name=None,
             instance_version=None,
             global_user_id=None,
+            duo_seat_count=None,
             feature_enabled_by_namespace_ids=[],
             context_generated_at=mock_event_context.set.call_args[0][
                 0
