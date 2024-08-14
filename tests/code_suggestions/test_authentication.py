@@ -399,6 +399,81 @@ invalid_authentication_token_type_error = {
             },
             ["auth_duration_s", "token_issuer"],
         ),
+        # 'duo_seat_count' claim is non-empty, 'X-Gitlab-Duo-Seat-Count' is missing
+        (
+            {
+                "Authorization": "Bearer 12345",
+                "X-Gitlab-Authentication-Type": "oidc",
+                "X-Gitlab-Global-User-Id": "1234",
+                "X-GitLab-Realm": "self-managed",
+            },
+            None,
+            401,
+            User(
+                authenticated=True,
+                claims=UserClaims(
+                    scopes=["feature1", "feature3"],
+                    subject="1234",
+                    issuer="gitlab-ai-gateway",
+                    gitlab_realm="self-managed",
+                    duo_seat_count="333",
+                ),
+            ),
+            {"error": "Header is missing: 'X-Gitlab-Duo-Seat-Count'"},
+            ["auth_duration_s", "auth_error_details", "token_issuer"],
+        ),
+        # 'duo_seat_count' claim is non-empty, 'X-Gitlab-Duo-Seat-Count' is present but does not match the claim
+        (
+            {
+                "Authorization": "Bearer 12345",
+                "X-Gitlab-Authentication-Type": "oidc",
+                "X-Gitlab-Global-User-Id": "1234",
+                "X-GitLab-Realm": "self-managed",
+                "X-Gitlab-Duo-Seat-Count": "777",
+            },
+            None,
+            401,
+            User(
+                authenticated=True,
+                claims=UserClaims(
+                    scopes=["feature1", "feature3"],
+                    subject="1234",
+                    issuer="gitlab-ai-gateway",
+                    gitlab_realm="self-managed",
+                    duo_seat_count="333",
+                ),
+            ),
+            {"error": "Header mismatch 'X-Gitlab-Duo-Seat-Count'"},
+            ["auth_duration_s", "auth_error_details", "token_issuer"],
+        ),
+        # 'duo_seat_count' claim is non-empty, 'X-Gitlab-Duo-Seat-Count' is present and matches the claim
+        (
+            {
+                "Authorization": "Bearer 12345",
+                "X-Gitlab-Authentication-Type": "oidc",
+                "X-Gitlab-Global-User-Id": "1234",
+                "X-GitLab-Realm": "self-managed",
+                "X-Gitlab-Duo-Seat-Count": "333",
+            },
+            None,
+            200,
+            User(
+                authenticated=True,
+                claims=UserClaims(
+                    scopes=["feature1", "feature3"],
+                    subject="1234",
+                    issuer="gitlab-ai-gateway",
+                    gitlab_realm="self-managed",
+                    duo_seat_count="333",
+                ),
+            ),
+            {
+                "authenticated": True,
+                "is_debug": False,
+                "scopes": ["feature1", "feature3"],
+            },
+            ["auth_duration_s", "token_issuer"],
+        ),
     ],
 )
 def test_failed_authorization_logging(

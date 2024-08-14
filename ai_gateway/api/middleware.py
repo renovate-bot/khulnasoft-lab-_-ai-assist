@@ -30,6 +30,7 @@ from ai_gateway.api.timing import timing
 from ai_gateway.auth import AuthProvider, UserClaims
 from ai_gateway.auth.self_signed_jwt import SELF_SIGNED_TOKEN_ISSUER
 from ai_gateway.auth.user import GitLabUser
+from ai_gateway.cloud_connector.auth.validators import validate_duo_seat_count_header
 from ai_gateway.instrumentators.base import Telemetry, TelemetryInstrumentator
 from ai_gateway.internal_events import EventContext, current_event_context
 from ai_gateway.tracking.errors import log_exception
@@ -39,7 +40,6 @@ __all__ = [
     "MiddlewareAuthentication",
     "MiddlewareModelTelemetry",
 ]
-
 
 log = logging.getLogger("codesuggestions")
 access_logger = structlog.stdlib.get_logger("api.access")
@@ -270,6 +270,8 @@ class MiddlewareAuthentication(Middleware):
                 claim_val = getattr(claims, claim)
                 if claim_val and claim_val != headers.get(header):
                     raise AuthenticationError(f"Header mismatch '{header}'")
+
+            validate_duo_seat_count_header(claims, headers)
 
     @staticmethod
     def on_auth_error(_: Request, e: Exception):
