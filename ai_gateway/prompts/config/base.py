@@ -26,6 +26,7 @@ class PromptParams(BaseModel):
     # and naming is inconsistent between them. Therefore, we bind the timeout to the prompt instead.
     # See https://gitlab.com/gitlab-org/modelops/applied-ml/code-suggestions/ai-assist/-/merge_requests/1035#note_2020952732
     timeout: float | None = None
+    vertex_location: str | None = None
 
 
 class BasePromptConfig(BaseModel, Generic[TypeUnitPrimitive]):

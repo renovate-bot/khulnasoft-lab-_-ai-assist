@@ -54,7 +54,7 @@ async def lifespan(app: FastAPI):
             )
         )
 
-    setup_litellm()
+    setup_litellm(config)
 
     yield
 
@@ -138,8 +138,10 @@ def setup_custom_exception_handlers(app: FastAPI):
     app.add_exception_handler(ModelAPIError, model_api_exception_handler)
 
 
-def setup_litellm():
+def setup_litellm(config: Config):
     litellm.callbacks = [PromptInstrumentator()]
+
+    litellm.vertex_project = config.google_cloud_platform.project
 
 
 def setup_router(app: FastAPI):

@@ -55,8 +55,15 @@ def unused_port():
 
 
 @pytest.fixture
-def config():
-    return Config()
+def vertex_project():
+    yield "vertex-project"
+
+
+@pytest.fixture
+def config(vertex_project: str):
+    yield Config(
+        google_cloud_platform=ConfigGoogleCloudPlatform(project=vertex_project)
+    )
 
 
 @pytest.fixture
@@ -151,7 +158,7 @@ def test_setup_prometheus_fastapi_instrumentator():
 
 
 @pytest.mark.asyncio
-async def test_lifespan(config, app, unused_port, monkeypatch):
+async def test_lifespan(config, app, unused_port, monkeypatch, vertex_project):
     mock_credentials = MagicMock()
     mock_credentials.client_id = "mocked_client_id"
 
@@ -181,6 +188,8 @@ async def test_lifespan(config, app, unused_port, monkeypatch):
             asyncio.get_running_loop.assert_called_once()
 
         assert isinstance(litellm.callbacks[0], PromptInstrumentator)
+
+        assert litellm.vertex_project == vertex_project
 
     assert mock_container_app.return_value.shutdown_resources.called_once()
 

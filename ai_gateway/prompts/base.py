@@ -62,7 +62,7 @@ class Prompt(RunnableBinding[Input, Output]):
         kwargs = {}
 
         if params:
-            kwargs.update(params.model_dump())
+            kwargs.update(params.model_dump(exclude_none=True))
 
         if model_metadata:
             kwargs.update(

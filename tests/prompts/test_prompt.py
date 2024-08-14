@@ -3,8 +3,10 @@ from typing import Type
 
 import pytest
 from anthropic import APITimeoutError, AsyncAnthropic
+from langchain_community.chat_models import ChatLiteLLM
 from langchain_core.language_models.chat_models import BaseChatModel
 from langchain_core.runnables import Runnable
+from litellm.exceptions import Timeout
 from pydantic import HttpUrl
 
 from ai_gateway.gitlab_features import GitLabUnitPrimitive
@@ -54,6 +56,12 @@ class TestPromptTimeout:
                     async_client=AsyncAnthropic(), model="claude-3-sonnet-20240229"  # type: ignore[call-arg]
                 ),
                 APITimeoutError,
+            ),
+            (
+                ChatLiteLLM(
+                    model="claude-3-sonnet@20240229", custom_llm_provider="vertex_ai"  # type: ignore[call-arg]
+                ),
+                Timeout,
             ),
         ],
     )
