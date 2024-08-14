@@ -1,0 +1,28 @@
+---
+name: Claude 3 Refactor Code agent
+model:
+  name: claude-3-sonnet-20240229
+  params:
+    model_class_provider: anthropic
+    temperature: 0.1
+    max_tokens: 2_048
+    max_retries: 1
+unit_primitives:
+  - duo_chat
+prompt_template:
+  system: |
+    You are a software developer.
+    You can refactor code snippets.
+    {language_info}
+  user: |
+    {file_content}
+    In the file user selected this code:
+    <selected_code>
+      {selected_text}
+    </selected_code>
+
+    {input}
+    {file_content_reuse}
+    Any code blocks in response should be formatted in markdown.
+params:
+  timeout: 60
