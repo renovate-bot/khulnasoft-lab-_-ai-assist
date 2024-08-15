@@ -2,8 +2,10 @@ from abc import ABC, abstractmethod
 from enum import Enum
 from typing import Any, NamedTuple, Optional
 
+import httpx
 import structlog
 from anthropic import AsyncAnthropic
+from anthropic._base_client import _DefaultAsyncHttpxClient
 from google.cloud.aiplatform.gapic import PredictionServiceAsyncClient
 from pydantic import BaseModel
 
@@ -113,4 +115,12 @@ def grpc_connect_vertex(client_options: dict) -> PredictionServiceAsyncClient:
 
 
 def connect_anthropic(**kwargs: Any) -> AsyncAnthropic:
-    return AsyncAnthropic(**kwargs)
+    # Setting 30 seconds to the keep-alive expiry to avoid TLS handshake on every request.
+    # See https://www.python-httpx.org/advanced/resource-limits/ for more information.
+    limits: httpx.Limits = httpx.Limits(
+        max_connections=1000, max_keepalive_connections=100, keepalive_expiry=30
+    )
+
+    http_client: httpx.AsyncClient = _DefaultAsyncHttpxClient(limits=limits)
+
+    return AsyncAnthropic(http_client=http_client, **kwargs)

@@ -136,7 +136,7 @@ class TestLiteLlmChatMode:
 
         model = LiteLlmChatModel.from_model_name(name=model_name, api_key=None)
 
-        assert model.endpoint == None
+        assert model.endpoint is None
         assert model.api_key == "stubbed-api-key"
 
         if provider == KindModelProvider.LITELLM:
@@ -365,7 +365,7 @@ class TestLiteLlmTextGenModel:
 
         model = LiteLlmTextGenModel.from_model_name(name=model_name, api_key=None)
 
-        assert model.endpoint == None
+        assert model.endpoint is None
         assert model.api_key == "stubbed-api-key"
 
         if provider == KindModelProvider.LITELLM:
