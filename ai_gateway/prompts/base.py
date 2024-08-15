@@ -1,13 +1,15 @@
 from abc import ABC, abstractmethod
-from typing import Any, Optional, Sequence, Tuple, TypeVar, cast
+from typing import Any, AsyncIterator, Mapping, Optional, Sequence, Tuple, TypeVar, cast
 
 from jinja2 import BaseLoader, Environment
+from langchain_core.language_models.chat_models import BaseChatModel
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.prompts.chat import MessageLikeRepresentation
-from langchain_core.runnables import Runnable, RunnableBinding
+from langchain_core.runnables import Runnable, RunnableBinding, RunnableConfig
 
 from ai_gateway.auth.user import GitLabUser
 from ai_gateway.gitlab_features import GitLabUnitPrimitive, WrongUnitPrimitives
+from ai_gateway.instrumentators.model_requests import ModelRequestInstrumentator
 from ai_gateway.prompts.config.base import ModelConfig, PromptConfig, PromptParams
 from ai_gateway.prompts.typing import ModelMetadata, TypeModelFactory
 
@@ -28,6 +30,7 @@ def _format_str(content: str, options: dict[str, Any]) -> str:
 
 class Prompt(RunnableBinding[Input, Output]):
     name: str
+    model: BaseChatModel
     unit_primitives: list[GitLabUnitPrimitive]
 
     def __init__(
@@ -37,28 +40,21 @@ class Prompt(RunnableBinding[Input, Output]):
         model_metadata: Optional[ModelMetadata] = None,
         options: Optional[dict[str, Any]] = None,
     ):
-        model = self._build_model(
-            model_factory, config.model, config.params, model_metadata
-        )
+        model_kwargs = self._build_model_kwargs(config.params, model_metadata)
+        model = self._build_model(model_factory, config.model)
         messages = self.build_messages(config.prompt_template, options or {})
         prompt = ChatPromptTemplate.from_messages(messages)
-        chain = self._build_chain(cast(Runnable[Input, Output], prompt | model))
+        chain = self._build_chain(
+            cast(Runnable[Input, Output], prompt | model.bind(**model_kwargs))
+        )
 
-        super().__init__(name=config.name, unit_primitives=config.unit_primitives, bound=chain)  # type: ignore[call-arg]
+        super().__init__(name=config.name, model=model, unit_primitives=config.unit_primitives, bound=chain)  # type: ignore[call-arg]
 
-    def _build_model(
+    def _build_model_kwargs(
         self,
-        model_factory: TypeModelFactory,
-        config: ModelConfig,
         params: PromptParams | None,
         model_metadata: Optional[ModelMetadata] | None,
-    ) -> Runnable:
-        model = model_factory(
-            model=config.name,
-            **config.params.model_dump(
-                exclude={"model_class_provider"}, exclude_none=True, by_alias=True
-            )
-        )
+    ) -> Mapping[str, Any]:
         kwargs = {}
 
         if params:
@@ -72,7 +68,52 @@ class Prompt(RunnableBinding[Input, Output]):
                 api_key=model_metadata.api_key,
             )
 
-        return model.bind(**kwargs)
+        return kwargs
+
+    def _build_model(
+        self,
+        model_factory: TypeModelFactory,
+        config: ModelConfig,
+    ) -> BaseChatModel:
+        return model_factory(
+            model=config.name,
+            **config.params.model_dump(
+                exclude={"model_class_provider"}, exclude_none=True, by_alias=True
+            ),
+        )
+
+    @property
+    def model_name(self) -> str:
+        return self.model._identifying_params["model"]
+
+    @property
+    def instrumentator(self) -> ModelRequestInstrumentator:
+        return ModelRequestInstrumentator(
+            model_engine=self.model._llm_type,
+            model_name=self.model_name,
+            concurrency_limit=None,  # TODO: Plug concurrency limit into agents
+        )
+
+    async def ainvoke(
+        self,
+        input: Input,
+        config: Optional[RunnableConfig] = None,
+        **kwargs: Optional[Any],
+    ) -> Output:
+        with self.instrumentator.watch(stream=False):
+            return await super().ainvoke(input, config, **kwargs)
+
+    async def astream(
+        self,
+        input: Input,
+        config: Optional[RunnableConfig] = None,
+        **kwargs: Optional[Any],
+    ) -> AsyncIterator[Output]:
+        with self.instrumentator.watch(stream=True) as watcher:
+            async for item in super().astream(input, config, **kwargs):
+                yield item
+
+            await watcher.afinish()
 
     # Subclasses can override this method to add steps at either side of the chain
     @staticmethod

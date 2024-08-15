@@ -27,7 +27,6 @@ from ai_gateway.config import (
 )
 from ai_gateway.container import ContainerApplication
 from ai_gateway.models import ModelAPIError
-from ai_gateway.prompts.instrumentator import PromptInstrumentator
 from ai_gateway.structured_logging import setup_logging
 
 _ROUTES_V1 = [
@@ -186,8 +185,6 @@ async def test_lifespan(config, app, unused_port, monkeypatch, vertex_project):
 
         if config.instrumentator.thread_monitoring_enabled:
             asyncio.get_running_loop.assert_called_once()
-
-        assert isinstance(litellm.callbacks[0], PromptInstrumentator)
 
         assert litellm.vertex_project == vertex_project
 

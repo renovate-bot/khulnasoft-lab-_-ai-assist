@@ -56,7 +56,7 @@ class ModelRequestInstrumentator:
 
         def start(self):
             """Register the start of the inference request. Sets the start time to be used for
-            duration calculations, if needed, when `finish()` is called.
+            duration calculations when `finish()` is called.
             """
             self.start_time = time.perf_counter()
 
@@ -69,21 +69,13 @@ class ModelRequestInstrumentator:
         def register_error(self):
             self.error = True
 
-        def finish(self, duration: Optional[float] = None):
-            """Register the end of the inference request. When observing calls from providers that
-            perform their own duration calculation, the value passed on the `duration` parameter
-            will be observed. Otherwise, duration is calculated from the start time set by `start()`.
-            If `duration` is not provided and `start()` was not called, a ValueError is raised.
+        def finish(self):
+            """Register the end of the inference request.
+            Duration is calculated from the start time set by `start()`.
             """
             INFERENCE_IN_FLIGHT_GAUGE.labels(**self.labels).dec()
 
-            if duration is None:
-                if self.start_time is None:
-                    raise ValueError(
-                        "start() must be called before finish() if duration is not provided"
-                    )
-                duration = time.perf_counter() - self.start_time
-
+            duration = time.perf_counter() - self.start_time
             detail_labels = self._detail_labels()
 
             INFERENCE_COUNTER.labels(**detail_labels).inc()

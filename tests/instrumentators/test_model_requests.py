@@ -10,66 +10,50 @@ class TestWatchContainer:
     @mock.patch("prometheus_client.Counter.labels")
     @mock.patch("prometheus_client.Histogram.labels")
     @mock.patch("time.perf_counter")
-    @pytest.mark.parametrize(
-        ("mock_timestamps", "start", "duration", "expected_duration"),
-        [([], False, 1.5, 1.5), ([1, 2], True, None, 1), ([], False, None, None)],
-    )
     def test_finish(
         self,
         time_counter,
         mock_histograms,
         mock_counters,
         mock_gauges,
-        mock_timestamps,
-        start,
-        duration,
-        expected_duration,
     ):
         container = ModelRequestInstrumentator.WatchContainer(
             labels={"model_engine": "anthropic", "model_name": "claude"},
             streaming=False,
             concurrency_limit=None,
         )
-        time_counter.side_effect = mock_timestamps
+        time_counter.side_effect = [1, 2]
 
-        if start:
-            container.start()
-            mock_gauges.reset_mock()  # So we only have the calls from `stop` bellow
+        container.start()
+        mock_gauges.reset_mock()  # So we only have the calls from `stop` bellow
 
-        if expected_duration:
-            container.finish(duration)
+        container.finish()
 
-            assert mock_gauges.mock_calls == [
-                mock.call(model_engine="anthropic", model_name="claude"),
-                mock.call().dec(),
-            ]
+        assert mock_gauges.mock_calls == [
+            mock.call(model_engine="anthropic", model_name="claude"),
+            mock.call().dec(),
+        ]
 
-            assert mock_counters.mock_calls == [
-                mock.call(
-                    model_engine="anthropic",
-                    model_name="claude",
-                    error="no",
-                    streaming="no",
-                    feature_category="unknown",
-                ),
-                mock.call().inc(),
-            ]
-            assert mock_histograms.mock_calls == [
-                mock.call(
-                    model_engine="anthropic",
-                    model_name="claude",
-                    error="no",
-                    streaming="no",
-                    feature_category="unknown",
-                ),
-                mock.call().observe(expected_duration),
-            ]
-        else:
-            with pytest.raises(
-                ValueError,
-                match="start\(\) must be called before finish\(\) if duration is not provided",
-            ):
-                container.finish(duration)
+        assert mock_counters.mock_calls == [
+            mock.call(
+                model_engine="anthropic",
+                model_name="claude",
+                error="no",
+                streaming="no",
+                feature_category="unknown",
+            ),
+            mock.call().inc(),
+        ]
+        assert mock_histograms.mock_calls == [
+            mock.call(
+                model_engine="anthropic",
+                model_name="claude",
+                error="no",
+                streaming="no",
+                feature_category="unknown",
+            ),
+            mock.call().observe(1),
+        ]
 
 
 class TestModelRequestInstrumentator:

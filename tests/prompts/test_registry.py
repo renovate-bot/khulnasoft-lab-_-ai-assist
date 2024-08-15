@@ -334,7 +334,7 @@ class TestLocalPromptRegistry:
             actual_messages
             == ChatPromptTemplate.from_messages(expected_messages).messages
         )
-        assert getattr(binding.bound, "model") == expected_model
+        assert prompt.model_name == expected_model
         assert binding.kwargs == expected_kwargs
 
         actual_model_params = {

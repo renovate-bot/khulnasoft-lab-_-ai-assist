@@ -21,7 +21,11 @@ class FakeModel(SimpleChatModel):
 
     @property
     def _llm_type(self) -> str:
-        return "fake-model"
+        return "fake-provider"
+
+    @property
+    def _identifying_params(self) -> dict[str, Any]:
+        return {"model": "fake-model"}
 
     def _call(
         self,

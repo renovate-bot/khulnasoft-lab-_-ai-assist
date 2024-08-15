@@ -30,7 +30,6 @@ from ai_gateway.container import ContainerApplication
 from ai_gateway.instrumentators.threads import monitor_threads
 from ai_gateway.models import ModelAPIError
 from ai_gateway.profiling import setup_profiling
-from ai_gateway.prompts.instrumentator import PromptInstrumentator
 from ai_gateway.structured_logging import setup_app_logging
 
 __all__ = [
@@ -139,8 +138,6 @@ def setup_custom_exception_handlers(app: FastAPI):
 
 
 def setup_litellm(config: Config):
-    litellm.callbacks = [PromptInstrumentator()]
-
     litellm.vertex_project = config.google_cloud_platform.project
 
 
