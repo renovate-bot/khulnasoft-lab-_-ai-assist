@@ -319,15 +319,38 @@ def mock_with_prompt_prepared():
 
 @pytest.fixture
 def model_response():
-    yield None
+    yield "Hello there!"
 
 
 @pytest.fixture
-def model(model_response: str):
-    # our default Assistant prompt template already contains "Thought: "
-    text = "" if model_response is None else model_response[len("Thought: ") :]
+def model_engine():
+    yield "fake-engine"
 
-    yield FakeListChatModel(responses=[text])
+
+@pytest.fixture
+def model_name():
+    yield "fake-model"
+
+
+class FakeModel(FakeListChatModel):
+    model_engine: str
+    model_name: str
+
+    @property
+    def _llm_type(self) -> str:
+        return self.model_engine
+
+    @property
+    def _identifying_params(self) -> dict[str, Any]:
+        return {**super()._identifying_params, **{"model": self.model_name}}
+
+
+@pytest.fixture
+def model(model_response: str, model_engine: str, model_name: str):
+    # our default Assistant prompt template already contains "Thought: "
+    text = model_response.removeprefix("Thought: ") if model_response else ""
+
+    yield FakeModel(model_engine=model_engine, model_name=model_name, responses=[text])
 
 
 @pytest.fixture

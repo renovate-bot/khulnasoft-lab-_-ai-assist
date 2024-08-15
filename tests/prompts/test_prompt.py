@@ -1,5 +1,6 @@
 import os
 from typing import Type
+from unittest import mock
 
 import pytest
 from anthropic import APITimeoutError, AsyncAnthropic
@@ -30,6 +31,47 @@ class TestPrompt:
         )
 
         assert messages == [("system", "Hi, I'm Duo"), ("user", "What's up?")]
+
+    def test_instrumentator(self, model_engine: str, model_name: str, prompt: Prompt):
+        assert prompt.instrumentator.labels == {
+            "model_engine": model_engine,
+            "model_name": model_name,
+        }
+
+    @pytest.mark.asyncio
+    @mock.patch(
+        "ai_gateway.instrumentators.model_requests.ModelRequestInstrumentator.watch"
+    )
+    async def test_ainvoke(
+        self, mock_watch: mock.Mock, prompt: Prompt, model_response: str
+    ):
+        response = await prompt.ainvoke({})
+
+        assert response.content == model_response
+
+        mock_watch.assert_called_with(stream=False)
+
+    @pytest.mark.asyncio
+    @mock.patch(
+        "ai_gateway.instrumentators.model_requests.ModelRequestInstrumentator.watch"
+    )
+    async def test_astream(
+        self, mock_watch: mock.Mock, prompt: Prompt, model_response: str
+    ):
+        mock_watcher = mock.AsyncMock()
+        mock_watch.return_value.__enter__.return_value = mock_watcher
+        response = ""
+
+        async for c in prompt.astream({}):
+            response += c.content
+
+            mock_watcher.afinish.assert_not_awaited()  # Make sure we don't finish prematurely
+
+        assert response == model_response
+
+        mock_watch.assert_called_with(stream=True)
+
+        mock_watcher.afinish.assert_awaited_once()
 
 
 @pytest.mark.skipif(
