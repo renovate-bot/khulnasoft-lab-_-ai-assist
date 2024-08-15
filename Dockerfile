@@ -34,7 +34,7 @@ RUN poetry install --no-interaction --no-ansi --no-cache --no-root --only main
 ##
 ## Final image copies dependencies from install-image
 ##
-FROM base-image as final
+FROM base-image AS final
 
 COPY --from=install-image /opt/venv /opt/venv
 
