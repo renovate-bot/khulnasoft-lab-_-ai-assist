@@ -2,6 +2,7 @@ from anthropic import AsyncAnthropic
 from dependency_injector import containers, providers
 from langchain_community.chat_models import ChatLiteLLM
 
+from ai_gateway.models.base import connect_anthropic
 from ai_gateway.models.v2.anthropic_claude import ChatAnthropic
 
 __all__ = [
@@ -10,7 +11,7 @@ __all__ = [
 
 
 def _init_anthropic_client() -> AsyncAnthropic:
-    return AsyncAnthropic()
+    return connect_anthropic()
 
 
 class ContainerModels(containers.DeclarativeContainer):
