@@ -14,8 +14,17 @@ class TestKindLiteLlmModel:
     def test_chat_model(self):
         assert KindLiteLlmModel.MISTRAL.chat_model() == "openai/mistral"
         assert KindLiteLlmModel.MIXTRAL.chat_model() == "openai/mixtral"
-        assert KindLiteLlmModel.CODE_GEMMA.chat_model() == "openai/codegemma"
+        assert KindLiteLlmModel.MIXTRAL_8X22B.chat_model() == "openai/mixtral_8x22b"
         assert KindLiteLlmModel.CODESTRAL.chat_model() == "openai/codestral"
+        assert KindLiteLlmModel.CODEGEMMA_2B.chat_model() == "openai/codegemma_2b"
+        assert KindLiteLlmModel.CODEGEMMA_7B.chat_model() == "openai/codegemma_7b"
+        assert KindLiteLlmModel.CODEGEMMA.chat_model() == "openai/codegemma"
+        assert (
+            KindLiteLlmModel.CODELLAMA_13B_CODE.chat_model()
+            == "openai/codellama_13b_code"
+        )
+        assert KindLiteLlmModel.CODELLAMA.chat_model() == "openai/codellama"
+        assert KindLiteLlmModel.DEEPSEEKCODER.chat_model() == "openai/deepseekcoder"
         assert (
             KindLiteLlmModel.CODESTRAL.chat_model(provider=KindModelProvider.MISTRALAI)
             == "codestral/codestral"
@@ -23,8 +32,8 @@ class TestKindLiteLlmModel:
 
     def test_text_model(self):
         assert (
-            KindLiteLlmModel.CODE_GEMMA.text_model()
-            == "text-completion-openai/codegemma"
+            KindLiteLlmModel.CODEGEMMA_2B.text_model()
+            == "text-completion-openai/codegemma_2b"
         )
         assert (
             KindLiteLlmModel.CODESTRAL.text_model()
@@ -101,9 +110,9 @@ class TestLiteLlmChatMode:
                 None,
                 KindModelProvider.MISTRALAI,
                 True,
-                {"mistral_api_key": "stubbed-mistral-api-key"},
+                {"mistral_api_key": "stubbed-api-key"},
                 "codestral/codestral",
-                "stubbed-mistral-api-key",
+                "stubbed-api-key",
                 "codestral",
             ),
         ],
@@ -277,7 +286,7 @@ class TestLiteLlmTextGenModel:
     @pytest.fixture
     def lite_llm_text_model(self, endpoint, api_key):
         return LiteLlmTextGenModel.from_model_name(
-            name="codegemma",
+            name="codegemma_2b",
             endpoint=endpoint,
             api_key=api_key,
             custom_models_enabled=True,
@@ -296,22 +305,22 @@ class TestLiteLlmTextGenModel:
         ),
         [
             (
-                "codegemma",
+                "codegemma_2b",
                 "",
                 KindModelProvider.LITELLM,
                 True,
                 {},
-                "text-completion-openai/codegemma",
+                "text-completion-openai/codegemma_2b",
                 "stubbed-api-key",
                 "litellm",
             ),
             (
-                "codegemma",
+                "codegemma_2b",
                 None,
                 KindModelProvider.LITELLM,
                 True,
                 {},
-                "text-completion-openai/codegemma",
+                "text-completion-openai/codegemma_2b",
                 "stubbed-api-key",
                 "litellm",
             ),
@@ -330,9 +339,9 @@ class TestLiteLlmTextGenModel:
                 "",
                 KindModelProvider.MISTRALAI,
                 True,
-                {"mistral_api_key": "stubbed-mistral-api-key"},
+                {"mistral_api_key": "stubbed-api-key"},
                 "text-completion-codestral/codestral",
-                "stubbed-mistral-api-key",
+                "stubbed-api-key",
                 "codestral",
             ),
         ],

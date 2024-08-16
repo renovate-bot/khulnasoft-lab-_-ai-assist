@@ -1,5 +1,5 @@
 ---
-name: Codestral Code Generations
+name: Codestral 22B Code Generations
 model:
   name: codestral
   params:

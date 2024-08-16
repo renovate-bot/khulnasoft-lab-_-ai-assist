@@ -1,23 +1,18 @@
 ---
-name: Codellama 13B Code Generations
+name: Mixtral 8X22B Code Generations
 model:
-  name: codellama
+  name: mixtral_8x22b
   params:
     model_class_provider: litellm
     temperature: 0.95
+    timeout: 60
     max_tokens: 512
     max_retries: 1
 unit_primitives:
   - code_suggestions
 prompt_template:
   user: |
-    [INST]<<SYS>> You are a tremendously accurate and skilled code generation agent. We want to generate new {language} code inside the file '{file_name}'. Your task is to provide valid code without any additional explanations, comments, or feedback. <</SYS>>
-
-    {prefix}
-    [SUGGESTION]
-
-    The new code you will generate will start at the position of the cursor, which is currently indicated by the [SUGGESTION] tag.
-    The comment directly before the cursor position is the instruction, all other comments are not instructions.
+    <s>[INST] You are a tremendously accurate and skilled code generation agent. We want to generate new {language} code inside the file '{file_name}'. Your task is to provide valid code without any additional explanations, comments, or feedback.
 
     When generating the new code, please ensure the following:
     1. It is valid {language} code.
@@ -27,7 +22,19 @@ prompt_template:
     5. Return the code result without any extra explanation or examples.
 
     If you are not able to generate code based on the given instructions, return an empty result.
+    [/INST]
+
+    [INST]
+    ## Existing code:
+
+    {prefix}
+
+    ## Instruction to generate the new code:
+
+    {%- if instruction %}
+      {instruction}
+    {%- else %}
+      Generate the best possible code based on instructions.
+    {%- endif %}
 
     [/INST]
-params:
-  timeout: 60

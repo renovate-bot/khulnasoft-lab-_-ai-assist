@@ -1,7 +1,7 @@
 ---
-name: Codellama Code Completions
+name: Codellama 13B-Code Code Completions
 model:
-  name: codellama:code
+  name: codellama_13b_code
   params:
     model_class_provider: litellm
     timeout: 60
