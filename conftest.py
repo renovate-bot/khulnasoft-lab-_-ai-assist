@@ -104,18 +104,12 @@ def mock_connect_vertex_search():
 
 
 @pytest.fixture
-def mock_connect_anthropic():
-    with patch("ai_gateway.models.base.AsyncAnthropic"):
-        yield
-
-
-@pytest.fixture
 def mock_config():
     yield Config()
 
 
 @pytest.fixture
-def mock_container(mock_config: Config, mock_connect_vertex: Mock, mock_connect_vertex_search: Mock, mock_connect_anthropic: Mock):
+def mock_container(mock_config: Config, mock_connect_vertex: Mock, mock_connect_vertex_search: Mock):
     container_application = ContainerApplication()
     container_application.config.from_dict(mock_config.model_dump())
 

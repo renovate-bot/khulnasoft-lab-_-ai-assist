@@ -4,7 +4,6 @@ model:
   name: codellama_13b_code
   params:
     model_class_provider: litellm
-    timeout: 60
     temperature: 0.95
     max_tokens: 128
     max_retries: 1

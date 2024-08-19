@@ -81,17 +81,17 @@ class LocalPromptRegistry(BasePromptRegistry):
         prompts_registered = {}
 
         for path in prompts_definitions_dir.glob("**/*.yml"):
-            prompt_id_with_model_name = str(
-                # E.g., "chat/react/base", "generate_description/mistral", etc.
-                path.relative_to(prompts_definitions_dir).with_suffix("")
-            )
-
-            # Remove model name, for example: to receive "chat/react" from "chat/react/mistral"
-            prompt_id, _, _ = prompt_id_with_model_name.rpartition("/")
+            # E.g., "chat/react/base", "generate_description/mistral", etc.
+            prompt_id_with_model_name = path.relative_to(
+                prompts_definitions_dir
+            ).with_suffix("")
 
             with open(path, "r") as fp:
-                klass = class_overrides.get(prompt_id, Prompt)
-                prompts_registered[prompt_id_with_model_name] = PromptRegistered(
+                # Remove model name, for example: to receive "chat/react" from "chat/react/mistral"
+                klass = class_overrides.get(
+                    str(prompt_id_with_model_name.parent), Prompt
+                )
+                prompts_registered[str(prompt_id_with_model_name)] = PromptRegistered(
                     klass=klass, config=PromptConfig(**yaml.safe_load(fp))
                 )
 
