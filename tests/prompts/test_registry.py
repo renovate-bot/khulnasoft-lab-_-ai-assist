@@ -147,7 +147,6 @@ def prompts_registered():
                 name="Chat react prompt",
                 model=ModelConfig(
                     name="claude-3-haiku-20240307",
-                    provider="anthropic",
                     params=ChatAnthropicParams(
                         model_class_provider=ModelClassProvider.ANTHROPIC,
                         temperature=0.1,
@@ -172,7 +171,6 @@ def prompts_registered():
                 name="Chat react custom prompt",
                 model=ModelConfig(
                     name="custom",
-                    provider="litellm",
                     params=ChatLiteLLMParams(
                         model_class_provider=ModelClassProvider.LITE_LLM,
                         temperature=0.1,

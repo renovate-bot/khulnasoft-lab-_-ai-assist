@@ -1,26 +1,21 @@
-from typing import Generic, TypeVar
-
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 
 from ai_gateway.gitlab_features import GitLabUnitPrimitive
 from ai_gateway.prompts.config.models import TypeModelParams
 
-__all__ = ["BasePromptConfig", "PromptConfig", "ModelConfig"]
-
-
-# Prompts may operate with unit primitives in various ways.
-# Basic prompts typically use plain strings as unit primitives.
-# More sophisticated prompts, like Duo Chat, assign unit primitives to specific tools.
-# Creating a generic UnitPrimitiveType enables storage of unit primitives in any desired format.
-TypeUnitPrimitive = TypeVar("TypeUnitPrimitive")
+__all__ = ["PromptConfig", "ModelConfig"]
 
 
 class ModelConfig(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
     name: str
     params: TypeModelParams
 
 
 class PromptParams(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
     stop: list[str] | None = None
     # NOTE: In langchain, some providers accept the timeout when initializing the client. However, support
     # and naming is inconsistent between them. Therefore, we bind the timeout to the prompt instead.
@@ -29,13 +24,11 @@ class PromptParams(BaseModel):
     vertex_location: str | None = None
 
 
-class BasePromptConfig(BaseModel, Generic[TypeUnitPrimitive]):
+class PromptConfig(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
     name: str
     model: ModelConfig
-    unit_primitives: list[TypeUnitPrimitive]
+    unit_primitives: list[GitLabUnitPrimitive]
     prompt_template: dict[str, str]
     params: PromptParams | None = None
-
-
-class PromptConfig(BasePromptConfig):
-    unit_primitives: list[GitLabUnitPrimitive]
