@@ -37,7 +37,6 @@ def mock_sleep():  # So we don't have to wait
         yield
 
 
-@pytest.mark.skip(reason="Missing Google Auth stub")
 @pytest.mark.asyncio
 @pytest.mark.parametrize(("response_text"), [('{"error": "something went wrong"}')])
 async def test_ainvoke(
@@ -47,14 +46,15 @@ async def test_ainvoke(
     prompt: Prompt,
     response_text: str,
 ):
-    with pytest.raises(litellm.APIConnectionError, match="something went wrong"):
+    with pytest.raises(litellm.APIConnectionError, match="something went wrong"), patch(
+        "google.auth.default", return_value=(Mock(), "mock_project_id")
+    ):
         await prompt.ainvoke({})
 
     mock_http_new.assert_called_once()
     assert mock_http_handler.post.call_count == 3
 
 
-@pytest.mark.skip(reason="Missing Google Auth stub")
 @pytest.mark.asyncio
 @pytest.mark.parametrize(
     ("response_text"),
@@ -75,7 +75,7 @@ async def test_astream(
 
     with pytest.raises(
         litellm.exceptions.InternalServerError, match="something went wrong"
-    ):
+    ), patch("google.auth.default", return_value=(Mock(), "mock_project_id")):
         await anext(prompt.astream({}))
 
     assert mock_http_handler.post.call_count == 1
