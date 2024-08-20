@@ -1,4 +1,4 @@
-from enum import Enum
+from enum import StrEnum
 from typing import Annotated, List, Literal, Optional, Union
 
 from fastapi import Body
@@ -17,7 +17,7 @@ __all__ = [
 ]
 
 
-class CodeEditorComponents(str, Enum):
+class CodeEditorComponents(StrEnum):
     COMPLETION = "code_editor_completion"
     GENERATION = "code_editor_generation"
     CONTEXT = "code_context"

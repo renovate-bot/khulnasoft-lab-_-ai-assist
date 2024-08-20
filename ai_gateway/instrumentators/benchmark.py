@@ -1,6 +1,6 @@
 import time
 from contextlib import contextmanager
-from enum import Enum
+from enum import StrEnum
 
 from prometheus_client import Histogram
 from starlette_context import context
@@ -8,7 +8,7 @@ from starlette_context import context
 __all__ = ["benchmark", "KnownMetrics"]
 
 
-class KnownMetrics(str, Enum):
+class KnownMetrics(StrEnum):
     """Known list of Prometheus metrics."""
 
     POST_PROCESSING_DURATION = "post_processing_duration_s"

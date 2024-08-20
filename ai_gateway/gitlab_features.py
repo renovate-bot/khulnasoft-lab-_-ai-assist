@@ -1,8 +1,8 @@
-from enum import Enum
+from enum import StrEnum
 
 
 # TODO: Validate that these categories exist in https://gitlab.com/gitlab-com/www-gitlab-com/raw/master/data/stages.yml.
-class GitLabFeatureCategory(str, Enum):
+class GitLabFeatureCategory(StrEnum):
     AI_ABSTRACTION_LAYER = "ai_abstraction_layer"
     CODE_REVIEW_WORKFLOW = "code_review_workflow"
     CODE_SUGGESTIONS = "code_suggestions"
@@ -16,7 +16,7 @@ class GitLabFeatureCategory(str, Enum):
 
 
 # Make sure these unit primitives are defined in `ee/config/cloud_connector/access_data.yml`
-class GitLabUnitPrimitive(str, Enum):
+class GitLabUnitPrimitive(StrEnum):
     ANALYZE_CI_JOB_FAILURE = "analyze_ci_job_failure"
     CATEGORIZE_DUO_CHAT_QUESTION = "categorize_duo_chat_question"
     CODE_SUGGESTIONS = "code_suggestions"

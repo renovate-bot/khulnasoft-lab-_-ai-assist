@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from enum import Enum
+from enum import StrEnum
 from typing import Annotated, AsyncIterator, Union
 
 from pydantic import BaseModel, StringConstraints
@@ -14,7 +14,7 @@ config = Config()
 __all__ = ["ChatModelBase", "Role", "Message"]
 
 
-class Role(str, Enum):
+class Role(StrEnum):
     SYSTEM = "system"
     USER = "user"
     ASSISTANT = "assistant"

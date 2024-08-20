@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from enum import Enum
+from enum import IntEnum
 from typing import Mapping, NamedTuple, Optional
 
 from ai_gateway.experimentation.base import ExperimentTelemetry
@@ -15,7 +15,7 @@ __all__ = [
 ]
 
 
-class LanguageId(Enum):
+class LanguageId(IntEnum):
     C = 1
     CPP = 2
     CSHARP = 3
