@@ -1,4 +1,4 @@
-from enum import Enum
+from enum import StrEnum
 from typing import Any, AsyncIterator, Callable, Optional, Union
 
 import httpx
@@ -64,7 +64,7 @@ class AnthropicAPITimeoutError(ModelAPIError):
         return wrapper
 
 
-class KindAnthropicModel(str, Enum):
+class KindAnthropicModel(StrEnum):
     # Avoid using model versions that only specify the major version number.
     # More info - https://docs.anthropic.com/claude/reference/selecting-a-model
     CLAUDE_INSTANT_1_1 = "claude-instant-1.1"

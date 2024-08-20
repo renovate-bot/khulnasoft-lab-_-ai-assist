@@ -1,4 +1,4 @@
-from enum import Enum
+from enum import StrEnum
 from pathlib import Path
 from typing import NamedTuple, Optional
 
@@ -28,13 +28,13 @@ __all__ = [
 ]
 
 
-class ModelProvider(str, Enum):
+class ModelProvider(StrEnum):
     VERTEX_AI = "vertex-ai"
     ANTHROPIC = "anthropic"
     LITELLM = "litellm"
 
 
-class KindUseCase(str, Enum):
+class KindUseCase(StrEnum):
     CODE_COMPLETIONS = "code completions"
     CODE_GENERATIONS = "code generations"
 

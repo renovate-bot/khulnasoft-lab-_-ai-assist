@@ -1,4 +1,4 @@
-from enum import Enum
+from enum import StrEnum
 from typing import AsyncIterator, Callable, Optional, Sequence, Union
 
 from litellm import CustomStreamWrapper, acompletion
@@ -20,7 +20,7 @@ __all__ = [
 STUBBED_API_KEY = "stubbed-api-key"
 
 
-class KindLiteLlmModel(str, Enum):
+class KindLiteLlmModel(StrEnum):
     CODEGEMMA_2B = "codegemma_2b"
     CODEGEMMA = "codegemma"
     CODEGEMMA_7B = "codegemma_7b"
@@ -132,7 +132,6 @@ class LiteLlmChatModel(ChatModelBase):
         top_k: int = 40,
         code_context: Optional[Sequence[str]] = None,
     ) -> Union[TextGenModelOutput, AsyncIterator[TextGenModelChunk]]:
-
         if isinstance(messages, str):
             messages = [Message(content=messages, role=Role.USER)]
 
@@ -265,7 +264,6 @@ class LiteLlmTextGenModel(TextGenModelBase):
         top_k: int = 40,
         code_context: Optional[Sequence[str]] = None,
     ) -> Union[TextGenModelOutput, AsyncIterator[TextGenModelChunk]]:
-
         with self.instrumentator.watch(stream=stream) as watcher:
             suggestion = await acompletion(
                 model=self.metadata.name,

@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from enum import Enum
+from enum import StrEnum
 from typing import Any, Optional, Sequence, Union
 
 import structlog
@@ -97,7 +97,7 @@ class CodeGeckoModelInput(ModelInput):
         return {"prefix": self.prefix, "suffix": self.suffix}
 
 
-class KindVertexTextModel(str, Enum):
+class KindVertexTextModel(StrEnum):
     # Avoid using model versions that only specify the major version number
     # similar to `KindAnthropicModel`.
     CODE_BISON = "code-bison"

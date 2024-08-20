@@ -1,5 +1,5 @@
 # from ai_gateway.gitlab_features import GitLabFeatureCategory, GitLabUnitPrimitive
-from enum import Enum
+from enum import StrEnum
 from unittest import mock
 from unittest.mock import Mock, patch
 
@@ -16,12 +16,12 @@ from ai_gateway.api.feature_category import (
 from ai_gateway.gitlab_features import GitLabFeatureCategory, GitLabUnitPrimitive
 
 
-class DummyGitLabFeatureCategory(str, Enum):
+class DummyGitLabFeatureCategory(StrEnum):
     AWESOME_CATEGORY_1 = "awesome_category_1"
     AWESOME_CATEGORY_2 = "awesome_category_2"
 
 
-class DummyGitLabUnitPrimitive(str, Enum):
+class DummyGitLabUnitPrimitive(StrEnum):
     AWESOME_FEATURE_1 = "awesome_feature_1"
     AWESOME_FEATURE_2 = "awesome_feature_2"
 

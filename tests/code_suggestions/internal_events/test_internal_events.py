@@ -1,4 +1,3 @@
-from enum import Enum
 from unittest import mock
 from unittest.mock import patch
 

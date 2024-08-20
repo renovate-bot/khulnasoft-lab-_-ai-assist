@@ -1,4 +1,4 @@
-from enum import Enum
+from enum import StrEnum
 from typing import Annotated, Literal, Mapping
 
 from pydantic import BaseModel, Field
@@ -12,7 +12,7 @@ __all__ = [
 ]
 
 
-class ModelClassProvider(str, Enum):
+class ModelClassProvider(StrEnum):
     LITE_LLM = "litellm"
     ANTHROPIC = "anthropic"
 

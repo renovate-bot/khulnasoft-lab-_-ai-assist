@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from enum import Enum
+from enum import StrEnum
 from typing import Any, NamedTuple, Optional
 
 import httpx
@@ -33,7 +33,7 @@ __all__ = [
 log = structlog.stdlib.get_logger("codesuggestions")
 
 
-class KindModelProvider(str, Enum):
+class KindModelProvider(StrEnum):
     ANTHROPIC = "anthropic"
     VERTEX_AI = "vertex-ai"
     LITELLM = "litellm"
