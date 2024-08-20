@@ -153,6 +153,9 @@ class MiddlewareLogRequest(Middleware):
                         X_GITLAB_SAAS_NAMESPACE_IDS_HEADER
                     ),
                     "gitlab_realm": request.headers.get(X_GITLAB_REALM_HEADER),
+                    "gitlab_duo_seat_count": request.headers.get(
+                        X_GITLAB_DUO_SEAT_COUNT_HEADER
+                    ),
                 }
                 fields.update(context.data)
 
