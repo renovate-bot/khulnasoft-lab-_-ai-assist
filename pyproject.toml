@@ -45,7 +45,6 @@ litellm = "^1.35.20"
 langchain = "^0.2.0"
 langchain-anthropic = "^0.1.13"
 langchain-community = "^0.2.1"
-pyfakefs = "^5.5.0"
 
 [tool.poetry.group.test]
 optional = true
@@ -59,6 +58,7 @@ pylint = "^3.0.3"
 astroid = "^3.0.2"
 pytest-watcher = "^0.4.2"
 pytest-randomly = "^3.15.0"
+pyfakefs = "^5.6.0"
 
 [tool.poetry.group.lint]
 optional = true
