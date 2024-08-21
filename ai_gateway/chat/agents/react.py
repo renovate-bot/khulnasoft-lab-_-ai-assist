@@ -8,6 +8,7 @@ from langchain_core.runnables import Runnable, RunnableConfig
 from pydantic import BaseModel
 
 from ai_gateway.chat.agents.typing import (
+    AdditionalContext,
     AgentFinalAnswer,
     AgentStep,
     AgentToolAction,
@@ -45,6 +46,7 @@ class ReActAgentInputs(BaseModel):
     context: Optional[Context] = None
     current_file: Optional[CurrentFile] = None
     model_metadata: Optional[ModelMetadata] = None
+    additional_context: Optional[list[AdditionalContext]] = None
 
 
 class ReActInputParser(Runnable[ReActAgentInputs, dict]):

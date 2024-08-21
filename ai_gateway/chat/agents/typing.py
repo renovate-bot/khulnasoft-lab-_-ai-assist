@@ -1,4 +1,4 @@
-from typing import Generic, Literal, TypeVar
+from typing import Generic, Literal, Optional, TypeVar
 
 from pydantic import BaseModel
 
@@ -10,6 +10,7 @@ __all__ = [
     "TypeAgentAction",
     "Context",
     "CurrentFile",
+    "AdditionalContext",
 ]
 
 
@@ -41,3 +42,10 @@ class CurrentFile(BaseModel):
     file_path: str
     data: str
     selected_code: bool
+
+
+# Note: additionaL_context is an alias for injected_context
+class AdditionalContext(BaseModel):
+    type: Optional[str] = None
+    name: Optional[str] = None
+    content: Optional[str] = None
