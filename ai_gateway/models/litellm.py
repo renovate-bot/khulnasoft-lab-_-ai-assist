@@ -36,7 +36,7 @@ class KindLiteLlmModel(StrEnum):
     # https://docs.litellm.ai/docs/providers/openai_compatible
     def _provider_prefix(self, provider):
         if provider == KindModelProvider.LITELLM:
-            return "openai"
+            return "custom_openai"
 
         return provider.value
 
