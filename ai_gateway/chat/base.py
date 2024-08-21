@@ -1,6 +1,7 @@
 from abc import ABC, abstractmethod
 from typing import Optional
 
+from packaging.version import InvalidVersion, Version
 from pydantic import BaseModel
 
 from ai_gateway.auth import GitLabUser
@@ -24,10 +25,29 @@ class UnitPrimitiveToolset(BaseModel):
     # If it's not set, the tools are available for all GitLab versions.
     min_required_gl_version: Optional[str] = None
 
+    def is_available_for(
+        self, unit_primitives: list[GitLabUnitPrimitive], gl_version: str
+    ):
+        if self.name not in unit_primitives:
+            return False
+
+        if not self.min_required_gl_version:
+            return True
+
+        if not gl_version:
+            return False
+
+        try:
+            return Version(self.min_required_gl_version) <= Version(gl_version)
+        except InvalidVersion:
+            return False
+
 
 class BaseToolsRegistry(ABC):
     @abstractmethod
-    def get_on_behalf(self, user: GitLabUser) -> list[BaseTool]:
+    def get_on_behalf(
+        self, user: GitLabUser, gl_version: str, raise_exception: bool = True
+    ) -> list[BaseTool]:
         pass
 
     @abstractmethod

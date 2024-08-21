@@ -35,14 +35,13 @@ class DuoChatToolsRegistry(BaseToolsRegistry):
         ]
 
     def get_on_behalf(
-        self, user: GitLabUser, raise_exception: bool = True
+        self, user: GitLabUser, gl_version: str, raise_exception: bool = True
     ) -> list[BaseTool]:
         tools = []
         user_unit_primitives = user.unit_primitives
 
         for toolset in self.toolsets:
-            if toolset.name in user_unit_primitives:
-                # Consider tool versioning - https://gitlab.com/gitlab-org/gitlab/-/issues/466247
+            if toolset.is_available_for(user_unit_primitives, gl_version):
                 tools.extend(toolset.tools)
 
         if len(tools) == 0 and raise_exception:

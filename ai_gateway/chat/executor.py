@@ -40,12 +40,12 @@ class GLAgentRemoteExecutor(Generic[TypeAgentInputs, TypeAgentAction]):
 
         return self._tools
 
-    def on_behalf(self, user: GitLabUser):
+    def on_behalf(self, user: GitLabUser, gl_version: str):
         # Access the user tools as soon as possible to raise an exception
         # (in case of invalid unit primitives) before starting the data stream.
         # Reason: https://github.com/tiangolo/fastapi/discussions/10138
         if not user.is_debug:
-            self._tools = self.tools_registry.get_on_behalf(user)
+            self._tools = self.tools_registry.get_on_behalf(user, gl_version)
 
     async def invoke(self, *, inputs: TypeAgentInputs) -> TypeAgentAction:
         agent = self.agent_factory(tools=self.tools, inputs=inputs)

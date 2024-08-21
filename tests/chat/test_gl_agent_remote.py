@@ -43,7 +43,9 @@ def agent_factory(agent):
 def tools_registry():
     tools_registry = Mock(spec=BaseToolsRegistry)
     tools_registry.get_all = Mock(side_effect=lambda: expected_tools)
-    tools_registry.get_on_behalf = Mock(side_effect=lambda _user: expected_tools)
+    tools_registry.get_on_behalf = Mock(
+        side_effect=lambda _user, _gl_version: expected_tools
+    )
 
     return tools_registry
 
@@ -83,14 +85,15 @@ class TestGLAgentRemoteExecutor:
             agent_factory=agent_factory, tools_registry=tools_registry
         )
 
-        executor.on_behalf(user)
+        gl_version = "17.2.0"
+        executor.on_behalf(user, gl_version)
 
         actual_action = await executor.invoke(inputs=inputs)
 
         if user.is_debug:
             tools_registry.get_all.assert_called_once_with()
         else:
-            tools_registry.get_on_behalf.assert_called_once_with(user)
+            tools_registry.get_on_behalf.assert_called_once_with(user, gl_version)
 
         agent_factory.assert_called_once_with(tools=expected_tools, inputs=inputs)
         agent.ainvoke.assert_called_once_with(inputs)
@@ -109,14 +112,15 @@ class TestGLAgentRemoteExecutor:
             agent_factory=agent_factory, tools_registry=tools_registry
         )
 
-        executor.on_behalf(user)
+        gl_version = "17.2.0"
+        executor.on_behalf(user, gl_version)
 
         actual_actions = [action async for action in executor.stream(inputs=inputs)]
 
         if user.is_debug:
             tools_registry.get_all.assert_called_once_with()
         else:
-            tools_registry.get_on_behalf.assert_called_once_with(user)
+            tools_registry.get_on_behalf.assert_called_once_with(user, gl_version)
 
         agent_factory.assert_called_once_with(tools=expected_tools, inputs=inputs)
         agent.astream.assert_called_once_with(inputs)

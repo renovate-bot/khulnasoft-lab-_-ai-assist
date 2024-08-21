@@ -46,7 +46,7 @@ def mocked_stream():
 
 @pytest.fixture()
 def mocked_on_behalf():
-    def _on_behalf(user: GitLabUser) -> AsyncIterator[TypeAgentAction]:
+    def _on_behalf(user: GitLabUser, gl_version: str) -> AsyncIterator[TypeAgentAction]:
         if len(user.unit_primitives) == 0:
             # We don't expect any unit primitives allocated by the user
             raise WrongUnitPrimitives()
