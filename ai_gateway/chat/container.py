@@ -29,6 +29,9 @@ def _react_agent_factory(
         if file := inputs.current_file:
             options.update({"current_file": file})
 
+        if additional_context := inputs.additional_context:
+            options.update({"additional_context": additional_context})
+
         return prompt_registry.get("chat/react", options, inputs.model_metadata)
 
     return _fn
