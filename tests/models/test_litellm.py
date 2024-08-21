@@ -12,19 +12,27 @@ from ai_gateway.models.litellm import LiteLlmTextGenModel
 
 class TestKindLiteLlmModel:
     def test_chat_model(self):
-        assert KindLiteLlmModel.MISTRAL.chat_model() == "openai/mistral"
-        assert KindLiteLlmModel.MIXTRAL.chat_model() == "openai/mixtral"
-        assert KindLiteLlmModel.MIXTRAL_8X22B.chat_model() == "openai/mixtral_8x22b"
-        assert KindLiteLlmModel.CODESTRAL.chat_model() == "openai/codestral"
-        assert KindLiteLlmModel.CODEGEMMA_2B.chat_model() == "openai/codegemma_2b"
-        assert KindLiteLlmModel.CODEGEMMA_7B.chat_model() == "openai/codegemma_7b"
-        assert KindLiteLlmModel.CODEGEMMA.chat_model() == "openai/codegemma"
+        assert KindLiteLlmModel.MISTRAL.chat_model() == "custom_openai/mistral"
+        assert KindLiteLlmModel.MIXTRAL.chat_model() == "custom_openai/mixtral"
+        assert (
+            KindLiteLlmModel.MIXTRAL_8X22B.chat_model() == "custom_openai/mixtral_8x22b"
+        )
+        assert KindLiteLlmModel.CODESTRAL.chat_model() == "custom_openai/codestral"
+        assert (
+            KindLiteLlmModel.CODEGEMMA_2B.chat_model() == "custom_openai/codegemma_2b"
+        )
+        assert (
+            KindLiteLlmModel.CODEGEMMA_7B.chat_model() == "custom_openai/codegemma_7b"
+        )
+        assert KindLiteLlmModel.CODEGEMMA.chat_model() == "custom_openai/codegemma"
         assert (
             KindLiteLlmModel.CODELLAMA_13B_CODE.chat_model()
-            == "openai/codellama_13b_code"
+            == "custom_openai/codellama_13b_code"
         )
-        assert KindLiteLlmModel.CODELLAMA.chat_model() == "openai/codellama"
-        assert KindLiteLlmModel.DEEPSEEKCODER.chat_model() == "openai/deepseekcoder"
+        assert KindLiteLlmModel.CODELLAMA.chat_model() == "custom_openai/codellama"
+        assert (
+            KindLiteLlmModel.DEEPSEEKCODER.chat_model() == "custom_openai/deepseekcoder"
+        )
         assert (
             KindLiteLlmModel.CODESTRAL.chat_model(provider=KindModelProvider.MISTRALAI)
             == "codestral/codestral"
@@ -33,11 +41,11 @@ class TestKindLiteLlmModel:
     def test_text_model(self):
         assert (
             KindLiteLlmModel.CODEGEMMA_2B.text_model()
-            == "text-completion-openai/codegemma_2b"
+            == "text-completion-custom_openai/codegemma_2b"
         )
         assert (
             KindLiteLlmModel.CODESTRAL.text_model()
-            == "text-completion-openai/codestral"
+            == "text-completion-custom_openai/codestral"
         )
         assert (
             KindLiteLlmModel.CODESTRAL.text_model(provider=KindModelProvider.MISTRALAI)
@@ -81,7 +89,7 @@ class TestLiteLlmChatMode:
                 KindModelProvider.LITELLM,
                 True,
                 {},
-                "openai/mistral",
+                "custom_openai/mistral",
                 "stubbed-api-key",
                 "litellm",
             ),
@@ -91,7 +99,7 @@ class TestLiteLlmChatMode:
                 KindModelProvider.LITELLM,
                 True,
                 {},
-                "openai/mixtral",
+                "custom_openai/mixtral",
                 "stubbed-api-key",
                 "litellm",
             ),
@@ -310,7 +318,7 @@ class TestLiteLlmTextGenModel:
                 KindModelProvider.LITELLM,
                 True,
                 {},
-                "text-completion-openai/codegemma_2b",
+                "text-completion-custom_openai/codegemma_2b",
                 "stubbed-api-key",
                 "litellm",
             ),
@@ -320,7 +328,7 @@ class TestLiteLlmTextGenModel:
                 KindModelProvider.LITELLM,
                 True,
                 {},
-                "text-completion-openai/codegemma_2b",
+                "text-completion-custom_openai/codegemma_2b",
                 "stubbed-api-key",
                 "litellm",
             ),

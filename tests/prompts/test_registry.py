@@ -281,7 +281,7 @@ class TestLocalPromptRegistry:
                     name="custom",
                     endpoint=HttpUrl("http://localhost:4000/"),
                     api_key="token",
-                    provider="openai",
+                    provider="custom_openai",
                 ),
                 "Chat react custom prompt",
                 MockPromptClass,
@@ -291,7 +291,7 @@ class TestLocalPromptRegistry:
                     "stop": ["Foo", "Bar"],
                     "timeout": 60,
                     "model": "custom",
-                    "custom_llm_provider": "openai",
+                    "custom_llm_provider": "custom_openai",
                     "api_key": "token",
                     "api_base": "http://localhost:4000/",
                     "vertex_location": "us-east1",
@@ -350,7 +350,7 @@ class TestLocalPromptRegistry:
             name="custom",
             endpoint=HttpUrl("http://localhost:4000/"),
             api_key="token",
-            provider="openai",
+            provider="custom_openai",
         )
 
         with pytest.raises(

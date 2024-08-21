@@ -360,7 +360,7 @@ def _resolve_prompt_code_generations(
         name=payload.model_name,
         endpoint=payload.model_endpoint,
         api_key=payload.model_api_key,
-        provider="openai",
+        provider="custom_openai",
     )
 
     prompt = prompt_registry.get_on_behalf(
