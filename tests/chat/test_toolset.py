@@ -65,7 +65,7 @@ class TestDuoChatToolRegistry:
             claims=UserClaims(scopes=[u.value for u in unit_primitives]),
         )
 
-        tools = DuoChatToolsRegistry().get_on_behalf(user, raise_exception=False)
+        tools = DuoChatToolsRegistry().get_on_behalf(user, "", raise_exception=False)
         actual_tools = [type(tool) for tool in tools]
 
         assert actual_tools == expected_tools
@@ -84,4 +84,4 @@ class TestDuoChatToolRegistry:
         )
 
         with pytest.raises(WrongUnitPrimitives):
-            DuoChatToolsRegistry().get_on_behalf(user, raise_exception=True)
+            DuoChatToolsRegistry().get_on_behalf(user, "", raise_exception=True)

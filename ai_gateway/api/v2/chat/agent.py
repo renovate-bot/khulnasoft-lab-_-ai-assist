@@ -5,6 +5,7 @@ from fastapi import APIRouter, Depends, HTTPException, Request, status
 from starlette.responses import StreamingResponse
 
 from ai_gateway.api.feature_category import feature_category
+from ai_gateway.api.middleware import X_GITLAB_VERSION_HEADER
 from ai_gateway.api.v2.chat.typing import AgentRequest, AgentStreamResponseEvent
 from ai_gateway.async_dependency_resolver import (
     get_container_application,
@@ -86,7 +87,8 @@ async def chat(
     )
 
     try:
-        gl_agent_remote_executor.on_behalf(current_user)
+        gl_version = request.headers.get(X_GITLAB_VERSION_HEADER, "")
+        gl_agent_remote_executor.on_behalf(current_user, gl_version)
     except WrongUnitPrimitives as ex:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
