@@ -10,6 +10,24 @@ from ai_gateway.models.base_text import TextGenModelChunk, TextGenModelOutput
 from ai_gateway.models.litellm import LiteLlmTextGenModel
 
 
+@pytest.fixture
+def mock_vertex_ai_location():
+    with patch("ai_gateway.models.litellm.Config") as mock:
+        mock.return_value = Mock(vertex_text_model=Mock(location="mock-location"))
+
+        yield mock
+
+
+@pytest.fixture
+def mock_vertex_ai_location_in_europe():
+    with patch("ai_gateway.models.litellm.Config") as mock:
+        mock.return_value = Mock(
+            vertex_text_model=Mock(location="europe-mock-location")
+        )
+
+        yield mock
+
+
 class TestKindLiteLlmModel:
     def test_chat_model(self):
         assert KindLiteLlmModel.MISTRAL.chat_model() == "custom_openai/mistral"
@@ -50,6 +68,12 @@ class TestKindLiteLlmModel:
         assert (
             KindLiteLlmModel.CODESTRAL.text_model(provider=KindModelProvider.MISTRALAI)
             == "text-completion-codestral/codestral"
+        )
+        assert (
+            KindLiteLlmModel.CODESTRAL_2405.text_model(
+                provider=KindModelProvider.VERTEX_AI
+            )
+            == "vertex_ai/codestral@2405"
         )
 
 
@@ -292,6 +316,10 @@ class TestLiteLlmTextGenModel:
         return "specified-api-key"
 
     @pytest.fixture
+    def provider_keys(self):
+        return {"mistral_api_key": "codestral-api-key"}
+
+    @pytest.fixture
     def lite_llm_text_model(self, endpoint, api_key):
         return LiteLlmTextGenModel.from_model_name(
             name="codegemma_2b",
@@ -394,49 +422,222 @@ class TestLiteLlmTextGenModel:
                 LiteLlmTextGenModel.from_model_name(name=model_name, api_key="api-key")
             assert str(exc.value) == "specifying custom models endpoint is disabled"
 
-    @pytest.mark.asyncio
-    async def test_generate(self, lite_llm_text_model, endpoint, api_key):
+        if provider == KindModelProvider.VERTEX_AI:
+            with pytest.raises(ValueError) as exc:
+                LiteLlmTextGenModel.from_model_name(name=model_name, endpoint=endpoint)
+            assert (
+                str(exc.value)
+                == "specifying api endpoint or key for vertex-ai provider is disabled"
+            )
 
-        with patch("ai_gateway.models.litellm.acompletion") as mock_acompletion:
-            mock_acompletion.return_value = AsyncMock(
-                choices=[AsyncMock(message=AsyncMock(content="Test response"))]
+            with pytest.raises(ValueError) as exc:
+                LiteLlmTextGenModel.from_model_name(name=model_name, api_key="api-key")
+            assert (
+                str(exc.value)
+                == "specifying api endpoint or key for vertex-ai provider is disabled"
             )
-            _generate_args = {
-                "stream": False,
-                "temperature": 0.9,
-                "max_output_tokens": 10,
-                "top_p": 0.95,
-                "top_k": 0,
-            }
-            output = await lite_llm_text_model.generate(
-                prefix="def hello_world():", **_generate_args
-            )
-            assert isinstance(output, TextGenModelOutput)
-            assert output.text == "Test response"
 
     @pytest.mark.asyncio
-    async def test_generate_stream(self, lite_llm_text_model, endpoint, api_key):
-        streamed_response = AsyncMock()
-        streamed_response.__aiter__.return_value = iter(
-            [
-                AsyncMock(
-                    choices=[AsyncMock(delta=AsyncMock(content="Streamed content"))]
-                )
-            ]
+    @pytest.mark.parametrize(
+        (
+            "model_name",
+            "provider",
+            "custom_models_enabled",
+            "model_completion_args",
+        ),
+        [
+            (
+                "codegemma",
+                KindModelProvider.LITELLM,
+                True,
+                {
+                    "model": "text-completion-custom_openai/codegemma",
+                    "stop": [
+                        "<|fim_prefix|>",
+                        "<|fim_suffix|>",
+                        "<|fim_middle|>",
+                        "<|file_separator|>",
+                    ],
+                },
+            ),
+            (
+                "codestral",
+                KindModelProvider.MISTRALAI,
+                True,
+                {
+                    "model": "text-completion-codestral/codestral",
+                    "stop": [],
+                    "api_key": "codestral-api-key",
+                },
+            ),
+        ],
+    )
+    async def test_generate(
+        self,
+        model_name,
+        provider,
+        custom_models_enabled,
+        model_completion_args,
+        endpoint,
+        api_key,
+        provider_keys,
+        mock_litellm_acompletion: Mock,
+    ):
+        litellm_model = LiteLlmTextGenModel.from_model_name(
+            name=model_name,
+            provider=provider,
+            endpoint=endpoint,
+            api_key=api_key,
+            custom_models_enabled=custom_models_enabled,
+            provider_keys=provider_keys,
         )
 
-        with patch("ai_gateway.models.litellm.acompletion") as mock_acompletion, patch(
+        output = await litellm_model.generate(
+            prefix="def hello_world():",
+        )
+
+        expected_completion_args = {
+            "max_tokens": 16,
+            "temperature": 0.95,
+            "top_p": 0.95,
+            "stream": False,
+            "timeout": 30.0,
+            "api_key": api_key,
+            "api_base": endpoint,
+            "messages": [{"content": "def hello_world():", "role": Role.USER}],
+        }
+        expected_completion_args.update(model_completion_args)
+
+        mock_litellm_acompletion.assert_called_with(**expected_completion_args)
+
+        assert isinstance(output, TextGenModelOutput)
+        assert output.text == "Test response"
+
+    @pytest.mark.asyncio
+    async def test_generate_vertex_codestral(
+        self,
+        mock_vertex_ai_location: Mock,
+        mock_litellm_acompletion: Mock,
+    ):
+        lite_llm_vertex_codestral_model = LiteLlmTextGenModel.from_model_name(
+            name=KindLiteLlmModel.CODESTRAL_2405,
+            provider=KindModelProvider.VERTEX_AI,
+        )
+
+        output = await lite_llm_vertex_codestral_model.generate(
+            prefix="func hello(name){",
+            suffix="}",
+            temperature=0.7,
+            max_output_tokens=128,
+        )
+
+        mock_litellm_acompletion.assert_called_with(
+            model="vertex_ai/codestral@2405",
+            messages=[{"content": "func hello(name){", "role": Role.USER}],
+            suffix="}",
+            text_completion=True,
+            vertex_ai_location="us-central1",
+            max_tokens=128,
+            temperature=0.7,
+            top_p=0.95,
+            stream=False,
+            timeout=60.0,
+            stop=[
+                "[INST]",
+                "[/INST]",
+                "[PREFIX]",
+                "[MIDDLE]",
+                "[SUFFIX]",
+            ],
+        )
+
+        assert isinstance(output, TextGenModelOutput)
+        assert output.text == "Test text completion response"
+
+    @pytest.mark.asyncio
+    async def test_generate_vertex_codestral_in_europe(
+        self,
+        mock_vertex_ai_location_in_europe: Mock,
+        mock_litellm_acompletion: Mock,
+    ):
+        lite_llm_vertex_codestral_model = LiteLlmTextGenModel.from_model_name(
+            name=KindLiteLlmModel.CODESTRAL_2405,
+            provider=KindModelProvider.VERTEX_AI,
+        )
+
+        await lite_llm_vertex_codestral_model.generate(
+            prefix="func hello(name){",
+            suffix="}",
+        )
+
+        _args, kwargs = mock_litellm_acompletion.call_args
+        assert kwargs["vertex_ai_location"] == "europe-west4"
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize(
+        (
+            "model_name",
+            "provider",
+            "custom_models_enabled",
+            "endpoint",
+            "api_key",
+        ),
+        [
+            (
+                "codegemma",
+                KindModelProvider.LITELLM,
+                True,
+                "http:://codegemma.local",
+                "api-key",
+            ),
+            (
+                "codestral",
+                KindModelProvider.MISTRALAI,
+                True,
+                "http://codestral.local",
+                None,
+            ),
+            (
+                "codestral@2405",
+                KindModelProvider.VERTEX_AI,
+                True,
+                None,
+                None,
+            ),
+        ],
+    )
+    async def test_generate_stream(
+        self,
+        model_name,
+        provider,
+        custom_models_enabled,
+        endpoint,
+        api_key,
+        provider_keys,
+        mock_litellm_acompletion_streamed: Mock,
+    ):
+        with patch(
             "ai_gateway.instrumentators.model_requests.ModelRequestInstrumentator.watch"
         ) as mock_watch:
             watcher = Mock()
             mock_watch.return_value.__enter__.return_value = watcher
 
-            mock_acompletion.return_value = streamed_response
+            litellm_model = LiteLlmTextGenModel.from_model_name(
+                name=model_name,
+                provider=provider,
+                endpoint=endpoint,
+                api_key=api_key,
+                custom_models_enabled=custom_models_enabled,
+                provider_keys=provider_keys,
+            )
 
-            response = await lite_llm_text_model.generate(
+            response = await litellm_model.generate(
                 prefix="Test message",
                 stream=True,
             )
+
+            _args, kwargs = mock_litellm_acompletion_streamed.call_args
+            assert kwargs["stream"] is True
 
             content = []
             async for chunk in response:
