@@ -1,7 +1,7 @@
 from contextlib import contextmanager
 from pathlib import Path
 from typing import Any, AsyncIterator, Type
-from unittest.mock import Mock, patch
+from unittest.mock import AsyncMock, Mock, patch
 
 import pytest
 from fastapi import FastAPI
@@ -309,6 +309,38 @@ def mock_completions_stream(mock_suggestions_output: CodeSuggestionsOutput):
 def mock_with_prompt_prepared():
     with patch("ai_gateway.code_suggestions.CodeGenerations.with_prompt_prepared") as mock:
         yield mock
+
+
+@pytest.fixture
+def mock_litellm_acompletion():
+    with patch("ai_gateway.models.litellm.acompletion") as mock_acompletion:
+        mock_acompletion.return_value = AsyncMock(
+            choices=[
+                AsyncMock(
+                    message=AsyncMock(content="Test response"),
+                    text="Test text completion response",
+                ),
+            ]
+        )
+
+        yield mock_acompletion
+
+
+@pytest.fixture
+def mock_litellm_acompletion_streamed():
+    with patch("ai_gateway.models.litellm.acompletion") as mock_acompletion:
+        streamed_response = AsyncMock()
+        streamed_response.__aiter__.return_value = iter(
+            [
+                AsyncMock(
+                    choices=[AsyncMock(delta=AsyncMock(content="Streamed content"))]
+                )
+            ]
+        )
+
+        mock_acompletion.return_value = streamed_response
+
+        yield mock_acompletion
 
 
 @pytest.fixture

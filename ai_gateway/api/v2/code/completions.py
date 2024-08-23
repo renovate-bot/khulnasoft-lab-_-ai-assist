@@ -56,7 +56,7 @@ from ai_gateway.code_suggestions.processing.ops import lang_from_filename
 from ai_gateway.gitlab_features import GitLabFeatureCategory, GitLabUnitPrimitive
 from ai_gateway.instrumentators.base import TelemetryInstrumentator
 from ai_gateway.internal_events import InternalEventsClient
-from ai_gateway.models import KindAnthropicModel, KindModelProvider
+from ai_gateway.models import KindAnthropicModel, KindLiteLlmModel, KindModelProvider
 from ai_gateway.models.base import TokensConsumptionMetadata
 from ai_gateway.prompts import BasePromptRegistry
 from ai_gateway.prompts.typing import ModelMetadata
@@ -136,6 +136,8 @@ async def completions(
 
     log.debug(
         "code completion input:",
+        model_name=payload.model_name,
+        model_provider=payload.model_provider,
         prompt=payload.prompt if hasattr(payload, "prompt") else None,
         prefix=payload.current_file.content_above_cursor,
         suffix=payload.current_file.content_below_cursor,
@@ -154,31 +156,35 @@ async def completions(
         KindModelProvider.LITELLM,
         KindModelProvider.MISTRALAI,
     ):
-        if payload.prompt_version == 2 and not payload.prompt:
-            model_metadata = ModelMetadata(
-                name=payload.model_name,
-                endpoint=payload.model_endpoint,
-                api_key=payload.model_api_key,
-                provider="text-completion-openai",
-            )
-
-            prompt = prompt_registry.get_on_behalf(
-                current_user, COMPLETIONS_AGENT_ID, None, model_metadata
-            )
-
-            code_completions = completions_agent_factory(
-                model__prompt=prompt,
-            )
-        else:
-            code_completions = completions_litellm_factory(
-                model__name=payload.model_name,
-                model__endpoint=payload.model_endpoint,
-                model__api_key=payload.model_api_key,
-                model__provider=payload.model_provider,
-            )
+        code_completions = _resolve_code_completions_litellm(
+            payload=payload,
+            current_user=current_user,
+            prompt_registry=prompt_registry,
+            completions_agent_factory=completions_agent_factory,
+            completions_litellm_factory=completions_litellm_factory,
+        )
 
         if payload.context:
             kwargs.update({"code_context": [ctx.content for ctx in payload.context]})
+    elif (
+        payload.model_provider == KindModelProvider.VERTEX_AI
+        and payload.model_name == KindLiteLlmModel.CODESTRAL_2405
+    ):
+        code_completions = _resolve_code_completions_vertex_codestral(
+            payload=payload,
+            completions_litellm_factory=completions_litellm_factory,
+        )
+
+        # We need to pass this here since litellm.LiteLlmTextGenModel
+        # sets the default temperature and max_output_tokens in the `generate` function signature
+        # To override those values, the kwargs passed to `generate` is updated here
+        # For further details, see:
+        #     https://gitlab.com/gitlab-org/modelops/applied-ml/code-suggestions/ai-assist/-/merge_requests/1172#note_2060587592
+        #
+        # The temperature value is taken from Mistral's docs: https://docs.mistral.ai/api/#operation/createFIMCompletion
+        # The max_output_tokens value is based on an ELI5 test:
+        #     https://gitlab.com/gitlab-org/modelops/applied-ml/code-suggestions/ai-assist/-/merge_requests/1172#note_2048354501
+        kwargs.update({"temperature": 0.7, "max_output_tokens": 128})
     else:
         code_completions = completions_legacy_factory()
         if payload.choices_count > 0:
@@ -368,6 +374,69 @@ def _resolve_prompt_code_generations(
     )
 
     return generations_agent_factory(model__prompt=prompt)
+
+
+def _resolve_code_completions_litellm(
+    payload: SuggestionsRequest,
+    current_user: GitLabUser,
+    prompt_registry: BasePromptRegistry,
+    completions_agent_factory: Factory[CodeCompletions],
+    completions_litellm_factory: Factory[CodeCompletions],
+) -> CodeCompletions:
+    if payload.prompt_version == 2 and not payload.prompt:
+        model_metadata = ModelMetadata(
+            name=payload.model_name,
+            endpoint=payload.model_endpoint,
+            api_key=payload.model_api_key,
+            provider="text-completion-openai",
+        )
+
+        return _resolve_agent_code_completions(
+            model_metadata=model_metadata,
+            current_user=current_user,
+            prompt_registry=prompt_registry,
+            completions_agent_factory=completions_agent_factory,
+        )
+
+    return completions_litellm_factory(
+        model__name=payload.model_name,
+        model__endpoint=payload.model_endpoint,
+        model__api_key=payload.model_api_key,
+        model__provider=payload.model_provider,
+    )
+
+
+def _resolve_code_completions_vertex_codestral(
+    payload: SuggestionsRequest,
+    completions_litellm_factory: Factory[CodeCompletions],
+) -> CodeCompletions:
+    if payload.prompt_version == 2 and payload.prompt is not None:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="You cannot specify a prompt with the given provider and model combination",
+        )
+
+    return completions_litellm_factory(
+        model__name=payload.model_name,
+        model__provider=payload.model_provider,
+        model__api_key=payload.model_api_key,
+        model__endpoint=payload.model_endpoint,
+    )
+
+
+def _resolve_agent_code_completions(
+    model_metadata: ModelMetadata,
+    current_user: GitLabUser,
+    prompt_registry: BasePromptRegistry,
+    completions_agent_factory: Factory[CodeCompletions],
+) -> CodeCompletions:
+    prompt = prompt_registry.get_on_behalf(
+        current_user, COMPLETIONS_AGENT_ID, None, model_metadata
+    )
+
+    return completions_agent_factory(
+        model__prompt=prompt,
+    )
 
 
 def _completion_suggestion_choices(

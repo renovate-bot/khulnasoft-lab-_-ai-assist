@@ -7,9 +7,9 @@ STUBBED_API_KEY = "<api-key>"
 
 
 class ModelMetadata(BaseModel):
-    endpoint: Annotated[AnyUrl, UrlConstraints(max_length=100)]
     name: Annotated[str, StringConstraints(max_length=100)]
     provider: Annotated[str, StringConstraints(max_length=100)]
+    endpoint: Annotated[AnyUrl, UrlConstraints(max_length=100)]
     api_key: Optional[Annotated[str, StringConstraints(max_length=100)]] = None
 
     # OpenAI client requires api key to be set

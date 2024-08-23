@@ -152,7 +152,7 @@ def _validate_model_name(
     if not use_case_models or not provider_models:
         raise ValueError(f"model {model_name} is unknown")
 
-    valid_model_names = use_case_models & set(provider_models)
+    valid_model_names = use_case_models & provider_models
 
     if model_name not in valid_model_names:
         raise ValueError(

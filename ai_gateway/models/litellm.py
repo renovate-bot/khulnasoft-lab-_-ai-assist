@@ -1,8 +1,9 @@
 from enum import StrEnum
 from typing import AsyncIterator, Callable, Optional, Sequence, Union
 
-from litellm import CustomStreamWrapper, acompletion
+from litellm import CustomStreamWrapper, ModelResponse, acompletion
 
+from ai_gateway.config import Config
 from ai_gateway.models.base import KindModelProvider, ModelMetadata, SafetyAttributes
 from ai_gateway.models.base_chat import ChatModelBase, Message, Role
 from ai_gateway.models.base_text import (
@@ -31,22 +32,39 @@ class KindLiteLlmModel(StrEnum):
     MIXTRAL_8X22B = "mixtral_8x22b"
     MIXTRAL = "mixtral"
     DEEPSEEKCODER = "deepseekcoder"
+    CODESTRAL_2405 = "codestral@2405"
 
-    # Chat models hosted behind openai proxies should be prefixed with "openai/":
-    # https://docs.litellm.ai/docs/providers/openai_compatible
-    def _provider_prefix(self, provider):
+    def _chat_provider_prefix(self, provider):
+        # Chat models hosted behind openai proxies should be prefixed with "openai/":
+        # https://docs.litellm.ai/docs/providers/openai_compatible
         if provider == KindModelProvider.LITELLM:
             return "custom_openai"
 
         return provider.value
 
-    def chat_model(self, provider=KindModelProvider.LITELLM) -> str:
-        return f"{self._provider_prefix(provider)}/{self.value}"
+    def _text_provider_prefix(self, provider):
+        # KindModelProvider.VERTEX_AI is 'vertex-ai', whereas LiteLLM uses 'vertex_ai' as the key for Vertex provider
+        # We need to transform the provider prefix to what's compatible with LiteLLM
+        if provider == KindModelProvider.VERTEX_AI:
+            return "vertex_ai"
 
-    # Text completion models hosted behind openai proxies should be prefixed with "text-completion-openai/":
-    # https://docs.litellm.ai/docs/providers/openai_compatible
+        # Text completion models hosted behind openai proxies should be prefixed with "text-completion-openai/":
+        # https://docs.litellm.ai/docs/providers/openai_compatible
+        if provider == KindModelProvider.LITELLM:
+            return "text-completion-custom_openai"
+
+        return f"text-completion-{provider.value}"
+
+    def chat_model(self, provider=KindModelProvider.LITELLM) -> str:
+        return f"{self._chat_provider_prefix(provider)}/{self.value}"
+
     def text_model(self, provider=KindModelProvider.LITELLM) -> str:
-        return f"text-completion-{self._provider_prefix(provider)}/{self.value}"
+        return f"{self._text_provider_prefix(provider)}/{self.value}"
+
+
+class ModelCompletionType(StrEnum):
+    TEXT = "text"
+    CHAT = "chat"
 
 
 MODEL_STOP_TOKENS = {
@@ -74,6 +92,20 @@ MODEL_STOP_TOKENS = {
         "<|fim_middle|>",
         "<|file_separator|>",
     ],
+    KindLiteLlmModel.CODESTRAL_2405: [
+        "[INST]",
+        "[/INST]",
+        "[PREFIX]",
+        "[MIDDLE]",
+        "[SUFFIX]",
+    ],
+}
+
+MODEL_SPECIFICATIONS = {
+    KindLiteLlmModel.CODESTRAL_2405: {
+        "timeout": 60,
+        "completion_type": ModelCompletionType.TEXT,
+    }
 }
 
 
@@ -243,6 +275,7 @@ class LiteLlmTextGenModel(TextGenModelBase):
         self.api_key = api_key
         self.endpoint = endpoint
         self.provider = provider
+        self.model_name = model_name
         self._metadata = ModelMetadata(
             name=model_name.text_model(provider),
             engine=provider.value,
@@ -253,10 +286,14 @@ class LiteLlmTextGenModel(TextGenModelBase):
     def metadata(self) -> ModelMetadata:
         return self._metadata
 
+    @property
+    def specifications(self):
+        return MODEL_SPECIFICATIONS.get(self.model_name, {})
+
     async def generate(
         self,
         prefix: str,
-        _suffix: Optional[str] = "",
+        suffix: Optional[str] = "",
         stream: bool = False,
         temperature: float = 0.95,
         max_output_tokens: int = 16,
@@ -265,17 +302,13 @@ class LiteLlmTextGenModel(TextGenModelBase):
         code_context: Optional[Sequence[str]] = None,
     ) -> Union[TextGenModelOutput, AsyncIterator[TextGenModelChunk]]:
         with self.instrumentator.watch(stream=stream) as watcher:
-            suggestion = await acompletion(
-                model=self.metadata.name,
-                messages=[{"content": prefix, "role": Role.USER}],
-                max_tokens=max_output_tokens,
-                temperature=temperature,
-                top_p=top_p,
+            suggestion = await self._get_suggestion(
+                prefix=prefix,
+                suffix=suffix,
                 stream=stream,
-                api_key=self.api_key,
-                api_base=self.endpoint,
-                timeout=30.0,
-                stop=self.stop_tokens,
+                temperature=temperature,
+                max_output_tokens=max_output_tokens,
+                top_p=top_p,
             )
 
             if stream:
@@ -286,7 +319,7 @@ class LiteLlmTextGenModel(TextGenModelBase):
                 )
 
         return TextGenModelOutput(
-            text=suggestion.choices[0].message.content,
+            text=self._extract_suggestion_text(suggestion),
             # Give a high value, the model doesn't return scores.
             score=10**5,
             safety_attributes=SafetyAttributes(),
@@ -307,6 +340,59 @@ class LiteLlmTextGenModel(TextGenModelBase):
         finally:
             after_callback()
 
+    async def _get_suggestion(
+        self,
+        prefix: str,
+        stream: bool,
+        temperature: float,
+        max_output_tokens: int,
+        top_p: float,
+        suffix: Optional[str] = "",
+    ) -> Union[ModelResponse, CustomStreamWrapper]:
+        completion_args = {
+            "model": self.metadata.name,
+            "messages": [{"content": prefix, "role": Role.USER}],
+            "max_tokens": max_output_tokens,
+            "temperature": temperature,
+            "top_p": top_p,
+            "stream": stream,
+            "timeout": self.specifications.get("timeout", 30.0),
+            "stop": self.stop_tokens,
+        }
+
+        if self._is_vertex():
+            completion_args["vertex_ai_location"] = self._get_vertex_model_location()
+        else:
+            completion_args["api_key"] = self.api_key
+            completion_args["api_base"] = self.endpoint
+
+        if self._use_text_completion():
+            completion_args["suffix"] = suffix
+            completion_args["text_completion"] = True
+
+        return await acompletion(**completion_args)
+
+    def _use_text_completion(self):
+        return (
+            self.specifications.get("completion_type", ModelCompletionType.CHAT)
+            == ModelCompletionType.TEXT
+        )
+
+    def _extract_suggestion_text(self, suggestion):
+        if self._use_text_completion():
+            return suggestion.choices[0].text
+
+        return suggestion.choices[0].message.content
+
+    def _is_vertex(self):
+        return self.provider == KindModelProvider.VERTEX_AI
+
+    def _get_vertex_model_location(self):
+        if Config().vertex_text_model.location.startswith("europe-"):
+            return "europe-west4"
+
+        return "us-central1"
+
     @classmethod
     def from_model_name(
         cls,
@@ -317,9 +403,13 @@ class LiteLlmTextGenModel(TextGenModelBase):
         provider: Optional[KindModelProvider] = KindModelProvider.LITELLM,
         provider_keys: Optional[dict] = None,
     ):
-        if not custom_models_enabled and provider == KindModelProvider.LITELLM:
-            if endpoint is not None or api_key is not None:
+        if endpoint is not None or api_key is not None:
+            if not custom_models_enabled and provider == KindModelProvider.LITELLM:
                 raise ValueError("specifying custom models endpoint is disabled")
+            if provider == KindModelProvider.VERTEX_AI:
+                raise ValueError(
+                    "specifying api endpoint or key for vertex-ai provider is disabled"
+                )
 
         if provider == KindModelProvider.MISTRALAI:
             api_key = provider_keys.get("mistral_api_key")
