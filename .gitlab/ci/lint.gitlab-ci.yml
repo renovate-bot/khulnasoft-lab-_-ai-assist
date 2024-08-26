@@ -27,6 +27,8 @@ lint:commit:
   stage: lint
   image: registry.hub.docker.com/library/node:alpine
   needs: []
+  variables:
+    GIT_DEPTH: 0
   before_script:
     - apk add --no-cache git
     - npm install --save-dev @commitlint/config-conventional @commitlint/cli
