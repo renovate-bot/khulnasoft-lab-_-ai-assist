@@ -319,7 +319,7 @@ class TestLocalPromptRegistry:
         expected_model_params: dict,
     ):
 
-        prompt = registry.get(prompt_id, {}, model_metadata)
+        prompt = registry.get(prompt_id, model_metadata)
 
         chain = cast(RunnableSequence, prompt.bound)
         actual_messages = cast(ChatPromptTemplate, chain.first).messages
@@ -330,7 +330,9 @@ class TestLocalPromptRegistry:
         assert isinstance(prompt, expected_class)
         assert (
             actual_messages
-            == ChatPromptTemplate.from_messages(expected_messages).messages
+            == ChatPromptTemplate.from_messages(
+                expected_messages, template_format="jinja2"
+            ).messages
         )
         assert prompt.model_name == expected_model
         assert binding.kwargs == expected_kwargs
@@ -357,4 +359,4 @@ class TestLocalPromptRegistry:
             ValueError,
             match="Endpoint override not allowed when custom models are disabled.",
         ):
-            registry.get("chat/react", {}, model_metadata)
+            registry.get("chat/react", model_metadata)

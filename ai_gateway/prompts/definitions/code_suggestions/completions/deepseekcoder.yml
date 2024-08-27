@@ -10,6 +10,6 @@ model:
 unit_primitives:
   - code_suggestions
 prompt_template:
-  user: <｜fim▁begin｜>{prefix}<｜fim▁hole｜>{suffix}<｜fim▁end｜>
+  user: <｜fim▁begin｜>{{prefix}}<｜fim▁hole｜>{{suffix}}<｜fim▁end｜>
 params:
   timeout: 60

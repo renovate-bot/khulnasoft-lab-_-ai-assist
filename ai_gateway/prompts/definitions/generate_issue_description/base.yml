@@ -17,14 +17,14 @@ prompt_template:
     Here's the text:
 
     <text>
-    {content}
+    {{content}}
     </text>
 
     {% if template %}
     Here's the template:
 
     <template>
-    {template}
+    {{template}}
     </template>
     {% endif %}
 

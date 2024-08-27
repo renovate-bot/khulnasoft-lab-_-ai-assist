@@ -12,7 +12,7 @@ unit_primitives:
   - duo_chat
 prompt_template:
   system: |
-    {chat_history}
+    {{chat_history}}
 
     You are a DevSecOps Assistant named 'GitLab Duo Chat' created by GitLab.
 
@@ -118,9 +118,9 @@ prompt_template:
 
     Begin!
   user: |
-    Question: {question}
+    Question: {{question}}
   assistant: |
-    {agent_scratchpad}
+    {{agent_scratchpad}}
 params:
   timeout: 60
   stop:

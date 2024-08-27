@@ -1,7 +1,8 @@
-from typing import AsyncIterator, Optional
-from unittest.mock import Mock, patch
+from typing import AsyncIterator
+from unittest.mock import Mock, PropertyMock, patch
 
 import pytest
+from langchain_core.language_models.chat_models import BaseChatModel
 from starlette.testclient import TestClient
 
 from ai_gateway.api.v2 import api_router
@@ -20,8 +21,9 @@ from ai_gateway.chat.agents import (
     TypeAgentAction,
     TypeReActAgentAction,
 )
+from ai_gateway.chat.agents.react import ReActAgentFinalAnswer
+from ai_gateway.config import Config
 from ai_gateway.gitlab_features import WrongUnitPrimitives
-from ai_gateway.internal_events import InternalEventAdditionalProperties
 from ai_gateway.prompts.typing import ModelMetadata
 
 
@@ -44,6 +46,22 @@ def mocked_stream():
         yield mock
 
 
+@pytest.fixture
+def mock_model(model: BaseChatModel):
+    with patch("ai_gateway.prompts.Prompt._build_model", return_value=model) as mock:
+        yield mock
+
+
+@pytest.fixture()
+def mocked_tools():
+    with patch(
+        "ai_gateway.chat.executor.GLAgentRemoteExecutor.tools",
+        new_callable=PropertyMock,
+        return_value=[],
+    ) as mock:
+        yield mock
+
+
 @pytest.fixture()
 def mocked_on_behalf():
     def _on_behalf(user: GitLabUser, gl_version: str) -> AsyncIterator[TypeAgentAction]:
@@ -58,6 +76,14 @@ def mocked_on_behalf():
         side_effect=_on_behalf,
     ) as mock:
         yield mock
+
+
+@pytest.fixture
+def mock_config():
+    config = Config()
+    config.custom_models.enabled = True
+
+    yield config
 
 
 class TestReActAgentStream:
@@ -220,3 +246,90 @@ class TestReActAgentStream:
 
         assert response.status_code == 403
         mocked_on_behalf.assert_called_once()
+
+
+class TestChatAgent:
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize(
+        (
+            "question",
+            "agent_options",
+            "model_response",
+            "expected_actions",
+        ),
+        [
+            (
+                "Basic request",
+                AgentRequestOptions(
+                    chat_history="",
+                    agent_scratchpad=ReActAgentScratchpad(agent_type="react", steps=[]),
+                ),
+                "thought\nFinal Answer: answer\n",
+                [
+                    AgentStreamResponseEvent(
+                        type="final_answer_delta",
+                        data=ReActAgentFinalAnswer(
+                            text=c,
+                        ),
+                    )
+                    for c in "answer"
+                ],
+            ),
+            (
+                "Request with '{}' in the input",
+                AgentRequestOptions(
+                    chat_history="",
+                    agent_scratchpad=ReActAgentScratchpad(agent_type="react", steps=[]),
+                    current_file=CurrentFile(
+                        file_path="main.c",
+                        data="int main() {}",
+                        selected_code=True,
+                    ),
+                ),
+                "thought\nFinal Answer: answer\n",
+                [
+                    AgentStreamResponseEvent(
+                        type="final_answer_delta",
+                        data=ReActAgentFinalAnswer(
+                            text=c,
+                        ),
+                    )
+                    for c in "answer"
+                ],
+            ),
+        ],
+    )
+    async def test_request(
+        self,
+        mock_client: TestClient,
+        mock_model: Mock,
+        mocked_tools: Mock,
+        mock_track_internal_event,
+        question: str,
+        agent_options: AgentRequestOptions,
+        expected_actions: list[AgentStreamResponseEvent],
+    ):
+        response = mock_client.post(
+            "/chat/agent",
+            headers={
+                "Authorization": "Bearer 12345",
+                "X-Gitlab-Authentication-Type": "oidc",
+            },
+            json={
+                "prompt": question,
+                "options": agent_options.model_dump(mode="json"),
+            },
+        )
+
+        actual_actions = [
+            AgentStreamResponseEvent.model_validate_json(chunk)
+            for chunk in response.text.strip().split("\n")
+        ]
+
+        assert response.status_code == 200
+        assert actual_actions == expected_actions
+
+        mock_track_internal_event.assert_called_once_with(
+            "request_duo_chat",
+            category="ai_gateway.api.v2.chat.agent",
+        )

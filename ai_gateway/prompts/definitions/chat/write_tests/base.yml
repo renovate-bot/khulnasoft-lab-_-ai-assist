@@ -13,15 +13,15 @@ prompt_template:
   system: |
     You are a software developer.
     You can write new tests.
-    {language_info}
+    {{language_info}}
   user: |
-    {file_content}
+    {{file_content}}
     In the file user selected this code:
     <selected_code>
-      {selected_text}
+      {{selected_text}}
     </selected_code>
 
-    {input}
+    {{input}}
     Any code blocks in response should be formatted in markdown.
 params:
   timeout: 60

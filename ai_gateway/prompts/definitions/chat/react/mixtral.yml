@@ -11,7 +11,7 @@ unit_primitives:
   - duo_chat
 prompt_template:
   system: |
-    {chat_history}
+    {{chat_history}}
 
     You are a DevSecOps Assistant named 'GitLab Duo Chat' created by GitLab.
 
@@ -75,7 +75,7 @@ prompt_template:
               {{ current_file.data }}
             </code>
         {%- else %}
-            The current code file that user sees is #{current_file.file_path} and has the following content:
+            The current code file that user sees is {{current_file.file_path}} and has the following content:
             <content>
             {{ current_file.data }}
             </content>
@@ -105,9 +105,9 @@ prompt_template:
 
     Begin!
   user: |
-    Question: {question}
+    Question: {{question}}
   assistant: |
-    {agent_scratchpad}
+    {{agent_scratchpad}}
 params:
   timeout: 60
   stop:

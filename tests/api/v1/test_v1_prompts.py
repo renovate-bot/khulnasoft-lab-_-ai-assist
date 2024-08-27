@@ -57,7 +57,7 @@ def model_factory():
 
 @pytest.fixture
 def prompt_template():
-    yield {"system": "Hi, I'm {name} and I'm {age} years old"}
+    yield {"system": "Hi, I'm {{name}} and I'm {{age}} years old"}
 
 
 @pytest.fixture
@@ -158,7 +158,7 @@ class TestPrompt:
             },
         )
 
-        mock_registry_get.assert_called_with("test", None, model_metadata)
+        mock_registry_get.assert_called_with("test", model_metadata)
         assert response.status_code == expected_status
         assert response.json() == expected_response
 
@@ -188,7 +188,7 @@ class TestPrompt:
             },
         )
 
-        mock_registry_get.assert_called_with("test", None, None)
+        mock_registry_get.assert_called_with("test", None)
         assert response.status_code == 200
         assert response.text == "Hi John!"
         assert response.headers["content-type"] == "text/event-stream; charset=utf-8"

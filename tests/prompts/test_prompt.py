@@ -26,11 +26,9 @@ class TestPrompt:
         assert isinstance(prompt.bound, Runnable)
 
     def test_build_messages(self, prompt_template):
-        messages = Prompt.build_messages(
-            prompt_template, {"name": "Duo", "content": "What's up?"}
-        )
+        messages = Prompt.build_messages(prompt_template)
 
-        assert messages == [("system", "Hi, I'm Duo"), ("user", "What's up?")]
+        assert messages == [("system", "Hi, I'm {{name}}"), ("user", "{{content}}")]
 
     def test_instrumentator(self, model_engine: str, model_name: str, prompt: Prompt):
         assert prompt.instrumentator.labels == {
@@ -45,7 +43,7 @@ class TestPrompt:
     async def test_ainvoke(
         self, mock_watch: mock.Mock, prompt: Prompt, model_response: str
     ):
-        response = await prompt.ainvoke({})
+        response = await prompt.ainvoke({"name": "Duo", "content": "What's up?"})
 
         assert response.content == model_response
 
@@ -62,7 +60,7 @@ class TestPrompt:
         mock_watch.return_value.__enter__.return_value = mock_watcher
         response = ""
 
-        async for c in prompt.astream({}):
+        async for c in prompt.astream({"name": "Duo", "content": "What's up?"}):
             response += c.content
 
             mock_watcher.afinish.assert_not_awaited()  # Make sure we don't finish prematurely
@@ -81,10 +79,6 @@ class TestPrompt:
     reason="3rd party requests not enabled",
 )
 class TestPromptTimeout:
-    @pytest.fixture
-    def prompt_options(self):
-        yield {"name": "Duo", "content": "Print pi with 400 decimals"}
-
     @pytest.fixture
     def prompt_params(self):
         yield PromptParams(timeout=0.1)
@@ -111,7 +105,9 @@ class TestPromptTimeout:
         self, prompt: Prompt, model: BaseChatModel, expected_exception: Type
     ):
         with pytest.raises(expected_exception):
-            await prompt.ainvoke({})
+            await prompt.ainvoke(
+                {"name": "Duo", "content": "Print pi with 400 decimals"}
+            )
 
 
 class TestModelMetadata:

@@ -11,7 +11,7 @@ unit_primitives:
   - code_suggestions
 prompt_template:
   user: |
-      <s>[SUFFIX]{suffix}[PREFIX]{prefix}
+      <s>[SUFFIX]{{suffix}}[PREFIX]{{prefix}}
 params:
   timeout: 60
   stop:

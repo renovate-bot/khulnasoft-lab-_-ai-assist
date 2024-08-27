@@ -11,7 +11,7 @@ unit_primitives:
   - duo_chat
 prompt_template:
   system: |
-    {chat_history}
+    {{chat_history}}
 
     You are a DevSecOps Assistant named 'GitLab Duo Chat' created by GitLab.
 
@@ -115,7 +115,7 @@ prompt_template:
         {%- endif %}
     {%- endfor -%}.
     You also have access to all information that can be helpful to someone working in software development of any kind.
-    At the moment, you do not have access to the following GitLab resources: {unavailable_resources}.
+    At the moment, you do not have access to the following GitLab resources: {{unavailable_resources}}.
     At the moment, you do not have the ability to search Issues or Epics based on a description or keywords.
     You can only read information about a specific issue/epic IF the user is on the specific issue/epic's page, or provides a URL or ID.
     Do not use the issue_reader or epic_reader tool if you do not have these specified identifiers.
@@ -131,9 +131,9 @@ prompt_template:
 
     Begin!
   user: |
-    Question: {question}
+    Question: {{question}}
   assistant: |
-    {agent_scratchpad}
+    {{agent_scratchpad}}
 params:
   timeout: 60
   stop:

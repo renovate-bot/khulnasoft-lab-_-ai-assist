@@ -1,7 +1,6 @@
 from abc import ABC, abstractmethod
 from typing import Any, AsyncIterator, Mapping, Optional, Sequence, Tuple, TypeVar, cast
 
-from jinja2 import BaseLoader, Environment
 from langchain_core.language_models.chat_models import BaseChatModel
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.prompts.chat import MessageLikeRepresentation
@@ -21,12 +20,6 @@ __all__ = [
 Input = TypeVar("Input")
 Output = TypeVar("Output")
 
-jinja_env = Environment(loader=BaseLoader())
-
-
-def _format_str(content: str, options: dict[str, Any]) -> str:
-    return jinja_env.from_string(content).render(options)
-
 
 class Prompt(RunnableBinding[Input, Output]):
     name: str
@@ -38,12 +31,11 @@ class Prompt(RunnableBinding[Input, Output]):
         model_factory: TypeModelFactory,
         config: PromptConfig,
         model_metadata: Optional[ModelMetadata] = None,
-        options: Optional[dict[str, Any]] = None,
     ):
         model_kwargs = self._build_model_kwargs(config.params, model_metadata)
         model = self._build_model(model_factory, config.model)
-        messages = self.build_messages(config.prompt_template, options or {})
-        prompt = ChatPromptTemplate.from_messages(messages)
+        messages = self.build_messages(config.prompt_template)
+        prompt = ChatPromptTemplate.from_messages(messages, template_format="jinja2")
         chain = self._build_chain(
             cast(Runnable[Input, Output], prompt | model.bind(**model_kwargs))
         )
@@ -123,21 +115,17 @@ class Prompt(RunnableBinding[Input, Output]):
     # Assume that the prompt template keys map to roles. Subclasses can
     # override this method to implement more complex logic.
     @staticmethod
-    def _prompt_template_to_messages(
-        tpl: dict[str, str], options: dict[str, Any]
-    ) -> list[Tuple[str, str]]:
+    def _prompt_template_to_messages(tpl: dict[str, str]) -> list[Tuple[str, str]]:
         return list(tpl.items())
 
     @classmethod
     def build_messages(
-        cls, prompt_template: dict[str, str], options: dict[str, Any]
+        cls, prompt_template: dict[str, str]
     ) -> Sequence[MessageLikeRepresentation]:
         messages = []
 
-        for role, template in cls._prompt_template_to_messages(
-            prompt_template, options
-        ):
-            messages.append((role, _format_str(template, options)))
+        for role, template in cls._prompt_template_to_messages(prompt_template):
+            messages.append((role, template))
 
         return messages
 
@@ -147,7 +135,6 @@ class BasePromptRegistry(ABC):
     def get(
         self,
         prompt_id: str,
-        options: Optional[dict[str, Any]] = None,
         model_metadata: Optional[ModelMetadata] = None,
     ) -> Prompt:
         pass
@@ -156,10 +143,9 @@ class BasePromptRegistry(ABC):
         self,
         user: GitLabUser,
         prompt_id: str,
-        options: Optional[dict[str, Any]] = None,
         model_metadata: Optional[ModelMetadata] = None,
     ) -> Prompt:
-        prompt = self.get(prompt_id, options, model_metadata)
+        prompt = self.get(prompt_id, model_metadata)
 
         for unit_primitive in prompt.unit_primitives:
             if not user.can(unit_primitive):
