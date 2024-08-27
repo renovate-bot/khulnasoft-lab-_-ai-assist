@@ -47,6 +47,9 @@ class ReActAgentInputs(BaseModel):
     current_file: Optional[CurrentFile] = None
     model_metadata: Optional[ModelMetadata] = None
     additional_context: Optional[list[AdditionalContext]] = None
+    unavailable_resources: Optional[list[str]] = [
+        "Merge Requests, Pipelines, Vulnerabilities"
+    ]
 
 
 class ReActInputParser(Runnable[ReActAgentInputs, dict]):
@@ -60,6 +63,7 @@ class ReActInputParser(Runnable[ReActAgentInputs, dict]):
                 input.agent_scratchpad
             ),
             "current_file": input.current_file,
+            "unavailable_resources": input.unavailable_resources,
         }
 
 
