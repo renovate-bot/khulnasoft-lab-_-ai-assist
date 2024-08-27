@@ -83,6 +83,7 @@ async def chat(
         context=agent_request.options.context,
         current_file=agent_request.options.current_file,
         model_metadata=agent_request.model_metadata,
+        unavailable_resources=agent_request.unavailable_resources,
         additional_context=agent_request.options.additional_context,
     )
 

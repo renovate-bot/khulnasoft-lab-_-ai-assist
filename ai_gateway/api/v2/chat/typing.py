@@ -37,6 +37,9 @@ class AgentRequest(BaseModel):
     prompt: str
     options: AgentRequestOptions
     model_metadata: Optional[ModelMetadata] = None
+    unavailable_resources: Optional[list[str]] = [
+        "Merge Requests, Pipelines, Vulnerabilities"
+    ]
 
 
 class AgentStreamResponseEvent(BaseModel):

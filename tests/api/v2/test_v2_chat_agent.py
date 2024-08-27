@@ -63,7 +63,14 @@ def mocked_on_behalf():
 class TestReActAgentStream:
     @pytest.mark.asyncio
     @pytest.mark.parametrize(
-        ("prompt", "agent_options", "actions", "model_metadata", "expected_actions"),
+        (
+            "prompt",
+            "agent_options",
+            "actions",
+            "model_metadata",
+            "expected_actions",
+            "unavailable_resources",
+        ),
         [
             (
                 "What's the title of this issue?",
@@ -110,6 +117,7 @@ class TestReActAgentStream:
                         ),
                     )
                 ],
+                ["Mystery Resource 1", "Mystery Resource 2"],
             )
         ],
     )
@@ -123,6 +131,7 @@ class TestReActAgentStream:
         actions: list[TypeAgentAction],
         expected_actions: list[AgentStreamResponseEvent],
         model_metadata: ModelMetadata,
+        unavailable_resources: list[str],
     ):
         async def _agent_stream(*_args, **_kwargs) -> AsyncIterator[TypeAgentAction]:
             for action in actions:
@@ -140,6 +149,7 @@ class TestReActAgentStream:
                 "prompt": prompt,
                 "options": agent_options.model_dump(mode="json"),
                 "model_metadata": model_metadata.model_dump(mode="json"),
+                "unavailable_resources": unavailable_resources,
             },
         )
 
@@ -167,6 +177,7 @@ class TestReActAgentStream:
             context=agent_options.context,
             current_file=agent_options.current_file,
             model_metadata=model_metadata,
+            unavailable_resources=unavailable_resources,
         )
 
         assert response.status_code == 200
