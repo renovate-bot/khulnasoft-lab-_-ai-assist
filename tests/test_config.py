@@ -7,6 +7,7 @@ from ai_gateway.config import (
     Config,
     ConfigAuth,
     ConfigCustomModels,
+    ConfigDefaultPrompts,
     ConfigFastApi,
     ConfigGoogleCloudPlatform,
     ConfigGoogleCloudProfiler,
@@ -417,6 +418,23 @@ def test_config_model_concurrency(values: dict, expected: ConfigModelConcurrency
         config = Config(_env_file=None)  # type: ignore[call-arg]
 
         assert config.model_engine_concurrency_limits == expected
+
+
+@pytest.mark.parametrize(
+    ("values", "expected"),
+    [
+        ({}, ConfigDefaultPrompts()),
+        (
+            {"AIGW_DEFAULT_PROMPTS": '{"chat/react": "vertex"}'},
+            ConfigDefaultPrompts({"chat/react": "vertex"}),
+        ),
+    ],
+)
+def test_config_default_prompts(values: dict, expected: ConfigDefaultPrompts):
+    with mock.patch.dict(os.environ, values, clear=True):
+        config = Config(_env_file=None)  # type: ignore[call-arg]
+
+        assert config.default_prompts == expected
 
 
 # pylint: enable=direct-environment-variable-reference

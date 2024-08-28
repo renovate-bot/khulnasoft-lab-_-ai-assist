@@ -22,10 +22,12 @@ class LocalPromptRegistry(BasePromptRegistry):
         self,
         prompts_registered: dict[str, PromptRegistered],
         model_factories: dict[ModelClassProvider, TypeModelFactory],
+        default_prompts: dict[str, str],
         custom_models_enabled: bool,
     ):
         self.prompts_registered = prompts_registered
         self.model_factories = model_factories
+        self.default_prompts = default_prompts
         self.custom_models_enabled = custom_models_enabled
 
     def _resolve_id(
@@ -36,7 +38,8 @@ class LocalPromptRegistry(BasePromptRegistry):
         if model_metadata:
             return f"{prompt_id}/{model_metadata.name}"
 
-        return f"{prompt_id}/{self.key_prompt_type_base}"
+        type = self.default_prompts.get(prompt_id, self.key_prompt_type_base)
+        return f"{prompt_id}/{type}"
 
     def get(
         self,
@@ -70,6 +73,7 @@ class LocalPromptRegistry(BasePromptRegistry):
         cls,
         class_overrides: dict[str, Type[Prompt]],
         model_factories: dict[ModelClassProvider, TypeModelFactory],
+        default_prompts: dict[str, str],
         custom_models_enabled: bool = False,
     ) -> "LocalPromptRegistry":
         """Iterate over all prompt definition files matching [usecase]/[type].yml,
@@ -95,4 +99,6 @@ class LocalPromptRegistry(BasePromptRegistry):
                     klass=klass, config=PromptConfig(**yaml.safe_load(fp))
                 )
 
-        return cls(prompts_registered, model_factories, custom_models_enabled)
+        return cls(
+            prompts_registered, model_factories, default_prompts, custom_models_enabled
+        )
