@@ -13,5 +13,5 @@
     "stanhu",
     "tle_gitlab"
   ],
-  "ignoreDeps": ["ruby", "vale"]
+  "ignoreDeps": ["errata-ai/vale", "node", "ruby"]
 }
