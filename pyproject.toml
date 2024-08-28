@@ -50,10 +50,10 @@ langchain-community = "^0.2.1"
 optional = true
 
 [tool.poetry.group.test.dependencies]
-pytest = "^7.2.0"
+pytest = "^8.2.0"
 responses = "^0.25.0"
 pytest-cov = "^5.0.0"
-pytest-asyncio = "^0.23.0"
+pytest-asyncio = "^0.24.0"
 pylint = "^3.0.3"
 astroid = "^3.0.2"
 pytest-watcher = "^0.4.2"
@@ -78,6 +78,7 @@ types-requests = "^2.31.0.20240406"
 addopts = "--disable-warnings"
 testpaths = ["tests"]
 filterwarnings = ["error::UserWarning"]
+asyncio_default_fixture_loop_scope = "fixture"
 
 [tool.poetry.scripts]
 ai_gateway = "ai_gateway.main:run_app"
