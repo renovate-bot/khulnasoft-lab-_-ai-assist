@@ -193,6 +193,11 @@ def prompts_registered():
 
 
 @pytest.fixture
+def default_prompts():
+    yield {}
+
+
+@pytest.fixture
 def custom_models_enabled():
     yield True
 
@@ -201,11 +206,13 @@ def custom_models_enabled():
 def registry(
     prompts_registered: dict[str, PromptRegistered],
     model_factories: dict[ModelClassProvider, TypeModelFactory],
+    default_prompts: dict[str, str],
     custom_models_enabled: bool,
 ):
     yield LocalPromptRegistry(
         model_factories=model_factories,
         prompts_registered=prompts_registered,
+        default_prompts=default_prompts,
         custom_models_enabled=custom_models_enabled,
     )
 
@@ -222,6 +229,7 @@ class TestLocalPromptRegistry:
                 "chat/react": MockPromptClass,
             },
             model_factories=model_factories,
+            default_prompts={},
             custom_models_enabled=False,
         )
 
@@ -341,6 +349,23 @@ class TestLocalPromptRegistry:
             if key in expected_model_params
         }
         assert actual_model_params == expected_model_params
+
+    def test_default_prompts(
+        self,
+        mock_fs: FakeFilesystem,
+        model_factories: dict[ModelClassProvider, TypeModelFactory],
+        prompts_registered: dict[str, PromptRegistered],
+    ):
+        registry = LocalPromptRegistry.from_local_yaml(
+            class_overrides={
+                "chat/react": MockPromptClass,
+            },
+            model_factories=model_factories,
+            default_prompts={"chat/react": "custom"},
+            custom_models_enabled=False,
+        )
+
+        assert registry.get("chat/react").name == "Chat react custom prompt"
 
     @pytest.mark.parametrize("custom_models_enabled", [False])
     def test_invalid_get(
