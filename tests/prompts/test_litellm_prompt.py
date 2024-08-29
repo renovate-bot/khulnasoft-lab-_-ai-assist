@@ -49,7 +49,7 @@ async def test_ainvoke(
     with pytest.raises(litellm.APIConnectionError, match="something went wrong"), patch(
         "google.auth.default", return_value=(Mock(), "mock_project_id")
     ):
-        await prompt.ainvoke({})
+        await prompt.ainvoke({"name": "Duo", "content": "What's up?"})
 
     mock_http_new.assert_called_once()
     assert mock_http_handler.post.call_count == 3
@@ -76,6 +76,6 @@ async def test_astream(
     with pytest.raises(
         litellm.exceptions.InternalServerError, match="something went wrong"
     ), patch("google.auth.default", return_value=(Mock(), "mock_project_id")):
-        await anext(prompt.astream({}))
+        await anext(prompt.astream({"name": "Duo", "content": "What's up?"}))
 
     assert mock_http_handler.post.call_count == 1

@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import Any, NamedTuple, Optional, Type
+from typing import NamedTuple, Optional, Type
 
 import yaml
 
@@ -44,7 +44,6 @@ class LocalPromptRegistry(BasePromptRegistry):
     def get(
         self,
         prompt_id: str,
-        options: Optional[dict[str, Any]] = None,
         model_metadata: Optional[ModelMetadata] = None,
     ) -> Prompt:
         if (
@@ -66,7 +65,7 @@ class LocalPromptRegistry(BasePromptRegistry):
                 f"unrecognized model class provider `{model_class_provider}`."
             )
 
-        return klass(model_factory, config, model_metadata, options)
+        return klass(model_factory, config, model_metadata)
 
     @classmethod
     def from_local_yaml(

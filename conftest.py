@@ -426,11 +426,6 @@ def prompt_config(
 
 
 @pytest.fixture
-def prompt_options():
-    yield {}
-
-
-@pytest.fixture
 def model_metadata():
     yield None
 
@@ -446,6 +441,5 @@ def prompt(
     model_factory: TypeModelFactory,
     prompt_config: PromptConfig,
     model_metadata: ModelMetadata | None,
-    prompt_options: dict[str, Any] | None,
 ):
-    yield prompt_class(model_factory, prompt_config, model_metadata, prompt_options)
+    yield prompt_class(model_factory, prompt_config, model_metadata)

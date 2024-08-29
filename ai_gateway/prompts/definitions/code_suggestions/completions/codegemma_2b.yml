@@ -11,7 +11,7 @@ unit_primitives:
   - code_suggestions
 prompt_template:
   user: |
-    <|fim_prefix|>{prefix}<|fim_suffix|>{suffix}<|fim_middle|>
+    <|fim_prefix|>{{prefix}}<|fim_suffix|>{{suffix}}<|fim_middle|>
 params:
   timeout: 60
   stop:

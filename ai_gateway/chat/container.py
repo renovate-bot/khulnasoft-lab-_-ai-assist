@@ -1,11 +1,11 @@
-from typing import TYPE_CHECKING, Sequence
+from typing import TYPE_CHECKING
 
 from dependency_injector import containers, providers
 
 from ai_gateway.chat.agents import ReActAgent, ReActAgentInputs, TypeReActAgentAction
 from ai_gateway.chat.executor import GLAgentRemoteExecutor, TypeAgentFactory
-from ai_gateway.chat.tools import BaseTool
 from ai_gateway.chat.toolset import DuoChatToolsRegistry
+from ai_gateway.prompts.typing import ModelMetadata
 
 if TYPE_CHECKING:
     from ai_gateway.prompts import BasePromptRegistry
@@ -18,21 +18,8 @@ __all__ = [
 def _react_agent_factory(
     prompt_registry: "BasePromptRegistry",
 ) -> TypeAgentFactory[ReActAgentInputs, TypeReActAgentAction]:
-    def _fn(tools: Sequence[BaseTool], inputs: ReActAgentInputs) -> ReActAgent:
-        options = {"tools": tools}
-
-        if context := inputs.context:
-            options.update(
-                {"context_type": context.type, "context_content": context.content}
-            )
-
-        if file := inputs.current_file:
-            options.update({"current_file": file})
-
-        if additional_context := inputs.additional_context:
-            options.update({"additional_context": additional_context})
-
-        return prompt_registry.get("chat/react", options, inputs.model_metadata)
+    def _fn(model_metadata: ModelMetadata) -> ReActAgent:
+        return prompt_registry.get("chat/react", model_metadata)
 
     return _fn
 

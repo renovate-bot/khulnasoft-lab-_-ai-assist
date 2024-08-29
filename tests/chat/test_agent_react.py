@@ -43,9 +43,9 @@ async def _assert_agent_invoked(
 @pytest.fixture
 def prompt_template():
     yield {
-        "system": "{chat_history}\n\nYou are a DevSecOps Assistant named 'GitLab Duo Chat' created by GitLab.",
-        "user": "{question}",
-        "assistant": "{agent_scratchpad}",
+        "system": "{{chat_history}}\n\nYou are a DevSecOps Assistant named 'GitLab Duo Chat' created by GitLab.",
+        "user": "{{question}}",
+        "assistant": "{{agent_scratchpad}}",
     }
 
 

@@ -11,7 +11,7 @@ unit_primitives:
   - code_suggestions
 prompt_template:
   user: |
-    <PRE> #{prefix} <SUF> #{suffix} <MID>
+    <PRE> {{prefix}} <SUF> {{suffix}} <MID>
 params:
   timeout: 60
   stop:

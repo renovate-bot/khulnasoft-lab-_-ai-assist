@@ -48,9 +48,8 @@ async def prompt(
     internal_event_client: InternalEventsClient = Depends(get_internal_event_client),
 ):
     try:
-
         prompt = prompt_registry.get_on_behalf(
-            current_user, prompt_id, None, prompt_request.model_metadata
+            current_user, prompt_id, prompt_request.model_metadata
         )
     except KeyError:
         raise HTTPException(

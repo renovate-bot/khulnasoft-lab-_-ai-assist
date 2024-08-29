@@ -15,6 +15,7 @@ from ai_gateway.chat.agents.typing import (
     Context,
     CurrentFile,
 )
+from ai_gateway.chat.tools.base import BaseTool
 from ai_gateway.prompts import Prompt
 from ai_gateway.prompts.typing import ModelMetadata
 
@@ -50,21 +51,33 @@ class ReActAgentInputs(BaseModel):
     unavailable_resources: Optional[list[str]] = [
         "Merge Requests, Pipelines, Vulnerabilities"
     ]
+    tools: Optional[list[BaseTool]] = None
 
 
 class ReActInputParser(Runnable[ReActAgentInputs, dict]):
     def invoke(
         self, input: ReActAgentInputs, config: Optional[RunnableConfig] = None
     ) -> dict:
-        return {
+        final_inputs = {
+            "additional_context": input.additional_context,
             "chat_history": chat_history_plain_text_renderer(input.chat_history),
+            "context_type": "",
+            "context_content": "",
             "question": input.question,
             "agent_scratchpad": agent_scratchpad_plain_text_renderer(
                 input.agent_scratchpad
             ),
             "current_file": input.current_file,
             "unavailable_resources": input.unavailable_resources,
+            "tools": input.tools,
         }
+
+        if context := input.context:
+            final_inputs.update(
+                {"context_type": context.type, "context_content": context.content}
+            )
+
+        return final_inputs
 
 
 def chat_history_plain_text_renderer(chat_history: list | str) -> str:
