@@ -208,7 +208,6 @@ class TestLiteLlmChatMode:
                 stream=False,
                 temperature=0.2,
                 top_p=0.95,
-                top_k=40,
                 max_tokens=2048,
                 api_key=api_key,
                 api_base=endpoint,
@@ -243,7 +242,6 @@ class TestLiteLlmChatMode:
                 stream=True,
                 temperature=0.3,
                 top_p=0.9,
-                top_k=25,
                 max_output_tokens=1024,
             )
 
@@ -258,7 +256,6 @@ class TestLiteLlmChatMode:
                 stream=True,
                 temperature=0.3,
                 top_p=0.9,
-                top_k=25,
                 max_tokens=1024,
                 api_key=api_key,
                 api_base=endpoint,
