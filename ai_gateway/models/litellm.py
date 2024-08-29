@@ -161,7 +161,6 @@ class LiteLlmChatModel(ChatModelBase):
         temperature: float = 0.2,
         max_output_tokens: int = 2048,
         top_p: float = 0.95,
-        top_k: int = 40,
         code_context: Optional[Sequence[str]] = None,
     ) -> Union[TextGenModelOutput, AsyncIterator[TextGenModelChunk]]:
         if isinstance(messages, str):
@@ -176,7 +175,6 @@ class LiteLlmChatModel(ChatModelBase):
                 stream=stream,
                 temperature=temperature,
                 top_p=top_p,
-                top_k=top_k,
                 max_tokens=max_output_tokens,
                 api_key=self.api_key,
                 api_base=self.endpoint,
@@ -298,7 +296,6 @@ class LiteLlmTextGenModel(TextGenModelBase):
         temperature: float = 0.95,
         max_output_tokens: int = 16,
         top_p: float = 0.95,
-        top_k: int = 40,
         code_context: Optional[Sequence[str]] = None,
     ) -> Union[TextGenModelOutput, AsyncIterator[TextGenModelChunk]]:
         with self.instrumentator.watch(stream=stream) as watcher:
