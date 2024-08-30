@@ -55,7 +55,7 @@ class CodeCompletionsLegacy:
         file_name: str,
         editor_lang: str,
         **kwargs: Any,
-    ) -> ModelEngineOutput:
+    ) -> list[ModelEngineOutput]:
         responses = await self.engine.generate(
             prefix, suffix, file_name, editor_lang, **kwargs
         )
