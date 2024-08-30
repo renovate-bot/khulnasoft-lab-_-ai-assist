@@ -1,0 +1,8 @@
+pre-commit:
+  parallel: true
+  skip:
+    - ref: main
+  commands:
+    lint:
+      glob: "*.py"
+      run: make lint-code LINT_WORKING_DIR={staged_files}

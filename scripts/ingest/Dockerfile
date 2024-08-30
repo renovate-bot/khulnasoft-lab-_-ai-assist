@@ -38,6 +38,7 @@ RUN asdf plugin-add gcloud https://github.com/jthegedus/asdf-gcloud
 RUN asdf plugin add vale https://github.com/pdemagny/asdf-vale
 RUN asdf plugin add markdownlint-cli2 https://github.com/paulo-ferraz-oliveira/asdf-markdownlint-cli2
 RUN asdf plugin add nodejs https://github.com/asdf-vm/asdf-nodejs
+RUN asdf plugin add lefthook https://github.com/jtzero/asdf-lefthook
 
 # Install nodejs first since markdownlint-cli2 needs it.
 # This can be dropped once asdf installs dependencies in order: https://github.com/asdf-vm/asdf/pull/1723

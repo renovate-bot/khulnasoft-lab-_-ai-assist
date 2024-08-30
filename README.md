@@ -59,6 +59,14 @@ The `format` command only addresses `black` and `isort` issues.
 
 There is an [internal recording](https://youtu.be/SXfLOYm4zS4) for GitLab members that provides an overview of this project.
 
+### Running lint on Git commit
+
+To run linters before committing, set the Git hook as follows:
+
+```shell
+lefthook install
+```
+
 ### Frameworks
 
 This project is built with the following frameworks:
