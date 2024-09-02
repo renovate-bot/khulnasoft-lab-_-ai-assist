@@ -14,6 +14,7 @@ class UserClaims(NamedTuple):
     subject: str = ""
     issuer: str = ""
     duo_seat_count: str = ""
+    gitlab_instance_id: str = ""
 
 
 class User(NamedTuple):

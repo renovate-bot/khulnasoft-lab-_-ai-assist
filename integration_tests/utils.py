@@ -18,6 +18,7 @@ def get_user_jwt(realm: str) -> str | None:
         "Bypass-Auth": "true",
         "X-Gitlab-Realm": realm,
         "X-Gitlab-Global-User-Id": "111",
+        "X-Gitlab-Instance-Id": "ea8bf810-1d6f-4a6a-b4fd-93e8cbd8b57f",
     }
 
     response = requests.post(api_url, headers=headers, timeout=60)

@@ -1,13 +1,9 @@
-import json
 from typing import Annotated
 
 import pytest
-from dependency_injector.wiring import inject
 from fastapi import APIRouter, Depends, FastAPI, HTTPException, Request, status
 from fastapi.testclient import TestClient
-from starlette.middleware import Middleware
 from starlette.responses import JSONResponse
-from starlette.routing import Route
 from structlog.testing import capture_logs
 
 from ai_gateway.api.middleware import MiddlewareAuthentication
@@ -138,6 +134,7 @@ invalid_authentication_token_type_error = {
                     scopes=["feature1", "feature3"],
                     subject="1234",
                     gitlab_realm="self-managed",
+                    gitlab_instance_id="1234",
                 ),
             ),
             {
@@ -162,6 +159,7 @@ invalid_authentication_token_type_error = {
                     scopes=["feature2", "feature3"],
                     subject="1234",
                     gitlab_realm="self-managed",
+                    gitlab_instance_id="1234",
                 ),
             ),
             {
@@ -186,6 +184,7 @@ invalid_authentication_token_type_error = {
                     scopes=["feature1", "feature2", "feature3"],
                     subject="1234",
                     gitlab_realm="self-managed",
+                    gitlab_instance_id="1234",
                 ),
             ),
             {
@@ -225,7 +224,10 @@ invalid_authentication_token_type_error = {
             User(
                 authenticated=True,
                 claims=UserClaims(
-                    scopes=["feature1"], subject="1234", gitlab_realm="self-managed"
+                    scopes=["feature1"],
+                    subject="1234",
+                    gitlab_realm="self-managed",
+                    gitlab_instance_id="1234",
                 ),
             ),
             {"detail": "Unauthorized to access homepage"},
@@ -244,7 +246,10 @@ invalid_authentication_token_type_error = {
             User(
                 authenticated=True,
                 claims=UserClaims(
-                    scopes=["feature3"], subject="1234", gitlab_realm="self-managed"
+                    scopes=["feature3"],
+                    subject="1234",
+                    gitlab_realm="self-managed",
+                    gitlab_instance_id="1234",
                 ),
             ),
             {"detail": "Unauthorized to access homepage"},
@@ -266,6 +271,7 @@ invalid_authentication_token_type_error = {
                     scopes=["unsupported_scope"],
                     subject="1234",
                     gitlab_realm="self-managed",
+                    gitlab_instance_id="1234",
                 ),
             ),
             {"detail": "Unauthorized to access homepage"},
@@ -287,6 +293,7 @@ invalid_authentication_token_type_error = {
                     scopes=["feature1", "feature3"],
                     subject="1234",
                     gitlab_realm="self-managed",
+                    gitlab_instance_id="1234",
                 ),
             ),
             {"error": "Forbidden by auth provider"},
@@ -307,6 +314,7 @@ invalid_authentication_token_type_error = {
                     scopes=["feature1", "feature3"],
                     subject="1234",
                     gitlab_realm="self-managed",
+                    gitlab_instance_id="1234",
                 ),
             ),
             {"error": "Header mismatch 'X-Gitlab-Instance-Id'"},
@@ -327,6 +335,7 @@ invalid_authentication_token_type_error = {
                     scopes=["feature1", "feature3"],
                     subject="1234",
                     gitlab_realm="self-managed",
+                    gitlab_instance_id="1234",
                 ),
             ),
             {"error": "Header mismatch 'X-Gitlab-Realm'"},
@@ -345,7 +354,9 @@ invalid_authentication_token_type_error = {
             User(
                 authenticated=True,
                 claims=UserClaims(
-                    scopes=["feature1", "feature3"], gitlab_realm="self-managed"
+                    scopes=["feature1", "feature3"],
+                    gitlab_realm="self-managed",
+                    gitlab_instance_id="",
                 ),
             ),
             {
@@ -371,6 +382,7 @@ invalid_authentication_token_type_error = {
                     subject="1234",
                     issuer="gitlab-ai-gateway",
                     gitlab_realm="self-managed",
+                    gitlab_instance_id="1234",
                 ),
             ),
             {"error": "Header mismatch 'X-Gitlab-Global-User-Id'"},
@@ -381,6 +393,7 @@ invalid_authentication_token_type_error = {
                 "Authorization": "Bearer 12345",
                 "X-Gitlab-Authentication-Type": "oidc",
                 "X-Gitlab-Global-User-Id": "1234",
+                "X-Gitlab-Instance-Id": "1234",
                 "X-GitLab-Realm": "self-managed",
             },
             None,
@@ -392,6 +405,7 @@ invalid_authentication_token_type_error = {
                     subject="1234",
                     issuer="gitlab-ai-gateway",
                     gitlab_realm="self-managed",
+                    gitlab_instance_id="1234",
                 ),
             ),
             {
@@ -407,6 +421,7 @@ invalid_authentication_token_type_error = {
                 "Authorization": "Bearer 12345",
                 "X-Gitlab-Authentication-Type": "oidc",
                 "X-Gitlab-Global-User-Id": "1234",
+                "X-Gitlab-Instance-Id": "1234",
                 "X-GitLab-Realm": "self-managed",
             },
             None,
@@ -419,6 +434,7 @@ invalid_authentication_token_type_error = {
                     issuer="gitlab-ai-gateway",
                     gitlab_realm="self-managed",
                     duo_seat_count="333",
+                    gitlab_instance_id="1234",
                 ),
             ),
             {"error": "Header is missing: 'X-Gitlab-Duo-Seat-Count'"},
@@ -430,6 +446,7 @@ invalid_authentication_token_type_error = {
                 "Authorization": "Bearer 12345",
                 "X-Gitlab-Authentication-Type": "oidc",
                 "X-Gitlab-Global-User-Id": "1234",
+                "X-Gitlab-Instance-Id": "1234",
                 "X-GitLab-Realm": "self-managed",
                 "X-Gitlab-Duo-Seat-Count": "777",
             },
@@ -443,6 +460,7 @@ invalid_authentication_token_type_error = {
                     issuer="gitlab-ai-gateway",
                     gitlab_realm="self-managed",
                     duo_seat_count="333",
+                    gitlab_instance_id="1234",
                 ),
             ),
             {"error": "Header mismatch 'X-Gitlab-Duo-Seat-Count'"},
@@ -454,6 +472,7 @@ invalid_authentication_token_type_error = {
                 "Authorization": "Bearer 12345",
                 "X-Gitlab-Authentication-Type": "oidc",
                 "X-Gitlab-Global-User-Id": "1234",
+                "X-Gitlab-Instance-Id": "1234",
                 "X-GitLab-Realm": "self-managed",
                 "X-Gitlab-Duo-Seat-Count": "333",
             },
@@ -467,6 +486,88 @@ invalid_authentication_token_type_error = {
                     issuer="gitlab-ai-gateway",
                     gitlab_realm="self-managed",
                     duo_seat_count="333",
+                    gitlab_instance_id="1234",
+                ),
+            ),
+            {
+                "authenticated": True,
+                "is_debug": False,
+                "scopes": ["feature1", "feature3"],
+            },
+            ["auth_duration_s", "token_issuer"],
+        ),
+        # 'gitlab_instance_id' claim is non-empty, 'X-Gitlab-Instance-Id' is missing
+        (
+            {
+                "Authorization": "Bearer 12345",
+                "X-Gitlab-Authentication-Type": "oidc",
+                "X-Gitlab-Global-User-Id": "1234",
+                "X-Gitlab-Duo-Seat-Count": "333",
+                "X-GitLab-Realm": "self-managed",
+            },
+            None,
+            401,
+            User(
+                authenticated=True,
+                claims=UserClaims(
+                    scopes=["feature1", "feature3"],
+                    subject="1234",
+                    issuer="gitlab-ai-gateway",
+                    gitlab_realm="self-managed",
+                    duo_seat_count="333",
+                    gitlab_instance_id="1234",
+                ),
+            ),
+            {"error": "Header mismatch 'X-Gitlab-Instance-Id'"},
+            ["auth_duration_s", "auth_error_details", "token_issuer"],
+        ),
+        # 'gitlab_instance_id' claim is non-empty, 'X-Gitlab-Instance-Id' is present but does not match the claim
+        (
+            {
+                "Authorization": "Bearer 12345",
+                "X-Gitlab-Authentication-Type": "oidc",
+                "X-Gitlab-Global-User-Id": "1234",
+                "X-Gitlab-Instance-Id": "mismatch",
+                "X-GitLab-Realm": "self-managed",
+                "X-Gitlab-Duo-Seat-Count": "333",
+            },
+            None,
+            401,
+            User(
+                authenticated=True,
+                claims=UserClaims(
+                    scopes=["feature1", "feature3"],
+                    subject="1234",
+                    issuer="gitlab-ai-gateway",
+                    gitlab_realm="self-managed",
+                    duo_seat_count="333",
+                    gitlab_instance_id="1234",
+                ),
+            ),
+            {"error": "Header mismatch 'X-Gitlab-Instance-Id'"},
+            ["auth_duration_s", "auth_error_details", "token_issuer"],
+        ),
+        # 'gitlab_instance_id' claim is non-empty, 'X-Gitlab-Instance-Id' is present and matches the claim
+        (
+            {
+                "Authorization": "Bearer 12345",
+                "X-Gitlab-Authentication-Type": "oidc",
+                "X-Gitlab-Global-User-Id": "1234",
+                "X-Gitlab-Instance-Id": "1234",
+                "X-GitLab-Realm": "self-managed",
+                "X-Gitlab-Duo-Seat-Count": "333",
+            },
+            None,
+            200,
+            User(
+                authenticated=True,
+                claims=UserClaims(
+                    scopes=["feature1", "feature3"],
+                    subject="1234",
+                    issuer="gitlab-ai-gateway",
+                    gitlab_realm="self-managed",
+                    duo_seat_count="333",
+                    gitlab_instance_id="1234",
                 ),
             ),
             {
