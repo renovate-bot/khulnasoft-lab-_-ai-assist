@@ -1,5 +1,5 @@
 ---
-name: Claude 3 Generate Issue Description
+name: Claude 3 Generate Description
 model:
   name: claude-3-haiku-20240307
   params:
