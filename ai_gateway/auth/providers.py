@@ -57,6 +57,7 @@ class CompositeProvider(AuthProvider):
         issuer = ""
         scopes = []
         duo_seat_count = ""
+        gitlab_instance_id = ""
 
         if len(jwks.get("keys", [])) == 0:
             raise self.CriticalAuthError(
@@ -75,6 +76,7 @@ class CompositeProvider(AuthProvider):
             issuer = jwt_claims.get("iss", "")
             scopes = jwt_claims.get("scopes", [])
             duo_seat_count = str(jwt_claims.get("duo_seat_count", ""))
+            gitlab_instance_id = jwt_claims.get("gitlab_instance_id", "")
 
             is_allowed = True
         except JWTError as err:
@@ -88,6 +90,7 @@ class CompositeProvider(AuthProvider):
                 subject=subject,
                 issuer=issuer,
                 duo_seat_count=duo_seat_count,
+                gitlab_instance_id=gitlab_instance_id,
             ),
         )
 

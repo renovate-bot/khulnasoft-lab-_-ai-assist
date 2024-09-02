@@ -36,6 +36,9 @@ async def user_access_token(
     x_gitlab_realm: Annotated[
         str, Header()
     ] = None,  # This is the value of X_GITLAB_REALM_HEADER
+    x_gitlab_instance_id: Annotated[
+        str, Header()
+    ] = None,  # This is the value of X_GITLAB_INSTANCE_ID_HEADER
     internal_event_client: InternalEventsClient = Depends(get_internal_event_client),
 ):
     if not current_user.can(
@@ -58,6 +61,12 @@ async def user_access_token(
             detail="Missing X-Gitlab-Global-User-Id header",
         )
 
+    if not x_gitlab_instance_id:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Missing X-Gitlab-Instance-Id header",
+        )
+
     if not x_gitlab_realm:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -66,7 +75,10 @@ async def user_access_token(
 
     try:
         token, expires_at = token_authority.encode(
-            x_gitlab_global_user_id, x_gitlab_realm, current_user
+            x_gitlab_global_user_id,
+            x_gitlab_realm,
+            current_user,
+            x_gitlab_instance_id,
         )
     except Exception:
         raise HTTPException(status_code=500, detail="Failed to generate JWT")

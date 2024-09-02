@@ -142,6 +142,7 @@ def test_user_access_token_success(
     assert decoded_token["jti"]
     assert decoded_token["gitlab_realm"] == gitlab_realm
     assert decoded_token["scopes"] == ["code_suggestions"]
+    assert decoded_token["gitlab_instance_id"] == "1234"
     assert parsed_response["expires_at"] == decoded_token["exp"]
 
     if duo_seat_count_claim_and_header_are_present:
@@ -182,6 +183,37 @@ def test_user_access_token_global_user_id_header_missing(mock_client: TestClient
     )
     assert response.status_code == status.HTTP_400_BAD_REQUEST
     assert response.json()["detail"] == "Missing X-Gitlab-Global-User-Id header"
+
+
+def test_user_access_token_gitlab_instance_id_header_empty(mock_client: TestClient):
+    response = mock_client.post(
+        "/code/user_access_token",
+        headers={
+            "X-GitLab-Instance-Id": "",
+            "Authorization": "Bearer 12345",
+            "X-Gitlab-Global-User-Id": "1234",
+            "X-Gitlab-Authentication-Type": "oidc",
+            "X-Gitlab-Realm": "self-managed",
+            "X-Gitlab-Duo-Seat-Count": DUO_SEAT_COUNT_CLAIM_TEST_VALUE,
+        },
+    )
+    assert response.status_code == status.HTTP_400_BAD_REQUEST
+    assert response.json()["detail"] == "Missing X-Gitlab-Instance-Id header"
+
+
+def test_user_access_token_gitlab_instance_id_header_missing(mock_client: TestClient):
+    response = mock_client.post(
+        "/code/user_access_token",
+        headers={
+            "Authorization": "Bearer 12345",
+            "X-Gitlab-Authentication-Type": "oidc",
+            "X-GitLab-Global-User-Id": "1234",
+            "X-Gitlab-Realm": "self-managed",
+            "X-Gitlab-Duo-Seat-Count": DUO_SEAT_COUNT_CLAIM_TEST_VALUE,
+        },
+    )
+    assert response.status_code == status.HTTP_400_BAD_REQUEST
+    assert response.json()["detail"] == "Missing X-Gitlab-Instance-Id header"
 
 
 def test_user_access_token_gitlab_realm_header_empty(mock_client: TestClient):

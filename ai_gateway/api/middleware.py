@@ -270,6 +270,7 @@ class MiddlewareAuthentication(Middleware):
         def _validate_headers(self, claims, headers):
             claim_header_mapping = {
                 "gitlab_realm": X_GITLAB_REALM_HEADER,
+                "gitlab_instance_id": X_GITLAB_INSTANCE_ID_HEADER,
                 "subject": (
                     X_GITLAB_GLOBAL_USER_ID_HEADER
                     if claims.issuer == SELF_SIGNED_TOKEN_ISSUER

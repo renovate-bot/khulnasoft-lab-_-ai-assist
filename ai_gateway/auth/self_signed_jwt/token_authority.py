@@ -22,7 +22,9 @@ class TokenAuthority:
     def __init__(self, signing_key):
         self.signing_key = signing_key
 
-    def encode(self, sub, gitlab_realm, current_user) -> tuple[str, int]:
+    def encode(
+        self, sub, gitlab_realm, current_user, gitlab_instance_id
+    ) -> tuple[str, int]:
         expires_at = datetime.now(timezone.utc) + timedelta(hours=1)
         try:
             claims = {
@@ -34,6 +36,7 @@ class TokenAuthority:
                 "iat": datetime.now(timezone.utc),
                 "jti": str(uuid.uuid4()),
                 "gitlab_realm": gitlab_realm,
+                "gitlab_instance_id": gitlab_instance_id,
                 "scopes": [GitLabUnitPrimitive.CODE_SUGGESTIONS],
             }
 
