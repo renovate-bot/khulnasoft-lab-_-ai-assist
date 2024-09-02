@@ -1,5 +1,3 @@
-import json
-import os.path
 from unittest.mock import AsyncMock, call, patch
 
 import pytest

@@ -1,5 +1,4 @@
-from contextvars import ContextVar
-from unittest.mock import MagicMock, Mock, patch
+from unittest.mock import MagicMock, patch
 
 from anthropic import APIStatusError
 from structlog.testing import capture_logs

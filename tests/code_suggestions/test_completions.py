@@ -23,7 +23,6 @@ from ai_gateway.instrumentators import KnownMetrics, TextGenModelInstrumentator
 from ai_gateway.models import (
     AnthropicAPIConnectionError,
     AnthropicAPIStatusError,
-    KindVertexTextModel,
     ModelAPIError,
     ModelMetadata,
     PalmCodeGeckoModel,

@@ -113,7 +113,6 @@ disable = [
   "import-outside-toplevel",
   "too-many-function-args",
   "arguments-differ",
-  "unused-import",
   "unspecified-encoding",
   "redefined-builtin",
   "arguments-renamed",

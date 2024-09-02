@@ -1,13 +1,9 @@
-import json
 from typing import Annotated
 
 import pytest
-from dependency_injector.wiring import inject
 from fastapi import APIRouter, Depends, FastAPI, HTTPException, Request, status
 from fastapi.testclient import TestClient
-from starlette.middleware import Middleware
 from starlette.responses import JSONResponse
-from starlette.routing import Route
 from structlog.testing import capture_logs
 
 from ai_gateway.api.middleware import MiddlewareAuthentication
