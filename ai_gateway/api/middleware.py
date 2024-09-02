@@ -34,6 +34,7 @@ from ai_gateway.cloud_connector.auth.validators import (
     X_GITLAB_DUO_SEAT_COUNT_HEADER,
     validate_duo_seat_count_header,
 )
+from ai_gateway.feature_flags import current_feature_flag_context
 from ai_gateway.instrumentators.base import Telemetry, TelemetryInstrumentator
 from ai_gateway.internal_events import EventContext, current_event_context
 from ai_gateway.tracking.errors import log_exception
@@ -59,6 +60,7 @@ X_GITLAB_FEATURE_ENABLED_BY_NAMESPACE_IDS_HEADER = (
 )
 X_GITLAB_MODEL_GATEWAY_REQUEST_SENT_AT = "X-Gitlab-Rails-Send-Start"
 X_GITLAB_LANGUAGE_SERVER_VERSION = "X-Gitlab-Language-Server-Version"
+X_GITLAB_ENABLED_FEATURE_FLAGS = "x-gitlab-enabled-feature-flags"
 
 
 class _PathResolver:
@@ -155,6 +157,9 @@ class MiddlewareLogRequest(Middleware):
                     "gitlab_realm": request.headers.get(X_GITLAB_REALM_HEADER),
                     "gitlab_duo_seat_count": request.headers.get(
                         X_GITLAB_DUO_SEAT_COUNT_HEADER
+                    ),
+                    "enabled_feature_flags": request.headers.get(
+                        X_GITLAB_ENABLED_FEATURE_FLAGS
                     ),
                 }
                 fields.update(context.data)
@@ -394,6 +399,31 @@ class DistributedTraceMiddleware:
                 await self.app(scope, receive, send)
         else:
             await self.app(scope, receive, send)
+
+
+class FeatureFlagMiddleware:
+    """Middleware for feature flags."""
+
+    def __init__(self, app):
+        self.app = app
+
+    async def __call__(self, scope, receive, send):
+        if scope["type"] != "http":
+            await self.app(scope, receive, send)
+            return
+
+        request = Request(scope)
+
+        if X_GITLAB_ENABLED_FEATURE_FLAGS not in request.headers:
+            await self.app(scope, receive, send)
+            return
+
+        feature_flags = request.headers.get(X_GITLAB_ENABLED_FEATURE_FLAGS, "").split(
+            ","
+        )
+        current_feature_flag_context.set(feature_flags)
+
+        await self.app(scope, receive, send)
 
 
 class MiddlewareModelTelemetry(Middleware):

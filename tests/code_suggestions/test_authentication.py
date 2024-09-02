@@ -71,6 +71,7 @@ expected_log_keys = [
     "gitlab_saas_duo_pro_namespace_ids",
     "gitlab_language_server_version",
     "gitlab_duo_seat_count",
+    "enabled_feature_flags",
     "duration_request",
 ]
 

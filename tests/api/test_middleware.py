@@ -12,6 +12,7 @@ from ai_gateway.api.middleware import (
     X_GITLAB_SAAS_DUO_PRO_NAMESPACE_IDS_HEADER,
     X_GITLAB_VERSION_HEADER,
     DistributedTraceMiddleware,
+    FeatureFlagMiddleware,
     InternalEventMiddleware,
 )
 from ai_gateway.cloud_connector.auth.validators import X_GITLAB_DUO_SEAT_COUNT_HEADER
@@ -35,6 +36,11 @@ def distributed_trace_middleware(mock_app):
     return DistributedTraceMiddleware(
         mock_app, skip_endpoints=["/health"], environment="development"
     )
+
+
+@pytest.fixture
+def feature_flag_middleware(mock_app):
+    return FeatureFlagMiddleware(mock_app)
 
 
 @pytest.mark.asyncio
@@ -266,3 +272,31 @@ async def test_middleware_distributed_trace(distributed_trace_middleware):
         mock_tracing_context.assert_called_once_with(parent=current_run_id)
 
     distributed_trace_middleware.app.assert_called_once_with(scope, receive, send)
+
+
+@pytest.mark.asyncio
+async def test_middleware_feature_flag(feature_flag_middleware):
+    enabled_flags = "feature_a,feature_b,feature_c"
+    request = Request(
+        {
+            "type": "http",
+            "path": "/api/endpoint",
+            "headers": [
+                (b"x-gitlab-enabled-feature-flags", enabled_flags.encode()),
+            ],
+        }
+    )
+    scope = request.scope
+    receive = AsyncMock()
+    send = AsyncMock()
+
+    with patch(
+        "ai_gateway.api.middleware.current_feature_flag_context"
+    ) as mock_feature_flag_context:
+        await feature_flag_middleware(scope, receive, send)
+
+        mock_feature_flag_context.set.assert_called_once_with(
+            ["feature_a", "feature_b", "feature_c"]
+        )
+
+    feature_flag_middleware.app.assert_called_once_with(scope, receive, send)

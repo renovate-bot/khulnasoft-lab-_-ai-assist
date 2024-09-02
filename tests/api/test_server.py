@@ -223,7 +223,7 @@ def test_middleware_log_request(fastapi_server_app: FastAPI, caplog):
 @pytest.mark.parametrize(
     "test_path,expected", [("/v1/chat/agent", True), ("/monitoring/healthz", False)]
 )
-def test_middleware_internal_event(test_path, expected):
+def test_middleware_internal_event(fastapi_server_app: FastAPI, test_path, expected):
     config = Config(
         _env_file=None,
         auth=ConfigAuth(bypass_external=True),
@@ -243,7 +243,7 @@ def test_middleware_internal_event(test_path, expected):
 @pytest.mark.parametrize(
     "test_path,expected", [("/v1/chat/agent", True), ("/monitoring/healthz", False)]
 )
-def test_middleware_distributed_trace(test_path, expected):
+def test_middleware_distributed_trace(fastapi_server_app: FastAPI, test_path, expected):
     config = Config(
         _env_file=None,
         auth=ConfigAuth(bypass_external=True),
@@ -263,6 +263,26 @@ def test_middleware_distributed_trace(test_path, expected):
             mock_tracing_context.assert_called_once()
         else:
             mock_tracing_context.assert_not_called()
+
+
+def test_middleware_feature_flag(fastapi_server_app: FastAPI):
+    config = Config(
+        _env_file=None,
+        auth=ConfigAuth(bypass_external=True),
+    )
+    server = create_fast_api_server(config)
+    client = TestClient(server)
+
+    with patch(
+        "ai_gateway.api.middleware.current_feature_flag_context"
+    ) as mock_feature_flag_context:
+        client.post(
+            "/v1/chat/agent",
+            headers={"x-gitlab-enabled-feature-flags": "feature_a,feature_b"},
+        )
+        mock_feature_flag_context.set.assert_called_once_with(
+            ["feature_a", "feature_b"]
+        )
 
 
 def test_setup_custom_exception_handlers(app, monkeypatch):

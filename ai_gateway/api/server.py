@@ -15,6 +15,7 @@ from starlette_context.middleware import RawContextMiddleware
 
 from ai_gateway.api.middleware import (
     DistributedTraceMiddleware,
+    FeatureFlagMiddleware,
     InternalEventMiddleware,
     MiddlewareAuthentication,
     MiddlewareLogRequest,
@@ -98,6 +99,7 @@ def create_fast_api_server(config: Config):
                 bypass_auth_with_header=config.auth.bypass_external_with_header,
                 skip_endpoints=_SKIP_ENDPOINTS,
             ),
+            Middleware(FeatureFlagMiddleware),
             Middleware(
                 InternalEventMiddleware,
                 skip_endpoints=_SKIP_ENDPOINTS,
