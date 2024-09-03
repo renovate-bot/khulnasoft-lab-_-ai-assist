@@ -1,4 +1,4 @@
-from typing import AsyncIterator, Optional
+from typing import Optional
 from unittest.mock import AsyncMock, Mock, patch
 
 import pytest
@@ -6,7 +6,7 @@ import pytest
 from ai_gateway.models import KindLiteLlmModel, LiteLlmChatModel
 from ai_gateway.models.base import KindModelProvider
 from ai_gateway.models.base_chat import Message, Role
-from ai_gateway.models.base_text import TextGenModelChunk, TextGenModelOutput
+from ai_gateway.models.base_text import TextGenModelOutput
 from ai_gateway.models.litellm import LiteLlmTextGenModel
 
 

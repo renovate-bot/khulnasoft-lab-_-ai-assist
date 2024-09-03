@@ -14,7 +14,6 @@ from ai_gateway.models.vertex_text import (
     KindVertexTextModel,
     PalmCodeBisonModel,
     PalmCodeGeckoModel,
-    PalmCodeGenBaseModel,
     PalmTextBisonModel,
     TextBisonModelInput,
     VertexAPIConnectionError,

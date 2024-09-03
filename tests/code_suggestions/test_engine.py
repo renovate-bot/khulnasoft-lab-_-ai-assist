@@ -3,7 +3,6 @@ from typing import Any
 from unittest.mock import AsyncMock, Mock, PropertyMock
 
 import pytest
-from google.api_core.exceptions import GoogleAPICallError, GoogleAPIError
 from transformers import AutoTokenizer
 
 from ai_gateway.code_suggestions.processing import (
