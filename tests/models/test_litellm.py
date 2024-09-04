@@ -545,6 +545,7 @@ class TestLiteLlmTextGenModel:
                 "[PREFIX]",
                 "[MIDDLE]",
                 "[SUFFIX]",
+                "\n\n",
             ],
         )
 
