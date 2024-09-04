@@ -5,6 +5,7 @@ import pytest
 from ai_gateway.auth import GitLabUser, UserClaims
 from ai_gateway.chat.tools import BaseTool
 from ai_gateway.chat.tools.gitlab import (
+    BuildReader,
     CiEditorAssistant,
     CommitReader,
     EpicReader,
@@ -115,6 +116,38 @@ class TestDuoChatToolRegistry:
         assert actual_tools == [
             CiEditorAssistant,
             CommitReader,
+        ]
+
+        current_feature_flag_context.set([])
+
+        tools = DuoChatToolsRegistry().get_on_behalf(
+            user, "17.5.0-pre", raise_exception=False
+        )
+        actual_tools = [type(tool) for tool in tools]
+
+        assert actual_tools == [CiEditorAssistant]
+
+    def test_build_reader_feature_flag(self):
+        current_feature_flag_context.set(["ai_build_reader_for_chat"])
+
+        user = GitLabUser(
+            authenticated=True,
+            claims=UserClaims(
+                scopes=[
+                    GitLabUnitPrimitive.ASK_BUILD.value,
+                    GitLabUnitPrimitive.DUO_CHAT.value,
+                ]
+            ),
+        )
+
+        tools = DuoChatToolsRegistry().get_on_behalf(
+            user, "17.5.0-pre", raise_exception=False
+        )
+        actual_tools = [type(tool) for tool in tools]
+
+        assert actual_tools == [
+            CiEditorAssistant,
+            BuildReader,
         ]
 
         current_feature_flag_context.set([])
