@@ -98,6 +98,7 @@ MODEL_STOP_TOKENS = {
         "[PREFIX]",
         "[MIDDLE]",
         "[SUFFIX]",
+        "\n\n",
     ],
 }
 
