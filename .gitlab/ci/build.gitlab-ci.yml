@@ -5,3 +5,18 @@ build:ingest-image:
   variables:
     KANIKO_BUILD_FILE: scripts/ingest/Dockerfile
     KANIKO_DESTINATION: "${INGEST_IMAGE}"
+
+build:self-hosted-ai-gateway-image:
+  stage: build
+  extends:
+    - .kaniko_base
+  variables:
+    KANIKO_BUILD_FILE: docker/self_hosted/Dockerfile
+    KANIKO_DESTINATION: "${TARGET_IMAGE}"
+    KANIKO_EXTRA_ARGS: |
+      --build-arg TAG=$CI_COMMIT_TAG
+      --build-arg SRC_IMAGE="${TARGET_IMAGE}"
+  rules:
+    - if: $CI_COMMIT_TAG =~ /^self-hosted-/
+  needs:
+    - build-docker-model-gateway
