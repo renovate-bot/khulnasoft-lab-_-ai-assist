@@ -19,8 +19,34 @@ async def awesome_feature(
     request: Request,
     internal_event_client: InternalEventsClient = Depends(get_internal_event_client),
 ):
-    # Send "request_awesome_feature" event to the Snowplow.
+    # Send "request_awesome_feature" event to Snowplow.
     internal_event_client.track_event("request_awesome_feature")
+```
+
+Additional properties can be passed when tracking events. They can be used to save additional data related to a given event.
+
+Snowplow has built-in properties with keys `label` (string), `property` (string), and `value` (numeric). It's recommended to use these properties first. If you need to pass more properties, you can send custom key-value pairs. For example:
+
+```python
+from ai_gateway.internal_events.context import InternalEventAdditionalProperties
+...
+# Send "request_awesome_feature" event to Snowplow with additional properties.
+additional_properties = InternalEventAdditionalProperties(
+    label="completion_event", property="property_value", value=1, key="value"
+)
+internal_event_client.track_event(
+    event_name="request_awesome_feature",
+    additional_properties=additional_properties,
+)
+```
+
+There is another parameter called `category` where we capture where the event happened. We should pass the name of the class where the event happened.
+
+```python
+internal_event_client.track_event(
+    f"request_{path_unit_primitive_map[chat_invokable]}",
+    category=__name__,
+)
 ```
 
 There are various arguments you can set aside from the event name.
