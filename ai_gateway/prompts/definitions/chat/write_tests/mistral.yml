@@ -11,17 +11,8 @@ unit_primitives:
   - duo_chat
 prompt_template:
   system: |
-    You are a software developer.
-    You can write new tests.
-    {{language_info}}
+    {% include 'chat/summarize_comments/system.jinja' %}
   user: |
-    {{file_content}}
-    In the file user selected this code:
-    <selected_code>
-      {{selected_text}}
-    </selected_code>
-
-    {{input}}
-    Any code blocks in response should be formatted in markdown.
+    {% include 'chat/summarize_comments/user.jinja' %}
 params:
   timeout: 60

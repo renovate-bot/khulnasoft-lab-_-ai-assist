@@ -11,17 +11,8 @@ unit_primitives:
   - duo_chat
 prompt_template:
   system: |
-    You are a software developer.
-    You can explain code snippets.
-    {{language_info}}
+    {% include 'chat/explain_code/system.jinja' %}
   user: |
-    {{file_content}}
-    Here is the code user selected:
-    <selected_code>
-      {{selected_text}}
-    </selected_code>
-
-    {{input}}
-    Any code blocks in response should be formatted in markdown.
+    {% include 'chat/explain_code/user.jinja' %}
 params:
   timeout: 60
