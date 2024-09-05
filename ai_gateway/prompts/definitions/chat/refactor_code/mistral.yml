@@ -11,18 +11,8 @@ unit_primitives:
   - duo_chat
 prompt_template:
   system: |
-    You are a software developer.
-    You can refactor code snippets.
-    {{language_info}}
+    {% include 'chat/refactor_code/system.jinja' %}
   user: |
-    {{file_content}}
-    In the file user selected this code:
-    <selected_code>
-      {{selected_text}}
-    </selected_code>
-
-    {{input}}
-    {{file_content_reuse}}
-    Any code blocks in response should be formatted in markdown.
+    {% include 'chat/refactor_code/user.jinja' %}
 params:
   timeout: 60

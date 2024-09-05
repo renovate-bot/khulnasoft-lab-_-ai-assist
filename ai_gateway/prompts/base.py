@@ -1,9 +1,12 @@
 from abc import ABC, abstractmethod
 from typing import Any, AsyncIterator, Mapping, Optional, Sequence, Tuple, TypeVar, cast
 
+from jinja2 import PackageLoader
+from jinja2.sandbox import SandboxedEnvironment
 from langchain_core.language_models.chat_models import BaseChatModel
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.prompts.chat import MessageLikeRepresentation
+from langchain_core.prompts.string import DEFAULT_FORMATTER_MAPPING
 from langchain_core.runnables import Runnable, RunnableBinding, RunnableConfig
 
 from ai_gateway.auth.user import GitLabUser
@@ -19,6 +22,18 @@ __all__ = [
 
 Input = TypeVar("Input")
 Output = TypeVar("Output")
+
+jinja_env = SandboxedEnvironment(
+    loader=PackageLoader("ai_gateway.prompts", "definitions")
+)
+
+
+def jinja2_formatter(template: str, /, **kwargs: Any) -> str:
+    return jinja_env.from_string(template).render(**kwargs)
+
+
+# Override LangChain's jinja2 formatter so we can specify a loader with access to all our templates
+DEFAULT_FORMATTER_MAPPING["jinja2"] = jinja2_formatter
 
 
 class Prompt(RunnableBinding[Input, Output]):

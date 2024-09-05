@@ -11,22 +11,8 @@ unit_primitives:
   - summarize_comments
 prompt_template:
   system: |
-    You are an assistant that extracts the most important information from the comments in maximum 10 bullet points.
+    {% include 'chat/summarize_comments/system.jinja' %}
   user: |
-    Each comment is wrapped in a <comment> tag.
-
-    Desired markdown format:
-    **<summary_title>**
-    - <bullet_point>
-    - <bullet_point>
-    - <bullet_point>
-    - ...
-
-    {{notes_content}}
-
-    Focus on extracting information related to one another and that are the majority of the content.
-    Ignore phrases that are not connected to others.
-    Do not specify what you are ignoring.
-    Do not answer questions.
+    {% include 'chat/summarize_comments/user.jinja' %}
 params:
   timeout: 60
