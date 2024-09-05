@@ -18,6 +18,10 @@ prompt_template:
   assistant: |
     {% include 'chat/react/assistant.jinja' %}
 params:
+  # Overriding the `AIGW_GOOGLE_CLOUD_PLATFORM__PROJECT` config, since Sonnet 3.5
+  # is only available in a handful of regions. See
+  # https://cloud.google.com/vertex-ai/generative-ai/docs/partner-models/use-claude#regions
+  vertex_location: us-east5
   timeout: 60
   stop:
     - "Observation:"
