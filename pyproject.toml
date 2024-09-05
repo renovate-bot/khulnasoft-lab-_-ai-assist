@@ -78,7 +78,7 @@ types-requests = "^2.31.0.20240406"
 addopts = "--disable-warnings"
 testpaths = ["tests"]
 filterwarnings = ["error::UserWarning"]
-asyncio_default_fixture_loop_scope = "fixture"
+asyncio_default_fixture_loop_scope = "function"
 
 [tool.poetry.scripts]
 ai_gateway = "ai_gateway.main:run_app"
