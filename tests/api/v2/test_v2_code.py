@@ -693,7 +693,7 @@ class TestCodeCompletions:
                 "codestral@2405",
                 {
                     "temperature": 0.7,
-                    "max_output_tokens": 128,
+                    "max_output_tokens": 64,
                 },
             ),
         ],
@@ -947,7 +947,7 @@ class TestCodeCompletions:
 
         _args, kwargs = mock_litellm_acompletion.call_args
         assert kwargs["temperature"] == 0.7
-        assert kwargs["max_tokens"] == 128
+        assert kwargs["max_tokens"] == 64
 
     def test_vertex_codestral_with_prompt(self, mock_client, mock_agent_model: Mock):
         params = {
