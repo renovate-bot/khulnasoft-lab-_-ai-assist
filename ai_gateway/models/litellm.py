@@ -11,6 +11,7 @@ from ai_gateway.models.base_text import (
     TextGenModelChunk,
     TextGenModelOutput,
 )
+from ai_gateway.tracking import SnowplowEventContext
 
 __all__ = [
     "LiteLlmChatModel",
@@ -298,6 +299,7 @@ class LiteLlmTextGenModel(TextGenModelBase):
         max_output_tokens: int = 16,
         top_p: float = 0.95,
         code_context: Optional[Sequence[str]] = None,
+        snowplow_event_context: Optional[SnowplowEventContext] = None,
     ) -> Union[TextGenModelOutput, AsyncIterator[TextGenModelChunk]]:
         with self.instrumentator.watch(stream=stream) as watcher:
             suggestion = await self._get_suggestion(

@@ -11,7 +11,6 @@ from ai_gateway.api.v1 import api_router
 from ai_gateway.api.v1.chat.auth import ChatInvokable, authorize_with_unit_primitive
 from ai_gateway.auth import GitLabUser, User, UserClaims
 from ai_gateway.gitlab_features import GitLabUnitPrimitive
-from ai_gateway.internal_events import InternalEventAdditionalProperties
 from ai_gateway.models import (
     AnthropicAPIConnectionError,
     AnthropicAPIStatusError,

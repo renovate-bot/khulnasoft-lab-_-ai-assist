@@ -1,0 +1,59 @@
+from typing import Optional
+
+from fastapi import Request
+from starlette.datastructures import CommaSeparatedStrings
+
+from ai_gateway.api.middleware import (
+    X_GITLAB_HOST_NAME_HEADER,
+    X_GITLAB_INSTANCE_ID_HEADER,
+    X_GITLAB_REALM_HEADER,
+    X_GITLAB_SAAS_DUO_PRO_NAMESPACE_IDS_HEADER,
+    X_GITLAB_SAAS_NAMESPACE_IDS_HEADER,
+)
+from ai_gateway.auth import SELF_SIGNED_TOKEN_ISSUER
+from ai_gateway.tracking import SnowplowEventContext
+
+
+def get_snowplow_code_suggestion_context(
+    req: Request,
+    prefix: Optional[str] = "",
+    suffix: Optional[str] = "",
+    language: Optional[str] = "",
+    global_user_id: Optional[str] = "",
+) -> SnowplowEventContext:
+    language = language.lower() if language else ""
+    # gitlab-rails 16.3+ sends an X-Gitlab-Realm header
+    gitlab_realm = req.headers.get(X_GITLAB_REALM_HEADER)
+    # older versions don't serve code suggestions, so we read this from the IDE token claim
+    if not gitlab_realm and req.user and req.user.claims:
+        gitlab_realm = req.user.claims.gitlab_realm
+
+    is_direct_connection = False
+    if (
+        req.user
+        and req.user.claims
+        and req.user.claims.issuer == SELF_SIGNED_TOKEN_ISSUER
+    ):
+        is_direct_connection = True
+
+    return SnowplowEventContext(
+        prefix_length=len(prefix),
+        suffix_length=len(suffix),
+        language=language,
+        user_agent=req.headers.get("User-Agent", ""),
+        gitlab_realm=gitlab_realm if gitlab_realm else "",
+        is_direct_connection=is_direct_connection,
+        gitlab_instance_id=req.headers.get(X_GITLAB_INSTANCE_ID_HEADER, ""),
+        gitlab_global_user_id=global_user_id,
+        gitlab_host_name=req.headers.get(X_GITLAB_HOST_NAME_HEADER, ""),
+        gitlab_saas_duo_pro_namespace_ids=list(
+            CommaSeparatedStrings(
+                req.headers.get(X_GITLAB_SAAS_DUO_PRO_NAMESPACE_IDS_HEADER, "")
+            )
+        ),
+        gitlab_saas_namespace_ids=list(
+            CommaSeparatedStrings(
+                req.headers.get(X_GITLAB_SAAS_NAMESPACE_IDS_HEADER, "")
+            )
+        ),
+    )

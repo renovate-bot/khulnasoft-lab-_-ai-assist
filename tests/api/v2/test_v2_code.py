@@ -1,6 +1,6 @@
 import time
 from typing import Dict, List, Union
-from unittest.mock import Mock, patch
+from unittest.mock import ANY, Mock, patch
 
 import pytest
 from dependency_injector import containers
@@ -13,7 +13,6 @@ from structlog.testing import capture_logs
 from ai_gateway.api.v2 import api_router
 from ai_gateway.auth import User, UserClaims
 from ai_gateway.config import Config
-from ai_gateway.internal_events import InternalEventAdditionalProperties
 from ai_gateway.models.base_chat import Message, Role
 from ai_gateway.tracking.container import ContainerTracking
 from ai_gateway.tracking.instrumentator import SnowplowInstrumentator
@@ -149,6 +148,7 @@ class TestCodeCompletions:
             file_name="main.py",
             editor_lang=None,
             stream=False,
+            snowplow_event_context=ANY,
         )
 
         body = response.json()
@@ -224,6 +224,7 @@ class TestCodeCompletions:
             file_name=current_file["file_name"],
             editor_lang=current_file.get("language_identifier", None),
             stream=False,
+            snowplow_event_context=ANY,
             **expected_args,
         )
 
@@ -403,6 +404,7 @@ class TestCodeCompletions:
             file_name=current_file["file_name"],
             editor_lang=current_file.get("language_identifier", None),
             stream=False,
+            snowplow_event_context=ANY,
             **code_completions_kwargs,
         )
 
@@ -744,6 +746,7 @@ class TestCodeCompletions:
             "file_name": current_file["file_name"],
             "editor_lang": current_file.get("language_identifier", None),
             "stream": True,
+            "snowplow_event_context": ANY,
         }
         completions_args.update(extra_args)
 

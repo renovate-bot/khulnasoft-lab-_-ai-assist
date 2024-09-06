@@ -14,6 +14,7 @@ def user():
             gitlab_realm="self-managed",
             issuer="https://customers.gitlab.com",
         ),
+        global_user_id="test-user-id",
     )
 
 

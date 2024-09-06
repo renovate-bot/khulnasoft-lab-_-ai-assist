@@ -34,12 +34,12 @@ class SnowplowEventContext:
     language: str
     user_agent: str
     gitlab_realm: str
-    is_direct_connection: str
-    gitlab_instance_id: str
-    gitlab_global_user_id: str
-    gitlab_host_name: str
-    gitlab_saas_namespace_ids: list[int]
-    gitlab_saas_duo_pro_namespace_ids: list[int]
+    is_direct_connection: Optional[bool] = None
+    gitlab_instance_id: Optional[str] = None
+    gitlab_global_user_id: Optional[str] = None
+    gitlab_host_name: Optional[str] = None
+    gitlab_saas_namespace_ids: Optional[list[int]] = None
+    gitlab_saas_duo_pro_namespace_ids: Optional[list[int]] = None
 
 
 @dataclass

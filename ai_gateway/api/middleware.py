@@ -206,6 +206,7 @@ class MiddlewareAuthentication(Middleware):
             """
             Ref: https://www.starlette.io/authentication/
             """
+            global_user_id = conn.headers.get(X_GITLAB_GLOBAL_USER_ID_HEADER)
 
             if self.path_resolver.skip_path(conn.url.path):
                 return None
@@ -213,7 +214,9 @@ class MiddlewareAuthentication(Middleware):
             if self.bypass_auth:
                 log.critical("Auth is disabled, all users allowed")
 
-                return AuthCredentials(), GitLabUser(authenticated=True, is_debug=True)
+                return AuthCredentials(), GitLabUser(
+                    authenticated=True, is_debug=True, global_user_id=global_user_id
+                )
 
             if (
                 self.bypass_auth_with_header  # Should only be set and used for test & dev
@@ -223,7 +226,9 @@ class MiddlewareAuthentication(Middleware):
                     "Auth is disabled, all requests with `Bypass-Auth` header set allowed"
                 )
 
-                return AuthCredentials(), GitLabUser(authenticated=True, is_debug=True)
+                return AuthCredentials(), GitLabUser(
+                    authenticated=True, is_debug=True, global_user_id=global_user_id
+                )
 
             if self.AUTH_HEADER not in conn.headers:
                 raise AuthenticationError("No authorization header presented")
@@ -237,7 +242,7 @@ class MiddlewareAuthentication(Middleware):
             self._validate_headers(claims, conn.headers)
 
             return AuthCredentials(claims.scopes), GitLabUser(
-                authenticated, claims=claims
+                authenticated, claims=claims, global_user_id=global_user_id
             )
 
         @timing("auth_duration_s")

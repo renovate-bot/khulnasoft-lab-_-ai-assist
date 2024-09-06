@@ -1,5 +1,5 @@
 from time import time
-from typing import Annotated, AsyncIterator
+from typing import Annotated, AsyncIterator, Optional
 
 import structlog
 from dependency_injector.providers import Factory
@@ -8,6 +8,7 @@ from fastapi import APIRouter, Depends, HTTPException, Request, status
 
 from ai_gateway.api.feature_category import feature_category
 from ai_gateway.api.middleware import X_GITLAB_LANGUAGE_SERVER_VERSION
+from ai_gateway.api.snowplow_context import get_snowplow_code_suggestion_context
 from ai_gateway.api.v3.code.typing import (
     CodeContextPayload,
     CodeEditorComponents,
@@ -32,11 +33,11 @@ from ai_gateway.code_suggestions import (
 from ai_gateway.container import ContainerApplication
 from ai_gateway.gitlab_features import GitLabFeatureCategory, GitLabUnitPrimitive
 from ai_gateway.models import KindModelProvider
+from ai_gateway.tracking import SnowplowEventContext
 
 __all__ = [
     "router",
 ]
-
 
 log = structlog.stdlib.get_logger("codesuggestions")
 
@@ -70,13 +71,24 @@ async def completions(
         and language_server_version.supports_advanced_context()
     ] or None
 
+    snowplow_code_suggestion_context = get_snowplow_code_suggestion_context(
+        req=request,
+        prefix=component.payload.content_above_cursor,
+        suffix=component.payload.content_below_cursor,
+        language=component.payload.language_identifier,
+        global_user_id=current_user.global_user_id,
+    )
     if component.type == CodeEditorComponents.COMPLETION:
         return await code_completion(
-            payload=component.payload, code_context=code_context
+            payload=component.payload,
+            code_context=code_context,
+            snowplow_event_context=snowplow_code_suggestion_context,
         )
     if component.type == CodeEditorComponents.GENERATION:
         return await code_generation(
-            payload=component.payload, code_context=code_context
+            payload=component.payload,
+            code_context=code_context,
+            snowplow_event_context=snowplow_code_suggestion_context,
         )
 
 
@@ -90,6 +102,7 @@ async def code_completion(
         ContainerApplication.code_suggestions.completions.anthropic.provider
     ],
     code_context: list[CodeContextPayload] = None,
+    snowplow_event_context: Optional[SnowplowEventContext] = None,
 ):
     if payload.model_provider == ModelProvider.ANTHROPIC:
         engine = completions_anthropic_factory()
@@ -107,6 +120,7 @@ async def code_completion(
         editor_lang=payload.language_identifier,
         stream=payload.stream,
         code_context=code_context,
+        snowplow_event_context=snowplow_event_context,
         **kwargs,
     )
 
@@ -160,6 +174,7 @@ async def code_generation(
         ContainerApplication.code_suggestions.generations.anthropic_default.provider
     ],
     code_context: list[CodeContextPayload] = None,
+    snowplow_event_context: Optional[SnowplowEventContext] = None,
 ):
     if payload.model_provider == KindModelProvider.ANTHROPIC:
         engine = generations_anthropic_factory()
@@ -175,6 +190,7 @@ async def code_generation(
         editor_lang=payload.language_identifier,
         model_provider=payload.model_provider,
         stream=payload.stream,
+        snowplow_event_context=snowplow_event_context,
     )
 
     if isinstance(suggestion, AsyncIterator):

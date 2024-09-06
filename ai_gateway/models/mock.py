@@ -98,9 +98,10 @@ class LLM(TextGenModelBase):
             "stream": stream,
             "kwargs": dict(kwargs),
         }
-        suggestion = (
-            f"echo: {json.dumps(scope)}"  # echo the current scope's local variables
-        )
+
+        # echo the current scope's local variables
+        # default=vars prevents object is not JSON serializable error
+        suggestion = f"echo: {json.dumps(scope, default=vars)}"
 
         with self.instrumentator.watch(stream=stream) as watcher:
             if stream:
