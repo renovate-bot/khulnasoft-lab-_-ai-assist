@@ -182,9 +182,7 @@ async def completions(
         #     https://gitlab.com/gitlab-org/modelops/applied-ml/code-suggestions/ai-assist/-/merge_requests/1172#note_2060587592
         #
         # The temperature value is taken from Mistral's docs: https://docs.mistral.ai/api/#operation/createFIMCompletion
-        # The max_output_tokens value is based on an ELI5 test:
-        #     https://gitlab.com/gitlab-org/modelops/applied-ml/code-suggestions/ai-assist/-/merge_requests/1172#note_2048354501
-        kwargs.update({"temperature": 0.7, "max_output_tokens": 128})
+        kwargs.update({"temperature": 0.7, "max_output_tokens": 64})
     else:
         code_completions = completions_legacy_factory()
         if payload.choices_count > 0:
