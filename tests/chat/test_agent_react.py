@@ -5,12 +5,19 @@ from ai_gateway.chat.agents.react import (
     ReActAgentFinalAnswer,
     ReActAgentInputs,
     ReActAgentToolAction,
+    ReActInputParser,
     ReActPlainTextParser,
     TypeReActAgentAction,
     agent_scratchpad_plain_text_renderer,
     chat_history_plain_text_renderer,
 )
-from ai_gateway.chat.agents.typing import AgentStep
+from ai_gateway.chat.agents.typing import (
+    AdditionalContext,
+    AgentStep,
+    Context,
+    CurrentFile,
+)
+from ai_gateway.chat.tools.base import BaseTool
 
 
 @pytest.fixture
@@ -65,6 +72,50 @@ def final_answer(model_response: str):
         thought="I'm thinking...",
         text="Paris",
         log=model_response,
+    )
+
+
+def test_react_input_parser():
+    additional_context = AdditionalContext(
+        id="hello.py",
+        category="file",
+        content="def hello()-> str: return 'hello'",
+        metadata={"file_type": "python"},
+    )
+    context = Context(
+        type="issue",
+        content="This is an incredibly interesting issue",
+    )
+    current_file = CurrentFile(
+        file_path="/path/to/file.py",
+        data="def hello_world():\n    print('Hello, World!')",
+        selected_code=False,
+    )
+
+    inputs = ReActAgentInputs(
+        question="What is this file about?",
+        chat_history=["str1", "str2"],
+        agent_scratchpad=[],
+        additional_context=[additional_context],
+        context=context,
+        current_file=current_file,
+        unavailable_resources=["Merge Requests", "Pipelines"],
+        tools=[BaseTool(name="test_tool", description="A test tool")],
+    )
+
+    parser = ReActInputParser()
+    parsed_inputs = parser.invoke(inputs)
+
+    assert parsed_inputs["question"] == "What is this file about?"
+    assert parsed_inputs["chat_history"] == "str1\nstr2"
+    assert parsed_inputs["agent_scratchpad"] == ""
+    assert parsed_inputs["additional_context"] == [additional_context]
+    assert parsed_inputs["context_type"] == "issue"
+    assert parsed_inputs["context_content"] == "This is an incredibly interesting issue"
+    assert parsed_inputs["current_file"] == current_file
+    assert parsed_inputs["unavailable_resources"] == ["Merge Requests", "Pipelines"]
+    assert len(parsed_inputs["tools"]) == 1 and isinstance(
+        parsed_inputs["tools"][0], BaseTool
     )
 
 
