@@ -61,10 +61,40 @@ There is an [internal recording](https://youtu.be/SXfLOYm4zS4) for GitLab member
 
 ### Running lint on Git commit
 
-To run linters before committing, set the Git hook as follows:
+We use [Lefthook](https://github.com/evilmartians/lefthook) to lint code and doc
+prior to Git committing. This repository comes with a Lefthook configuration
+(`lefthook.yml`), but it must be installed.
+
+1. Install Lefthook managed Git hooks:
+
+   ```shell
+   lefthook install
+   ```
+
+1. Test Lefthook is working by running the Lefthook `pre-commit` Git hook:
+
+   ```shell
+   lefthook run pre-commit
+   ```
+
+   This should return the Lefthook version and the list of executable commands with
+   output.
+
+#### Disable Lefthook temporarily
+
+To disable Lefthook temporarily, you can set the `LEFTHOOK` environment variable
+to `0`. For instance:
 
 ```shell
-lefthook install
+LEFTHOOK=0 git commit ...
+```
+
+#### Run Lefthook hooks manually
+
+To run the `pre-commit` Git hook, run:
+
+```shell
+lefthook run pre-commit
 ```
 
 ### Frameworks
