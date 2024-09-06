@@ -6,6 +6,7 @@ from fastapi.testclient import TestClient
 
 from ai_gateway.api.v3 import api_router
 from ai_gateway.auth import User, UserClaims
+from ai_gateway.tracking import SnowplowEventContext
 
 
 @pytest.fixture(scope="class")
@@ -99,6 +100,7 @@ class TestEditorContentCompletion:
                 "X-Gitlab-Authentication-Type": "oidc",
                 "X-GitLab-Instance-Id": "1234",
                 "X-GitLab-Realm": "self-managed",
+                "X-Gitlab-Global-User-Id": "test-user-id",
             },
             json=data,
         )
@@ -113,6 +115,19 @@ class TestEditorContentCompletion:
 
         assert body["metadata"]["timestamp"] > 0
 
+        expected_snowplow_event = SnowplowEventContext(
+            prefix_length=30,
+            suffix_length=1,
+            language="python",
+            user_agent="testclient",
+            gitlab_realm="self-managed",
+            is_direct_connection=False,
+            gitlab_instance_id="1234",
+            gitlab_global_user_id="test-user-id",
+            gitlab_host_name="",
+            gitlab_saas_namespace_ids=[],
+            gitlab_saas_duo_pro_namespace_ids=[],
+        )
         mock_completions_legacy.assert_called_with(
             prefix=payload["content_above_cursor"],
             suffix=payload["content_below_cursor"],
@@ -121,6 +136,7 @@ class TestEditorContentCompletion:
             stream=False,
             code_context=None,
             candidate_count=3,
+            snowplow_event_context=expected_snowplow_event,
         )
 
     @pytest.mark.parametrize(
@@ -275,6 +291,7 @@ class TestEditorContentCompletion:
                 "X-Gitlab-Authentication-Type": "oidc",
                 "X-GitLab-Instance-Id": "1234",
                 "X-GitLab-Realm": "self-managed",
+                "X-Gitlab-Global-User-Id": "test-user-id",
             },
             json=data,
         )
@@ -283,6 +300,19 @@ class TestEditorContentCompletion:
         assert response.text == mock_suggestions_output_text
         assert response.headers["content-type"] == "text/event-stream; charset=utf-8"
 
+        expected_snowplow_event = SnowplowEventContext(
+            prefix_length=30,
+            suffix_length=1,
+            language="python",
+            user_agent="testclient",
+            gitlab_realm="self-managed",
+            is_direct_connection=False,
+            gitlab_instance_id="1234",
+            gitlab_global_user_id="test-user-id",
+            gitlab_host_name="",
+            gitlab_saas_namespace_ids=[],
+            gitlab_saas_duo_pro_namespace_ids=[],
+        )
         mock_completions_stream.assert_called_with(
             prefix=payload["content_above_cursor"],
             suffix=payload["content_below_cursor"],
@@ -290,6 +320,7 @@ class TestEditorContentCompletion:
             editor_lang=payload["language_identifier"],
             stream=True,
             code_context=None,
+            snowplow_event_context=expected_snowplow_event,
         )
 
 
@@ -372,6 +403,7 @@ class TestEditorContentGeneration:
                 "X-Gitlab-Authentication-Type": "oidc",
                 "X-GitLab-Instance-Id": "1234",
                 "X-GitLab-Realm": "self-managed",
+                "X-Gitlab-Global-User-Id": "test-user-id",
             },
             json=data,
         )
@@ -386,12 +418,26 @@ class TestEditorContentGeneration:
 
         assert body["metadata"]["timestamp"] > 0
 
+        expected_snowplow_event = SnowplowEventContext(
+            prefix_length=30,
+            suffix_length=1,
+            language="python",
+            user_agent="testclient",
+            gitlab_realm="self-managed",
+            is_direct_connection=False,
+            gitlab_instance_id="1234",
+            gitlab_global_user_id="test-user-id",
+            gitlab_host_name="",
+            gitlab_saas_namespace_ids=[],
+            gitlab_saas_duo_pro_namespace_ids=[],
+        )
         mock_generations.assert_called_with(
             prefix=payload["content_above_cursor"],
             file_name=payload["file_name"],
             editor_lang=payload["language_identifier"],
             model_provider=None,
             stream=False,
+            snowplow_event_context=expected_snowplow_event,
         )
 
     @pytest.mark.parametrize(

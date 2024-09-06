@@ -16,6 +16,7 @@ from ai_gateway.models.base import (
     TokensConsumptionMetadata,
 )
 from ai_gateway.models.base_text import TextGenModelBase, TextGenModelOutput
+from ai_gateway.tracking import SnowplowEventContext
 
 __all__ = [
     "PalmCodeBisonModel",
@@ -233,6 +234,7 @@ class PalmCodeGenBaseModel(TextGenModelBase):
         top_k: int = 40,
         candidate_count: int = 1,
         stop_sequences: Optional[Sequence[str]] = None,
+        snowplow_event_context: Optional[SnowplowEventContext] = None,
     ) -> Optional[TextGenModelOutput | list[TextGenModelOutput]]:
         pass
 
@@ -262,6 +264,7 @@ class PalmTextBisonModel(PalmCodeGenBaseModel):
         top_k: int = 40,
         candidate_count: int = 1,
         stop_sequences: Optional[Sequence[str]] = None,
+        snowplow_event_context: Optional[SnowplowEventContext] = None,
     ) -> Optional[TextGenModelOutput | list[TextGenModelOutput]]:
         model_input = TextBisonModelInput(prompt)
         res = await self._generate(
@@ -315,6 +318,7 @@ class PalmCodeBisonModel(PalmCodeGenBaseModel):
         top_k: int = 40,
         candidate_count: int = 1,
         stop_sequences: Optional[Sequence[str]] = None,
+        snowplow_event_context: Optional[SnowplowEventContext] = None,
     ) -> Optional[TextGenModelOutput | list[TextGenModelOutput]]:
         model_input = CodeBisonModelInput(prompt)
         res = await self._generate(
@@ -371,6 +375,7 @@ class PalmCodeGeckoModel(PalmCodeGenBaseModel):
         candidate_count: int = 1,
         stop_sequences: Optional[Sequence[str]] = None,
         code_context: Optional[list[str]] = None,
+        snowplow_event_context: Optional[SnowplowEventContext] = None,
     ) -> Optional[TextGenModelOutput | list[TextGenModelOutput]]:
         model_input = CodeGeckoModelInput(prompt, suffix)
 

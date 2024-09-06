@@ -1,6 +1,6 @@
 from contextlib import contextmanager
 from typing import Any, AsyncIterator
-from unittest.mock import AsyncMock, Mock, call, patch
+from unittest.mock import AsyncMock, MagicMock, Mock, call, patch
 
 import pytest
 from snowplow_tracker import Snowplow
@@ -25,7 +25,7 @@ from ai_gateway.models.base_text import (
     TextGenModelOutput,
 )
 from ai_gateway.tracking.instrumentator import SnowplowInstrumentator
-from ai_gateway.tracking.snowplow import SnowplowEvent
+from ai_gateway.tracking.snowplow import SnowplowEvent, SnowplowEventContext
 
 
 class InstrumentorMock(Mock):
@@ -176,15 +176,15 @@ class TestCodeGeneration:
             for chunk in model_chunks:
                 yield chunk
 
+        snowplow_event_context = MagicMock(spec=SnowplowEventContext)
         expected_event_1 = SnowplowEvent(
-            context=None,
+            context=snowplow_event_context,
             action="tokens_per_user_request_prompt",
             label="code_generation",
             value=1,
         )
-
         expected_event_2 = SnowplowEvent(
-            context=None,
+            context=snowplow_event_context,
             action="tokens_per_user_request_response",
             label="code_generation",
             value=response_token_length,
@@ -210,6 +210,7 @@ class TestCodeGeneration:
                 editor_lang=LanguageId.PYTHON,
                 model_provider=ModelProvider.ANTHROPIC,
                 stream=stream,
+                snowplow_event_context=snowplow_event_context,
             )
 
             if stream:

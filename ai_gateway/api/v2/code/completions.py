@@ -5,18 +5,10 @@ import anthropic
 import structlog
 from dependency_injector.providers import Factory
 from fastapi import APIRouter, Body, Depends, HTTPException, Request, status
-from starlette.datastructures import CommaSeparatedStrings
 
 from ai_gateway.api.feature_category import feature_category
-from ai_gateway.api.middleware import (
-    X_GITLAB_GLOBAL_USER_ID_HEADER,
-    X_GITLAB_HOST_NAME_HEADER,
-    X_GITLAB_INSTANCE_ID_HEADER,
-    X_GITLAB_LANGUAGE_SERVER_VERSION,
-    X_GITLAB_REALM_HEADER,
-    X_GITLAB_SAAS_DUO_PRO_NAMESPACE_IDS_HEADER,
-    X_GITLAB_SAAS_NAMESPACE_IDS_HEADER,
-)
+from ai_gateway.api.middleware import X_GITLAB_LANGUAGE_SERVER_VERSION
+from ai_gateway.api.snowplow_context import get_snowplow_code_suggestion_context
 from ai_gateway.api.v2.code.typing import (
     CompletionsRequestV1,
     CompletionsRequestV2,
@@ -127,10 +119,18 @@ async def completions(
         category=__name__,
     )
 
+    snowplow_event_context = None
     try:
-        snowplow_instrumentator.watch(
-            _suggestion_requested_snowplow_event(request, payload)
+        language = lang_from_filename(payload.current_file.file_name)
+        language_name = language.name if language else ""
+        snowplow_event_context = get_snowplow_code_suggestion_context(
+            req=request,
+            prefix=payload.current_file.content_above_cursor,
+            suffix=payload.current_file.content_below_cursor,
+            language=language_name,
+            global_user_id=current_user.global_user_id,
         )
+        snowplow_instrumentator.watch(SnowplowEvent(context=snowplow_event_context))
     except Exception as e:
         log_exception(e)
 
@@ -196,7 +196,12 @@ async def completions(
         if language_server_version.supports_advanced_context() and payload.context:
             kwargs.update({"code_context": [ctx.content for ctx in payload.context]})
 
-    suggestions = await _execute_code_completion(payload, code_completions, **kwargs)
+    suggestions = await _execute_code_completion(
+        payload=payload,
+        code_completions=code_completions,
+        snowplow_event_context=snowplow_event_context,
+        **kwargs,
+    )
 
     if isinstance(suggestions[0], AsyncIterator):
         return await _handle_stream(suggestions[0])
@@ -256,10 +261,18 @@ async def generations(
         category=__name__,
     )
 
+    snowplow_event_context = None
     try:
-        snowplow_instrumentator.watch(
-            _suggestion_requested_snowplow_event(request, payload)
+        language = lang_from_filename(payload.current_file.file_name)
+        language_name = language.name if language else ""
+        snowplow_event_context = get_snowplow_code_suggestion_context(
+            req=request,
+            prefix=payload.current_file.content_above_cursor,
+            suffix=payload.current_file.content_below_cursor,
+            language=language_name,
+            global_user_id=current_user.global_user_id,
         )
+        snowplow_instrumentator.watch(SnowplowEvent(context=snowplow_event_context))
     except Exception as e:
         log_exception(e)
 
@@ -308,6 +321,7 @@ async def generations(
             editor_lang=payload.current_file.language_identifier,
             model_provider=payload.model_provider,
             stream=payload.stream,
+            snowplow_event_context=snowplow_event_context,
         )
 
     if isinstance(suggestion, AsyncIterator):
@@ -479,53 +493,6 @@ def _generation_suggestion_choices(text: str) -> list:
     return [SuggestionsResponse.Choice(text=text)] if text else []
 
 
-def _suggestion_requested_snowplow_event(
-    req: Request,
-    payload: SuggestionsRequest,
-) -> SnowplowEvent:
-    language = lang_from_filename(payload.current_file.file_name) or ""
-    if language:
-        language = language.name.lower()
-
-    # gitlab-rails 16.3+ sends an X-Gitlab-Realm header
-    gitlab_realm = req.headers.get(X_GITLAB_REALM_HEADER)
-    # older versions don't serve code suggestions, so we read this from the IDE token claim
-    if not gitlab_realm and req.user and req.user.claims:
-        gitlab_realm = req.user.claims.gitlab_realm
-
-    is_direct_connection = False
-    if (
-        req.user
-        and req.user.claims
-        and req.user.claims.issuer == SELF_SIGNED_TOKEN_ISSUER
-    ):
-        is_direct_connection = True
-
-    return SnowplowEvent(
-        context=SnowplowEventContext(
-            prefix_length=len(payload.current_file.content_above_cursor),
-            suffix_length=len(payload.current_file.content_below_cursor),
-            language=language,
-            user_agent=req.headers.get("User-Agent", ""),
-            gitlab_realm=gitlab_realm if gitlab_realm else "",
-            is_direct_connection=is_direct_connection,
-            gitlab_instance_id=req.headers.get(X_GITLAB_INSTANCE_ID_HEADER, ""),
-            gitlab_global_user_id=req.headers.get(X_GITLAB_GLOBAL_USER_ID_HEADER, ""),
-            gitlab_host_name=req.headers.get(X_GITLAB_HOST_NAME_HEADER, ""),
-            gitlab_saas_duo_pro_namespace_ids=list(
-                CommaSeparatedStrings(
-                    req.headers.get(X_GITLAB_SAAS_DUO_PRO_NAMESPACE_IDS_HEADER, "")
-                )
-            ),
-            gitlab_saas_namespace_ids=list(
-                CommaSeparatedStrings(
-                    req.headers.get(X_GITLAB_SAAS_NAMESPACE_IDS_HEADER, "")
-                )
-            ),
-        )
-    )
-
-
 async def _handle_stream(
     response: AsyncIterator[CodeSuggestionsChunk],
 ) -> StreamSuggestionsResponse:
@@ -541,6 +508,7 @@ async def _handle_stream(
 async def _execute_code_completion(
     payload: CompletionsRequestWithVersion,
     code_completions: Factory[CodeCompletions | CodeCompletionsLegacy],
+    snowplow_event_context: Optional[SnowplowEventContext] = None,
     **kwargs: dict,
 ) -> any:
     with TelemetryInstrumentator().watch(payload.telemetry):
@@ -550,6 +518,7 @@ async def _execute_code_completion(
             file_name=payload.current_file.file_name,
             editor_lang=payload.current_file.language_identifier,
             stream=payload.stream,
+            snowplow_event_context=snowplow_event_context,
             **kwargs,
         )
 

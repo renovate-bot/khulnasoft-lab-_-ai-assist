@@ -25,7 +25,7 @@ from ai_gateway.models.base_text import (
     TextGenModelOutput,
 )
 from ai_gateway.tracking.instrumentator import SnowplowInstrumentator
-from ai_gateway.tracking.snowplow import SnowplowEvent
+from ai_gateway.tracking.snowplow import SnowplowEvent, SnowplowEventContext
 
 __all__ = ["CodeGenerations"]
 
@@ -89,6 +89,7 @@ class CodeGenerations:
         editor_lang: Optional[str] = None,
         model_provider: Optional[str] = None,
         stream: bool = False,
+        snowplow_event_context: Optional[SnowplowEventContext] = None,
         **kwargs: Any,
     ) -> Union[CodeSuggestionsOutput, AsyncIterator[CodeSuggestionsChunk]]:
         lang_id = resolve_lang_id(file_name, editor_lang)
@@ -98,7 +99,7 @@ class CodeGenerations:
 
         self.snowplow_instrumentator.watch(
             SnowplowEvent(
-                context=None,
+                context=snowplow_event_context,
                 action="tokens_per_user_request_prompt",
                 label="code_generation",
                 value=sum(
@@ -136,7 +137,7 @@ class CodeGenerations:
 
                 if res:
                     if isinstance(res, AsyncIterator):
-                        return self._handle_stream(res)
+                        return self._handle_stream(res, snowplow_event_context)
 
                     return await self._handle_sync(
                         response=res,
@@ -144,6 +145,7 @@ class CodeGenerations:
                         model_provider=model_provider,
                         prefix=prefix,
                         watch_container=watch_container,
+                        snowplow_event_context=snowplow_event_context,
                     )
 
             except ModelAPICallError as ex:
@@ -159,7 +161,9 @@ class CodeGenerations:
         )
 
     async def _handle_stream(
-        self, response: AsyncIterator[TextGenModelChunk]
+        self,
+        response: AsyncIterator[TextGenModelChunk],
+        snowplow_event_context: Optional[SnowplowEventContext] = None,
     ) -> AsyncIterator[CodeSuggestionsChunk]:
         chunks = []
         try:
@@ -170,7 +174,7 @@ class CodeGenerations:
         finally:
             self.snowplow_instrumentator.watch(
                 SnowplowEvent(
-                    context=None,
+                    context=snowplow_event_context,
                     action="tokens_per_user_request_response",
                     label="code_generation",
                     value=sum(self.tokenization_strategy.estimate_length(chunks)),
@@ -184,6 +188,7 @@ class CodeGenerations:
         prefix: str,
         watch_container: TextGenModelInstrumentator.WatchContainer,
         model_provider: Optional[str] = None,
+        snowplow_event_context: Optional[SnowplowEventContext] = None,
     ) -> CodeSuggestionsOutput:
         watch_container.register_model_output_length(response.text)
         watch_container.register_model_score(response.score)
@@ -198,7 +203,7 @@ class CodeGenerations:
 
         self.snowplow_instrumentator.watch(
             SnowplowEvent(
-                context=None,
+                context=snowplow_event_context,
                 action="tokens_per_user_request_response",
                 label="code_generation",
                 value=self.tokenization_strategy.estimate_length(response.text)[0],

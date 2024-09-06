@@ -27,11 +27,17 @@ class GitLabUser(BaseUser):
         self,
         authenticated: bool,
         is_debug: bool = False,
+        global_user_id: Optional[str] = None,
         claims: Optional[UserClaims] = None,
     ):
         self._authenticated = authenticated
         self._is_debug = is_debug
         self._claims = claims
+        self._global_user_id = global_user_id
+
+    @property
+    def global_user_id(self) -> str:
+        return self._global_user_id
 
     @property
     def claims(self) -> Optional[UserClaims]:

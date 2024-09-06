@@ -32,7 +32,7 @@ from ai_gateway.models.base_text import (
     TextGenModelOutput,
 )
 from ai_gateway.tracking.instrumentator import SnowplowInstrumentator
-from ai_gateway.tracking.snowplow import SnowplowEvent
+from ai_gateway.tracking.snowplow import SnowplowEvent, SnowplowEventContext
 
 __all__ = ["CodeCompletionsLegacy", "CodeCompletions"]
 
@@ -54,6 +54,7 @@ class CodeCompletionsLegacy:
         suffix: str,
         file_name: str,
         editor_lang: str,
+        snowplow_event_context: Optional[SnowplowEventContext] = None,
         **kwargs: Any,
     ) -> list[ModelEngineOutput]:
         responses = await self.engine.generate(
@@ -62,7 +63,7 @@ class CodeCompletionsLegacy:
 
         self.instrumentator.watch(
             SnowplowEvent(
-                context=None,
+                context=snowplow_event_context,
                 action="tokens_per_user_request_prompt",
                 label="code_completion",
                 value=responses[0].tokens_consumption_metadata.input_tokens,
@@ -102,7 +103,7 @@ class CodeCompletionsLegacy:
 
         self.instrumentator.watch(
             SnowplowEvent(
-                context=None,
+                context=snowplow_event_context,
                 action="tokens_per_user_request_response",
                 label="code_completion",
                 value=total_output_tokens,
@@ -160,6 +161,7 @@ class CodeCompletions:
         raw_prompt: Optional[str] = None,
         code_context: Optional[list] = None,
         stream: bool = False,
+        snowplow_event_context: Optional[SnowplowEventContext] = None,
         **kwargs: Any,
     ) -> Union[CodeSuggestionsOutput, AsyncIterator[CodeSuggestionsChunk]]:
         lang_id = resolve_lang_id(file_name, editor_lang)
