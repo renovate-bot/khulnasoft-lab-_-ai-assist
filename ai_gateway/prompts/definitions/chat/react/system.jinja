@@ -81,12 +81,12 @@ It should contain everything that user needs to see, including answer from "Obse
 {%- endif %}
 
 {%- if additional_context %}
-User added additional context below enclosed in <additional_context></additional_context> tags. Each additional context has a name, type, and content:
+User added additional context below enclosed in <additional_context></additional_context> tags. Each additional context has an ID, category, and content:
 
 {%- for added_context in additional_context %}
 <additional_context>
-    <type> {{ added_context.type }} </type>
-    <name> {{ added_context.name }} </name>
+    <id> {{ added_context.id }} </id>
+    <category> {{ added_context.category }} </category>
     <content>
     {{ added_context.content }}
     </content>
