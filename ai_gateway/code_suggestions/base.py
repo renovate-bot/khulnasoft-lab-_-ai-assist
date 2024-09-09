@@ -58,6 +58,12 @@ USE_CASES_MODELS_MAP = {
         KindLiteLlmModel.CODESTRAL,
         KindLiteLlmModel.DEEPSEEKCODER,
         KindLiteLlmModel.CODESTRAL_2405,
+        KindLiteLlmModel.MISTRAL,
+        KindLiteLlmModel.MISTRAL_TEXT,
+        KindLiteLlmModel.MIXTRAL,
+        KindLiteLlmModel.MIXTRAL_TEXT,
+        KindLiteLlmModel.MIXTRAL_8X22B,
+        KindLiteLlmModel.MIXTRAL_8X22B_TEXT,
     },
     KindUseCase.CODE_GENERATIONS: {
         KindAnthropicModel.CLAUDE_2_0,
