@@ -1,6 +1,7 @@
 from pathlib import Path
 from typing import NamedTuple, Optional, Type
 
+import structlog
 import yaml
 
 from ai_gateway.prompts.base import BasePromptRegistry, Prompt
@@ -8,6 +9,8 @@ from ai_gateway.prompts.config import ModelClassProvider, PromptConfig
 from ai_gateway.prompts.typing import ModelMetadata, TypeModelFactory
 
 __all__ = ["LocalPromptRegistry", "PromptRegistered"]
+
+log = structlog.stdlib.get_logger("prompts")
 
 
 class PromptRegistered(NamedTuple):
@@ -97,6 +100,12 @@ class LocalPromptRegistry(BasePromptRegistry):
                 prompts_registered[str(prompt_id_with_model_name)] = PromptRegistered(
                     klass=klass, config=PromptConfig(**yaml.safe_load(fp))
                 )
+
+        log.info(
+            "Initializing prompt registry from local yaml",
+            default_prompts=default_prompts,
+            custom_models_enabled=custom_models_enabled,
+        )
 
         return cls(
             prompts_registered, model_factories, default_prompts, custom_models_enabled

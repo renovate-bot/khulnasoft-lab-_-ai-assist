@@ -439,6 +439,12 @@ class TestCodeCompletions:
                 {"raw_prompt": current_file["content_above_cursor"]}
             )
 
+        def get_request_duration(cap_logs):
+            event = 'testclient:50000 - "POST /completions HTTP/1.1" 200'
+            entry = next(entry for entry in cap_logs if entry["event"] == event)
+
+            return entry["duration_request"]
+
         # get valid duration
         with capture_logs() as cap_logs:
             response = mock_client.post(
@@ -453,10 +459,7 @@ class TestCodeCompletions:
                 json=data,
             )
             assert response.status_code == 200
-            assert len(cap_logs) == 3
-            assert cap_logs[-1]["status_code"] == 200
-            assert cap_logs[-1]["method"] == "POST"
-            assert cap_logs[-1]["duration_request"] >= 1
+            assert get_request_duration(cap_logs) >= 1
 
         # -1 in duration_request indicates invalid X-Gitlab-Rails-Send-Start header
         with capture_logs() as cap_logs:
@@ -472,10 +475,7 @@ class TestCodeCompletions:
                 json=data,
             )
             assert response.status_code == 200
-            assert len(cap_logs) == 3
-            assert cap_logs[-1]["status_code"] == 200
-            assert cap_logs[-1]["method"] == "POST"
-            assert cap_logs[-1]["duration_request"] == -1
+            assert get_request_duration(cap_logs) == -1
 
         # -1 in duration_request indicates missing X-Gitlab-Rails-Send-Start header
         with capture_logs() as cap_logs:
@@ -490,10 +490,7 @@ class TestCodeCompletions:
                 json=data,
             )
             assert response.status_code == 200
-            assert len(cap_logs) == 3
-            assert cap_logs[-1]["status_code"] == 200
-            assert cap_logs[-1]["method"] == "POST"
-            assert cap_logs[-1]["duration_request"] == -1
+            assert get_request_duration(cap_logs) == -1
 
     @pytest.mark.parametrize(
         (
