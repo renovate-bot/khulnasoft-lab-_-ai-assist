@@ -1,5 +1,5 @@
 import re
-from typing import Any, AsyncIterator, Optional, TypedDict
+from typing import Any, AsyncIterator, Optional
 
 from langchain_core.exceptions import OutputParserException
 from langchain_core.output_parsers import BaseCumulativeTransformOutputParser
@@ -12,8 +12,10 @@ from ai_gateway.chat.agents.typing import (
     AgentFinalAnswer,
     AgentStep,
     AgentToolAction,
+    AgentUnknownAction,
     Context,
     CurrentFile,
+    TypeAgentEvent,
 )
 from ai_gateway.chat.tools.base import BaseTool
 from ai_gateway.prompts import Prompt
@@ -21,29 +23,15 @@ from ai_gateway.prompts.typing import ModelMetadata
 
 __all__ = [
     "ReActAgentInputs",
-    "ReActAgentToolAction",
-    "ReActAgentFinalAnswer",
-    "TypeReActAgentAction",
     "ReActPlainTextParser",
     "ReActAgent",
 ]
 
 
-class ReActAgentToolAction(AgentToolAction):
-    pass
-
-
-class ReActAgentFinalAnswer(AgentFinalAnswer):
-    pass
-
-
-TypeReActAgentAction = ReActAgentToolAction | ReActAgentFinalAnswer
-
-
 class ReActAgentInputs(BaseModel):
     question: str
     chat_history: str | list[str]
-    agent_scratchpad: list[AgentStep[TypeReActAgentAction]]
+    agent_scratchpad: list[AgentStep]
     context: Optional[Context] = None
     current_file: Optional[CurrentFile] = None
     model_metadata: Optional[ModelMetadata] = None
@@ -88,7 +76,7 @@ def chat_history_plain_text_renderer(chat_history: list | str) -> str:
 
 
 def agent_scratchpad_plain_text_renderer(
-    scratchpad: list[AgentStep[TypeReActAgentAction]],
+    scratchpad: list[AgentStep],
 ) -> str:
     tpl = (
         "Thought: {thought}\n"
@@ -105,7 +93,7 @@ def agent_scratchpad_plain_text_renderer(
             observation=pad.observation,
         )
         for pad in scratchpad
-        if isinstance(pad.action, ReActAgentToolAction)
+        if isinstance(pad.action, AgentToolAction)
     ]
 
     return "\n".join(steps)
@@ -119,24 +107,24 @@ class ReActPlainTextParser(BaseCumulativeTransformOutputParser):
     re_action_input = re.compile(r"Action Input:\s*([\s\S]*?)\s*</message>")
     re_final_answer = re.compile(r"Final Answer:\s*([\s\S]*?)\s*</message>")
 
-    def _parse_final_answer(self, message: str) -> Optional[ReActAgentFinalAnswer]:
+    def _parse_final_answer(self, message: str) -> Optional[AgentFinalAnswer]:
         if match_answer := self.re_final_answer.search(message):
             match_thought = self.re_thought.search(message)
 
-            return ReActAgentFinalAnswer(
+            return AgentFinalAnswer(
                 thought=match_thought.group(1) if match_thought else "",
                 text=match_answer.group(1),
             )
 
         return None
 
-    def _parse_agent_action(self, message: str) -> Optional[ReActAgentToolAction]:
+    def _parse_agent_action(self, message: str) -> Optional[AgentToolAction]:
         match_action = self.re_action.search(message)
         match_action_input = self.re_action_input.search(message)
         match_thought = self.re_thought.search(message)
 
         if match_action and match_action_input:
-            return ReActAgentToolAction(
+            return AgentToolAction(
                 tool=match_action.group(1),
                 tool_input=match_action_input.group(1),
                 thought=match_thought.group(1) if match_thought else "",
@@ -144,50 +132,43 @@ class ReActPlainTextParser(BaseCumulativeTransformOutputParser):
 
         return None
 
-    def _parse(self, text: str) -> TypeReActAgentAction:
-        text = f"Thought: {text}"
-        wrapped_text = f"<message>{text}</message>"
+    def _parse(self, text: str) -> TypeAgentEvent:
+        wrapped_text = f"<message>Thought: {text}</message>"
 
-        message: Optional[TypeReActAgentAction] = None
+        event: Optional[TypeAgentEvent] = None
         if final_answer := self._parse_final_answer(wrapped_text):
-            message = final_answer
+            event = final_answer
         elif agent_action := self._parse_agent_action(wrapped_text):
-            message = agent_action
+            event = agent_action
+        else:
+            event = AgentUnknownAction(text=text)
 
-        if message is None:
-            raise ValueError("incorrect `TypeReActAgentAction` schema output")
-
-        return message
+        return event
 
     def parse_result(
         self, result: list[Generation], *, partial: bool = False
-    ) -> Optional[TypeReActAgentAction]:
-        action = None
+    ) -> Optional[TypeAgentEvent]:
+        event = None
         text = result[0].text.strip()
 
         try:
-            action = self._parse(text)
+            event = self._parse(text)
         except ValueError as e:
             if not partial:
                 msg = f"Invalid output: {text}"
                 raise OutputParserException(msg, llm_output=text) from e
 
-        return action
+        return event
 
-    def parse(self, text: str) -> Optional[TypeReActAgentAction]:
+    def parse(self, text: str) -> Optional[TypeAgentEvent]:
         return self.parse_result([Generation(text=text)])
 
 
-class ReActAgent(Prompt[ReActAgentInputs, TypeReActAgentAction]):
-    class _StreamState(TypedDict):
-        tool_action: Optional[ReActAgentToolAction]
-        len_final_answer: int
-        len_thought: int
-
+class ReActAgent(Prompt[ReActAgentInputs, TypeAgentEvent]):
     @staticmethod
     def _build_chain(
-        chain: Runnable[ReActAgentInputs, TypeReActAgentAction]
-    ) -> Runnable[ReActAgentInputs, TypeReActAgentAction]:
+        chain: Runnable[ReActAgentInputs, TypeAgentEvent]
+    ) -> Runnable[ReActAgentInputs, TypeAgentEvent]:
         return ReActInputParser() | chain | ReActPlainTextParser()
 
     async def astream(
@@ -195,28 +176,24 @@ class ReActAgent(Prompt[ReActAgentInputs, TypeReActAgentAction]):
         input: ReActAgentInputs,
         config: Optional[RunnableConfig] = None,
         **kwargs: Optional[Any],
-    ) -> AsyncIterator[TypeReActAgentAction]:
-        state = ReActAgent._StreamState(
-            tool_action=None,
-            len_final_answer=0,
-            len_thought=0,
-        )
-
+    ) -> AsyncIterator[TypeAgentEvent]:
+        events = []
         astream = super().astream(input, config=config, **kwargs)
+        len_final_answer = 0
 
-        async for action in astream:
-            if isinstance(action, ReActAgentToolAction):
-                state["tool_action"] = action
-            elif (
-                action
-                and isinstance(action, ReActAgentFinalAnswer)
-                and len(action.text) > 0
-            ):
-                yield ReActAgentFinalAnswer(
-                    text=action.text[state["len_final_answer"] :],
+        async for event in astream:
+            if isinstance(event, AgentFinalAnswer) and len(event.text) > 0:
+                yield AgentFinalAnswer(
+                    text=event.text[len_final_answer:],
                 )
 
-                state["len_final_answer"] = len(action.text)
+                len_final_answer = len(event.text)
 
-        if tool_action := state.get("tool_action", None):
-            yield tool_action
+            events.append(event)
+
+        if any(isinstance(e, AgentFinalAnswer) for e in events):
+            pass  # no-op
+        elif any(isinstance(e, AgentToolAction) for e in events):
+            yield events[-1]
+        elif isinstance(events[-1], AgentUnknownAction):
+            yield events[-1]

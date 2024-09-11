@@ -2,7 +2,7 @@ from typing import Literal, Optional
 
 from pydantic import BaseModel, Field
 
-from ai_gateway.chat.agents import Context, CurrentFile, TypeReActAgentAction
+from ai_gateway.chat.agents import Context, CurrentFile
 from ai_gateway.chat.agents.typing import AdditionalContext
 from ai_gateway.prompts.typing import ModelMetadata
 
@@ -10,7 +10,6 @@ __all__ = [
     "ReActAgentScratchpad",
     "AgentRequestOptions",
     "AgentRequest",
-    "AgentStreamResponseEvent",
 ]
 
 
@@ -40,8 +39,3 @@ class AgentRequest(BaseModel):
     unavailable_resources: Optional[list[str]] = [
         "Merge Requests, Pipelines, Vulnerabilities"
     ]
-
-
-class AgentStreamResponseEvent(BaseModel):
-    type: Literal["action", "final_answer_delta"]
-    data: TypeReActAgentAction

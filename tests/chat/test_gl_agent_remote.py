@@ -5,10 +5,10 @@ from langchain_core.runnables import Runnable
 
 from ai_gateway.auth import GitLabUser
 from ai_gateway.chat import BaseToolsRegistry, GLAgentRemoteExecutor, TypeAgentFactory
-from ai_gateway.chat.agents import ReActAgentInputs, ReActAgentToolAction
+from ai_gateway.chat.agents import AgentToolAction, ReActAgentInputs
 from ai_gateway.chat.tools.gitlab import EpicReader, IssueReader
 
-expected_tool_action = ReActAgentToolAction(
+expected_tool_action = AgentToolAction(
     thought="thought", tool="tool", tool_input="tool_input"
 )
 

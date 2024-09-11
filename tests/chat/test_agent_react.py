@@ -1,13 +1,13 @@
 import pytest
 
 from ai_gateway.chat.agents.react import (
+    AgentFinalAnswer,
+    AgentToolAction,
+    AgentUnknownAction,
     ReActAgent,
-    ReActAgentFinalAnswer,
     ReActAgentInputs,
-    ReActAgentToolAction,
     ReActInputParser,
     ReActPlainTextParser,
-    TypeReActAgentAction,
     agent_scratchpad_plain_text_renderer,
     chat_history_plain_text_renderer,
 )
@@ -30,7 +30,7 @@ async def _assert_agent_invoked(
     question: str,
     agent_scratchpad: list[AgentStep],
     chat_history: list[str] | str,
-    expected_actions: list[ReActAgentToolAction | ReActAgentFinalAnswer],
+    expected_actions: list[AgentToolAction | AgentFinalAnswer | AgentUnknownAction],
     stream: bool,
 ):
     inputs = ReActAgentInputs(
@@ -58,7 +58,7 @@ def prompt_template():
 
 @pytest.fixture
 def tool_action(model_response: str):
-    yield ReActAgentToolAction(
+    yield AgentToolAction(
         thought="I'm thinking...",
         tool="ci_issue_reader",
         tool_input="random input",
@@ -68,7 +68,7 @@ def tool_action(model_response: str):
 
 @pytest.fixture
 def final_answer(model_response: str):
-    yield ReActAgentFinalAnswer(
+    yield AgentFinalAnswer(
         thought="I'm thinking...",
         text="Paris",
         log=model_response,
@@ -137,20 +137,16 @@ def test_chat_history_plain_text_renderer(chat_history: str | list[str], expecte
         (
             [
                 AgentStep(
-                    action=ReActAgentToolAction(
+                    action=AgentToolAction(
                         tool="tool1", tool_input="tool_input1", thought="thought1"
                     ),
                     observation="observation1",
                 ),
                 AgentStep(
-                    action=ReActAgentToolAction(
+                    action=AgentToolAction(
                         tool="tool2", tool_input="tool_input2", thought="thought2"
                     ),
                     observation="observation2",
-                ),
-                AgentStep(
-                    action=ReActAgentFinalAnswer(text="final_answer"),
-                    observation="observation3",
                 ),
             ],
             (
@@ -180,7 +176,7 @@ class TestReActPlainTextParser:
         [
             (
                 "thought1\nAction: tool1\nAction Input: tool_input1\n",
-                ReActAgentToolAction(
+                AgentToolAction(
                     thought="thought1",
                     tool="tool1",
                     tool_input="tool_input1",
@@ -188,24 +184,23 @@ class TestReActPlainTextParser:
             ),
             (
                 "thought1\nFinal Answer: final answer\n",
-                ReActAgentFinalAnswer(
+                AgentFinalAnswer(
                     text="final answer",
+                ),
+            ),
+            (
+                "Hi, I'm GitLab Duo Chat.",
+                AgentUnknownAction(
+                    text="Hi, I'm GitLab Duo Chat.",
                 ),
             ),
         ],
     )
-    def test_agent_message(self, text: str, expected: ReActAgentToolAction):
+    def test_agent_message(self, text: str, expected: AgentToolAction):
         parser = ReActPlainTextParser()
         actual = parser.parse(text)
 
         assert actual == expected
-
-    @pytest.mark.parametrize("text", ["random_text"])
-    def test_error(self, text: str):
-        parser = ReActPlainTextParser()
-
-        with pytest.raises(ValueError):
-            parser.parse(text)
 
 
 class TestReActAgent:
@@ -244,8 +239,8 @@ class TestReActAgent:
                 "What's your name?",
                 "User: what's the description of this issue\nAI: PoC ReAct",
                 [
-                    AgentStep[TypeReActAgentAction](
-                        action=ReActAgentToolAction(
+                    AgentStep(
+                        action=AgentToolAction(
                             thought="thought",
                             tool="ci_issue_reader",
                             tool_input="random input",
@@ -295,7 +290,7 @@ class TestReActAgent:
                 [],
                 "Thought: I'm thinking...\nAction: ci_issue_reader\nAction Input: random input",
                 [
-                    ReActAgentToolAction(
+                    AgentToolAction(
                         thought="I'm thinking...",
                         tool="ci_issue_reader",
                         tool_input="random input",
@@ -306,8 +301,8 @@ class TestReActAgent:
                 "What's your name?",
                 "User: what's the description of this issue\nAI: PoC ReAct",
                 [
-                    AgentStep[TypeReActAgentAction](
-                        action=ReActAgentToolAction(
+                    AgentStep(
+                        action=AgentToolAction(
                             thought="thought",
                             tool="ci_issue_reader",
                             tool_input="random input",
@@ -317,11 +312,22 @@ class TestReActAgent:
                 ],
                 "Thought: I'm thinking...\nFinal Answer: Bar",
                 [
-                    ReActAgentFinalAnswer(
+                    AgentFinalAnswer(
                         text="B",
                     ),
-                    ReActAgentFinalAnswer(text="a"),
-                    ReActAgentFinalAnswer(text="r"),
+                    AgentFinalAnswer(text="a"),
+                    AgentFinalAnswer(text="r"),
+                ],
+            ),
+            (
+                "Hi, how are you? Do not include Final Answer:, Thought: and Action: in response.",
+                "",
+                [],
+                "I'm good. How about you?",
+                [
+                    AgentUnknownAction(
+                        text="I'm good. How about you?",
+                    ),
                 ],
             ),
         ],
@@ -332,7 +338,7 @@ class TestReActAgent:
         chat_history: list[str] | str,
         agent_scratchpad: list[AgentStep],
         model_response: str,
-        expected_actions: list[ReActAgentToolAction | ReActAgentFinalAnswer],
+        expected_actions: list[AgentToolAction | AgentFinalAnswer],
         prompt: ReActAgent,
     ):
         await _assert_agent_invoked(
