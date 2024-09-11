@@ -3,7 +3,7 @@ from typing import AsyncIterator, Generic, Protocol
 from langchain_core.runnables import Runnable
 
 from ai_gateway.auth import GitLabUser
-from ai_gateway.chat.agents import TypeAgentAction, TypeAgentInputs
+from ai_gateway.chat.agents import TypeAgentEvent, TypeAgentInputs
 from ai_gateway.chat.base import BaseToolsRegistry
 from ai_gateway.chat.tools import BaseTool
 from ai_gateway.prompts import Prompt
@@ -15,15 +15,15 @@ __all__ = [
 ]
 
 
-class TypeAgentFactory(Protocol[TypeAgentInputs, TypeAgentAction]):
+class TypeAgentFactory(Protocol[TypeAgentInputs, TypeAgentEvent]):
     def __call__(
         self,
         *,
         model_metadata: ModelMetadata,
-    ) -> Runnable[TypeAgentInputs, TypeAgentAction]: ...
+    ) -> Runnable[TypeAgentInputs, TypeAgentEvent]: ...
 
 
-class GLAgentRemoteExecutor(Generic[TypeAgentInputs, TypeAgentAction]):
+class GLAgentRemoteExecutor(Generic[TypeAgentInputs, TypeAgentEvent]):
     def __init__(
         self,
         *,
@@ -48,14 +48,12 @@ class GLAgentRemoteExecutor(Generic[TypeAgentInputs, TypeAgentAction]):
         if not user.is_debug:
             self._tools = self.tools_registry.get_on_behalf(user, gl_version)
 
-    async def invoke(self, *, inputs: TypeAgentInputs) -> TypeAgentAction:
+    async def invoke(self, *, inputs: TypeAgentInputs) -> TypeAgentEvent:
         agent, inputs = self._process_inputs(inputs)
 
         return await agent.ainvoke(inputs)
 
-    async def stream(
-        self, *, inputs: TypeAgentInputs
-    ) -> AsyncIterator[TypeAgentAction]:
+    async def stream(self, *, inputs: TypeAgentInputs) -> AsyncIterator[TypeAgentEvent]:
         agent, inputs = self._process_inputs(inputs)
 
         async for action in agent.astream(inputs):

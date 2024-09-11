@@ -1,3 +1,4 @@
+import json
 from typing import AsyncIterator
 from unittest.mock import Mock, PropertyMock, patch
 
@@ -6,22 +7,17 @@ from langchain_core.language_models.chat_models import BaseChatModel
 from starlette.testclient import TestClient
 
 from ai_gateway.api.v2 import api_router
-from ai_gateway.api.v2.chat.typing import (
-    AgentRequestOptions,
-    AgentStreamResponseEvent,
-    ReActAgentScratchpad,
-)
+from ai_gateway.api.v2.chat.typing import AgentRequestOptions, ReActAgentScratchpad
 from ai_gateway.auth import GitLabUser, User, UserClaims
 from ai_gateway.chat.agents import (
+    AgentBaseEvent,
     AgentStep,
+    AgentToolAction,
     Context,
     CurrentFile,
     ReActAgentInputs,
-    ReActAgentToolAction,
-    TypeAgentAction,
-    TypeReActAgentAction,
 )
-from ai_gateway.chat.agents.react import ReActAgentFinalAnswer
+from ai_gateway.chat.agents.typing import AgentFinalAnswer, TypeAgentEvent
 from ai_gateway.config import Config
 from ai_gateway.gitlab_features import WrongUnitPrimitives
 from ai_gateway.prompts.typing import ModelMetadata
@@ -64,7 +60,7 @@ def mocked_tools():
 
 @pytest.fixture()
 def mocked_on_behalf():
-    def _on_behalf(user: GitLabUser, gl_version: str) -> AsyncIterator[TypeAgentAction]:
+    def _on_behalf(user: GitLabUser, gl_version: str) -> AsyncIterator[TypeAgentEvent]:
         if len(user.unit_primitives) == 0:
             # We don't expect any unit primitives allocated by the user
             raise WrongUnitPrimitives()
@@ -84,6 +80,12 @@ def mock_config():
     config.custom_models.enabled = True
 
     yield config
+
+
+def chunk_to_model(chunk: str, klass: AgentBaseEvent) -> str:
+    res = json.loads(chunk)
+    data = res.pop("data")
+    return klass.model_validate({**res, **data})
 
 
 class TestReActAgentStream:
@@ -121,7 +123,7 @@ class TestReActAgentStream:
                     ),
                 ),
                 [
-                    ReActAgentToolAction(
+                    AgentToolAction(
                         thought="thought",
                         tool="tool",
                         tool_input="tool_input",
@@ -134,13 +136,10 @@ class TestReActAgentStream:
                     api_key="token",
                 ),
                 [
-                    AgentStreamResponseEvent(
-                        type="action",
-                        data=ReActAgentToolAction(
-                            thought="thought",
-                            tool="tool",
-                            tool_input="tool_input",
-                        ),
+                    AgentToolAction(
+                        thought="thought",
+                        tool="tool",
+                        tool_input="tool_input",
                     )
                 ],
                 ["Mystery Resource 1", "Mystery Resource 2"],
@@ -154,12 +153,12 @@ class TestReActAgentStream:
         mock_track_internal_event,
         prompt: str,
         agent_options: AgentRequestOptions,
-        actions: list[TypeAgentAction],
-        expected_actions: list[AgentStreamResponseEvent],
+        actions: list[TypeAgentEvent],
+        expected_actions: list[TypeAgentEvent],
         model_metadata: ModelMetadata,
         unavailable_resources: list[str],
     ):
-        async def _agent_stream(*_args, **_kwargs) -> AsyncIterator[TypeAgentAction]:
+        async def _agent_stream(*_args, **_kwargs) -> AsyncIterator[TypeAgentEvent]:
             for action in actions:
                 yield action
 
@@ -180,13 +179,13 @@ class TestReActAgentStream:
         )
 
         actual_actions = [
-            AgentStreamResponseEvent.model_validate_json(chunk)
+            chunk_to_model(chunk, AgentToolAction)
             for chunk in response.text.strip().split("\n")
         ]
 
         agent_scratchpad = [
-            AgentStep[TypeReActAgentAction](
-                action=ReActAgentToolAction(
+            AgentStep(
+                action=AgentToolAction(
                     thought=step.thought,
                     tool=step.tool,
                     tool_input=step.tool_input,
@@ -266,11 +265,8 @@ class TestChatAgent:
                 ),
                 "thought\nFinal Answer: answer\n",
                 [
-                    AgentStreamResponseEvent(
-                        type="final_answer_delta",
-                        data=ReActAgentFinalAnswer(
-                            text=c,
-                        ),
+                    AgentFinalAnswer(
+                        text=c,
                     )
                     for c in "answer"
                 ],
@@ -288,11 +284,8 @@ class TestChatAgent:
                 ),
                 "thought\nFinal Answer: answer\n",
                 [
-                    AgentStreamResponseEvent(
-                        type="final_answer_delta",
-                        data=ReActAgentFinalAnswer(
-                            text=c,
-                        ),
+                    AgentFinalAnswer(
+                        text=c,
                     )
                     for c in "answer"
                 ],
@@ -307,7 +300,7 @@ class TestChatAgent:
         mock_track_internal_event,
         question: str,
         agent_options: AgentRequestOptions,
-        expected_actions: list[AgentStreamResponseEvent],
+        expected_actions: list[TypeAgentEvent],
     ):
         response = mock_client.post(
             "/chat/agent",
@@ -322,7 +315,7 @@ class TestChatAgent:
         )
 
         actual_actions = [
-            AgentStreamResponseEvent.model_validate_json(chunk)
+            chunk_to_model(chunk, AgentFinalAnswer)
             for chunk in response.text.strip().split("\n")
         ]
 

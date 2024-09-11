@@ -46,9 +46,9 @@ def test_container(mock_container: containers.DeclarativeContainer):
         assert isinstance(prompt, Prompt)
 
         if isinstance(prompt, ReActAgent):
-            prompt_template = prompt.bound.middle[0]
+            prompt_template = prompt.bound.middle[0]  # type: ignore[attr-defined]
         else:
-            prompt_template = prompt.bound.first
+            prompt_template = prompt.bound.first  # type: ignore[attr-defined]
 
         # Check that the messages are populated correctly
         assert len(prompt_template.format_messages()) > 0
