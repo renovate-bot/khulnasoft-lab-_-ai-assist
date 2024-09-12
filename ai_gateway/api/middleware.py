@@ -296,6 +296,7 @@ class MiddlewareAuthentication(Middleware):
     def on_auth_error(_: Request, e: Exception):
         content = jsonable_encoder({"error": str(e)})
         context["auth_error_details"] = str(e)
+        context["http_exception_details"] = str(e)
         return JSONResponse(status_code=401, content=content)
 
     def __init__(
