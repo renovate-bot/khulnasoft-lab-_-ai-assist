@@ -127,10 +127,10 @@ def _build_endpoint() -> str:
 class ConfigGoogleCloudPlatform(BaseModel):
     project: str = ""
     service_account_json_key: str = ""
+    location: str = Field(default_factory=_build_location)
 
 
 class ConfigVertexTextModel(ConfigGoogleCloudPlatform):
-    location: str = Field(default_factory=_build_location)
     endpoint: str = Field(default_factory=_build_endpoint)
 
 

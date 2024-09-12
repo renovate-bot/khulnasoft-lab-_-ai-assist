@@ -50,6 +50,26 @@ def unit_primitives():
     return ["code_suggestions"]
 
 
+@pytest.fixture
+def mock_gcp_location():
+    with patch("ai_gateway.api.v2.code.completions.Config") as mock:
+        mock.return_value = Mock(
+            google_cloud_platform=Mock(location="us-mock-location")
+        )
+
+        yield mock
+
+
+@pytest.fixture
+def mock_gcp_location_in_asia():
+    with patch("ai_gateway.api.v2.code.completions.Config") as mock:
+        mock.return_value = Mock(
+            google_cloud_platform=Mock(location="asia-mock-location")
+        )
+
+        yield mock
+
+
 class TestCodeCompletions:
     def cleanup(self):
         """Ensure Snowplow cache is reset between tests."""
@@ -929,7 +949,9 @@ class TestCodeCompletions:
 
         assert response.status_code == expected_status_code
 
-    def test_vertex_codestral(self, mock_client: Mock, mock_litellm_acompletion: Mock):
+    def test_vertex_codestral(
+        self, mock_client: Mock, mock_litellm_acompletion: Mock, mock_gcp_location: Mock
+    ):
         params = {
             "prompt_version": 2,
             "project_path": "gitlab-org/gitlab",
@@ -973,6 +995,39 @@ class TestCodeCompletions:
         assert (
             (body["detail"])
             == "You cannot specify a prompt with the given provider and model combination"
+        )
+
+    def test_attempt_vertex_codestral_in_asia(
+        self,
+        mock_client: Mock,
+        mock_litellm_acompletion: Mock,
+        mock_completions_legacy: Mock,
+        mock_gcp_location_in_asia: Mock,
+    ):
+        params = {
+            "prompt_version": 1,
+            "project_path": "gitlab-org/gitlab",
+            "project_id": 278964,
+            "current_file": {
+                "file_name": "main.py",
+                "content_above_cursor": "foo",
+                "content_below_cursor": "\n",
+            },
+            "model_provider": "vertex-ai",
+            "model_name": "codestral@2405",
+        }
+
+        self._send_code_completions_request(mock_client, params)
+
+        assert not mock_litellm_acompletion.called
+
+        mock_completions_legacy.assert_called_once_with(
+            prefix="foo",
+            suffix="\n",
+            file_name="main.py",
+            editor_lang=None,
+            stream=False,
+            snowplow_event_context=ANY,
         )
 
     def _send_code_completions_request(self, mock_client, params):

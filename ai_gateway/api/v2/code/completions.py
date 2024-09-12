@@ -45,6 +45,7 @@ from ai_gateway.code_suggestions.base import CodeSuggestionsOutput
 from ai_gateway.code_suggestions.language_server import LanguageServerVersion
 from ai_gateway.code_suggestions.processing.base import ModelEngineOutput
 from ai_gateway.code_suggestions.processing.ops import lang_from_filename
+from ai_gateway.config import Config
 from ai_gateway.gitlab_features import GitLabFeatureCategory, GitLabUnitPrimitive
 from ai_gateway.instrumentators.base import TelemetryInstrumentator
 from ai_gateway.internal_events import InternalEventsClient
@@ -169,6 +170,11 @@ async def completions(
     elif (
         payload.model_provider == KindModelProvider.VERTEX_AI
         and payload.model_name == KindLiteLlmModel.CODESTRAL_2405
+        # Codestral is currently not supported in asia-* locations
+        # This is a temporary change to allow rollout of Codestral to all internal users
+        # while we are looking into getting support for Codestral in Asia
+        # https://gitlab.com/gitlab-org/modelops/applied-ml/code-suggestions/ai-assist/-/issues/635
+        and _allow_vertex_codestral()
     ):
         code_completions = _resolve_code_completions_vertex_codestral(
             payload=payload,
@@ -489,6 +495,14 @@ def _completion_suggestion_choices(
 
 def _generation_suggestion_choices(text: str) -> list:
     return [SuggestionsResponse.Choice(text=text)] if text else []
+
+
+def _allow_vertex_codestral():
+    return not _get_gcp_location().startswith("asia-")
+
+
+def _get_gcp_location():
+    return Config().google_cloud_platform.location
 
 
 async def _handle_stream(
