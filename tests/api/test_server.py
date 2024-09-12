@@ -70,14 +70,6 @@ def app():
     return FastAPI()
 
 
-@pytest.fixture
-def container_application():
-    container_app = ContainerApplication()
-    container_app.init_resources = MagicMock()
-    container_app.shutdown_resources = MagicMock()
-    return container_app
-
-
 @pytest.fixture(scope="session")
 def auth_enabled():
     # pylint: disable=direct-environment-variable-reference
@@ -178,17 +170,14 @@ async def test_lifespan(config, app, unused_port, monkeypatch, vertex_project):
 
     async with server.lifespan(app):
         mock_container_app.assert_called_once()
-        assert mock_container_app.return_value.config.from_dict.called_once_with(
+        mock_container_app.return_value.config.from_dict.assert_called_once_with(
             config.model_dump()
         )
-        assert mock_container_app.return_value.init_resources.called_once()
 
         if config.instrumentator.thread_monitoring_enabled:
             asyncio.get_running_loop.assert_called_once()
 
         assert litellm.vertex_project == vertex_project
-
-    assert mock_container_app.return_value.shutdown_resources.called_once()
 
 
 def test_middleware_authentication(fastapi_server_app: FastAPI, auth_enabled: bool):
