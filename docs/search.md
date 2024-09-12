@@ -7,7 +7,7 @@ You can use `POST /v1/search/(search-app-name)` endpoint in AI Gateway for perfo
 
 ## Data ingestion and refreshing
 
-### GitLab documentations
+### GitLab documentation on GitLab hosted AI Gateway
 
 Input:
 
@@ -123,3 +123,21 @@ You can check usage quota in [GCP console](https://console.cloud.google.com/home
 1. Check **Current usage percentage**. If the value is saturated, [search API in AI Gateway](#search-api-in-ai-gateway) or [ingestion process](#data-ingestion-and-refreshing) could fail.
 
 Here is a [quota and usage percentage for `ai-enablement-dev-69497ba7` GCP project](https://console.cloud.google.com/apis/api/discoveryengine.googleapis.com/quotas?project=ai-enablement-dev-69497ba7).
+
+## GitLab documentation on self-hosted AI Gateway
+
+Customer that self-hosted their AI Gateway instance do not have access to GitLab VertexAI instance. As an alternative 
+way of searching for documentation, the AI Gateway self-hosted image already includes embedded search on tags `self-hosted-17.4.0-ee` and 
+later.
+
+To achieve this, we use [a full-text search using bm25 on a sqlite database](https://www.sqlite.org/fts5.html). The corpus 
+is generated when building the Docker image and is updated for every version, users are not required to take any action. 
+This mechanism is light and simple, but the results are not robust towards user query. It is recommended to strip away unnecessary 
+words and pass only the intent. For example, instead of querying `How can I create an issue`, better results are obtained 
+by querying `create issue`.
+
+To generate the corpus, run:
+
+```shell
+poetry run python scripts/index_docs_as_sqlite.py -o <tmp/output-database-path> -v <gitlab-version-tag>
+```
