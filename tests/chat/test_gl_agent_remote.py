@@ -95,7 +95,9 @@ class TestGLAgentRemoteExecutor:
         else:
             tools_registry.get_on_behalf.assert_called_once_with(user, gl_version)
 
-        agent_factory.assert_called_once_with(model_metadata=inputs.model_metadata)
+        agent_factory.assert_called_once_with(
+            chat_history=inputs.chat_history, model_metadata=inputs.model_metadata
+        )
         agent.ainvoke.assert_called_once_with(inputs)
         assert actual_action == expected_tool_action
 
@@ -122,6 +124,8 @@ class TestGLAgentRemoteExecutor:
         else:
             tools_registry.get_on_behalf.assert_called_once_with(user, gl_version)
 
-        agent_factory.assert_called_once_with(model_metadata=inputs.model_metadata)
+        agent_factory.assert_called_once_with(
+            chat_history=inputs.chat_history, model_metadata=inputs.model_metadata
+        )
         agent.astream.assert_called_once_with(inputs)
         assert actual_actions == [expected_tool_action]

@@ -42,7 +42,9 @@ def test_container(mock_container: containers.DeclarativeContainer):
                 name=str(model_name), endpoint=Url("http://localhost:4000"), provider=""
             )
 
-        prompt = registry.get(str(prompt_id), model_metadata=model_metadata)
+        prompt = registry.get(
+            str(prompt_id), model_metadata=model_metadata, chat_history="test"
+        )
         assert isinstance(prompt, Prompt)
 
         if isinstance(prompt, ReActAgent):

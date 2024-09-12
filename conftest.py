@@ -429,6 +429,9 @@ def prompt_config(
 def model_metadata():
     yield None
 
+@pytest.fixture
+def prompt_kwargs():
+    yield {}
 
 @pytest.fixture
 def prompt_class():
@@ -441,5 +444,6 @@ def prompt(
     model_factory: TypeModelFactory,
     prompt_config: PromptConfig,
     model_metadata: ModelMetadata | None,
+    prompt_kwargs: dict,
 ):
-    yield prompt_class(model_factory, prompt_config, model_metadata)
+    yield prompt_class(model_factory, prompt_config, model_metadata, **prompt_kwargs)

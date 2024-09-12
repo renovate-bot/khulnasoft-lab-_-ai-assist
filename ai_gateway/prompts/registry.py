@@ -48,6 +48,7 @@ class LocalPromptRegistry(BasePromptRegistry):
         self,
         prompt_id: str,
         model_metadata: Optional[ModelMetadata] = None,
+        **kwargs,
     ) -> Prompt:
         if (
             model_metadata
@@ -68,7 +69,7 @@ class LocalPromptRegistry(BasePromptRegistry):
                 f"unrecognized model class provider `{model_class_provider}`."
             )
 
-        return klass(model_factory, config, model_metadata)
+        return klass(model_factory, config, model_metadata, **kwargs)
 
     @classmethod
     def from_local_yaml(

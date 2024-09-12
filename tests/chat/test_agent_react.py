@@ -18,6 +18,7 @@ from ai_gateway.chat.agents.typing import (
     CurrentFile,
 )
 from ai_gateway.chat.tools.base import BaseTool
+from ai_gateway.models.base_chat import Message, Role
 
 
 @pytest.fixture
@@ -25,11 +26,21 @@ def prompt_class():
     yield ReActAgent
 
 
+@pytest.fixture
+def prompt_kwargs():
+    yield {
+        "chat_history": [
+            Message(role=Role.USER, content="Hi, how are you?"),
+            Message(role=Role.ASSISTANT, content="I'm good!"),
+        ]
+    }
+
+
 async def _assert_agent_invoked(
     prompt: ReActAgent,
     question: str,
     agent_scratchpad: list[AgentStep],
-    chat_history: list[str] | str,
+    chat_history: list[Message] | list[str] | str,
     expected_actions: list[AgentToolAction | AgentFinalAnswer | AgentUnknownAction],
     stream: bool,
 ):
@@ -50,7 +61,7 @@ async def _assert_agent_invoked(
 @pytest.fixture
 def prompt_template():
     yield {
-        "system": "{{chat_history}}\n\nYou are a DevSecOps Assistant named 'GitLab Duo Chat' created by GitLab.",
+        "system": "You are a DevSecOps Assistant named 'GitLab Duo Chat' created by GitLab.",
         "user": "{{question}}",
         "assistant": "{{agent_scratchpad}}",
     }
@@ -75,7 +86,22 @@ def final_answer(model_response: str):
     )
 
 
-def test_react_input_parser():
+@pytest.mark.parametrize(
+    ("chat_history", "expected_chat_history"),
+    [
+        (["str1", "str2"], "str1\nstr2"),
+        (
+            [
+                Message(role=Role.USER, content="Hi, how are you?"),
+                Message(role=Role.ASSISTANT, content="I'm good!"),
+            ],
+            None,
+        ),
+    ],
+)
+def test_react_input_parser(
+    chat_history: list[Message] | list[str] | str, expected_chat_history
+):
     additional_context = AdditionalContext(
         id="hello.py",
         category="file",
@@ -94,7 +120,7 @@ def test_react_input_parser():
 
     inputs = ReActAgentInputs(
         question="What is this file about?",
-        chat_history=["str1", "str2"],
+        chat_history=chat_history,
         agent_scratchpad=[],
         additional_context=[additional_context],
         context=context,
@@ -107,7 +133,10 @@ def test_react_input_parser():
     parsed_inputs = parser.invoke(inputs)
 
     assert parsed_inputs["question"] == "What is this file about?"
-    assert parsed_inputs["chat_history"] == "str1\nstr2"
+    if expected_chat_history:
+        assert parsed_inputs["chat_history"] == expected_chat_history
+    else:
+        assert "chat_history" not in parsed_inputs
     assert parsed_inputs["agent_scratchpad"] == ""
     assert parsed_inputs["additional_context"] == [additional_context]
     assert parsed_inputs["context_type"] == "issue"
@@ -298,6 +327,18 @@ class TestReActAgent:
                 ],
             ),
             (
+                "Can you explain the print function?",
+                [
+                    Message(role=Role.USER, content="How can I log output?"),
+                    Message(role=Role.ASSISTANT, content="Use print function"),
+                ],
+                [],
+                "Thought: I'm thinking...\nFinal Answer: A",
+                [
+                    AgentFinalAnswer(text="A"),
+                ],
+            ),
+            (
                 "What's your name?",
                 "User: what's the description of this issue\nAI: PoC ReAct",
                 [
@@ -335,7 +376,7 @@ class TestReActAgent:
     async def test_stream(
         self,
         question: str,
-        chat_history: list[str] | str,
+        chat_history: list[Message] | list[str] | str,
         agent_scratchpad: list[AgentStep],
         model_response: str,
         expected_actions: list[AgentToolAction | AgentFinalAnswer],
