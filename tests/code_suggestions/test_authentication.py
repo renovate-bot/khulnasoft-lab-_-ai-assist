@@ -95,7 +95,7 @@ invalid_authentication_token_type_error = {
                 claims=UserClaims(scopes=["feature1", "feature3"]),
             ),
             {"error": "No authorization header presented"},
-            ["auth_error_details"],
+            ["auth_error_details", "http_exception_details"],
         ),
         (
             {"Authorization": "invalid"},
@@ -106,7 +106,7 @@ invalid_authentication_token_type_error = {
                 claims=UserClaims(scopes=["feature1", "feature3"]),
             ),
             {"error": "Invalid authorization header"},
-            ["auth_error_details"],
+            ["auth_error_details", "http_exception_details"],
         ),
         (
             {"Authorization": "Bearer 12345"},
@@ -117,7 +117,7 @@ invalid_authentication_token_type_error = {
                 claims=UserClaims(scopes=["feature1", "feature3"]),
             ),
             invalid_authentication_token_type_error,
-            ["auth_duration_s", "auth_error_details"],
+            ["auth_duration_s", "auth_error_details", "http_exception_details"],
         ),
         (
             {
@@ -297,7 +297,12 @@ invalid_authentication_token_type_error = {
                 ),
             ),
             {"error": "Forbidden by auth provider"},
-            ["auth_duration_s", "auth_error_details", "token_issuer"],
+            [
+                "auth_duration_s",
+                "auth_error_details",
+                "token_issuer",
+                "http_exception_details",
+            ],
         ),
         (
             {
@@ -318,7 +323,12 @@ invalid_authentication_token_type_error = {
                 ),
             ),
             {"error": "Header mismatch 'X-Gitlab-Instance-Id'"},
-            ["auth_duration_s", "auth_error_details", "token_issuer"],
+            [
+                "auth_duration_s",
+                "auth_error_details",
+                "token_issuer",
+                "http_exception_details",
+            ],
         ),
         (
             {
@@ -339,7 +349,12 @@ invalid_authentication_token_type_error = {
                 ),
             ),
             {"error": "Header mismatch 'X-Gitlab-Realm'"},
-            ["auth_duration_s", "auth_error_details", "token_issuer"],
+            [
+                "auth_duration_s",
+                "auth_error_details",
+                "token_issuer",
+                "http_exception_details",
+            ],
         ),
         (
             # If JWT claim doesn't contain a value, the value header check is skipped
@@ -386,7 +401,12 @@ invalid_authentication_token_type_error = {
                 ),
             ),
             {"error": "Header mismatch 'X-Gitlab-Global-User-Id'"},
-            ["auth_duration_s", "auth_error_details", "token_issuer"],
+            [
+                "auth_duration_s",
+                "auth_error_details",
+                "token_issuer",
+                "http_exception_details",
+            ],
         ),
         (
             {
@@ -438,7 +458,12 @@ invalid_authentication_token_type_error = {
                 ),
             ),
             {"error": "Header is missing: 'X-Gitlab-Duo-Seat-Count'"},
-            ["auth_duration_s", "auth_error_details", "token_issuer"],
+            [
+                "auth_duration_s",
+                "auth_error_details",
+                "token_issuer",
+                "http_exception_details",
+            ],
         ),
         # 'duo_seat_count' claim is non-empty, 'X-Gitlab-Duo-Seat-Count' is present but does not match the claim
         (
@@ -464,7 +489,12 @@ invalid_authentication_token_type_error = {
                 ),
             ),
             {"error": "Header mismatch 'X-Gitlab-Duo-Seat-Count'"},
-            ["auth_duration_s", "auth_error_details", "token_issuer"],
+            [
+                "auth_duration_s",
+                "auth_error_details",
+                "token_issuer",
+                "http_exception_details",
+            ],
         ),
         # 'duo_seat_count' claim is non-empty, 'X-Gitlab-Duo-Seat-Count' is present and matches the claim
         (
@@ -519,7 +549,12 @@ invalid_authentication_token_type_error = {
                 ),
             ),
             {"error": "Header mismatch 'X-Gitlab-Instance-Id'"},
-            ["auth_duration_s", "auth_error_details", "token_issuer"],
+            [
+                "auth_duration_s",
+                "auth_error_details",
+                "token_issuer",
+                "http_exception_details",
+            ],
         ),
         # 'gitlab_instance_id' claim is non-empty, 'X-Gitlab-Instance-Id' is present but does not match the claim
         (
@@ -545,7 +580,12 @@ invalid_authentication_token_type_error = {
                 ),
             ),
             {"error": "Header mismatch 'X-Gitlab-Instance-Id'"},
-            ["auth_duration_s", "auth_error_details", "token_issuer"],
+            [
+                "auth_duration_s",
+                "auth_error_details",
+                "token_issuer",
+                "http_exception_details",
+            ],
         ),
         # 'gitlab_instance_id' claim is non-empty, 'X-Gitlab-Instance-Id' is present and matches the claim
         (
