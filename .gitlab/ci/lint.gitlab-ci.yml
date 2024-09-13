@@ -15,7 +15,7 @@ lint:
 
 lint:doc:
   stage: lint
-  image: registry.gitlab.com/gitlab-org/gitlab-docs/lint-markdown:alpine-3.20-vale-3.7.0-markdownlint2-0.13.0-lychee-0.15.1
+  image: registry.gitlab.com/gitlab-org/gitlab-docs/lint-markdown:alpine-3.20-vale-3.7.1-markdownlint2-0.13.0-lychee-0.15.1
   rules:
     - changes:
         - "**/*.{md}"
