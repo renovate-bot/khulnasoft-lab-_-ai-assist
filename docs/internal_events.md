@@ -57,12 +57,12 @@ See [this section](https://docs.gitlab.com/ee/development/internal_analytics/int
 1. Enable snowplow micro in GDK with [these instructions](https://docs.gitlab.com/ee/development/internal_analytics/internal_event_instrumentation/local_setup_and_debugging.html#snowplow-micro).
 1. Update [the application settings](application_settings.md#how-to-update-application-settings):
 
-    ```shell
-    AIGW_INTERNAL_EVENT__ENABLED=true
-    AIGW_INTERNAL_EVENT__ENDPOINT=http://127.0.0.1:9091
-    AIGW_INTERNAL_EVENT__BATCH_SIZE=1
-    AIGW_INTERNAL_EVENT__THREAD_COUNT=1
-    ```
+   ```shell
+   AIGW_INTERNAL_EVENT__ENABLED=true
+   AIGW_INTERNAL_EVENT__ENDPOINT=http://127.0.0.1:9091
+   AIGW_INTERNAL_EVENT__BATCH_SIZE=1
+   AIGW_INTERNAL_EVENT__THREAD_COUNT=1
+   ```
 
 1. Run snowplow micro with `gdk start snowplow-micro`.
 1. Run AI Gateway with `poetry run ai_gateway`.
