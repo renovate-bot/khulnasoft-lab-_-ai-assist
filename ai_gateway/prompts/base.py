@@ -46,10 +46,11 @@ class Prompt(RunnableBinding[Input, Output]):
         model_factory: TypeModelFactory,
         config: PromptConfig,
         model_metadata: Optional[ModelMetadata] = None,
+        **kwargs,
     ):
         model_kwargs = self._build_model_kwargs(config.params, model_metadata)
         model = self._build_model(model_factory, config.model)
-        messages = self.build_messages(config.prompt_template)
+        messages = self.build_messages(config.prompt_template, **kwargs)
         prompt = ChatPromptTemplate.from_messages(messages, template_format="jinja2")
         chain = self._build_chain(
             cast(Runnable[Input, Output], prompt | model.bind(**model_kwargs))
@@ -135,7 +136,7 @@ class Prompt(RunnableBinding[Input, Output]):
 
     @classmethod
     def build_messages(
-        cls, prompt_template: dict[str, str]
+        cls, prompt_template: dict[str, str], **kwargs
     ) -> Sequence[MessageLikeRepresentation]:
         messages = []
 

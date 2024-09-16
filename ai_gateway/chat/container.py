@@ -5,7 +5,6 @@ from dependency_injector import containers, providers
 from ai_gateway.chat.agents import ReActAgent, ReActAgentInputs, TypeAgentEvent
 from ai_gateway.chat.executor import GLAgentRemoteExecutor, TypeAgentFactory
 from ai_gateway.chat.toolset import DuoChatToolsRegistry
-from ai_gateway.prompts.typing import ModelMetadata
 
 if TYPE_CHECKING:
     from ai_gateway.prompts import BasePromptRegistry
@@ -18,8 +17,8 @@ __all__ = [
 def _react_agent_factory(
     prompt_registry: "BasePromptRegistry",
 ) -> TypeAgentFactory[ReActAgentInputs, TypeAgentEvent]:
-    def _fn(model_metadata: ModelMetadata) -> ReActAgent:
-        return prompt_registry.get("chat/react", model_metadata)
+    def _fn(**kwargs) -> ReActAgent:
+        return prompt_registry.get("chat/react", **kwargs)
 
     return _fn
 

@@ -1,9 +1,11 @@
 import re
-from typing import Any, AsyncIterator, Optional
+from typing import Any, AsyncIterator, Optional, Sequence
 
 from langchain_core.exceptions import OutputParserException
+from langchain_core.messages import AIMessage, HumanMessage
 from langchain_core.output_parsers import BaseCumulativeTransformOutputParser
 from langchain_core.outputs import Generation
+from langchain_core.prompts.chat import MessageLikeRepresentation
 from langchain_core.runnables import Runnable, RunnableConfig
 from pydantic import BaseModel
 
@@ -18,6 +20,7 @@ from ai_gateway.chat.agents.typing import (
     TypeAgentEvent,
 )
 from ai_gateway.chat.tools.base import BaseTool
+from ai_gateway.models.base_chat import Message, Role
 from ai_gateway.prompts import Prompt
 from ai_gateway.prompts.typing import ModelMetadata
 
@@ -30,7 +33,7 @@ __all__ = [
 
 class ReActAgentInputs(BaseModel):
     question: str
-    chat_history: str | list[str]
+    chat_history: list[Message] | list[str] | str
     agent_scratchpad: list[AgentStep]
     context: Optional[Context] = None
     current_file: Optional[CurrentFile] = None
@@ -48,7 +51,6 @@ class ReActInputParser(Runnable[ReActAgentInputs, dict]):
     ) -> dict:
         final_inputs = {
             "additional_context": input.additional_context,
-            "chat_history": chat_history_plain_text_renderer(input.chat_history),
             "context_type": "",
             "context_content": "",
             "question": input.question,
@@ -59,6 +61,16 @@ class ReActInputParser(Runnable[ReActAgentInputs, dict]):
             "unavailable_resources": input.unavailable_resources,
             "tools": input.tools,
         }
+
+        if isinstance(input.chat_history, list) and any(
+            isinstance(m, Message) for m in input.chat_history
+        ):
+            pass  # no-op
+        else:
+            # Legacy support for chat history as a string
+            final_inputs.update(
+                {"chat_history": chat_history_plain_text_renderer(input.chat_history)}
+            )
 
         if context := input.context:
             final_inputs.update(
@@ -170,6 +182,40 @@ class ReActAgent(Prompt[ReActAgentInputs, TypeAgentEvent]):
         chain: Runnable[ReActAgentInputs, TypeAgentEvent]
     ) -> Runnable[ReActAgentInputs, TypeAgentEvent]:
         return ReActInputParser() | chain | ReActPlainTextParser()
+
+    @classmethod
+    def build_messages(
+        cls,
+        prompt_template: dict[str, str],
+        chat_history: list[Message] | list[str] | str,
+        **kwargs,
+    ) -> Sequence[MessageLikeRepresentation]:
+        messages = []
+
+        if "system" in prompt_template:
+            messages.append(("system", prompt_template["system"]))
+
+        # NOTE: You MUST encapsulate arbitrary inputs into HumanMessage or AIMessage.
+        # Do NOT use other types (e.g. tuple).
+        # See https://gitlab.com/gitlab-org/modelops/applied-ml/code-suggestions/ai-assist/-/issues/604
+        if isinstance(chat_history, list) and all(
+            isinstance(m, Message) for m in chat_history
+        ):
+            for m in chat_history:
+                if m.role is Role.USER:
+                    messages.append(HumanMessage(m.content))
+                elif m.role is Role.ASSISTANT:
+                    messages.append(AIMessage(m.content))
+                else:
+                    raise ValueError("Unsupported message")
+
+        if "user" in prompt_template:
+            messages.append(("user", prompt_template["user"]))
+
+        if "assistant" in prompt_template:
+            messages.append(("assistant", prompt_template["assistant"]))
+
+        return messages
 
     async def astream(
         self,

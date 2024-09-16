@@ -13,7 +13,8 @@ from ai_gateway.chat.agents import ReActAgent
 from ai_gateway.config import Config
 from ai_gateway.gitlab_features import GitLabUnitPrimitive
 from ai_gateway.prompts import Prompt
-from ai_gateway.prompts.typing import ModelMetadata
+from ai_gateway.prompts.config.base import PromptConfig
+from ai_gateway.prompts.typing import ModelMetadata, TypeModelFactory
 
 
 class FakeModel(SimpleChatModel):
@@ -59,6 +60,28 @@ def model_factory():
 @pytest.fixture
 def prompt_template():
     yield {"system": "Hi, I'm {{name}} and I'm {{age}} years old"}
+
+
+@pytest.fixture
+def prompt(
+    prompt_class: Type[Prompt],
+    model_factory: TypeModelFactory,
+    prompt_config: PromptConfig,
+    model_metadata: ModelMetadata | None,
+    prompt_kwargs: dict,
+):
+    if prompt_class is ReActAgent:
+        yield prompt_class(
+            model_factory,
+            prompt_config,
+            model_metadata,
+            chat_history="chat_history",
+            **prompt_kwargs,
+        )
+    else:
+        yield prompt_class(
+            model_factory, prompt_config, model_metadata, **prompt_kwargs
+        )
 
 
 @pytest.fixture

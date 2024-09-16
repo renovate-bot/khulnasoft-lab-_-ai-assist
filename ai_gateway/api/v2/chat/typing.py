@@ -4,6 +4,7 @@ from pydantic import BaseModel, Field
 
 from ai_gateway.chat.agents import Context, CurrentFile
 from ai_gateway.chat.agents.typing import AdditionalContext
+from ai_gateway.models.base_chat import Message
 from ai_gateway.prompts.typing import ModelMetadata
 
 __all__ = [
@@ -25,7 +26,7 @@ class ReActAgentScratchpad(BaseModel):
 
 
 class AgentRequestOptions(BaseModel):
-    chat_history: str | list[str]
+    chat_history: list[Message] | list[str] | str
     agent_scratchpad: ReActAgentScratchpad = Field(discriminator="agent_type")
     context: Optional[Context] = None
     current_file: Optional[CurrentFile] = None
