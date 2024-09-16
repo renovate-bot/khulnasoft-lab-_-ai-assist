@@ -1,5 +1,5 @@
 from enum import StrEnum
-from typing import Annotated, List, Literal, Optional, Union
+from typing import Annotated, Any, List, Literal, Optional, Union
 
 from fastapi import Body
 from pydantic import BaseModel, ConfigDict, Field, StringConstraints
@@ -50,6 +50,8 @@ class EditorContentCompletionPayload(EditorContentPayload):
 
 class EditorContentGenerationPayload(EditorContentPayload):
     prompt: Optional[Annotated[str, StringConstraints(max_length=400000)]] = None
+    prompt_id: Optional[str] = None
+    prompt_enhancer: Optional[dict[str, Any]] = None
 
 
 class CodeEditorCompletion(BaseModel):
