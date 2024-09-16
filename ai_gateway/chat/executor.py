@@ -1,11 +1,13 @@
 from typing import AsyncIterator, Generic, Protocol
 
+import structlog
 from langchain_core.runnables import Runnable
 
 from ai_gateway.auth import GitLabUser
 from ai_gateway.chat.agents import TypeAgentEvent, TypeAgentInputs
 from ai_gateway.chat.base import BaseToolsRegistry
 from ai_gateway.chat.tools import BaseTool
+from ai_gateway.feature_flags import FeatureFlag, is_feature_enabled
 from ai_gateway.prompts import Prompt
 from ai_gateway.prompts.typing import ModelMetadata
 
@@ -13,6 +15,8 @@ __all__ = [
     "TypeAgentFactory",
     "GLAgentRemoteExecutor",
 ]
+
+log = structlog.stdlib.get_logger("gl_agent_remote_executor")
 
 
 class TypeAgentFactory(Protocol[TypeAgentInputs, TypeAgentEvent]):
@@ -55,6 +59,9 @@ class GLAgentRemoteExecutor(Generic[TypeAgentInputs, TypeAgentEvent]):
 
     async def stream(self, *, inputs: TypeAgentInputs) -> AsyncIterator[TypeAgentEvent]:
         agent, inputs = self._process_inputs(inputs)
+
+        if is_feature_enabled(FeatureFlag.EXPANDED_AI_LOGGING):
+            log.info("Processed inputs", source=__name__, inputs=inputs)
 
         async for action in agent.astream(inputs):
             yield action

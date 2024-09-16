@@ -19,6 +19,7 @@ from ai_gateway.chat.agents import (
     TypeAgentEvent,
 )
 from ai_gateway.chat.executor import GLAgentRemoteExecutor
+from ai_gateway.feature_flags import FeatureFlag, is_feature_enabled
 from ai_gateway.gitlab_features import (
     GitLabFeatureCategory,
     GitLabUnitPrimitive,
@@ -92,6 +93,9 @@ async def chat(
         f"request_{GitLabUnitPrimitive.DUO_CHAT}",
         category=__name__,
     )
+
+    if is_feature_enabled(FeatureFlag.EXPANDED_AI_LOGGING):
+        log.info("Request to V2 Chat Agent", source=__name__, inputs=inputs)
 
     stream_events = gl_agent_remote_executor.stream(inputs=inputs)
 

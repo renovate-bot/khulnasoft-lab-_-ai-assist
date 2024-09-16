@@ -1,10 +1,17 @@
 from contextvars import ContextVar
 from typing import List
 
-__all__ = ["is_feature_enabled", "current_feature_flag_context"]
+__all__ = ["is_feature_enabled", "current_feature_flag_context", "FeatureFlag"]
+
+from enum import StrEnum
 
 
-def is_feature_enabled(feature_name: str) -> bool:
+class FeatureFlag(StrEnum):
+    # Definition: https://gitlab.com/gitlab-org/gitlab/-/blob/master/config/feature_flags/development/expanded_ai_logging.yml
+    EXPANDED_AI_LOGGING = "expanded_ai_logging"
+
+
+def is_feature_enabled(feature_name: FeatureFlag | str) -> bool:
     """
     Check if a feature is enabled.
 
@@ -14,6 +21,10 @@ def is_feature_enabled(feature_name: str) -> bool:
     See https://gitlab.com/gitlab-org/modelops/applied-ml/code-suggestions/ai-assist/-/blob/main/docs/feature_flags.md
     """
     enabled_feature_flags: List[str] = current_feature_flag_context.get()
+
+    if isinstance(feature_name, FeatureFlag):
+        feature_name = feature_name.value
+
     return feature_name in enabled_feature_flags
 
 

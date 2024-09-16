@@ -10,6 +10,7 @@ from google.cloud.aiplatform.gapic import PredictionServiceAsyncClient
 from pydantic import BaseModel
 
 from ai_gateway.config import Config
+from ai_gateway.feature_flags import FeatureFlag, is_feature_enabled
 from ai_gateway.instrumentators.model_requests import ModelRequestInstrumentator
 
 # TODO: The instrumentator needs the config here to know what limit needs to be
@@ -30,7 +31,7 @@ __all__ = [
     "connect_anthropic",
 ]
 
-log = structlog.stdlib.get_logger("codesuggestions")
+log = structlog.stdlib.get_logger("models")
 
 
 class KindModelProvider(StrEnum):
@@ -114,6 +115,17 @@ def grpc_connect_vertex(client_options: dict) -> PredictionServiceAsyncClient:
     return PredictionServiceAsyncClient(client_options=client_options)
 
 
+async def log_anthropic_request(request: httpx.Request):
+    if is_feature_enabled(FeatureFlag.EXPANDED_AI_LOGGING):
+        log.info(
+            "Request to Anthropic",
+            source=__name__,
+            request_method=request.method,
+            request_url=request.url,
+            request_content=request.content,
+        )
+
+
 def connect_anthropic(**kwargs: Any) -> AsyncAnthropic:
     # Setting 30 seconds to the keep-alive expiry to avoid TLS handshake on every request.
     # See https://www.python-httpx.org/advanced/resource-limits/ for more information.
@@ -121,6 +133,8 @@ def connect_anthropic(**kwargs: Any) -> AsyncAnthropic:
         max_connections=1000, max_keepalive_connections=100, keepalive_expiry=30
     )
 
-    http_client: httpx.AsyncClient = _DefaultAsyncHttpxClient(limits=limits)
+    http_client: httpx.AsyncClient = _DefaultAsyncHttpxClient(
+        limits=limits, event_hooks={"request": [log_anthropic_request]}
+    )
 
     return AsyncAnthropic(http_client=http_client, **kwargs)
