@@ -1,6 +1,7 @@
 import re
 from typing import Any, AsyncIterator, Optional, Sequence
 
+import structlog
 from langchain_core.exceptions import OutputParserException
 from langchain_core.messages import AIMessage, HumanMessage
 from langchain_core.output_parsers import BaseCumulativeTransformOutputParser
@@ -20,6 +21,7 @@ from ai_gateway.chat.agents.typing import (
     TypeAgentEvent,
 )
 from ai_gateway.chat.tools.base import BaseTool
+from ai_gateway.feature_flags import FeatureFlag, is_feature_enabled
 from ai_gateway.models.base_chat import Message, Role
 from ai_gateway.prompts import Prompt
 from ai_gateway.prompts.typing import ModelMetadata
@@ -29,6 +31,8 @@ __all__ = [
     "ReActPlainTextParser",
     "ReActAgent",
 ]
+
+log = structlog.stdlib.get_logger("react")
 
 
 class ReActAgentInputs(BaseModel):
@@ -76,6 +80,9 @@ class ReActInputParser(Runnable[ReActAgentInputs, dict]):
             final_inputs.update(
                 {"context_type": context.type, "context_content": context.content}
             )
+
+        if is_feature_enabled(FeatureFlag.EXPANDED_AI_LOGGING):
+            log.info("ReActInputParser", source=__name__, final_inputs=final_inputs)
 
         return final_inputs
 
@@ -228,6 +235,9 @@ class ReActAgent(Prompt[ReActAgentInputs, TypeAgentEvent]):
         len_final_answer = 0
 
         async for event in astream:
+            if is_feature_enabled(FeatureFlag.EXPANDED_AI_LOGGING):
+                log.info("Response streaming", source=__name__, streamed_event=event)
+
             if isinstance(event, AgentFinalAnswer) and len(event.text) > 0:
                 yield AgentFinalAnswer(
                     text=event.text[len_final_answer:],

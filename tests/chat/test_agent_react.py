@@ -1,4 +1,5 @@
 import pytest
+from structlog.testing import capture_logs
 
 from ai_gateway.chat.agents.react import (
     AgentFinalAnswer,
@@ -18,6 +19,7 @@ from ai_gateway.chat.agents.typing import (
     CurrentFile,
 )
 from ai_gateway.chat.tools.base import BaseTool
+from ai_gateway.feature_flags.context import current_feature_flag_context
 from ai_gateway.models.base_chat import Message, Role
 
 
@@ -50,12 +52,16 @@ async def _assert_agent_invoked(
         agent_scratchpad=agent_scratchpad,
     )
 
-    if stream:
-        actual_actions = [action async for action in prompt.astream(inputs)]
-    else:
-        actual_actions = [await prompt.ainvoke(inputs)]
+    with capture_logs() as cap_logs:
+        if stream:
+            actual_actions = [action async for action in prompt.astream(inputs)]
+        else:
+            actual_actions = [await prompt.ainvoke(inputs)]
 
     assert actual_actions == expected_actions
+
+    if stream:
+        assert cap_logs[-1]["event"] == "Response streaming"
 
 
 @pytest.fixture
@@ -84,6 +90,12 @@ def final_answer(model_response: str):
         text="Paris",
         log=model_response,
     )
+
+
+@pytest.fixture(autouse=True)
+def stub_feature_flags():
+    current_feature_flag_context.set(["expanded_ai_logging"])
+    yield
 
 
 @pytest.mark.parametrize(
@@ -130,7 +142,9 @@ def test_react_input_parser(
     )
 
     parser = ReActInputParser()
-    parsed_inputs = parser.invoke(inputs)
+
+    with capture_logs() as cap_logs:
+        parsed_inputs = parser.invoke(inputs)
 
     assert parsed_inputs["question"] == "What is this file about?"
     if expected_chat_history:
@@ -146,6 +160,7 @@ def test_react_input_parser(
     assert len(parsed_inputs["tools"]) == 1 and isinstance(
         parsed_inputs["tools"][0], BaseTool
     )
+    assert cap_logs[0]["event"] == "ReActInputParser"
 
 
 @pytest.mark.parametrize(
