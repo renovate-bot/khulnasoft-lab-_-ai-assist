@@ -4,8 +4,8 @@ model:
   name: claude-3-5-sonnet-20240620
   params:
     model_class_provider: anthropic
-    temperature: 0.0
-    max_tokens: 2_048
+    temperature: 0.1
+    max_tokens: 4_096
     max_retries: 1
 unit_primitives:
   - duo_chat
@@ -17,6 +17,6 @@ prompt_template:
   assistant: |
     {% include 'chat/react/assistant.jinja' %}
 params:
-  timeout: 60
+  timeout: 30
   stop:
     - "Observation:"
