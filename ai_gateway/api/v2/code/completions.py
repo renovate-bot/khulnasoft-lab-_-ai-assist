@@ -23,6 +23,7 @@ from ai_gateway.async_dependency_resolver import (
     get_code_suggestions_completions_agent_factory_provider,
     get_code_suggestions_completions_anthropic_provider,
     get_code_suggestions_completions_litellm_factory_provider,
+    get_code_suggestions_completions_litellm_vertex_codestral_factory_provider,
     get_code_suggestions_completions_vertex_legacy_provider,
     get_code_suggestions_generations_agent_factory_provider,
     get_code_suggestions_generations_anthropic_chat_factory_provider,
@@ -101,6 +102,9 @@ async def completions(
     completions_litellm_factory: Factory[CodeCompletions] = Depends(
         get_code_suggestions_completions_litellm_factory_provider
     ),
+    completions_litellm_vertex_codestral_factory: Factory[CodeCompletions] = Depends(
+        get_code_suggestions_completions_litellm_vertex_codestral_factory_provider
+    ),
     completions_agent_factory: Factory[CodeCompletions] = Depends(
         get_code_suggestions_completions_agent_factory_provider
     ),
@@ -178,7 +182,7 @@ async def completions(
     ):
         code_completions = _resolve_code_completions_vertex_codestral(
             payload=payload,
-            completions_litellm_factory=completions_litellm_factory,
+            completions_litellm_vertex_codestral_factory=completions_litellm_vertex_codestral_factory,
         )
 
         # We need to pass this here since litellm.LiteLlmTextGenModel
@@ -426,7 +430,7 @@ def _resolve_code_completions_litellm(
 
 def _resolve_code_completions_vertex_codestral(
     payload: SuggestionsRequest,
-    completions_litellm_factory: Factory[CodeCompletions],
+    completions_litellm_vertex_codestral_factory: Factory[CodeCompletions],
 ) -> CodeCompletions:
     if payload.prompt_version == 2 and payload.prompt is not None:
         raise HTTPException(
@@ -434,12 +438,7 @@ def _resolve_code_completions_vertex_codestral(
             detail="You cannot specify a prompt with the given provider and model combination",
         )
 
-    return completions_litellm_factory(
-        model__name=payload.model_name,
-        model__provider=payload.model_provider,
-        model__api_key=payload.model_api_key,
-        model__endpoint=payload.model_endpoint,
-    )
+    return completions_litellm_vertex_codestral_factory()
 
 
 def _resolve_agent_code_completions(

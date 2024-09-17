@@ -300,6 +300,51 @@ class TestCodeCompletions:
 
         yield use_case
 
+    @pytest.fixture(scope="class")
+    def completions_with_post_processing(self):
+        model = Mock(spec=TextGenModelBase)
+        model.MAX_MODEL_LEN = 2048
+        model.generate = AsyncMock(
+            return_value=TextGenModelOutput(
+                text="Unprocessed completion output",
+                score=0,
+                safety_attributes=SafetyAttributes(),
+                metadata=Mock(output_tokens=10),
+            )
+        )
+
+        post_processor = Mock(spec=PostProcessor)
+        post_processor.process.return_value = "Post-processed completion output"
+        post_processor_factory = Mock()
+        post_processor_factory.return_value = post_processor
+
+        prompt_builder = Mock(spec=PromptBuilderPrefixBased)
+        prompt_builder.build.return_value = Prompt(
+            prefix="test_prefix",
+            suffix="test_suffix",
+            metadata=MetadataPromptBuilder(
+                components={
+                    "prefix": MetadataCodeContent(length=10, length_tokens=2),
+                    "suffix": MetadataCodeContent(length=10, length_tokens=2),
+                },
+                code_context=MetadataExtraInfo(
+                    name="code_context",
+                    pre=MetadataCodeContent(length=20, length_tokens=4),
+                    post=MetadataCodeContent(length=15, length_tokens=3),
+                ),
+            ),
+        )
+
+        completions = CodeCompletions(
+            model,
+            tokenization_strategy=Mock(spec=TokenStrategyBase),
+            post_processor=post_processor_factory,
+        )
+        completions.prompt_builder = prompt_builder
+        completions.instrumentator = InstrumentorMock(spec=TextGenModelInstrumentator)
+
+        yield completions
+
     @pytest.mark.parametrize(
         (
             "prefix",
@@ -586,3 +631,27 @@ class TestCodeCompletions:
         use_case.instrumentator.watcher.register_model_exception.assert_called_with(
             str(exception), code
         )
+
+    async def test_execute_with_post_processor(
+        self, completions_with_post_processing: Mock
+    ):
+        prefix = "def foo"
+        suffix = ""
+        file_name = "foo.py"
+        stream = False
+        editor_lang = "python"
+
+        actual = await completions_with_post_processing.execute(
+            prefix=prefix,
+            suffix=suffix,
+            file_name=file_name,
+            editor_lang=editor_lang,
+            stream=stream,
+        )
+
+        mock_post_process = (
+            completions_with_post_processing.post_processor.return_value.process
+        )
+        mock_post_process.assert_called_with("Unprocessed completion output")
+
+        assert actual.text == "Post-processed completion output"

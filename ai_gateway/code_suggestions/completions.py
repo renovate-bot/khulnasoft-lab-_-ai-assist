@@ -116,13 +116,18 @@ class CodeCompletions:
     SUFFIX_RESERVED_PERCENT = 0.07
 
     def __init__(
-        self, model: TextGenModelBase, tokenization_strategy: TokenStrategyBase
+        self,
+        model: TextGenModelBase,
+        tokenization_strategy: TokenStrategyBase,
+        post_processor: Optional[Factory[PostProcessor]] = None,
     ):
         self.model = model
 
         self.instrumentator = TextGenModelInstrumentator(
             model.metadata.engine, model.metadata.name
         )
+
+        self.post_processor = post_processor
 
         # If you need the previous logic for building prompts using tree-sitter, refer to CodeCompletionsLegacy.
         # In the future, we plan to completely drop CodeCompletionsLegacy and move its logic to CodeCompletions
@@ -188,7 +193,9 @@ class CodeCompletions:
                     if isinstance(res, AsyncIterator):
                         return self._handle_stream(res)
 
-                    return self._handle_sync(prompt, res, lang_id, watch_container)
+                    return await self._handle_sync(
+                        prompt, res, lang_id, watch_container
+                    )
             except ModelAPICallError as ex:
                 watch_container.register_model_exception(str(ex), ex.code)
                 raise
@@ -217,7 +224,7 @@ class CodeCompletions:
             chunk_content = CodeSuggestionsChunk(text=chunk.text)
             yield chunk_content
 
-    def _handle_sync(
+    async def _handle_sync(
         self,
         prompt: Prompt,
         response: TextGenModelOutput,
@@ -228,8 +235,10 @@ class CodeCompletions:
         watch_container.register_model_score(response.score)
         watch_container.register_safety_attributes(response.safety_attributes)
 
+        response_text = await self._get_response_text(response.text, prompt, lang_id)
+
         return CodeSuggestionsOutput(
-            text=response.text,
+            text=response_text,
             score=response.score,
             model=self.model.metadata,
             lang_id=lang_id,
@@ -240,6 +249,16 @@ class CodeCompletions:
                 ),
             ),
         )
+
+    async def _get_response_text(
+        self, response_text: str, prompt: Prompt, lang_id: LanguageId
+    ):
+        if self.post_processor:
+            return await self.post_processor(
+                prompt.prefix, suffix=prompt.suffix, lang_id=lang_id
+            ).process(response_text)
+
+        return response_text
 
     def _get_tokens_consumption_metadata(
         self, prompt: Prompt, response: Optional[TextGenModelOutput] = None
