@@ -990,14 +990,7 @@ class TestCodeCompletions:
             top_p=0.95,
             stream=False,
             timeout=60,
-            stop=[
-                "[INST]",
-                "[/INST]",
-                "[PREFIX]",
-                "[MIDDLE]",
-                "[SUFFIX]",
-                "\n\n",
-            ],
+            stop=["\n\n"],
         )
 
         mock_post_processor.assert_called_with("Test text completion response")

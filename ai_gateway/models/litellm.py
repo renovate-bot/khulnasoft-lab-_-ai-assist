@@ -97,11 +97,6 @@ MODEL_STOP_TOKENS = {
         "<|file_separator|>",
     ],
     KindLiteLlmModel.CODESTRAL_2405: [
-        "[INST]",
-        "[/INST]",
-        "[PREFIX]",
-        "[MIDDLE]",
-        "[SUFFIX]",
         "\n\n",
     ],
 }
@@ -360,7 +355,7 @@ class LiteLlmTextGenModel(TextGenModelBase):
             "top_p": top_p,
             "stream": stream,
             "timeout": self.specifications.get("timeout", 30.0),
-            "stop": self.stop_tokens,
+            "stop": self._get_stop_tokens(suffix),
         }
 
         if self._is_vertex():
@@ -387,8 +382,33 @@ class LiteLlmTextGenModel(TextGenModelBase):
 
         return suggestion.choices[0].message.content
 
+    def _get_stop_tokens(self, suffix):
+        if self._is_vertex_codestral():
+            suffix_stop_token = self._get_suffix_stop_token(suffix)
+            if suffix_stop_token:
+                return self.stop_tokens + [self._get_suffix_stop_token(suffix)]
+
+        return self.stop_tokens
+
+    def _get_suffix_stop_token(self, suffix):
+        if not suffix or not suffix.strip():
+            return ""
+
+        suffix_lines = suffix.split("\n")
+        if len(suffix_lines) > 1:
+            # For multi-line suffixes, we return the first line
+            # that is not empty or all white spaces
+            for line in suffix_lines:
+                if line.strip():
+                    return line
+
+        return suffix.strip()
+
     def _is_vertex(self):
         return self.provider == KindModelProvider.VERTEX_AI
+
+    def _is_vertex_codestral(self):
+        return self._is_vertex() and self.model_name == KindLiteLlmModel.CODESTRAL_2405
 
     def _get_vertex_model_location(self):
         if Config().vertex_text_model.location.startswith("europe-"):
