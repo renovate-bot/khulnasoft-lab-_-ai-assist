@@ -13,7 +13,12 @@ from ai_gateway.code_suggestions.processing.post.completions import (
 )
 from ai_gateway.code_suggestions.processing.pre import TokenizerTokenStrategy
 from ai_gateway.experimentation import experiment_registry_provider
-from ai_gateway.models import KindAnthropicModel, KindVertexTextModel
+from ai_gateway.models import (
+    KindAnthropicModel,
+    KindLiteLlmModel,
+    KindModelProvider,
+    KindVertexTextModel,
+)
 from ai_gateway.models.base_chat import ChatModelBase
 from ai_gateway.models.base_text import TextGenModelBase
 from ai_gateway.tokenizer import init_tokenizer
@@ -142,6 +147,22 @@ class ContainerCodeCompletions(containers.DeclarativeContainer):
         tokenization_strategy=providers.Factory(
             TokenizerTokenStrategy, tokenizer=tokenizer
         ),
+    )
+
+    litellm_vertex_codestral_factory = providers.Factory(
+        CodeCompletions,
+        model=providers.Factory(
+            litellm,
+            name=KindLiteLlmModel.CODESTRAL_2405,
+            provider=KindModelProvider.VERTEX_AI,
+        ),
+        tokenization_strategy=providers.Factory(
+            TokenizerTokenStrategy, tokenizer=tokenizer
+        ),
+        post_processor=providers.Factory(
+            PostProcessorCompletions,
+            exclude=config.excl_post_proc,
+        ).provider,
     )
 
     agent_factory = providers.Factory(
