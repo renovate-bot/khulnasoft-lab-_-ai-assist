@@ -352,6 +352,8 @@ class TestCodeCompletions:
             "file_name",
             "editor_lang",
             "stream",
+            "context_max_percent",
+            "code_context",
             "expected_language_id",
             "expected_output",
         ),
@@ -362,6 +364,8 @@ class TestCodeCompletions:
                 "file_name",
                 "python",
                 False,
+                1.0,
+                None,
                 LanguageId.PYTHON,
                 "random_suggestion",
             ),
@@ -371,6 +375,8 @@ class TestCodeCompletions:
                 "file_name",
                 None,
                 False,
+                1.0,
+                None,
                 None,
                 "random_suggestion",
             ),
@@ -380,6 +386,19 @@ class TestCodeCompletions:
                 "file_name.py",
                 None,
                 False,
+                1.0,
+                None,
+                LanguageId.PYTHON,
+                "random_suggestion",
+            ),
+            (
+                "random_prefix",
+                "random_suffix",
+                "file_name.py",
+                None,
+                False,
+                0.5,
+                ["some context"],
                 LanguageId.PYTHON,
                 "random_suggestion",
             ),
@@ -393,6 +412,8 @@ class TestCodeCompletions:
         file_name: str,
         editor_lang: str,
         stream: bool,
+        context_max_percent: float,
+        code_context: list,
         expected_language_id: LanguageId,
         expected_output: str,
     ):
@@ -427,6 +448,16 @@ class TestCodeCompletions:
             file_name=file_name,
             editor_lang=editor_lang,
             stream=stream,
+            code_context=code_context,
+            context_max_percent=context_max_percent,
+        )
+
+        use_case.prompt_builder.add_content.assert_called_with(
+            prefix,
+            suffix=suffix,
+            suffix_reserved_percent=CodeCompletions.SUFFIX_RESERVED_PERCENT,
+            context_max_percent=context_max_percent,
+            code_context=code_context,
         )
 
         assert expected_output == actual.text

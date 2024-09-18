@@ -700,6 +700,7 @@ class TestCodeCompletions:
             "provider",
             "model",
             "extra_args",
+            "context",
         ),
         [
             (
@@ -707,12 +708,14 @@ class TestCodeCompletions:
                 "anthropic",
                 None,
                 {},
+                [],
             ),
             (
                 "def search",
                 "litellm",
                 "codestral",
                 {},
+                [],
             ),
             (
                 "def search",
@@ -721,7 +724,20 @@ class TestCodeCompletions:
                 {
                     "temperature": 0.7,
                     "max_output_tokens": 64,
+                    "context_max_percent": 0.3,
                 },
+                [],
+            ),
+            (
+                "def search",
+                "vertex-ai",
+                "codestral@2405",
+                {
+                    "temperature": 0.7,
+                    "max_output_tokens": 64,
+                    "context_max_percent": 0.3,
+                },
+                [{"name": "test", "type": "file", "content": "some context"}],
             ),
         ],
     )
@@ -732,6 +748,7 @@ class TestCodeCompletions:
         expected_response: str,
         provider: str,
         extra_args: dict,
+        context: list,
         model: str | None,
     ):
         current_file = {
@@ -746,6 +763,7 @@ class TestCodeCompletions:
             "model_provider": provider,
             "current_file": current_file,
             "stream": True,
+            "context": context,
         }
         if model:
             data["model_name"] = model
@@ -773,6 +791,10 @@ class TestCodeCompletions:
             "stream": True,
             "snowplow_event_context": ANY,
         }
+
+        if context:
+            completions_args["code_context"] = [c["content"] for c in context]
+
         completions_args.update(extra_args)
 
         mock_completions_stream.assert_called_with(**completions_args)

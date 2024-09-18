@@ -1,5 +1,6 @@
 from typing import Any, AsyncIterator, Optional, Union
 
+import structlog
 from dependency_injector.providers import Factory
 
 from ai_gateway.code_suggestions.base import (
@@ -35,6 +36,8 @@ from ai_gateway.tracking.instrumentator import SnowplowInstrumentator
 from ai_gateway.tracking.snowplow import SnowplowEvent, SnowplowEventContext
 
 __all__ = ["CodeCompletionsLegacy", "CodeCompletions"]
+
+log = structlog.stdlib.get_logger("codesuggestions")
 
 
 class CodeCompletionsLegacy:
@@ -142,6 +145,7 @@ class CodeCompletions:
         suffix: str,
         raw_prompt: Optional[str] = None,
         code_context: Optional[list] = None,
+        context_max_percent: Optional[float] = None,
     ) -> Prompt:
         if raw_prompt:
             return self.prompt_builder.wrap(raw_prompt)
@@ -150,6 +154,7 @@ class CodeCompletions:
             prefix,
             suffix=suffix,
             suffix_reserved_percent=self.SUFFIX_RESERVED_PERCENT,
+            context_max_percent=context_max_percent,
             code_context=code_context,
         )
 
@@ -172,8 +177,15 @@ class CodeCompletions:
         lang_id = resolve_lang_id(file_name, editor_lang)
         increment_lang_counter(file_name, lang_id, editor_lang)
 
+        context_max_percent = kwargs.pop(
+            "context_max_percent", 1.0
+        )  # default is full context window
         prompt = self._get_prompt(
-            prefix, suffix, raw_prompt=raw_prompt, code_context=code_context
+            prefix,
+            suffix,
+            raw_prompt=raw_prompt,
+            code_context=code_context,
+            context_max_percent=context_max_percent,
         )
 
         with self.instrumentator.watch(prompt) as watch_container:
