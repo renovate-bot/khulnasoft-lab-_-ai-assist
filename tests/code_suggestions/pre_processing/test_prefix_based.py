@@ -339,6 +339,7 @@ class TestPromptBuilderPrefixBased:
             "suffix",
             "code_context",
             "suffix_reserved_percent",
+            "context_max_percent",
             "total_max_len",
             "expected_prompt",
         ),
@@ -348,6 +349,7 @@ class TestPromptBuilderPrefixBased:
                 "random_text",
                 ["context_text"],
                 0.5,
+                1.0,
                 2048,
                 Prompt(
                     prefix="context_text\nprefix_text",
@@ -370,6 +372,7 @@ class TestPromptBuilderPrefixBased:
                 "random_text",
                 ["context_text"],
                 0.25,
+                1.0,
                 4,
                 Prompt(
                     prefix="prefix_text",
@@ -387,6 +390,29 @@ class TestPromptBuilderPrefixBased:
                     ),
                 ),
             ),
+            (
+                "prefix_text",
+                "random_text",
+                ["context_text"],
+                0.25,
+                0.175,
+                6,
+                Prompt(
+                    prefix="context\nprefix_text",
+                    suffix="random",
+                    metadata=MetadataPromptBuilder(
+                        components={
+                            "prefix": MetadataCodeContent(length=11, length_tokens=3),
+                            "suffix": MetadataCodeContent(length=6, length_tokens=1),
+                        },
+                        code_context=MetadataExtraInfo(
+                            name="code_context",
+                            pre=MetadataCodeContent(length=12, length_tokens=3),
+                            post=MetadataCodeContent(length=7, length_tokens=1),
+                        ),
+                    ),
+                ),
+            ),
         ],
     )
     def test_with_code_context(
@@ -395,6 +421,7 @@ class TestPromptBuilderPrefixBased:
         suffix: str,
         code_context: list[str],
         suffix_reserved_percent: float,
+        context_max_percent: float,
         total_max_len: int,
         expected_prompt: Prompt,
     ):
@@ -407,6 +434,7 @@ class TestPromptBuilderPrefixBased:
                 prefix,
                 suffix=suffix,
                 suffix_reserved_percent=suffix_reserved_percent,
+                context_max_percent=context_max_percent,
                 code_context=code_context,
             )
         else:
@@ -414,6 +442,7 @@ class TestPromptBuilderPrefixBased:
                 *prefix,
                 suffix=suffix,
                 suffix_reserved_percent=suffix_reserved_percent,
+                context_max_percent=context_max_percent,
                 code_context=code_context
             )
 

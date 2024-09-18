@@ -192,7 +192,12 @@ async def completions(
         #     https://gitlab.com/gitlab-org/modelops/applied-ml/code-suggestions/ai-assist/-/merge_requests/1172#note_2060587592
         #
         # The temperature value is taken from Mistral's docs: https://docs.mistral.ai/api/#operation/createFIMCompletion
-        kwargs.update({"temperature": 0.7, "max_output_tokens": 64})
+        # context_max_percent is set to 0.3 to limit the amount of context right now because latency increases with larger context
+        kwargs.update(
+            {"temperature": 0.7, "max_output_tokens": 64, "context_max_percent": 0.3}
+        )
+        if payload.context:
+            kwargs.update({"code_context": [ctx.content for ctx in payload.context]})
     else:
         code_completions = completions_legacy_factory()
         if payload.choices_count > 0:

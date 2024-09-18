@@ -23,7 +23,9 @@ class PromptBuilderPrefixBased(PromptBuilderBase):
 
     # Percentage of tokens reserved for suffix (0 <= value <= 1).
     KEY_SUFFIX_RESERVED_PERCENT = "suffix_reserved_percent"
+    KEY_CONTEXT_MAX_PERCENT = "context_max_percent"
     DEFAULT_SUFFIX_RESERVED_PERCENT = 0
+    DEFAULT_CONTEXT_MAX_PERCENT = 1
 
     def __init__(self, total_max_len: int, tkn_strategy: TokenStrategyBase):
         super().__init__(total_max_len, tkn_strategy)
@@ -32,7 +34,8 @@ class PromptBuilderPrefixBased(PromptBuilderBase):
         self.suffix: Optional[str] = None
         self.code_context: Optional[list] = None
         self.opts: dict = {
-            self.KEY_SUFFIX_RESERVED_PERCENT: self.DEFAULT_SUFFIX_RESERVED_PERCENT
+            self.KEY_SUFFIX_RESERVED_PERCENT: self.DEFAULT_SUFFIX_RESERVED_PERCENT,
+            self.KEY_CONTEXT_MAX_PERCENT: self.DEFAULT_CONTEXT_MAX_PERCENT,
         }
 
         # This prompt builder requires a `prefix` placeholder to be present in the template
@@ -49,11 +52,14 @@ class PromptBuilderPrefixBased(PromptBuilderBase):
         opts: dict = {}
         if dist := kwargs.pop(self.KEY_SUFFIX_RESERVED_PERCENT, None):
             opts[self.KEY_SUFFIX_RESERVED_PERCENT] = max(0, min(dist, 1))
+        if dist := kwargs.pop(self.KEY_CONTEXT_MAX_PERCENT, None):
+            opts[self.KEY_CONTEXT_MAX_PERCENT] = max(0, min(dist, 1))
 
         self.opts.update(opts)
 
     def build(self) -> Prompt:
         suffix_reserved_percent = self.opts[self.KEY_SUFFIX_RESERVED_PERCENT]
+        context_max_percent = self.opts[self.KEY_CONTEXT_MAX_PERCENT]
         max_length = self.total_max_len - self.always_len
         max_length_prefix = math.ceil((1 - suffix_reserved_percent) * max_length)
         max_length_suffix = max_length - max_length_prefix
@@ -66,6 +72,10 @@ class PromptBuilderPrefixBased(PromptBuilderBase):
 
         if suffix:
             max_length_code_context -= suffix.length_tokens
+
+        max_length_code_context = math.floor(
+            min(max_length_code_context, max_length * context_max_percent)
+        )
         code_context_info = self._build_code_context(max_length_code_context)
 
         if code_context_info and max_length_code_context > 0:
