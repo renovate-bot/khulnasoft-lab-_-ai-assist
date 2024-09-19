@@ -6,7 +6,6 @@ from typing import Optional, Tuple
 
 import structlog
 from asgi_correlation_id.context import correlation_id
-from fastapi import Response
 from fastapi.encoders import jsonable_encoder
 from langsmith.run_helpers import tracing_context
 from pydantic import ValidationError
@@ -15,7 +14,7 @@ from starlette.authentication import (
     AuthenticationError,
     HTTPConnection,
 )
-from starlette.datastructures import CommaSeparatedStrings, Headers
+from starlette.datastructures import CommaSeparatedStrings, Headers, MutableHeaders
 from starlette.middleware import Middleware
 from starlette.middleware.authentication import (
     AuthenticationBackend,
@@ -40,7 +39,6 @@ from ai_gateway.internal_events import EventContext, current_event_context
 from ai_gateway.tracking.errors import log_exception
 
 __all__ = [
-    "MiddlewareLogRequest",
     "MiddlewareAuthentication",
     "MiddlewareModelTelemetry",
 ]
@@ -77,108 +75,112 @@ class _PathResolver:
         return path in self.endpoints
 
 
-class MiddlewareLogRequest(Middleware):
-    class CustomHeaderMiddleware(BaseHTTPMiddleware):
-        def __init__(self, path_resolver: _PathResolver, *args, **kwargs):
-            self.path_resolver = path_resolver
-            super().__init__(*args, **kwargs)
+class AccessLogMiddleware:
+    """Middleware for access logging."""
 
-        async def dispatch(self, request, call_next):
-            if self.path_resolver.skip_path(request.url.path):
-                return await call_next(request)
+    def __init__(self, app, skip_endpoints):
+        self.app = app
+        self.path_resolver = _PathResolver.from_optional_list(skip_endpoints)
 
-            structlog.contextvars.clear_contextvars()
-            # These context vars will be added to all log entries emitted during the request
-            request_id = correlation_id.get()
-            structlog.contextvars.bind_contextvars(correlation_id=request_id)
+    async def __call__(self, scope, receive, send):
+        if scope["type"] != "http":
+            await self.app(scope, receive, send)
+            return
 
-            start_time_total = time.perf_counter()
-            start_time_cpu = time.process_time()
-            # duration_request represents latency added by sending request from Rails to AI gateway
-            try:
-                wait_duration = time.time() - float(
-                    request.headers.get(X_GITLAB_MODEL_GATEWAY_REQUEST_SENT_AT)
-                )
-            except (ValueError, TypeError):
-                wait_duration = -1
+        request = Request(scope)
 
-            # If the call_next raises an error, we still want to return our own 500 response,
-            # so we can add headers to it (process time, request ID...)
-            response = Response(status_code=500)
-            try:
-                response = await call_next(request)
-            except Exception as e:
-                # TODO: Validate that we don't swallow exceptions (unit test?)
-                context.data["exception"] = {
-                    "message": str(e),
-                    "backtrace": traceback.format_exc(),
-                }
-                log_exception(e)
-            finally:
+        if self.path_resolver.skip_path(request.url.path):
+            await self.app(scope, receive, send)
+            return
+
+        structlog.contextvars.clear_contextvars()
+        # These context vars will be added to all log entries emitted during the request
+        request_id = correlation_id.get()
+        structlog.contextvars.bind_contextvars(correlation_id=request_id)
+
+        start_time_total = time.perf_counter()
+        start_time_cpu = time.process_time()
+        # duration_request represents latency added by sending request from Rails to AI gateway
+        try:
+            wait_duration = time.time() - float(
+                request.headers.get(X_GITLAB_MODEL_GATEWAY_REQUEST_SENT_AT)
+            )
+        except (ValueError, TypeError):
+            wait_duration = -1
+
+        status_code = 500
+
+        async def send_wrapper(message):
+            if message["type"] == "http.response.start":
+                nonlocal status_code, start_time_total
+                status_code = message["status"]
+
+                headers = MutableHeaders(scope=message)
                 elapsed_time = time.perf_counter() - start_time_total
-                cpu_time = time.process_time() - start_time_cpu
-                status_code = response.status_code
-                url = get_path_with_query_string(request.scope)
-                client_host = request.client.host
-                client_port = request.client.port
-                http_method = request.method
-                http_version = request.scope["http_version"]
+                headers.append("X-Process-Time", str(elapsed_time))
 
-                fields = {
-                    "url": str(request.url),
-                    "path": url,
-                    "status_code": status_code,
-                    "method": http_method,
-                    "correlation_id": request_id,
-                    "http_version": http_version,
-                    "client_ip": client_host,
-                    "client_port": client_port,
-                    "duration_s": elapsed_time,
-                    "duration_request": wait_duration,
-                    "cpu_s": cpu_time,
-                    "user_agent": request.headers.get("User-Agent"),
-                    "gitlab_language_server_version": request.headers.get(
-                        X_GITLAB_LANGUAGE_SERVER_VERSION
-                    ),
-                    "gitlab_instance_id": request.headers.get(
-                        X_GITLAB_INSTANCE_ID_HEADER
-                    ),
-                    "gitlab_global_user_id": request.headers.get(
-                        X_GITLAB_GLOBAL_USER_ID_HEADER
-                    ),
-                    "gitlab_host_name": request.headers.get(X_GITLAB_HOST_NAME_HEADER),
-                    "gitlab_version": request.headers.get(X_GITLAB_VERSION_HEADER),
-                    "gitlab_saas_duo_pro_namespace_ids": request.headers.get(
-                        X_GITLAB_SAAS_DUO_PRO_NAMESPACE_IDS_HEADER
-                    ),
-                    "gitlab_saas_namespace_ids": request.headers.get(
-                        X_GITLAB_SAAS_NAMESPACE_IDS_HEADER
-                    ),
-                    "gitlab_realm": request.headers.get(X_GITLAB_REALM_HEADER),
-                    "gitlab_duo_seat_count": request.headers.get(
-                        X_GITLAB_DUO_SEAT_COUNT_HEADER
-                    ),
-                    "enabled_feature_flags": request.headers.get(
-                        X_GITLAB_ENABLED_FEATURE_FLAGS
-                    ),
-                }
-                fields.update(context.data)
+            await send(message)
 
-                # Recreate the Uvicorn access log format, but add all parameters as structured information
-                access_logger.info(
-                    f"""{client_host}:{client_port} - "{http_method} {url} HTTP/{http_version}" {status_code}""",
-                    **fields,
-                )
-                response.headers["X-Process-Time"] = str(elapsed_time)
+        try:
+            await self.app(scope, receive, send_wrapper)
+        except Exception as e:
+            context.data["exception.message"] = str(e)
+            context.data["exception.class"] = type(e).__name__
+            context.data["exception.backtrace"] = traceback.format_exc()
+            log_exception(e)
+            raise e
+        finally:
+            elapsed_time = time.perf_counter() - start_time_total
+            cpu_time = time.process_time() - start_time_cpu
+            url = get_path_with_query_string(request.scope)
+            client_host = request.client.host
+            client_port = request.client.port
+            http_method = request.method
+            http_version = request.scope["http_version"]
 
-            return response
+            fields = {
+                "url": str(request.url),
+                "path": url,
+                "status_code": status_code,
+                "method": http_method,
+                "correlation_id": request_id,
+                "http_version": http_version,
+                "client_ip": client_host,
+                "client_port": client_port,
+                "duration_s": elapsed_time,
+                "duration_request": wait_duration,
+                "cpu_s": cpu_time,
+                "user_agent": request.headers.get("User-Agent"),
+                "gitlab_language_server_version": request.headers.get(
+                    X_GITLAB_LANGUAGE_SERVER_VERSION
+                ),
+                "gitlab_instance_id": request.headers.get(X_GITLAB_INSTANCE_ID_HEADER),
+                "gitlab_global_user_id": request.headers.get(
+                    X_GITLAB_GLOBAL_USER_ID_HEADER
+                ),
+                "gitlab_host_name": request.headers.get(X_GITLAB_HOST_NAME_HEADER),
+                "gitlab_version": request.headers.get(X_GITLAB_VERSION_HEADER),
+                "gitlab_saas_duo_pro_namespace_ids": request.headers.get(
+                    X_GITLAB_SAAS_DUO_PRO_NAMESPACE_IDS_HEADER
+                ),
+                "gitlab_saas_namespace_ids": request.headers.get(
+                    X_GITLAB_SAAS_NAMESPACE_IDS_HEADER
+                ),
+                "gitlab_realm": request.headers.get(X_GITLAB_REALM_HEADER),
+                "gitlab_duo_seat_count": request.headers.get(
+                    X_GITLAB_DUO_SEAT_COUNT_HEADER
+                ),
+                "enabled_feature_flags": request.headers.get(
+                    X_GITLAB_ENABLED_FEATURE_FLAGS
+                ),
+            }
+            fields.update(context.data)
 
-    def __init__(self, skip_endpoints: Optional[list] = None):
-        path_resolver = _PathResolver.from_optional_list(skip_endpoints)
-
-        super().__init__(
-            MiddlewareLogRequest.CustomHeaderMiddleware, path_resolver=path_resolver
-        )
+            # Recreate the Uvicorn access log format, but add all parameters as structured information
+            access_logger.info(
+                f"""{client_host}:{client_port} - "{http_method} {url} HTTP/{http_version}" {status_code}""",
+                **fields,
+            )
 
 
 class MiddlewareAuthentication(Middleware):
