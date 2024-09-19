@@ -14,11 +14,11 @@ from starlette_context import context
 from starlette_context.middleware import RawContextMiddleware
 
 from ai_gateway.api.middleware import (
+    AccessLogMiddleware,
     DistributedTraceMiddleware,
     FeatureFlagMiddleware,
     InternalEventMiddleware,
     MiddlewareAuthentication,
-    MiddlewareLogRequest,
     MiddlewareModelTelemetry,
 )
 from ai_gateway.api.monitoring import router as http_monitoring_router
@@ -77,7 +77,10 @@ def create_fast_api_server(config: Config):
                 allow_methods=["POST"],
                 allow_headers=["*"],
             ),
-            MiddlewareLogRequest(skip_endpoints=_SKIP_ENDPOINTS),
+            Middleware(
+                AccessLogMiddleware,
+                skip_endpoints=_SKIP_ENDPOINTS,
+            ),
             Middleware(
                 DistributedTraceMiddleware,
                 skip_endpoints=_SKIP_ENDPOINTS,

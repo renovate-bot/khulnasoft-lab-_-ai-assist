@@ -11,7 +11,7 @@ from langchain_core.language_models.chat_models import BaseChatModel
 from starlette.middleware import Middleware
 from starlette_context.middleware import RawContextMiddleware
 
-from ai_gateway.api.middleware import MiddlewareAuthentication, MiddlewareLogRequest
+from ai_gateway.api.middleware import MiddlewareAuthentication, AccessLogMiddleware
 from ai_gateway.code_suggestions.base import CodeSuggestionsChunk, CodeSuggestionsOutput
 from ai_gateway.code_suggestions.processing.base import ModelEngineOutput
 from ai_gateway.code_suggestions.processing.typing import (
@@ -69,7 +69,7 @@ def stub_auth_provider():
 def test_client(fast_api_router, stub_auth_provider, request):
     middlewares = [
         Middleware(RawContextMiddleware),
-        MiddlewareLogRequest(),
+        Middleware(AccessLogMiddleware, skip_endpoints=[]),
         MiddlewareAuthentication(stub_auth_provider, False, None),
     ]
     app = FastAPI(middleware=middlewares)
