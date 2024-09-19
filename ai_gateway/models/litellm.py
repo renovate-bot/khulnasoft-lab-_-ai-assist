@@ -2,9 +2,15 @@ from enum import StrEnum
 from typing import AsyncIterator, Callable, Optional, Sequence, Union
 
 from litellm import CustomStreamWrapper, ModelResponse, acompletion
+from litellm.exceptions import APIConnectionError, InternalServerError
 
 from ai_gateway.config import Config
-from ai_gateway.models.base import KindModelProvider, ModelMetadata, SafetyAttributes
+from ai_gateway.models.base import (
+    KindModelProvider,
+    ModelAPIError,
+    ModelMetadata,
+    SafetyAttributes,
+)
 from ai_gateway.models.base_chat import ChatModelBase, Message, Role
 from ai_gateway.models.base_text import (
     TextGenModelBase,
@@ -17,9 +23,27 @@ __all__ = [
     "LiteLlmChatModel",
     "LiteLlmTextGenModel",
     "KindLiteLlmModel",
+    "LiteLlmAPIConnectionError",
+    "LiteLlmInternalServerError",
 ]
 
 STUBBED_API_KEY = "stubbed-api-key"
+
+
+class LiteLlmAPIConnectionError(ModelAPIError):
+    @classmethod
+    def from_exception(cls, ex: APIConnectionError):
+        wrapper = cls(ex.message, errors=(ex,))
+
+        return wrapper
+
+
+class LiteLlmInternalServerError(ModelAPIError):
+    @classmethod
+    def from_exception(cls, ex: InternalServerError):
+        wrapper = cls(ex.message, errors=(ex,))
+
+        return wrapper
 
 
 class KindLiteLlmModel(StrEnum):
@@ -305,14 +329,19 @@ class LiteLlmTextGenModel(TextGenModelBase):
         snowplow_event_context: Optional[SnowplowEventContext] = None,
     ) -> Union[TextGenModelOutput, AsyncIterator[TextGenModelChunk]]:
         with self.instrumentator.watch(stream=stream) as watcher:
-            suggestion = await self._get_suggestion(
-                prefix=prefix,
-                suffix=suffix,
-                stream=stream,
-                temperature=temperature,
-                max_output_tokens=max_output_tokens,
-                top_p=top_p,
-            )
+            try:
+                suggestion = await self._get_suggestion(
+                    prefix=prefix,
+                    suffix=suffix,
+                    stream=stream,
+                    temperature=temperature,
+                    max_output_tokens=max_output_tokens,
+                    top_p=top_p,
+                )
+            except APIConnectionError as ex:
+                raise LiteLlmAPIConnectionError.from_exception(ex)
+            except InternalServerError as ex:
+                raise LiteLlmInternalServerError.from_exception(ex)
 
             if stream:
                 return self._handle_stream(
