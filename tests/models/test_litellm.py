@@ -2,12 +2,17 @@ from typing import Optional
 from unittest.mock import AsyncMock, Mock, patch
 
 import pytest
+from litellm.exceptions import APIConnectionError, InternalServerError
 
 from ai_gateway.models import KindLiteLlmModel, LiteLlmChatModel
 from ai_gateway.models.base import KindModelProvider
 from ai_gateway.models.base_chat import Message, Role
 from ai_gateway.models.base_text import TextGenModelOutput
-from ai_gateway.models.litellm import LiteLlmTextGenModel
+from ai_gateway.models.litellm import (
+    LiteLlmAPIConnectionError,
+    LiteLlmInternalServerError,
+    LiteLlmTextGenModel,
+)
 
 
 @pytest.fixture
@@ -509,6 +514,114 @@ class TestLiteLlmTextGenModel:
 
         assert isinstance(output, TextGenModelOutput)
         assert output.text == "Test response"
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize(
+        (
+            "model_name",
+            "provider",
+            "custom_models_enabled",
+        ),
+        [
+            (
+                "codegemma",
+                KindModelProvider.LITELLM,
+                True,
+            ),
+            (
+                "codestral",
+                KindModelProvider.MISTRALAI,
+                True,
+            ),
+        ],
+    )
+    async def test_generate_internal_server_error(
+        self,
+        model_name,
+        provider,
+        custom_models_enabled,
+        endpoint,
+        api_key,
+        provider_keys,
+        mock_litellm_acompletion: Mock,
+    ):
+        litellm_model = LiteLlmTextGenModel.from_model_name(
+            name=model_name,
+            provider=provider,
+            endpoint=endpoint,
+            api_key=api_key,
+            custom_models_enabled=custom_models_enabled,
+            provider_keys=provider_keys,
+        )
+
+        mock_litellm_acompletion.side_effect = InternalServerError(
+            message="Test internal server error",
+            llm_provider=provider,
+            model=model_name,
+        )
+
+        with pytest.raises(LiteLlmInternalServerError) as ex:
+            await litellm_model.generate(
+                prefix="def hello_world():",
+            )
+
+        expected_error_message = (
+            "litellm.InternalServerError: Test internal server error"
+        )
+
+        assert str(ex.value) == expected_error_message
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize(
+        (
+            "model_name",
+            "provider",
+            "custom_models_enabled",
+        ),
+        [
+            (
+                "codegemma",
+                KindModelProvider.LITELLM,
+                True,
+            ),
+            (
+                "codestral",
+                KindModelProvider.MISTRALAI,
+                True,
+            ),
+        ],
+    )
+    async def test_generate_api_connection_error(
+        self,
+        model_name,
+        provider,
+        custom_models_enabled,
+        endpoint,
+        api_key,
+        provider_keys,
+        mock_litellm_acompletion: Mock,
+    ):
+        litellm_model = LiteLlmTextGenModel.from_model_name(
+            name=model_name,
+            provider=provider,
+            endpoint=endpoint,
+            api_key=api_key,
+            custom_models_enabled=custom_models_enabled,
+            provider_keys=provider_keys,
+        )
+
+        mock_litellm_acompletion.side_effect = APIConnectionError(
+            message="Test API connection error", llm_provider=provider, model=model_name
+        )
+
+        with pytest.raises(LiteLlmAPIConnectionError) as ex:
+            await litellm_model.generate(
+                prefix="def hello_world():",
+            )
+
+        expected_error_message = "litellm.APIConnectionError: Test API connection error"
+
+        assert str(ex.value) == expected_error_message
 
     @pytest.mark.asyncio
     async def test_generate_vertex_codestral(
