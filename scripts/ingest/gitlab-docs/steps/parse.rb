@@ -13,14 +13,20 @@ require_relative "base_content_parser"
 
 def parse(filenames)
   filenames.map do |filename|
+    # filename: /tmp/gitlab-docs-v17.0.1-ee/doc/user/application_security/dast/checks/798.38.md
+    # source: user/application_security/dast/checks/798.38.md
+    # url: https://docs.gitlab.com/ee/user/application_security/dast/browser/checks/798.38
     source = filename.sub("#{DOC_DIR}/doc/", '')
+    page = source.gsub('.md', '')
+    url = "#{ROOT_URL}/#{page}"
 
-    puts "parsing: { filename: #{filename}, source: #{source} }"
+    puts "parsing: #{filename}"
 
-    parser = ::Gitlab::Llm::Embeddings::Utils::BaseContentParser.new( ROOT_URL )
+    parser = ::Gitlab::Llm::Embeddings::Utils::BaseContentParser.new
     parser.parse_and_split(
       File.read(filename),
-      source
+      source,
+      url
     )
   end
 end
