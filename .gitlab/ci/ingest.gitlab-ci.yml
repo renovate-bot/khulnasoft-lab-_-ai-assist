@@ -15,9 +15,7 @@ include:
     GITLAB_DOCS_WEB_ROOT_URL: "https://gitlab.com/help"
   needs: [build:ingest-image]
 
-ingest:dev:
-  stage: ingest
-  extends: [.ingest-base, .oidc_base_gcp]
+.ingest-dev:
   variables:
     GCP_PROJECT_NAME: $INGEST_GCP_PROJECT_NAME
     GCP_OIDC_WORKLOAD_ID_POOL_PROVIDER_NAME: $INGEST_WORKLOAD_IDENTITY_PROVIDER
@@ -25,14 +23,8 @@ ingest:dev:
   script:
     - cd /app && make ingest
   environment: ingest/dev
-  rules:
-    - if: $CI_COMMIT_BRANCH != $CI_DEFAULT_BRANCH
-      when: never
-    - if: $CI_PIPELINE_SOURCE == "schedule" && $SCHEDULE_TYPE == "ingest"
 
-ingest:prod:
-  stage: ingest
-  extends: [.ingest-base, .oidc_base_gcp]
+.ingest-prod:
   variables:
     GCP_PROJECT_NAME: $INGEST_GCP_PROJECT_NAME
     GCP_OIDC_WORKLOAD_ID_POOL_PROVIDER_NAME: $INGEST_WORKLOAD_IDENTITY_PROVIDER
@@ -40,11 +32,36 @@ ingest:prod:
   script:
     - cd /app && make ingest
   environment: ingest/prod
+
+ingest:dev:
+  stage: ingest
+  extends: [.ingest-base, .oidc_base_gcp, .ingest-dev]
+  rules:
+    - if: $CI_COMMIT_BRANCH != $CI_DEFAULT_BRANCH
+      when: never
+    - if: $CI_PIPELINE_SOURCE == "schedule" && $SCHEDULE_TYPE == "ingest"
+
+ingest:dev:trigger:
+  stage: ingest
+  extends: [.ingest-base, .oidc_base_gcp, .ingest-dev]
+  when: manual
+  rules:
+    - if: $GITLAB_INGEST_TRIGGER == "dev"
+
+ingest:prod:
+  stage: ingest
+  extends: [.ingest-base, .oidc_base_gcp, .ingest-prod]
   needs: [ingest:dev]
   rules:
     - if: $CI_COMMIT_BRANCH != $CI_DEFAULT_BRANCH
       when: never
     - if: $CI_PIPELINE_SOURCE == "schedule" && $SCHEDULE_TYPE == "ingest"
+
+ingest:prod:trigger:
+  stage: ingest
+  extends: [.ingest-base, .oidc_base_gcp, .ingest-prod]
+  rules:
+    - if: $GITLAB_INGEST_TRIGGER == "prod"
 
 ingest:dry-run:
   stage: ingest
