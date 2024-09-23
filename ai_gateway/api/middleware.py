@@ -124,9 +124,9 @@ class AccessLogMiddleware:
         try:
             await self.app(scope, receive, send_wrapper)
         except Exception as e:
-            context.data["exception.message"] = str(e)
-            context.data["exception.class"] = type(e).__name__
-            context.data["exception.backtrace"] = traceback.format_exc()
+            context.data["exception_message"] = str(e)
+            context.data["exception_class"] = type(e).__name__
+            context.data["exception_backtrace"] = traceback.format_exc()
             log_exception(e)
             raise e
         finally:
