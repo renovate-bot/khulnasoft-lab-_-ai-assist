@@ -71,5 +71,5 @@ def test_exeption_capture(mock_log_exception):
 
         assert response.status_code == 500
 
-    assert cap_logs[0]["exception.message"] == "Something broke!"
-    assert cap_logs[0]["exception.backtrace"].startswith("Traceback")
+    assert cap_logs[0]["exception_message"] == "Something broke!"
+    assert cap_logs[0]["exception_backtrace"].startswith("Traceback")
