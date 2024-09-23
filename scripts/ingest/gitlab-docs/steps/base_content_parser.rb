@@ -12,18 +12,17 @@ module Gitlab
         METADATA_REGEX = /\A---(?<metadata>.*?)---/m
 
         class BaseContentParser
-          attr_reader :max_chars_per_embedding, :min_chars_per_embedding, :root_url
+          attr_reader :max_chars_per_embedding, :min_chars_per_embedding
 
-          def initialize(root_url)
+          def initialize()
             @max_chars_per_embedding = MAX_CHARS_PER_EMBEDDING
             @min_chars_per_embedding = MIN_CHARS_PER_EMBEDDING
-            @root_url = root_url
           end
 
-          def parse_and_split(content, source_name)
+          def parse_and_split(content, source_name, url)
             items = []
             md5sum = ::OpenSSL::Digest::SHA256.hexdigest(content)
-            content, metadata = parse_content_and_metadata(content, md5sum, source_name)
+            content, metadata = parse_content_and_metadata(content, md5sum, source_name, url)
 
             split_by_newline_positions(content) do |text|
               next if text.nil?
@@ -37,7 +36,7 @@ module Gitlab
             items
           end
 
-          def parse_content_and_metadata(content, md5sum, source_name)
+          def parse_content_and_metadata(content, md5sum, source_name, url)
             match = content.match(METADATA_REGEX)
             metadata = if match
                          metadata = YAML.safe_load(content.match(METADATA_REGEX)[:metadata])
@@ -51,7 +50,7 @@ module Gitlab
             metadata['md5sum'] = md5sum
             metadata['source'] = source_name
             metadata['source_type'] = 'doc'
-            metadata['source_url'] = url(source_name)
+            metadata['source_url'] = url
 
             [content, metadata]
           end
@@ -87,11 +86,6 @@ module Gitlab
                 cursor += slice.length
               end
             end
-          end
-
-          def url(source_name)
-            page = source_name.gsub('.md', '')
-            "#{root_url}/#{page}"
           end
 
           def title(content)
