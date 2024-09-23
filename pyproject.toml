@@ -121,6 +121,7 @@ disable = [
   "abstract-method",
   "broad-exception-caught",
   "too-many-instance-attributes",
+  "too-many-positional-arguments",
   "too-many-statements",
   "redefined-outer-name",
   "duplicate-code",
