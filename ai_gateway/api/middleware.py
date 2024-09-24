@@ -109,13 +109,18 @@ class AccessLogMiddleware:
             wait_duration = -1
 
         status_code = 500
+        content_type = "unknown"
 
         async def send_wrapper(message):
             if message["type"] == "http.response.start":
-                nonlocal status_code, start_time_total
+                nonlocal status_code, start_time_total, content_type
                 status_code = message["status"]
 
                 headers = MutableHeaders(scope=message)
+
+                if "content-type" in headers:
+                    content_type = headers["content-type"]
+
                 elapsed_time = time.perf_counter() - start_time_total
                 headers.append("X-Process-Time", str(elapsed_time))
 
@@ -150,6 +155,7 @@ class AccessLogMiddleware:
                 "duration_s": elapsed_time,
                 "duration_request": wait_duration,
                 "cpu_s": cpu_time,
+                "content_type": content_type,
                 "user_agent": request.headers.get("User-Agent"),
                 "gitlab_language_server_version": request.headers.get(
                     X_GITLAB_LANGUAGE_SERVER_VERSION
