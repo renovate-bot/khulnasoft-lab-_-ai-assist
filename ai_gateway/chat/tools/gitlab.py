@@ -4,6 +4,7 @@ from ai_gateway.chat.tools.base import BaseRemoteTool
 
 __all__ = [
     "CiEditorAssistant",
+    "CommitReader",
     "IssueReader",
     "GitlabDocumentation",
     "EpicReader",
@@ -118,3 +119,32 @@ class EpicReader(BaseRemoteTool):
         Action: epic_reader
         Action Input: Please identify the author of &123 epic."""
     )
+
+
+class CommitReader(BaseRemoteTool):
+    name: str = "commit_reader"
+    resource: str = "commits"
+
+    description: str = """This tool retrieves the content of a specific commit
+        ONLY if the user question fulfills the strict usage conditions below.
+
+        **Strict Usage Conditions:**
+        * **Condition 1: Commit ID Provided:** This tool MUST be used ONLY when the user provides a valid commit ID.
+        * **Condition 2: Commit URL Context:** This tool MUST be used ONLY when the user is actively viewing
+          a specific commit URL or a specific URL is provided by the user.
+
+        **Do NOT** attempt to search for or identify commits based on descriptions, keywords, or user questions.
+
+        **Action Input:**
+        * The original question asked by the user.
+
+        **Important:**  Reject any input that does not strictly adhere to the usage conditions above.
+        Return a message stating you are unable to search for commits without a valid identifier."""
+
+    example: str = """Question: Please identify the author of #123 commit
+         Thought: You have access to the same resources as user who asks a question.
+             Question is about the content of a commit, so you need to use "CommitReader" tool to retrieve
+             and read commit.
+             Based on this information you can present final answer about commit.
+         Action: CommitReader
+         Action Input: Please identify the author of #123 commit"""

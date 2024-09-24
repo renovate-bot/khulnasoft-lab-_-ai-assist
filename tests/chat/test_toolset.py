@@ -6,11 +6,13 @@ from ai_gateway.auth import GitLabUser, UserClaims
 from ai_gateway.chat.tools import BaseTool
 from ai_gateway.chat.tools.gitlab import (
     CiEditorAssistant,
+    CommitReader,
     EpicReader,
     GitlabDocumentation,
     IssueReader,
 )
 from ai_gateway.chat.toolset import DuoChatToolsRegistry
+from ai_gateway.feature_flags.context import current_feature_flag_context
 from ai_gateway.gitlab_features import GitLabUnitPrimitive, WrongUnitPrimitives
 
 
@@ -47,7 +49,12 @@ class TestDuoChatToolRegistry:
                     GitLabUnitPrimitive.DUO_CHAT,
                     GitLabUnitPrimitive.DOCUMENTATION_SEARCH,
                 ],
-                [CiEditorAssistant, IssueReader, EpicReader, GitlabDocumentation],
+                [
+                    CiEditorAssistant,
+                    IssueReader,
+                    EpicReader,
+                    GitlabDocumentation,
+                ],
             ),
             (
                 [GitLabUnitPrimitive.CODE_SUGGESTIONS],
@@ -85,3 +92,37 @@ class TestDuoChatToolRegistry:
 
         with pytest.raises(WrongUnitPrimitives):
             DuoChatToolsRegistry().get_on_behalf(user, "", raise_exception=True)
+
+    def test_commit_reader_feature_flag(self):
+        current_feature_flag_context.set(["ai_commit_reader_for_chat"])
+
+        user = GitLabUser(
+            authenticated=True,
+            claims=UserClaims(
+                scopes=[
+                    GitLabUnitPrimitive.ASK_COMMIT.value,
+                    GitLabUnitPrimitive.DUO_CHAT.value,
+                ]
+            ),
+        )
+
+        tools = DuoChatToolsRegistry().get_on_behalf(
+            user, "17.5.0-pre", raise_exception=False
+        )
+        actual_tools = [type(tool) for tool in tools]
+
+        assert actual_tools == [
+            CiEditorAssistant,
+            IssueReader,
+            EpicReader,
+            CommitReader,
+        ]
+
+        current_feature_flag_context.set([])
+
+        tools = DuoChatToolsRegistry().get_on_behalf(
+            user, "17.5.0-pre", raise_exception=False
+        )
+        actual_tools = [type(tool) for tool in tools]
+
+        assert actual_tools == [CiEditorAssistant, IssueReader, EpicReader]
