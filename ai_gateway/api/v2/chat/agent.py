@@ -103,7 +103,7 @@ async def chat(
     # This is because the status code is returned before the actual process starts,
     # and there is no way to tell clients that the status code was changed after the streaming started.
     # Ref: https://github.com/encode/starlette/discussions/1739#discussioncomment-3094935.
-    # If an exception is raised during the process, you will see `exception` field in the access log.
+    # If an exception is raised during the process, you will see `exception_message` field in the access log.
     return StreamingResponse(
-        _stream_handler(stream_events), media_type="text/event-stream"
+        _stream_handler(stream_events), media_type="application/x-ndjson; charset=utf-8"
     )

@@ -55,6 +55,7 @@ expected_log_keys = [
     "client_port",
     "duration_s",
     "cpu_s",
+    "content_type",
     "user_agent",
     "event",
     "log_level",
