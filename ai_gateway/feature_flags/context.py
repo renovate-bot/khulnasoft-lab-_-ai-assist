@@ -9,6 +9,7 @@ from enum import StrEnum
 class FeatureFlag(StrEnum):
     # Definition: https://gitlab.com/gitlab-org/gitlab/-/blob/master/config/feature_flags/development/expanded_ai_logging.yml
     EXPANDED_AI_LOGGING = "expanded_ai_logging"
+    AI_COMMIT_READER_FOR_CHAT = "ai_commit_reader_for_chat"
 
 
 def is_feature_enabled(feature_name: FeatureFlag | str) -> bool:

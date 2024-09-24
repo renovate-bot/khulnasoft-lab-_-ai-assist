@@ -18,6 +18,7 @@ class GitLabFeatureCategory(StrEnum):
 # Make sure these unit primitives are defined in `ee/config/cloud_connector/access_data.yml`
 class GitLabUnitPrimitive(StrEnum):
     ANALYZE_CI_JOB_FAILURE = "analyze_ci_job_failure"
+    ASK_COMMIT = "ask_commit"
     CATEGORIZE_DUO_CHAT_QUESTION = "categorize_duo_chat_question"
     CODE_SUGGESTIONS = "code_suggestions"
     DOCUMENTATION_SEARCH = "documentation_search"
@@ -46,6 +47,7 @@ class WrongUnitPrimitives(Exception):
 
 FEATURE_CATEGORIES_FOR_PROXY_ENDPOINTS = {
     GitLabUnitPrimitive.ANALYZE_CI_JOB_FAILURE: GitLabFeatureCategory.CONTINUOUS_INTEGRATION,
+    GitLabUnitPrimitive.ASK_COMMIT: GitLabFeatureCategory.DUO_CHAT,
     GitLabUnitPrimitive.CATEGORIZE_DUO_CHAT_QUESTION: GitLabFeatureCategory.DUO_CHAT,
     GitLabUnitPrimitive.DOCUMENTATION_SEARCH: GitLabFeatureCategory.DUO_CHAT,
     GitLabUnitPrimitive.DUO_CHAT: GitLabFeatureCategory.DUO_CHAT,
@@ -72,6 +74,7 @@ FEATURE_CATEGORIES_FOR_PROXY_ENDPOINTS = {
 # TODO: Ask stage groups to give better descriptions for these UPs.
 UNIT_PRIMITIVE_AND_DESCRIPTION_MAPPING = {
     GitLabUnitPrimitive.ANALYZE_CI_JOB_FAILURE: "Explain why a GitLab CI job failed and suggest a fix for it",
+    GitLabUnitPrimitive.ASK_COMMIT: "Ask questions about GitLab commits",
     GitLabUnitPrimitive.CATEGORIZE_DUO_CHAT_QUESTION: "Categorize user's question to GitLab Duo Chat for internal telemetry purpose",
     GitLabUnitPrimitive.DOCUMENTATION_SEARCH: "Perform semantic search on gitlab documentations for a given query.",
     GitLabUnitPrimitive.DUO_CHAT: "Ask various GitLab-related questions and tasks.",

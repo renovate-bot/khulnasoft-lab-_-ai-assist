@@ -3,10 +3,12 @@ from ai_gateway.chat.base import BaseToolsRegistry, UnitPrimitiveToolset
 from ai_gateway.chat.tools import BaseTool
 from ai_gateway.chat.tools.gitlab import (
     CiEditorAssistant,
+    CommitReader,
     EpicReader,
     GitlabDocumentation,
     IssueReader,
 )
+from ai_gateway.feature_flags import FeatureFlag, is_feature_enabled
 from ai_gateway.gitlab_features import GitLabUnitPrimitive, WrongUnitPrimitives
 
 __all__ = ["DuoChatToolsRegistry"]
@@ -15,17 +17,20 @@ __all__ = ["DuoChatToolsRegistry"]
 class DuoChatToolsRegistry(BaseToolsRegistry):
     @property
     def toolsets(self) -> list[UnitPrimitiveToolset]:
+        duo_chat_tools = [
+            CiEditorAssistant(),
+            IssueReader(),
+            EpicReader(),
+        ]
+
         # We can also read the list of tools and associated unit primitives from the file
         # similar to what we implemented for the Prompt Registry
-        return [
+        toolsets = [
+            # TODO: We'll split this soon as per https://gitlab.com/groups/gitlab-org/-/work_items/15212.
             UnitPrimitiveToolset(
                 name=GitLabUnitPrimitive.DUO_CHAT,
                 min_required_gl_version=None,
-                tools=[
-                    CiEditorAssistant(),
-                    IssueReader(),
-                    EpicReader(),
-                ],
+                tools=duo_chat_tools,
             ),
             UnitPrimitiveToolset(
                 name=GitLabUnitPrimitive.DOCUMENTATION_SEARCH,
@@ -33,6 +38,17 @@ class DuoChatToolsRegistry(BaseToolsRegistry):
                 tools=[GitlabDocumentation()],
             ),
         ]
+
+        if is_feature_enabled(FeatureFlag.AI_COMMIT_READER_FOR_CHAT):
+            toolsets.append(
+                UnitPrimitiveToolset(
+                    name=GitLabUnitPrimitive.ASK_COMMIT,
+                    min_required_gl_version="17.5.0-pre",
+                    tools=[CommitReader()],
+                )
+            )
+
+        return toolsets
 
     def get_on_behalf(
         self, user: GitLabUser, gl_version: str, raise_exception: bool = True
