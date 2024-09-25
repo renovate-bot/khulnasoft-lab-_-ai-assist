@@ -652,14 +652,7 @@ class TestLiteLlmTextGenModel:
             top_p=0.95,
             stream=False,
             timeout=60.0,
-            stop=[
-                "[INST]",
-                "[/INST]",
-                "[PREFIX]",
-                "[MIDDLE]",
-                "[SUFFIX]",
-                "\n\n",
-            ],
+            stop=["\n\n", "}"],
         )
 
         assert isinstance(output, TextGenModelOutput)
@@ -683,6 +676,65 @@ class TestLiteLlmTextGenModel:
 
         _args, kwargs = mock_litellm_acompletion.call_args
         assert kwargs["vertex_ai_location"] == "europe-west4"
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize(
+        ("prefix", "suffix", "expected_stop_tokens"),
+        [
+            (
+                "func hello(name){",
+                "}",
+                ["\n\n", "}"],
+            ),
+            (
+                "    func hello(name){",
+                "\n    }\n}",
+                ["\n\n", "    }"],
+            ),
+            (
+                "func hello(name):",
+                "",
+                ["\n\n"],
+            ),
+            (
+                "func hello(name):",
+                "\n    \n    \n    \n    \n",
+                ["\n\n"],
+            ),
+            (
+                "    def hello(name)",
+                "\n    end\n  end",
+                ["\n\n", "    end"],
+            ),
+            (
+                "    def hello(name)",
+                "\n\n    \n    \n    end\n  end",
+                ["\n\n", "    end"],
+            ),
+        ],
+    )
+    async def test_generate_vertex_codestral_suffix(
+        self,
+        prefix,
+        suffix,
+        expected_stop_tokens,
+        mock_vertex_ai_location: Mock,
+        mock_litellm_acompletion: Mock,
+    ):
+        lite_llm_vertex_codestral_model = LiteLlmTextGenModel.from_model_name(
+            name=KindLiteLlmModel.CODESTRAL_2405,
+            provider=KindModelProvider.VERTEX_AI,
+        )
+
+        await lite_llm_vertex_codestral_model.generate(
+            prefix=prefix,
+            suffix=suffix,
+            temperature=0.7,
+            max_output_tokens=128,
+        )
+
+        _args, kwargs = mock_litellm_acompletion.call_args
+        assert kwargs["stop"] == expected_stop_tokens
 
     @pytest.mark.asyncio
     @pytest.mark.parametrize(
