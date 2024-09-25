@@ -90,6 +90,7 @@ class CodeGenerations:
         model_provider: Optional[str] = None,
         stream: bool = False,
         snowplow_event_context: Optional[SnowplowEventContext] = None,
+        prompt_enhancer: Optional[dict] = None,
         **kwargs: Any,
     ) -> Union[CodeSuggestionsOutput, AsyncIterator[CodeSuggestionsChunk]]:
         lang_id = resolve_lang_id(file_name, editor_lang)
@@ -122,6 +123,8 @@ class CodeGenerations:
                         "file_name": file_name,
                     }
 
+                    if prompt_enhancer:
+                        params.update(prompt_enhancer)
                     res = await self.model.generate(params, stream)
                 elif isinstance(self.model, ChatModelBase):
                     res = await self.model.generate(

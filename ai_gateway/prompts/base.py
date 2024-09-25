@@ -56,7 +56,12 @@ class Prompt(RunnableBinding[Input, Output]):
             cast(Runnable[Input, Output], prompt | model.bind(**model_kwargs))
         )
 
-        super().__init__(name=config.name, model=model, unit_primitives=config.unit_primitives, bound=chain)  # type: ignore[call-arg]
+        super().__init__(
+            name=config.name,
+            model=model,
+            unit_primitives=config.unit_primitives,
+            bound=chain,
+        )  # type: ignore[call-arg]
 
     def _build_model_kwargs(
         self,

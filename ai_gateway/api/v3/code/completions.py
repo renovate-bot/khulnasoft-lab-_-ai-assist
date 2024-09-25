@@ -20,6 +20,7 @@ from ai_gateway.api.v3.code.typing import (
     ResponseMetadataBase,
     StreamSuggestionsResponse,
 )
+from ai_gateway.async_dependency_resolver import get_container_application
 from ai_gateway.auth.self_signed_jwt import SELF_SIGNED_TOKEN_ISSUER
 from ai_gateway.auth.user import GitLabUser, get_current_user
 from ai_gateway.code_suggestions import (
@@ -33,6 +34,7 @@ from ai_gateway.code_suggestions import (
 from ai_gateway.container import ContainerApplication
 from ai_gateway.gitlab_features import GitLabFeatureCategory, GitLabUnitPrimitive
 from ai_gateway.models import KindModelProvider
+from ai_gateway.prompts import BasePromptRegistry
 from ai_gateway.tracking import SnowplowEventContext
 
 __all__ = [
@@ -44,12 +46,17 @@ log = structlog.stdlib.get_logger("codesuggestions")
 router = APIRouter()
 
 
+async def get_prompt_registry():
+    yield get_container_application().pkg_prompts.prompt_registry()
+
+
 @router.post("/completions")
 @feature_category(GitLabFeatureCategory.CODE_SUGGESTIONS)
 async def completions(
     request: Request,
     payload: CompletionRequest,
     current_user: Annotated[GitLabUser, Depends(get_current_user)],
+    prompt_registry: Annotated[BasePromptRegistry, Depends(get_prompt_registry)],
 ):
     if not current_user.can(
         GitLabUnitPrimitive.CODE_SUGGESTIONS,
@@ -86,8 +93,10 @@ async def completions(
         )
     if component.type == CodeEditorComponents.GENERATION:
         return await code_generation(
+            current_user=current_user,
             payload=component.payload,
             code_context=code_context,
+            prompt_registry=prompt_registry,
             snowplow_event_context=snowplow_code_suggestion_context,
         )
 
@@ -167,22 +176,31 @@ def _completion_suggestion_choices(suggestions: list) -> list:
 @inject
 async def code_generation(
     payload: EditorContentGenerationPayload,
+    current_user: GitLabUser,
+    prompt_registry: BasePromptRegistry,
     generations_vertex_factory: Factory[CodeGenerations] = Provide[
         ContainerApplication.code_suggestions.generations.vertex.provider
     ],
     generations_anthropic_factory: Factory[CodeGenerations] = Provide[
         ContainerApplication.code_suggestions.generations.anthropic_default.provider
     ],
+    agent_factory: Factory[CodeGenerations] = Provide[
+        ContainerApplication.code_suggestions.generations.agent_factory.provider
+    ],
     code_context: list[CodeContextPayload] = None,
     snowplow_event_context: Optional[SnowplowEventContext] = None,
 ):
-    if payload.model_provider == KindModelProvider.ANTHROPIC:
-        engine = generations_anthropic_factory()
+    if payload.prompt_id:
+        prompt = prompt_registry.get_on_behalf(current_user, payload.prompt_id)
+        engine = agent_factory(model__prompt=prompt)
     else:
-        engine = generations_vertex_factory()
+        if payload.model_provider == KindModelProvider.ANTHROPIC:
+            engine = generations_anthropic_factory()
+        else:
+            engine = generations_vertex_factory()
 
-    if payload.prompt:
-        engine.with_prompt_prepared(payload.prompt)
+        if payload.prompt:
+            engine.with_prompt_prepared(payload.prompt)
 
     suggestion = await engine.execute(
         prefix=payload.content_above_cursor,
@@ -191,6 +209,7 @@ async def code_generation(
         model_provider=payload.model_provider,
         stream=payload.stream,
         snowplow_event_context=snowplow_event_context,
+        prompt_enhancer=payload.prompt_enhancer,
     )
 
     if isinstance(suggestion, AsyncIterator):

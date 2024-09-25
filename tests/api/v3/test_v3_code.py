@@ -438,6 +438,140 @@ class TestEditorContentGeneration:
             model_provider=None,
             stream=False,
             snowplow_event_context=expected_snowplow_event,
+            prompt_enhancer=None,
+        )
+
+    @pytest.mark.parametrize(
+        (
+            "mock_suggestions_output_text",
+            "mock_suggestions_model",
+            "mock_suggestions_engine",
+            "expected_response",
+        ),
+        [
+            # non-empty suggestions from model
+            (
+                "def search",
+                "Claude 3 Code Generations Agent",
+                "agent",
+                {
+                    "choices": [
+                        {
+                            "text": "def search",
+                            "index": 0,
+                            "finish_reason": "length",
+                        }
+                    ],
+                    "metadata": {
+                        "model": {
+                            "engine": "agent",
+                            "name": "Claude 3 Code Generations Agent",
+                            "lang": "python",
+                        },
+                    },
+                },
+            ),
+            # empty suggestions from model
+            (
+                "",
+                "Claude 3 Code Generations Agent",
+                "agent",
+                {
+                    "choices": [],
+                    "metadata": {
+                        "model": {
+                            "engine": "agent",
+                            "name": "Claude 3 Code Generations Agent",
+                            "lang": "python",
+                        },
+                    },
+                },
+            ),
+        ],
+    )
+    def test_generation_agent_model_successful_response(
+        self,
+        mock_client: TestClient,
+        mock_generations: Mock,
+        mock_suggestions_output_text: str,
+        expected_response: dict,
+    ):
+        prompt_enhancer = {
+            "examples_array": [
+                {
+                    "example": "class Project:\n  def __init__(self, name, public):\n    self.name = name\n    self.visibility = 'PUBLIC' if public\n\n    # is this project public?\n{{cursor}}\n\n    # print name of this project",
+                    "response": "<new_code>def is_public(self):\n  return self.visibility == 'PUBLIC'",
+                    "trigger_type": "comment",
+                },
+                {
+                    "example": "def get_user(session):\n  # get the current user's name from the session data\n{{cursor}}\n\n# is the current user an admin",
+                    "response": "<new_code>username = None\nif 'username' in session:\n  username = session['username']\nreturn username",
+                    "trigger_type": "comment",
+                },
+            ],
+            "trimmed_prefix": "# Create a fast binary search\n",
+            "trimmed_suffix": "",
+        }
+
+        data = {
+            "prompt_components": [
+                {
+                    "type": "code_editor_generation",
+                    "payload": {
+                        "file_name": "main.py",
+                        "content_above_cursor": "# Create a fast binary search\n",
+                        "content_below_cursor": "\n",
+                        "language_identifier": "python",
+                        "prompt_id": "code_suggestions/generations",
+                        "prompt_enhancer": prompt_enhancer,
+                    },
+                }
+            ],
+        }
+
+        response = mock_client.post(
+            "/code/completions",
+            headers={
+                "Authorization": "Bearer 12345",
+                "X-Gitlab-Authentication-Type": "oidc",
+                "X-GitLab-Instance-Id": "1234",
+                "X-GitLab-Realm": "self-managed",
+                "X-Gitlab-Global-User-Id": "test-user-id",
+            },
+            json=data,
+        )
+
+        assert response.status_code == 200
+
+        body = response.json()
+
+        assert body["choices"] == expected_response["choices"]
+
+        assert body["metadata"]["model"] == expected_response["metadata"]["model"]
+
+        assert body["metadata"]["timestamp"] > 0
+
+        expected_snowplow_event = SnowplowEventContext(
+            prefix_length=30,
+            suffix_length=1,
+            language="python",
+            user_agent="testclient",
+            gitlab_realm="self-managed",
+            is_direct_connection=False,
+            gitlab_instance_id="1234",
+            gitlab_global_user_id="test-user-id",
+            gitlab_host_name="",
+            gitlab_saas_namespace_ids=[],
+            gitlab_saas_duo_pro_namespace_ids=[],
+        )
+        mock_generations.assert_called_with(
+            prefix="# Create a fast binary search\n",
+            file_name="main.py",
+            editor_lang="python",
+            model_provider=None,
+            stream=False,
+            snowplow_event_context=expected_snowplow_event,
+            prompt_enhancer=prompt_enhancer,
         )
 
     @pytest.mark.parametrize(
