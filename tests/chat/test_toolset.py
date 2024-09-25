@@ -23,9 +23,9 @@ class TestDuoChatToolRegistry:
             (
                 [
                     CiEditorAssistant,
-                    IssueReader,
-                    EpicReader,
                     GitlabDocumentation,
+                    EpicReader,
+                    IssueReader,
                 ]
             )
         ],
@@ -39,21 +39,22 @@ class TestDuoChatToolRegistry:
     @pytest.mark.parametrize(
         ("unit_primitives", "expected_tools"),
         [
-            (
-                [GitLabUnitPrimitive.DUO_CHAT],
-                [CiEditorAssistant, IssueReader, EpicReader],
-            ),
+            ([GitLabUnitPrimitive.DUO_CHAT], [CiEditorAssistant]),
             ([GitLabUnitPrimitive.DOCUMENTATION_SEARCH], [GitlabDocumentation]),
+            ([GitLabUnitPrimitive.ASK_EPIC], [EpicReader]),
+            ([GitLabUnitPrimitive.ASK_ISSUE], [IssueReader]),
             (
                 [
                     GitLabUnitPrimitive.DUO_CHAT,
                     GitLabUnitPrimitive.DOCUMENTATION_SEARCH,
+                    GitLabUnitPrimitive.ASK_EPIC,
+                    GitLabUnitPrimitive.ASK_ISSUE,
                 ],
                 [
                     CiEditorAssistant,
-                    IssueReader,
-                    EpicReader,
                     GitlabDocumentation,
+                    EpicReader,
+                    IssueReader,
                 ],
             ),
             (
@@ -113,8 +114,6 @@ class TestDuoChatToolRegistry:
 
         assert actual_tools == [
             CiEditorAssistant,
-            IssueReader,
-            EpicReader,
             CommitReader,
         ]
 
@@ -125,4 +124,4 @@ class TestDuoChatToolRegistry:
         )
         actual_tools = [type(tool) for tool in tools]
 
-        assert actual_tools == [CiEditorAssistant, IssueReader, EpicReader]
+        assert actual_tools == [CiEditorAssistant]
