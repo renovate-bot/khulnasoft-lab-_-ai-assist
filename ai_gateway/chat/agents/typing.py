@@ -7,6 +7,7 @@ __all__ = [
     "AgentToolAction",
     "AgentFinalAnswer",
     "AgentUnknownAction",
+    "AgentError",
     "AgentBaseEvent",
     "TypeAgentEvent",
     "AgentStep",
@@ -39,6 +40,11 @@ class AgentFinalAnswer(AgentBaseEvent):
 class AgentUnknownAction(AgentBaseEvent):
     type: str = "unknown"
     text: str
+
+
+class AgentError(AgentBaseEvent):
+    type: str = "error"
+    message: str
 
 
 TypeAgentEvent = TypeVar(

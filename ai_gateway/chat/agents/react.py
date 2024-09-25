@@ -12,6 +12,7 @@ from pydantic import BaseModel
 
 from ai_gateway.chat.agents.typing import (
     AdditionalContext,
+    AgentError,
     AgentFinalAnswer,
     AgentStep,
     AgentToolAction,
@@ -234,18 +235,24 @@ class ReActAgent(Prompt[ReActAgentInputs, TypeAgentEvent]):
         astream = super().astream(input, config=config, **kwargs)
         len_final_answer = 0
 
-        async for event in astream:
-            if is_feature_enabled(FeatureFlag.EXPANDED_AI_LOGGING):
-                log.info("Response streaming", source=__name__, streamed_event=event)
+        try:
+            async for event in astream:
+                if is_feature_enabled(FeatureFlag.EXPANDED_AI_LOGGING):
+                    log.info(
+                        "Response streaming", source=__name__, streamed_event=event
+                    )
 
-            if isinstance(event, AgentFinalAnswer) and len(event.text) > 0:
-                yield AgentFinalAnswer(
-                    text=event.text[len_final_answer:],
-                )
+                if isinstance(event, AgentFinalAnswer) and len(event.text) > 0:
+                    yield AgentFinalAnswer(
+                        text=event.text[len_final_answer:],
+                    )
 
-                len_final_answer = len(event.text)
+                    len_final_answer = len(event.text)
 
-            events.append(event)
+                events.append(event)
+        except Exception as e:
+            yield AgentError(message=str(e))
+            raise
 
         if any(isinstance(e, AgentFinalAnswer) for e in events):
             pass  # no-op
