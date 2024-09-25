@@ -17,25 +17,30 @@ __all__ = ["DuoChatToolsRegistry"]
 class DuoChatToolsRegistry(BaseToolsRegistry):
     @property
     def toolsets(self) -> list[UnitPrimitiveToolset]:
-        duo_chat_tools = [
-            CiEditorAssistant(),
-            IssueReader(),
-            EpicReader(),
-        ]
-
         # We can also read the list of tools and associated unit primitives from the file
         # similar to what we implemented for the Prompt Registry
         toolsets = [
-            # TODO: We'll split this soon as per https://gitlab.com/groups/gitlab-org/-/work_items/15212.
             UnitPrimitiveToolset(
                 name=GitLabUnitPrimitive.DUO_CHAT,
                 min_required_gl_version=None,
-                tools=duo_chat_tools,
+                tools=[
+                    CiEditorAssistant(),
+                ],
             ),
             UnitPrimitiveToolset(
                 name=GitLabUnitPrimitive.DOCUMENTATION_SEARCH,
                 min_required_gl_version=None,
                 tools=[GitlabDocumentation()],
+            ),
+            UnitPrimitiveToolset(
+                name=GitLabUnitPrimitive.ASK_EPIC,
+                min_required_gl_version=None,
+                tools=[EpicReader()],
+            ),
+            UnitPrimitiveToolset(
+                name=GitLabUnitPrimitive.ASK_ISSUE,
+                min_required_gl_version=None,
+                tools=[IssueReader()],
             ),
         ]
 

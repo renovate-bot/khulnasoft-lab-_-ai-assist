@@ -19,6 +19,8 @@ class GitLabFeatureCategory(StrEnum):
 class GitLabUnitPrimitive(StrEnum):
     ANALYZE_CI_JOB_FAILURE = "analyze_ci_job_failure"
     ASK_COMMIT = "ask_commit"
+    ASK_EPIC = "ask_epic"
+    ASK_ISSUE = "ask_issue"
     CATEGORIZE_DUO_CHAT_QUESTION = "categorize_duo_chat_question"
     CODE_SUGGESTIONS = "code_suggestions"
     DOCUMENTATION_SEARCH = "documentation_search"
@@ -48,6 +50,8 @@ class WrongUnitPrimitives(Exception):
 FEATURE_CATEGORIES_FOR_PROXY_ENDPOINTS = {
     GitLabUnitPrimitive.ANALYZE_CI_JOB_FAILURE: GitLabFeatureCategory.CONTINUOUS_INTEGRATION,
     GitLabUnitPrimitive.ASK_COMMIT: GitLabFeatureCategory.DUO_CHAT,
+    GitLabUnitPrimitive.ASK_EPIC: GitLabFeatureCategory.DUO_CHAT,
+    GitLabUnitPrimitive.ASK_ISSUE: GitLabFeatureCategory.DUO_CHAT,
     GitLabUnitPrimitive.CATEGORIZE_DUO_CHAT_QUESTION: GitLabFeatureCategory.DUO_CHAT,
     GitLabUnitPrimitive.DOCUMENTATION_SEARCH: GitLabFeatureCategory.DUO_CHAT,
     GitLabUnitPrimitive.DUO_CHAT: GitLabFeatureCategory.DUO_CHAT,
@@ -75,6 +79,8 @@ FEATURE_CATEGORIES_FOR_PROXY_ENDPOINTS = {
 UNIT_PRIMITIVE_AND_DESCRIPTION_MAPPING = {
     GitLabUnitPrimitive.ANALYZE_CI_JOB_FAILURE: "Explain why a GitLab CI job failed and suggest a fix for it",
     GitLabUnitPrimitive.ASK_COMMIT: "Ask questions about GitLab commits",
+    GitLabUnitPrimitive.ASK_EPIC: "Ask questions about GitLab epics",
+    GitLabUnitPrimitive.ASK_ISSUE: "Ask questions about GitLab issues",
     GitLabUnitPrimitive.CATEGORIZE_DUO_CHAT_QUESTION: "Categorize user's question to GitLab Duo Chat for internal telemetry purpose",
     GitLabUnitPrimitive.DOCUMENTATION_SEARCH: "Perform semantic search on gitlab documentations for a given query.",
     GitLabUnitPrimitive.DUO_CHAT: "Ask various GitLab-related questions and tasks.",
