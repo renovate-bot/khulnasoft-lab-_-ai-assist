@@ -6,6 +6,7 @@ import structlog
 from dependency_injector.providers import Factory
 from fastapi import APIRouter, Body, Depends, HTTPException, Request, status
 
+from ai_gateway.api.error_utils import capture_validation_errors
 from ai_gateway.api.feature_category import feature_category
 from ai_gateway.api.middleware import X_GITLAB_LANGUAGE_SERVER_VERSION
 from ai_gateway.api.snowplow_context import get_snowplow_code_suggestion_context
@@ -88,6 +89,7 @@ async def get_prompt_registry():
 @router.post("/completions")
 @router.post("/code/completions")
 @feature_category(GitLabFeatureCategory.CODE_SUGGESTIONS)
+@capture_validation_errors()
 async def completions(
     request: Request,
     payload: CompletionsRequestWithVersion,
@@ -235,6 +237,7 @@ async def completions(
 
 @router.post("/code/generations")
 @feature_category(GitLabFeatureCategory.CODE_SUGGESTIONS)
+@capture_validation_errors()
 async def generations(
     request: Request,
     payload: GenerationsRequestWithVersion,

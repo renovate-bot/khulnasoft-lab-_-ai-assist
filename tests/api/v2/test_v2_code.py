@@ -10,6 +10,7 @@ from snowplow_tracker import Snowplow
 from starlette.datastructures import CommaSeparatedStrings
 from structlog.testing import capture_logs
 
+from ai_gateway.api.error_utils import capture_validation_errors
 from ai_gateway.api.v2 import api_router
 from ai_gateway.auth import User, UserClaims
 from ai_gateway.config import Config
@@ -1081,6 +1082,31 @@ class TestCodeCompletions:
             snowplow_event_context=ANY,
         )
 
+    @pytest.mark.asyncio
+    @capture_validation_errors()
+    async def test_completions_with_validation_error(self, mock_client):
+        params = {
+            "current_file": {
+                "file_name": "main.py",
+                "content_above_cursor": "foo",
+                "language_identifier": "python",
+                "content_below_cursor": "}",
+            },
+            "prompt_version": 2,
+            "model_provider": "codestral",
+            "model_name": "codestral@2405",
+        }
+
+        response = self._send_code_completions_request(mock_client, params)
+
+        assert response.status_code == 422
+
+        body = response.json()
+        assert (
+            (body["detail"])
+            == "[{'type': 'url_type', 'loc': ('endpoint',), 'msg': 'URL input should be a string or URL', 'input': None, 'url': 'https://errors.pydantic.dev/2.9/v/url_type'}]"
+        )
+
     def _send_code_completions_request(self, mock_client, params):
         headers = {
             "Authorization": "Bearer 12345",
@@ -1521,6 +1547,41 @@ class TestCodeGenerations:
         assert response.status_code == 200
         assert response.text == mock_suggestions_output_text
         assert response.headers["content-type"] == "text/event-stream; charset=utf-8"
+
+    @pytest.mark.asyncio
+    @capture_validation_errors()
+    async def test_generations_with_validation_error(self, mock_client):
+        response = mock_client.post(
+            "/code/generations",
+            headers={
+                "Authorization": "Bearer 12345",
+                "X-Gitlab-Authentication-Type": "oidc",
+                "X-GitLab-Instance-Id": "1234",
+                "X-GitLab-Realm": "self-managed",
+            },
+            json={
+                "current_file": {
+                    "file_name": "main.py",
+                    "content_above_cursor": "# create function",
+                    "content_below_cursor": "\n",
+                },
+                "prompt_version": 2,
+                "prompt": "# create a function",
+                "model_provider": "anthropic",
+                "model_name": "claude-2.1",
+                "stream": True,
+                "choices_count": 1,
+                "prompt_id": "12345",
+            },
+        )
+
+        assert response.status_code == 422
+
+        body = response.json()
+        assert (
+            (body["detail"])
+            == "[{'type': 'url_type', 'loc': ('endpoint',), 'msg': 'URL input should be a string or URL', 'input': None, 'url': 'https://errors.pydantic.dev/2.9/v/url_type'}]"
+        )
 
     @pytest.mark.parametrize(
         (
