@@ -1,7 +1,7 @@
 import logging
 import time
 import traceback
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Optional, Tuple
 
 import structlog
@@ -100,6 +100,9 @@ class AccessLogMiddleware:
 
         start_time_total = time.perf_counter()
         start_time_cpu = time.process_time()
+        response_start_duration_s = 0.0
+        first_chunk_duration_s = 0.0
+        request_arrived_at = datetime.now(timezone.utc)
         # duration_request represents latency added by sending request from Rails to AI gateway
         try:
             wait_duration = time.time() - float(
@@ -113,7 +116,7 @@ class AccessLogMiddleware:
 
         async def send_wrapper(message):
             if message["type"] == "http.response.start":
-                nonlocal status_code, start_time_total, content_type
+                nonlocal status_code, start_time_total, response_start_duration_s, first_chunk_duration_s, content_type
                 status_code = message["status"]
 
                 headers = MutableHeaders(scope=message)
@@ -121,8 +124,12 @@ class AccessLogMiddleware:
                 if "content-type" in headers:
                     content_type = headers["content-type"]
 
-                elapsed_time = time.perf_counter() - start_time_total
-                headers.append("X-Process-Time", str(elapsed_time))
+                response_start_duration_s = time.perf_counter() - start_time_total
+                headers.append("X-Process-Time", str(response_start_duration_s))
+
+            if message["type"] == "http.response.body":
+                if first_chunk_duration_s == 0.0:
+                    first_chunk_duration_s = time.perf_counter() - start_time_total
 
             await send(message)
 
@@ -154,6 +161,9 @@ class AccessLogMiddleware:
                 "client_port": client_port,
                 "duration_s": elapsed_time,
                 "duration_request": wait_duration,
+                "request_arrived_at": request_arrived_at.isoformat(),
+                "response_start_duration_s": response_start_duration_s,
+                "first_chunk_duration_s": first_chunk_duration_s,
                 "cpu_s": cpu_time,
                 "content_type": content_type,
                 "user_agent": request.headers.get("User-Agent"),
