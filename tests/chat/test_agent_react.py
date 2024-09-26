@@ -2,6 +2,7 @@ import pytest
 from structlog.testing import capture_logs
 
 from ai_gateway.chat.agents.react import (
+    AgentError,
     AgentFinalAnswer,
     AgentToolAction,
     AgentUnknownAction,
@@ -405,3 +406,41 @@ class TestReActAgent:
             stream=True,
             expected_actions=expected_actions,
         )
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize(
+        (
+            "question",
+            "model_error",
+            "expected_events",
+        ),
+        [
+            (
+                "What's the title of this epic?",
+                ValueError("overload_error"),
+                [
+                    AgentError(message="overload_error"),
+                ],
+            )
+        ],
+    )
+    async def test_stream_error(
+        self,
+        question: str,
+        model_error: Exception,
+        expected_events: list[AgentError],
+        prompt: ReActAgent,
+    ):
+        inputs = ReActAgentInputs(
+            question=question,
+            chat_history=[],
+            agent_scratchpad=[],
+        )
+
+        actual_events = []
+        with pytest.raises(ValueError) as exc_info:
+            async for event in prompt.astream(inputs):
+                actual_events.append(event)
+
+        assert actual_events == expected_events
+        assert str(exc_info.value) == "overload_error"

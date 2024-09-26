@@ -1,6 +1,6 @@
 from contextlib import contextmanager
 from pathlib import Path
-from typing import Any, AsyncIterator, Type
+from typing import Any, AsyncIterator, Type, Optional
 from unittest.mock import AsyncMock, Mock, patch
 
 import pytest
@@ -8,6 +8,7 @@ from fastapi import FastAPI
 from fastapi.testclient import TestClient
 from langchain.chat_models.fake import FakeListChatModel
 from langchain_core.language_models.chat_models import BaseChatModel
+from langchain_core.outputs import ChatGenerationChunk
 from starlette.middleware import Middleware
 from starlette_context.middleware import RawContextMiddleware
 
@@ -357,10 +358,14 @@ def model_engine():
 def model_name():
     yield "fake-model"
 
+@pytest.fixture
+def model_error():
+    yield None
 
 class FakeModel(FakeListChatModel):
     model_engine: str
     model_name: str
+    model_error: Optional[Exception] = None
 
     @property
     def _llm_type(self) -> str:
@@ -369,14 +374,22 @@ class FakeModel(FakeListChatModel):
     @property
     def _identifying_params(self) -> dict[str, Any]:
         return {**super()._identifying_params, **{"model": self.model_name}}
+    
+    async def _astream(
+        self, *args, **kwargs,
+    ) -> AsyncIterator[ChatGenerationChunk]:
+        async for c in super(FakeModel, self)._astream(*args, **kwargs):
+            yield c
 
+        if self.model_error:
+            raise self.model_error
 
 @pytest.fixture
-def model(model_response: str, model_engine: str, model_name: str):
+def model(model_response: str, model_engine: str, model_name: str, model_error: Exception):
     # our default Assistant prompt template already contains "Thought: "
     text = model_response.removeprefix("Thought: ") if model_response else ""
 
-    yield FakeModel(model_engine=model_engine, model_name=model_name, responses=[text])
+    yield FakeModel(model_engine=model_engine, model_name=model_name, responses=[text], model_error=model_error)
 
 
 @pytest.fixture
