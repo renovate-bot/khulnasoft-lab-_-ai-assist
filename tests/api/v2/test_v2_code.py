@@ -1102,10 +1102,17 @@ class TestCodeCompletions:
         assert response.status_code == 422
 
         body = response.json()
-        assert (
-            (body["detail"])
-            == "[{'type': 'url_type', 'loc': ('endpoint',), 'msg': 'URL input should be a string or URL', 'input': None, 'url': 'https://errors.pydantic.dev/2.9/v/url_type'}]"
-        )
+        expected_error_message = [
+            {
+                "ctx": {"error": {}},
+                "input": "codestral@2405",
+                "loc": ["body", 2, "model_name"],
+                "msg": "Value error, model codestral@2405 is not supported by use case code completions and provider codestral",
+                "type": "value_error",
+            }
+        ]
+
+        assert (body["detail"]) == expected_error_message
 
     def _send_code_completions_request(self, mock_client, params):
         headers = {

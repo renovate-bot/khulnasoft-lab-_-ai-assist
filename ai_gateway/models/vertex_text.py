@@ -112,6 +112,22 @@ class KindVertexTextModel(StrEnum):
     TEXTEMBEDDING_GECKO = "textembedding-gecko"
     TEXTEMBEDDING_GECKO_003 = "textembedding-gecko@003"
 
+    # Mistral AI
+    CODESTRAL_2405 = "codestral@2405"
+
+    # This method handles the provider prefix transformation for
+    # Vertex AI models
+    # It's necessary because we're using LiteLLM abstraction
+    # instead of the Vertex AI SDK directly for the codestral@2405
+    # model in code completions
+    def _text_provider_prefix(self, provider):
+        # KindModelProvider.VERTEX_AI is 'vertex-ai', whereas LiteLLM uses 'vertex_ai' as the key for Vertex provider
+        # We need to transform the provider prefix to what's compatible with LiteLLM
+        return "vertex_ai"
+
+    def text_model(self, provider=KindModelProvider.VERTEX_AI) -> str:
+        return f"{self._text_provider_prefix(provider)}/{self.value}"
+
 
 class PalmCodeGenBaseModel(TextGenModelBase):
     # Max number of tokens the model can handle

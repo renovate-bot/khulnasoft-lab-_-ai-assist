@@ -51,8 +51,9 @@ from ai_gateway.config import Config
 from ai_gateway.gitlab_features import GitLabFeatureCategory, GitLabUnitPrimitive
 from ai_gateway.instrumentators.base import TelemetryInstrumentator
 from ai_gateway.internal_events import InternalEventsClient
-from ai_gateway.models import KindAnthropicModel, KindLiteLlmModel, KindModelProvider
+from ai_gateway.models import KindAnthropicModel, KindModelProvider
 from ai_gateway.models.base import TokensConsumptionMetadata
+from ai_gateway.models.vertex_text import KindVertexTextModel
 from ai_gateway.prompts import BasePromptRegistry
 from ai_gateway.prompts.typing import ModelMetadata
 from ai_gateway.tracking import SnowplowEvent, SnowplowEventContext
@@ -175,7 +176,7 @@ async def completions(
             kwargs.update({"code_context": [ctx.content for ctx in payload.context]})
     elif (
         payload.model_provider == KindModelProvider.VERTEX_AI
-        and payload.model_name == KindLiteLlmModel.CODESTRAL_2405
+        and payload.model_name == KindVertexTextModel.CODESTRAL_2405
         # Codestral is currently not supported in asia-* locations
         # This is a temporary change to allow rollout of Codestral to all internal users
         # while we are looking into getting support for Codestral in Asia

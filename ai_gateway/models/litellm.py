@@ -17,6 +17,7 @@ from ai_gateway.models.base_text import (
     TextGenModelChunk,
     TextGenModelOutput,
 )
+from ai_gateway.models.vertex_text import KindVertexTextModel
 from ai_gateway.tracking import SnowplowEventContext
 
 __all__ = [
@@ -57,7 +58,6 @@ class KindLiteLlmModel(StrEnum):
     MIXTRAL_8X22B = "mixtral_8x22b"
     MIXTRAL = "mixtral"
     DEEPSEEKCODER = "deepseekcoder"
-    CODESTRAL_2405 = "codestral@2405"
     MISTRAL_TEXT = "mistral_text"
     MIXTRAL_TEXT = "mixtral_text"
     MIXTRAL_8X22B_TEXT = "mixtral_8x22b_text"
@@ -71,10 +71,6 @@ class KindLiteLlmModel(StrEnum):
         return provider.value
 
     def _text_provider_prefix(self, provider):
-        # KindModelProvider.VERTEX_AI is 'vertex-ai', whereas LiteLLM uses 'vertex_ai' as the key for Vertex provider
-        # We need to transform the provider prefix to what's compatible with LiteLLM
-        if provider == KindModelProvider.VERTEX_AI:
-            return "vertex_ai"
 
         # Text completion models hosted behind openai proxies should be prefixed with "text-completion-openai/":
         # https://docs.litellm.ai/docs/providers/openai_compatible
@@ -120,13 +116,15 @@ MODEL_STOP_TOKENS = {
         "<|fim_middle|>",
         "<|file_separator|>",
     ],
-    KindLiteLlmModel.CODESTRAL_2405: [
+    # Ref: https://docs.litellm.ai/docs/providers/vertex#mistral-api
+    # This model is served by Vertex AI but accessed through LiteLLM abstraction
+    KindVertexTextModel.CODESTRAL_2405: [
         "\n\n",
     ],
 }
 
 MODEL_SPECIFICATIONS = {
-    KindLiteLlmModel.CODESTRAL_2405: {
+    KindVertexTextModel.CODESTRAL_2405: {
         "timeout": 60,
         "completion_type": ModelCompletionType.TEXT,
     }
@@ -437,7 +435,9 @@ class LiteLlmTextGenModel(TextGenModelBase):
         return self.provider == KindModelProvider.VERTEX_AI
 
     def _is_vertex_codestral(self):
-        return self._is_vertex() and self.model_name == KindLiteLlmModel.CODESTRAL_2405
+        return (
+            self._is_vertex() and self.model_name == KindVertexTextModel.CODESTRAL_2405
+        )
 
     def _get_vertex_model_location(self):
         if Config().vertex_text_model.location.startswith("europe-"):
@@ -467,7 +467,10 @@ class LiteLlmTextGenModel(TextGenModelBase):
             api_key = provider_keys.get("mistral_api_key")
 
         try:
-            kind_model = KindLiteLlmModel(name)
+            if provider == KindModelProvider.VERTEX_AI:
+                kind_model = KindVertexTextModel(name)
+            else:
+                kind_model = KindLiteLlmModel(name)
         except ValueError:
             raise ValueError(f"no model found by the name '{name}'")
 
