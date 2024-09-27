@@ -1,0 +1,18 @@
+---
+name: Claude 3 Fix Code agent
+model:
+  name: claude-3-5-sonnet-20240620
+  params:
+    model_class_provider: anthropic
+    temperature: 0.1
+    max_tokens: 2_048
+    max_retries: 1
+unit_primitives:
+  - duo_chat
+prompt_template:
+  system: |
+    {% include 'chat/fix_code/system.jinja' %}
+  user: |
+    {% include 'chat/fix_code/user.jinja' %}
+params:
+  timeout: 60
