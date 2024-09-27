@@ -41,8 +41,7 @@ class KindUseCase(StrEnum):
 
 PROVIDERS_MODELS_MAP = {
     KindModelProvider.ANTHROPIC: set(KindAnthropicModel),
-    KindModelProvider.VERTEX_AI: set(KindVertexTextModel)
-    | {KindLiteLlmModel.CODESTRAL_2405},
+    KindModelProvider.VERTEX_AI: set(KindVertexTextModel),
     KindModelProvider.LITELLM: set(KindLiteLlmModel),
     KindModelProvider.MISTRALAI: set(KindLiteLlmModel),
 }
@@ -52,12 +51,12 @@ USE_CASES_MODELS_MAP = {
         KindAnthropicModel.CLAUDE_INSTANT_1_1,
         KindAnthropicModel.CLAUDE_INSTANT_1_2,
         KindVertexTextModel.CODE_GECKO_002,
+        KindVertexTextModel.CODESTRAL_2405,
         KindLiteLlmModel.CODEGEMMA_2B,
         KindLiteLlmModel.CODEGEMMA_7B,
         KindLiteLlmModel.CODELLAMA_13B_CODE,
         KindLiteLlmModel.CODESTRAL,
         KindLiteLlmModel.DEEPSEEKCODER,
-        KindLiteLlmModel.CODESTRAL_2405,
         KindLiteLlmModel.MISTRAL,
         KindLiteLlmModel.MISTRAL_TEXT,
         KindLiteLlmModel.MIXTRAL,

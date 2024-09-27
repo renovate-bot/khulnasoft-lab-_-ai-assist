@@ -13,6 +13,7 @@ from ai_gateway.models.litellm import (
     LiteLlmInternalServerError,
     LiteLlmTextGenModel,
 )
+from ai_gateway.models.vertex_text import KindVertexTextModel
 
 
 @pytest.fixture
@@ -75,7 +76,7 @@ class TestKindLiteLlmModel:
             == "text-completion-codestral/codestral"
         )
         assert (
-            KindLiteLlmModel.CODESTRAL_2405.text_model(
+            KindVertexTextModel.CODESTRAL_2405.text_model(
                 provider=KindModelProvider.VERTEX_AI
             )
             == "vertex_ai/codestral@2405"
@@ -630,7 +631,7 @@ class TestLiteLlmTextGenModel:
         mock_litellm_acompletion: Mock,
     ):
         lite_llm_vertex_codestral_model = LiteLlmTextGenModel.from_model_name(
-            name=KindLiteLlmModel.CODESTRAL_2405,
+            name=KindVertexTextModel.CODESTRAL_2405,
             provider=KindModelProvider.VERTEX_AI,
         )
 
@@ -665,7 +666,7 @@ class TestLiteLlmTextGenModel:
         mock_litellm_acompletion: Mock,
     ):
         lite_llm_vertex_codestral_model = LiteLlmTextGenModel.from_model_name(
-            name=KindLiteLlmModel.CODESTRAL_2405,
+            name=KindVertexTextModel.CODESTRAL_2405,
             provider=KindModelProvider.VERTEX_AI,
         )
 
@@ -722,7 +723,7 @@ class TestLiteLlmTextGenModel:
         mock_litellm_acompletion: Mock,
     ):
         lite_llm_vertex_codestral_model = LiteLlmTextGenModel.from_model_name(
-            name=KindLiteLlmModel.CODESTRAL_2405,
+            name=KindVertexTextModel.CODESTRAL_2405,
             provider=KindModelProvider.VERTEX_AI,
         )
 
