@@ -1,4 +1,5 @@
 import pytest
+from starlette_context import context, request_cycle_context
 from structlog.testing import capture_logs
 
 from ai_gateway.chat.agents.react import (
@@ -53,9 +54,15 @@ async def _assert_agent_invoked(
         agent_scratchpad=agent_scratchpad,
     )
 
-    with capture_logs() as cap_logs:
+    with capture_logs() as cap_logs, request_cycle_context({}):
         if stream:
             actual_actions = [action async for action in prompt.astream(inputs)]
+
+            if isinstance(expected_actions[0], AgentToolAction):
+                assert (
+                    context.get("duo_chat.agent_tool_action")
+                    == expected_actions[0].tool
+                )
         else:
             actual_actions = [await prompt.ainvoke(inputs)]
 

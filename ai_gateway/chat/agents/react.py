@@ -1,6 +1,7 @@
 import re
 from typing import Any, AsyncIterator, Optional, Sequence
 
+import starlette_context
 import structlog
 from langchain_core.exceptions import OutputParserException
 from langchain_core.messages import AIMessage, HumanMessage
@@ -32,6 +33,8 @@ __all__ = [
     "ReActPlainTextParser",
     "ReActAgent",
 ]
+
+_REACT_AGENT_TOOL_ACTION_CONTEXT_KEY = "duo_chat.agent_tool_action"
 
 log = structlog.stdlib.get_logger("react")
 
@@ -257,6 +260,8 @@ class ReActAgent(Prompt[ReActAgentInputs, TypeAgentEvent]):
         if any(isinstance(e, AgentFinalAnswer) for e in events):
             pass  # no-op
         elif any(isinstance(e, AgentToolAction) for e in events):
-            yield events[-1]
+            event = events[-1]
+            starlette_context.context[_REACT_AGENT_TOOL_ACTION_CONTEXT_KEY] = event.tool
+            yield event
         elif isinstance(events[-1], AgentUnknownAction):
             yield events[-1]
