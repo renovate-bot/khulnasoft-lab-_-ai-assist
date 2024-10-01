@@ -188,6 +188,8 @@ class ReActPlainTextParser(BaseCumulativeTransformOutputParser):
 
 
 class ReActAgent(Prompt[ReActAgentInputs, TypeAgentEvent]):
+    RETRYABLE_ERRORS = ["overloaded_error"]
+
     @staticmethod
     def _build_chain(
         chain: Runnable[ReActAgentInputs, TypeAgentEvent]
@@ -254,7 +256,10 @@ class ReActAgent(Prompt[ReActAgentInputs, TypeAgentEvent]):
 
                 events.append(event)
         except Exception as e:
-            yield AgentError(message=str(e))
+            error_message = str(e)
+            retryable = any(err in error_message for err in self.RETRYABLE_ERRORS)
+
+            yield AgentError(message=error_message, retryable=retryable)
             raise
 
         if any(isinstance(e, AgentFinalAnswer) for e in events):
