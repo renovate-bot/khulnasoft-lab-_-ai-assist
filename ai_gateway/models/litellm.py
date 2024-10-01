@@ -48,19 +48,11 @@ class LiteLlmInternalServerError(ModelAPIError):
 
 
 class KindLiteLlmModel(StrEnum):
-    CODEGEMMA_2B = "codegemma_2b"
     CODEGEMMA = "codegemma"
-    CODEGEMMA_7B = "codegemma_7b"
-    CODELLAMA_13B_CODE = "codellama_13b_code"
     CODELLAMA = "codellama"
     CODESTRAL = "codestral"
     MISTRAL = "mistral"
-    MIXTRAL_8X22B = "mixtral_8x22b"
-    MIXTRAL = "mixtral"
     DEEPSEEKCODER = "deepseekcoder"
-    MISTRAL_TEXT = "mistral_text"
-    MIXTRAL_TEXT = "mixtral_text"
-    MIXTRAL_8X22B_TEXT = "mixtral_8x22b_text"
 
     def _chat_provider_prefix(self, provider):
         # Chat models hosted behind openai proxies should be prefixed with "openai/":
@@ -93,23 +85,9 @@ class ModelCompletionType(StrEnum):
 
 MODEL_STOP_TOKENS = {
     KindLiteLlmModel.MISTRAL: ["</new_code>"],
-    KindLiteLlmModel.MIXTRAL: ["</new_code>"],
-    KindLiteLlmModel.MIXTRAL_8X22B: ["</new_code>"],
     # Ref: https://huggingface.co/google/codegemma_2b-7b
     # The model returns the completion, followed by one of the FIM tokens or the EOS token.
     # You should ignore everything that comes after any of these tokens.
-    KindLiteLlmModel.CODEGEMMA_2B: [
-        "<|fim_prefix|>",
-        "<|fim_suffix|>",
-        "<|fim_middle|>",
-        "<|file_separator|>",
-    ],
-    KindLiteLlmModel.CODEGEMMA_7B: [
-        "<|fim_prefix|>",
-        "<|fim_suffix|>",
-        "<|fim_middle|>",
-        "<|file_separator|>",
-    ],
     KindLiteLlmModel.CODEGEMMA: [
         "<|fim_prefix|>",
         "<|fim_suffix|>",
@@ -135,14 +113,11 @@ class LiteLlmChatModel(ChatModelBase):
     @property
     def MAX_MODEL_LEN(self):  # pylint: disable=invalid-name
         codegemma_models = {
-            KindLiteLlmModel.CODEGEMMA_2B,
-            KindLiteLlmModel.CODEGEMMA_7B,
             KindLiteLlmModel.CODEGEMMA,
         }
 
         codelama_models = {
             KindLiteLlmModel.CODELLAMA,
-            KindLiteLlmModel.CODELLAMA_13B_CODE,
         }
 
         if self._metadata.name in codegemma_models:
@@ -263,28 +238,17 @@ class LiteLlmChatModel(ChatModelBase):
 class LiteLlmTextGenModel(TextGenModelBase):
     @property
     def MAX_MODEL_LEN(self):  # pylint: disable=invalid-name
-        codegemma_models = {
-            KindLiteLlmModel.CODEGEMMA_2B,
-            KindLiteLlmModel.CODEGEMMA_7B,
-            KindLiteLlmModel.CODEGEMMA,
-        }
-
-        codelama_models = {
-            KindLiteLlmModel.CODELLAMA,
-            KindLiteLlmModel.CODELLAMA_13B_CODE,
-        }
-
-        if self._metadata.name in codegemma_models:
+        if self._metadata.name in KindLiteLlmModel.CODEGEMMA:
             return 8_192
 
-        if self._metadata.name in codelama_models:
+        if self._metadata.name == KindLiteLlmModel.CODELLAMA:
             return 16_384
 
         return 32_768
 
     def __init__(
         self,
-        model_name: KindLiteLlmModel = KindLiteLlmModel.CODEGEMMA_2B,
+        model_name: KindLiteLlmModel = KindLiteLlmModel.CODEGEMMA,
         endpoint: Optional[str] = None,
         api_key: Optional[str] = None,
         provider: Optional[KindModelProvider] = KindModelProvider.LITELLM,
