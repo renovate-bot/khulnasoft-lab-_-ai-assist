@@ -14,6 +14,9 @@ You'll need:
 - Docker
 - `docker compose` >= 1.28
 - [`gcloud` CLI](https://cloud.google.com/docs/authentication/provide-credentials-adc#how-to)
+- sqlite development libraries
+  - This package is usually called `libsqlite3-dev` or `sqlite-devel` (depending on your platform);
+    install this _before_ installing Python so it can compile against these libraries.
 - `mise` (recommended) or `asdf`
   - [More information](https://gitlab.com/gitlab-org/gitlab-development-kit/-/blob/main/doc/howto/mise.md) on why `mise` is recommended over `asdf`
   - To install `mise`, see [instructions here](https://mise.jdx.dev/getting-started.html).
