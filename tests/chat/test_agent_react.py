@@ -419,22 +419,33 @@ class TestReActAgent:
         (
             "question",
             "model_error",
+            "error_message",
             "expected_events",
         ),
         [
             (
                 "What's the title of this epic?",
-                ValueError("overload_error"),
+                ValueError("overloaded_error"),
+                "overloaded_error",
                 [
-                    AgentError(message="overload_error"),
+                    AgentError(message="overloaded_error", retryable=True),
                 ],
-            )
+            ),
+            (
+                "What's the title of this epic?",
+                ValueError("api_error"),
+                "api_error",
+                [
+                    AgentError(message="api_error", retryable=False),
+                ],
+            ),
         ],
     )
     async def test_stream_error(
         self,
         question: str,
         model_error: Exception,
+        error_message: str,
         expected_events: list[AgentError],
         prompt: ReActAgent,
     ):
@@ -450,4 +461,4 @@ class TestReActAgent:
                 actual_events.append(event)
 
         assert actual_events == expected_events
-        assert str(exc_info.value) == "overload_error"
+        assert str(exc_info.value) == error_message

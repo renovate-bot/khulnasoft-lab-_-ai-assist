@@ -45,6 +45,7 @@ class AgentUnknownAction(AgentBaseEvent):
 class AgentError(AgentBaseEvent):
     type: str = "error"
     message: str
+    retryable: bool
 
 
 TypeAgentEvent = TypeVar(
