@@ -87,7 +87,6 @@ ai_gateway = "ai_gateway.main:run_app"
 profile = "black"
 
 [tool.pylint.main]
-py-version = "3.10"
 jobs = 0
 load-plugins = [
   "lints.unsafe_dependency_resolution",
