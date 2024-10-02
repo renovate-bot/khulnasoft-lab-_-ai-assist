@@ -1,3 +1,5 @@
+# pylint: disable=too-many-lines
+
 import time
 from typing import Dict, List, Union
 from unittest.mock import ANY, Mock, patch
@@ -529,6 +531,7 @@ class TestCodeCompletions:
             "model_name",
             "model_endpoint",
             "model_api_key",
+            "model_identifier",
             "want_litellm_called",
             "want_prompt_called",
             "want_status",
@@ -543,6 +546,26 @@ class TestCodeCompletions:
                 "codegemma",
                 "http://localhost:4000/",
                 "api-key",
+                None,
+                True,
+                False,
+                200,
+                [
+                    {
+                        "text": "test completion",
+                        "index": 0,
+                        "finish_reason": "length",
+                    }
+                ],
+            ),
+            (
+                2,
+                "foo",
+                "litellm",
+                "codegemma",
+                "http://localhost:4000/",
+                "api-key",
+                "provider/codegemma_2b",
                 True,
                 False,
                 200,
@@ -561,6 +584,7 @@ class TestCodeCompletions:
                 "codegemma",
                 "http://localhost:4000/",
                 "api-key",
+                None,
                 False,
                 True,
                 200,
@@ -579,6 +603,7 @@ class TestCodeCompletions:
                 "codegemma",
                 "http://localhost:4000/",
                 "api-key",
+                None,
                 False,
                 True,
                 200,
@@ -597,6 +622,7 @@ class TestCodeCompletions:
                 "codestral",
                 "http://localhost:4000/",
                 "api-key",
+                None,
                 True,
                 False,
                 200,
@@ -615,6 +641,7 @@ class TestCodeCompletions:
                 "codestral@2405",
                 None,
                 None,
+                None,
                 True,
                 False,
                 200,
@@ -631,6 +658,7 @@ class TestCodeCompletions:
                 None,
                 "vertex-ai",
                 "codestral@2405",
+                None,
                 None,
                 None,
                 True,
@@ -657,6 +685,7 @@ class TestCodeCompletions:
         model_name,
         model_endpoint,
         model_api_key,
+        model_identifier,
         want_litellm_called,
         want_prompt_called,
         want_status,
@@ -684,6 +713,7 @@ class TestCodeCompletions:
                 "model_name": model_name,
                 "model_endpoint": model_endpoint,
                 "model_api_key": model_api_key,
+                "model_identifier": model_identifier,
             },
         )
 
@@ -1514,7 +1544,7 @@ class TestCodeGenerations:
         assert mock_anthropic.called == want_anthropic_called
         assert mock_llm_chat.called == want_litellm_called
         assert mock_anthropic_chat.called == want_anthropic_chat_called
-        assert mock_agent_model.called == (True if prompt_id else False)
+        assert mock_agent_model.called == bool(prompt_id)
 
         if want_prompt_prepared_called:
             mock_with_prompt_prepared.assert_called_with(want_prompt)
@@ -1587,7 +1617,8 @@ class TestCodeGenerations:
         body = response.json()
         assert (
             (body["detail"])
-            == "[{'type': 'url_type', 'loc': ('endpoint',), 'msg': 'URL input should be a string or URL', 'input': None, 'url': 'https://errors.pydantic.dev/2.9/v/url_type'}]"
+            == "[{'type': 'url_type', 'loc': ('endpoint',), 'msg': 'URL input should be a string or URL', "
+            "'input': None, 'url': 'https://errors.pydantic.dev/2.9/v/url_type'}]"
         )
 
     @pytest.mark.parametrize(
@@ -1671,7 +1702,7 @@ class TestCodeGenerations:
         )
 
         with patch.object(mock_container, "snowplow", snowplow_container_mock):
-            response = mock_client.post(
+            mock_client.post(
                 "/code/generations",
                 headers={
                     "Authorization": "Bearer 12345",

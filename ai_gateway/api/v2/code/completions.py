@@ -398,6 +398,7 @@ def _resolve_prompt_code_generations(
         endpoint=payload.model_endpoint,
         api_key=payload.model_api_key,
         provider="custom_openai",
+        identifier=payload.model_identifier,
     )
 
     prompt = prompt_registry.get_on_behalf(
@@ -419,6 +420,7 @@ def _resolve_code_completions_litellm(
             name=payload.model_name,
             endpoint=payload.model_endpoint,
             api_key=payload.model_api_key,
+            identifier=payload.model_identifier,
             provider="text-completion-openai",
         )
 

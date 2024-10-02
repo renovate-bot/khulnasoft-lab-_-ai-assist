@@ -290,6 +290,7 @@ class TestLocalPromptRegistry:
                     endpoint=HttpUrl("http://localhost:4000/"),
                     api_key="token",
                     provider="custom_openai",
+                    identifier="anthropic/claude-3-haiku-20240307",
                 ),
                 "Chat react custom prompt",
                 MockPromptClass,
@@ -298,8 +299,8 @@ class TestLocalPromptRegistry:
                 {
                     "stop": ["Foo", "Bar"],
                     "timeout": 60,
-                    "model": "custom",
-                    "custom_llm_provider": "custom_openai",
+                    "model": "claude-3-haiku-20240307",
+                    "custom_llm_provider": "anthropic",
                     "api_key": "token",
                     "api_base": "http://localhost:4000/",
                     "vertex_location": "us-east1",

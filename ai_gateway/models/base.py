@@ -89,6 +89,9 @@ class SafetyAttributes(BaseModel):
 class ModelMetadata(NamedTuple):
     name: str
     engine: str
+    endpoint: str = None
+    api_key: str = None
+    identifier: str = None
 
 
 class ModelBase(ABC):
@@ -108,6 +111,11 @@ class ModelBase(ABC):
     @abstractmethod
     def metadata(self) -> ModelMetadata:
         pass
+
+    def name_with_provider(self):
+        return (
+            self.metadata.identifier if self.metadata.identifier else self.metadata.name
+        )
 
 
 def grpc_connect_vertex(client_options: dict) -> PredictionServiceAsyncClient:

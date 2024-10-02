@@ -79,11 +79,16 @@ class TestLiteLlmChatMode:
         return "specified-api-key"
 
     @pytest.fixture
-    def lite_llm_chat_model(self, endpoint, api_key):
+    def identifier(self):
+        return "provider/some-cool-model"
+
+    @pytest.fixture
+    def lite_llm_chat_model(self, endpoint, api_key, identifier):
         return LiteLlmChatModel.from_model_name(
             name="mistral",
             endpoint=endpoint,
             api_key=api_key,
+            identifier=identifier,
             custom_models_enabled=True,
         )
 
@@ -91,6 +96,7 @@ class TestLiteLlmChatMode:
         (
             "model_name",
             "api_key",
+            "identifier",
             "provider",
             "custom_models_enabled",
             "provider_keys",
@@ -102,26 +108,29 @@ class TestLiteLlmChatMode:
             (
                 "mistral",
                 "",
+                "provider/some-cool-model",
                 KindModelProvider.LITELLM,
                 True,
                 {},
                 "custom_openai/mistral",
-                "stubbed-api-key",
+                "",
                 "litellm",
             ),
             (
                 "codestral",
                 "",
+                "",
                 KindModelProvider.MISTRALAI,
                 True,
                 {},
                 "codestral/codestral",
-                "stubbed-api-key",
+                None,
                 "codestral",
             ),
             (
                 "codestral",
                 None,
+                "",
                 KindModelProvider.MISTRALAI,
                 True,
                 {"mistral_api_key": "stubbed-api-key"},
@@ -135,6 +144,7 @@ class TestLiteLlmChatMode:
         self,
         model_name: str,
         api_key: Optional[str],
+        identifier: Optional[str],
         provider: KindModelProvider,
         custom_models_enabled: bool,
         provider_keys: dict,
@@ -149,18 +159,19 @@ class TestLiteLlmChatMode:
             endpoint=endpoint,
             custom_models_enabled=custom_models_enabled,
             provider=provider,
+            identifier=identifier,
             provider_keys=provider_keys,
         )
 
         assert model.metadata.name == expected_name
-        assert model.endpoint == endpoint
-        assert model.api_key == expected_api_key
+        assert model.metadata.endpoint == endpoint
+        assert model.metadata.api_key == expected_api_key
         assert model.metadata.engine == expected_engine
+        assert model.metadata.identifier == identifier
 
         model = LiteLlmChatModel.from_model_name(name=model_name, api_key=None)
 
-        assert model.endpoint is None
-        assert model.api_key == "stubbed-api-key"
+        assert model.metadata.endpoint is None
 
         if provider == KindModelProvider.LITELLM:
             with pytest.raises(ValueError) as exc:
@@ -185,7 +196,7 @@ class TestLiteLlmChatMode:
             assert output.text == "Test response"
 
             mock_acompletion.assert_called_with(
-                lite_llm_chat_model.metadata.name,
+                lite_llm_chat_model.name_with_provider(),
                 messages=expected_messages,
                 stream=False,
                 temperature=0.2,
@@ -198,7 +209,9 @@ class TestLiteLlmChatMode:
             )
 
     @pytest.mark.asyncio
-    async def test_generate_stream(self, lite_llm_chat_model, endpoint, api_key):
+    async def test_generate_stream(
+        self, lite_llm_chat_model, endpoint, api_key, identifier
+    ):
         expected_messages = [{"role": "user", "content": "Test message"}]
 
         streamed_response = AsyncMock()
@@ -233,7 +246,7 @@ class TestLiteLlmChatMode:
             assert content == ["Streamed content"]
 
             mock_acompletion.assert_called_with(
-                lite_llm_chat_model.metadata.name,
+                identifier,
                 messages=expected_messages,
                 stream=True,
                 temperature=0.3,
@@ -311,6 +324,7 @@ class TestLiteLlmTextGenModel:
         (
             "model_name",
             "api_key",
+            "identifier",
             "provider",
             "custom_models_enabled",
             "provider_keys",
@@ -322,36 +336,40 @@ class TestLiteLlmTextGenModel:
             (
                 "codegemma",
                 "",
+                "provider/some-cool-model",
                 KindModelProvider.LITELLM,
                 True,
                 {},
                 "text-completion-custom_openai/codegemma",
-                "stubbed-api-key",
+                "",
                 "litellm",
             ),
             (
                 "codegemma",
                 None,
+                None,
                 KindModelProvider.LITELLM,
                 True,
                 {},
                 "text-completion-custom_openai/codegemma",
-                "stubbed-api-key",
+                None,
                 "litellm",
             ),
             (
                 "codestral",
                 None,
+                None,
                 KindModelProvider.MISTRALAI,
                 True,
                 {},
                 "text-completion-codestral/codestral",
-                "stubbed-api-key",
+                None,
                 "codestral",
             ),
             (
                 "codestral",
                 "",
+                None,
                 KindModelProvider.MISTRALAI,
                 True,
                 {"mistral_api_key": "stubbed-api-key"},
@@ -365,6 +383,7 @@ class TestLiteLlmTextGenModel:
         self,
         model_name: str,
         api_key: Optional[str],
+        identifier: Optional[str],
         provider: KindModelProvider,
         custom_models_enabled: bool,
         provider_keys: dict,
@@ -379,18 +398,19 @@ class TestLiteLlmTextGenModel:
             endpoint=endpoint,
             custom_models_enabled=custom_models_enabled,
             provider=provider,
+            identifer=identifier,
             provider_keys=provider_keys,
         )
 
         assert model.metadata.name == expected_name
-        assert model.endpoint == endpoint
-        assert model.api_key == expected_api_key
+        assert model.metadata.endpoint == endpoint
+        assert model.metadata.api_key == expected_api_key
         assert model.metadata.engine == expected_engine
+        assert model.metadata.identifier == identifier
 
         model = LiteLlmTextGenModel.from_model_name(name=model_name, api_key=None)
 
-        assert model.endpoint is None
-        assert model.api_key == "stubbed-api-key"
+        assert model.metadata.endpoint is None
 
         if provider == KindModelProvider.LITELLM:
             with pytest.raises(ValueError) as exc:
