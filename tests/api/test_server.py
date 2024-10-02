@@ -270,7 +270,7 @@ def test_middleware_feature_flag(fastapi_server_app: FastAPI):
             headers={"x-gitlab-enabled-feature-flags": "feature_a,feature_b"},
         )
         mock_feature_flag_context.set.assert_called_once_with(
-            ["feature_a", "feature_b"]
+            {"feature_a", "feature_b"}
         )
 
 

@@ -2,6 +2,7 @@ from unittest.mock import AsyncMock, patch
 
 import pytest
 from starlette.requests import Request
+from starlette_context import context, request_cycle_context
 
 from ai_gateway.api.middleware import (
     X_GITLAB_FEATURE_ENABLED_BY_NAMESPACE_IDS_HEADER,
@@ -39,8 +40,13 @@ def distributed_trace_middleware(mock_app):
 
 
 @pytest.fixture
-def feature_flag_middleware(mock_app):
-    return FeatureFlagMiddleware(mock_app)
+def feature_flag_middleware(mock_app, disallowed_flags):
+    return FeatureFlagMiddleware(mock_app, disallowed_flags)
+
+
+@pytest.fixture
+def disallowed_flags():
+    return {}
 
 
 @pytest.mark.asyncio
@@ -275,15 +281,34 @@ async def test_middleware_distributed_trace(distributed_trace_middleware):
 
 
 @pytest.mark.asyncio
-async def test_middleware_feature_flag(feature_flag_middleware):
-    enabled_flags = "feature_a,feature_b,feature_c"
+@pytest.mark.parametrize(
+    "headers,disallowed_flags,expected_flags",
+    [
+        (
+            [
+                (b"x-gitlab-enabled-feature-flags", b"feature_a,feature_b,feature_c"),
+            ],
+            {},
+            {"feature_a", "feature_b", "feature_c"},
+        ),
+        (
+            [
+                (b"x-gitlab-enabled-feature-flags", b"feature_a,feature_b,feature_c"),
+                (b"x-gitlab-realm", b"self-managed"),
+            ],
+            {"self-managed": {"feature_a"}},
+            {"feature_b", "feature_c"},
+        ),
+    ],
+)
+async def test_middleware_feature_flag(
+    feature_flag_middleware, headers, disallowed_flags, expected_flags
+):
     request = Request(
         {
             "type": "http",
             "path": "/api/endpoint",
-            "headers": [
-                (b"x-gitlab-enabled-feature-flags", enabled_flags.encode()),
-            ],
+            "headers": headers,
         }
     )
     scope = request.scope
@@ -292,11 +317,11 @@ async def test_middleware_feature_flag(feature_flag_middleware):
 
     with patch(
         "ai_gateway.api.middleware.current_feature_flag_context"
-    ) as mock_feature_flag_context:
+    ) as mock_feature_flag_context, request_cycle_context({}):
         await feature_flag_middleware(scope, receive, send)
 
-        mock_feature_flag_context.set.assert_called_once_with(
-            ["feature_a", "feature_b", "feature_c"]
-        )
+        mock_feature_flag_context.set.assert_called_once_with(expected_flags)
+
+        assert set(context["enabled_feature_flags"].split(",")) == expected_flags
 
     feature_flag_middleware.app.assert_called_once_with(scope, receive, send)
