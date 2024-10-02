@@ -1,5 +1,5 @@
 from contextvars import ContextVar
-from typing import List
+from typing import Set
 
 __all__ = ["is_feature_enabled", "current_feature_flag_context", "FeatureFlag"]
 
@@ -21,7 +21,7 @@ def is_feature_enabled(feature_name: FeatureFlag | str) -> bool:
 
     See https://gitlab.com/gitlab-org/modelops/applied-ml/code-suggestions/ai-assist/-/blob/main/docs/feature_flags.md
     """
-    enabled_feature_flags: List[str] = current_feature_flag_context.get()
+    enabled_feature_flags: Set[str] = current_feature_flag_context.get()
 
     if isinstance(feature_name, FeatureFlag):
         feature_name = feature_name.value
@@ -29,6 +29,6 @@ def is_feature_enabled(feature_name: FeatureFlag | str) -> bool:
     return feature_name in enabled_feature_flags
 
 
-current_feature_flag_context: ContextVar[List[str]] = ContextVar(
-    "current_feature_flag_context", default=[]
+current_feature_flag_context: ContextVar[Set[str]] = ContextVar(
+    "current_feature_flag_context", default=set()
 )

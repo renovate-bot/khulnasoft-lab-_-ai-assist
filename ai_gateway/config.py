@@ -1,5 +1,5 @@
 import os
-from typing import Annotated, Optional
+from typing import Annotated, Optional, Set
 
 from dotenv import find_dotenv
 from pydantic import BaseModel, Field, RootModel
@@ -138,6 +138,10 @@ class ConfigVertexSearch(ConfigGoogleCloudPlatform):
     fallback_datastore_version: str = ""
 
 
+class ConfigFeatureFlags(BaseModel):
+    disallowed_flags: dict[str, Set[str]] = {}
+
+
 class ConfigModelConcurrency(RootModel):
     root: dict[str, dict[str, int]] = {}
 
@@ -212,6 +216,9 @@ class Config(BaseSettings):
     abuse_detection: Annotated[
         ConfigAbuseDetection, Field(default_factory=ConfigAbuseDetection)
     ] = ConfigAbuseDetection()
+    feature_flags: Annotated[
+        ConfigFeatureFlags, Field(default_factory=ConfigFeatureFlags)
+    ] = ConfigFeatureFlags()
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)

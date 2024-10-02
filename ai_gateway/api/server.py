@@ -102,7 +102,10 @@ def create_fast_api_server(config: Config):
                 bypass_auth_with_header=config.auth.bypass_external_with_header,
                 skip_endpoints=_SKIP_ENDPOINTS,
             ),
-            Middleware(FeatureFlagMiddleware),
+            Middleware(
+                FeatureFlagMiddleware,
+                disallowed_flags=config.feature_flags.disallowed_flags,
+            ),
             Middleware(
                 InternalEventMiddleware,
                 skip_endpoints=_SKIP_ENDPOINTS,
