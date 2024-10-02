@@ -1,0 +1,22 @@
+---
+name: Claude 3 ReAct Chat agent
+model:
+  name: claude-3-5-sonnet-20240620
+  params:
+    model_class_provider: litellm
+    temperature: 0.1
+    max_tokens: 4_096
+    max_retries: 1
+unit_primitives:
+  - duo_chat
+prompt_template:
+  system: |
+    {% include 'chat/react/system.jinja' %}
+  user: |
+    {% include 'chat/react/user.jinja' %}
+  assistant: |
+    {% include 'chat/react/assistant.jinja' %}
+params:
+  timeout: 30
+  stop:
+    - "Observation:"

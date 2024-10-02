@@ -71,15 +71,24 @@ class Prompt(RunnableBinding[Input, Output]):
         kwargs = {}
 
         if params:
-            kwargs.update(params.model_dump(exclude_none=True))
+            kwargs = {**params.model_dump(exclude_none=True)}
 
         if model_metadata:
-            kwargs.update(
-                model=model_metadata.name,
-                api_base=str(model_metadata.endpoint),
-                custom_llm_provider=model_metadata.provider,
-                api_key=model_metadata.api_key,
-            )
+            kwargs["api_base"] = str(model_metadata.endpoint)
+            kwargs["api_key"] = str(model_metadata.api_key)
+
+            if model_metadata.identifier:
+                splits = model_metadata.identifier.split("/")
+
+                if len(splits) == 1:
+                    kwargs["custom_llm_provider"] = "custom_openai"
+                    kwargs["model"] = splits[0]
+                else:
+                    kwargs["custom_llm_provider"] = splits[0]
+                    kwargs["model"] = splits[1]
+            else:
+                kwargs["model"] = model_metadata.name
+                kwargs["custom_llm_provider"] = model_metadata.provider
 
         return kwargs
 

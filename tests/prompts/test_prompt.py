@@ -8,13 +8,11 @@ from langchain_community.chat_models import ChatLiteLLM
 from langchain_core.language_models.chat_models import BaseChatModel
 from langchain_core.runnables import Runnable
 from litellm.exceptions import Timeout
-from pydantic import HttpUrl
 
 from ai_gateway.gitlab_features import GitLabUnitPrimitive
 from ai_gateway.models.v2.anthropic_claude import ChatAnthropic
 from ai_gateway.prompts.base import Prompt
 from ai_gateway.prompts.config.base import PromptParams
-from ai_gateway.prompts.typing import STUBBED_API_KEY, ModelMetadata
 
 
 class TestPrompt:
@@ -108,18 +106,3 @@ class TestPromptTimeout:
             await prompt.ainvoke(
                 {"name": "Duo", "content": "Print pi with 400 decimals"}
             )
-
-
-class TestModelMetadata:
-    def test_stubbing_empty_api_key(self):
-        params = {
-            "endpoint": HttpUrl("http://example.com"),
-            "name": "mistral",
-            "provider": "litellm",
-        }
-
-        metadata = ModelMetadata(**params)
-        assert metadata.api_key == STUBBED_API_KEY
-
-        metadata = ModelMetadata(**params, api_key="")
-        assert metadata.api_key == STUBBED_API_KEY

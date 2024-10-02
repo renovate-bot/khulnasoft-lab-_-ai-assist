@@ -53,6 +53,7 @@ class KindLiteLlmModel(StrEnum):
     CODESTRAL = "codestral"
     MISTRAL = "mistral"
     DEEPSEEKCODER = "deepseekcoder"
+    CLAUDE_3 = "claude_3"
 
     def _chat_provider_prefix(self, provider):
         # Chat models hosted behind openai proxies should be prefixed with "openai/":
@@ -131,19 +132,12 @@ class LiteLlmChatModel(ChatModelBase):
     def __init__(
         self,
         model_name: KindLiteLlmModel = KindLiteLlmModel.MISTRAL,
-        endpoint: Optional[str] = None,
-        api_key: Optional[str] = None,
         provider: Optional[KindModelProvider] = KindModelProvider.LITELLM,
+        metadata: Optional[ModelMetadata] = None,
     ):
-        if not api_key:
-            api_key = STUBBED_API_KEY
-
-        self.api_key = api_key
-        self.endpoint = endpoint
-        self.provider = provider
-        self._metadata = ModelMetadata(
+        self._metadata = metadata or ModelMetadata(
             name=model_name.chat_model(provider),
-            engine=provider.value,
+            engine=provider.value(),
         )
         self.stop_tokens = MODEL_STOP_TOKENS.get(model_name, [])
 
@@ -167,14 +161,14 @@ class LiteLlmChatModel(ChatModelBase):
 
         with self.instrumentator.watch(stream=stream) as watcher:
             suggestion = await acompletion(
-                self.metadata.name,
+                self.name_with_provider(),
                 messages=litellm_messages,
                 stream=stream,
                 temperature=temperature,
                 top_p=top_p,
                 max_tokens=max_output_tokens,
-                api_key=self.api_key,
-                api_base=self.endpoint,
+                api_key=self.metadata.api_key,
+                api_base=self.metadata.endpoint,
                 timeout=30.0,
                 stop=self.stop_tokens,
             )
@@ -215,6 +209,7 @@ class LiteLlmChatModel(ChatModelBase):
         custom_models_enabled: bool = False,
         endpoint: Optional[str] = None,
         api_key: Optional[str] = None,
+        identifier: Optional[str] = None,
         provider: Optional[KindModelProvider] = KindModelProvider.LITELLM,
         provider_keys: Optional[dict] = None,
     ):
@@ -230,9 +225,15 @@ class LiteLlmChatModel(ChatModelBase):
         except ValueError:
             raise ValueError(f"no model found by the name '{name}'")
 
-        return cls(
-            model_name=kind_model, endpoint=endpoint, api_key=api_key, provider=provider
+        model_metadata = ModelMetadata(
+            name=kind_model.chat_model(provider),
+            engine=provider,
+            endpoint=endpoint,
+            api_key=api_key,
+            identifier=identifier,
         )
+
+        return cls(kind_model, provider, model_metadata)
 
 
 class LiteLlmTextGenModel(TextGenModelBase):
@@ -249,21 +250,16 @@ class LiteLlmTextGenModel(TextGenModelBase):
     def __init__(
         self,
         model_name: KindLiteLlmModel = KindLiteLlmModel.CODEGEMMA,
-        endpoint: Optional[str] = None,
-        api_key: Optional[str] = None,
         provider: Optional[KindModelProvider] = KindModelProvider.LITELLM,
+        metadata: Optional[ModelMetadata] = None,
     ):
-        if not api_key:
-            api_key = STUBBED_API_KEY
-
-        self.api_key = api_key
-        self.endpoint = endpoint
         self.provider = provider
         self.model_name = model_name
-        self._metadata = ModelMetadata(
+        self._metadata = metadata or ModelMetadata(
             name=model_name.text_model(provider),
-            engine=provider.value,
+            engine=provider.value(),
         )
+
         self.stop_tokens = MODEL_STOP_TOKENS.get(model_name, [])
 
     @property
@@ -339,7 +335,7 @@ class LiteLlmTextGenModel(TextGenModelBase):
         suffix: Optional[str] = "",
     ) -> Union[ModelResponse, CustomStreamWrapper]:
         completion_args = {
-            "model": self.metadata.name,
+            "model": self.name_with_provider(),
             "messages": [{"content": prefix, "role": Role.USER}],
             "max_tokens": max_output_tokens,
             "temperature": temperature,
@@ -352,8 +348,8 @@ class LiteLlmTextGenModel(TextGenModelBase):
         if self._is_vertex():
             completion_args["vertex_ai_location"] = self._get_vertex_model_location()
         else:
-            completion_args["api_key"] = self.api_key
-            completion_args["api_base"] = self.endpoint
+            completion_args["api_key"] = self.metadata.api_key
+            completion_args["api_base"] = self.metadata.endpoint
 
         if self._use_text_completion():
             completion_args["suffix"] = suffix
@@ -416,6 +412,7 @@ class LiteLlmTextGenModel(TextGenModelBase):
         custom_models_enabled: bool = False,
         endpoint: Optional[str] = None,
         api_key: Optional[str] = None,
+        identifer: Optional[str] = None,
         provider: Optional[KindModelProvider] = KindModelProvider.LITELLM,
         provider_keys: Optional[dict] = None,
     ):
@@ -438,6 +435,12 @@ class LiteLlmTextGenModel(TextGenModelBase):
         except ValueError:
             raise ValueError(f"no model found by the name '{name}'")
 
-        return cls(
-            model_name=kind_model, endpoint=endpoint, api_key=api_key, provider=provider
+        metadata = ModelMetadata(
+            name=kind_model.text_model(provider),
+            engine=provider.value,
+            endpoint=endpoint,
+            api_key=api_key,
+            identifier=identifer,
         )
+
+        return cls(model_name=kind_model, provider=provider, metadata=metadata)
