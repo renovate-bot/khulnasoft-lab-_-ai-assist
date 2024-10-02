@@ -8,6 +8,7 @@ __all__ = [
     "IssueReader",
     "GitlabDocumentation",
     "EpicReader",
+    "BuildReader",
 ]
 
 
@@ -148,3 +149,31 @@ class CommitReader(BaseRemoteTool):
              Based on this information you can present final answer about commit.
          Action: CommitReader
          Action Input: Please identify the author of #123 commit"""
+
+
+class BuildReader(BaseRemoteTool):
+    name: str = "build_reader"
+    resource: str = "builds"
+
+    description: str = """This tool retrieves the content of a specific build
+        ONLY if the user question fulfills the strict usage conditions below.
+
+        **Strict Usage Conditions:**
+        * **Condition 1: build ID Provided:** This tool MUST be used ONLY when the user provides a valid build ID.
+        * **Condition 2: build URL Context:** This tool MUST be used ONLY when the user is actively viewing
+          a specific build URL or a specific URL is provided by the user.
+
+        **Do NOT** attempt to search for or identify builds based on descriptions, keywords, or user questions.
+
+        **Action Input:**
+        * The original question asked by the user.
+
+        **Important:**  Reject any input that does not strictly adhere to the usage conditions above.
+        Return a message stating you are unable to search for builds without a valid identifier."""
+
+    example: str = """Question: Please identify the author of &123 build.
+        Thought: You have access to the same resources as user who asks a question.
+            The question is about an build, so you need to use "build_reader" tool.
+            Based on this information you can present final answer.
+        Action: build_reader
+        Action Input: Please identify the author of &123 build."""

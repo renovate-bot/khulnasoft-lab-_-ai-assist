@@ -2,6 +2,7 @@ from ai_gateway.auth import GitLabUser
 from ai_gateway.chat.base import BaseToolsRegistry, UnitPrimitiveToolset
 from ai_gateway.chat.tools import BaseTool
 from ai_gateway.chat.tools.gitlab import (
+    BuildReader,
     CiEditorAssistant,
     CommitReader,
     EpicReader,
@@ -50,6 +51,15 @@ class DuoChatToolsRegistry(BaseToolsRegistry):
                     name=GitLabUnitPrimitive.ASK_COMMIT,
                     min_required_gl_version="17.5.0-pre",
                     tools=[CommitReader()],
+                )
+            )
+
+        if is_feature_enabled(FeatureFlag.AI_BUILD_READER_FOR_CHAT):
+            toolsets.append(
+                UnitPrimitiveToolset(
+                    name=GitLabUnitPrimitive.ASK_BUILD,
+                    min_required_gl_version="17.5.0-pre",
+                    tools=[BuildReader()],
                 )
             )
 
