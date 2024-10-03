@@ -40,6 +40,7 @@ class Prompt(RunnableBinding[Input, Output]):
     name: str
     model: BaseChatModel
     unit_primitives: list[GitLabUnitPrimitive]
+    prompt_tpl: ChatPromptTemplate
 
     def __init__(
         self,
@@ -61,6 +62,7 @@ class Prompt(RunnableBinding[Input, Output]):
             model=model,
             unit_primitives=config.unit_primitives,
             bound=chain,
+            prompt_tpl=prompt,
         )  # type: ignore[call-arg]
 
     def _build_model_kwargs(
