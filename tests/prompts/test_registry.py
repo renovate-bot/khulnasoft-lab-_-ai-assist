@@ -353,6 +353,50 @@ class TestLocalPromptRegistry:
         }
         assert actual_model_params == expected_model_params
 
+    @pytest.mark.parametrize(
+        (
+            "prompt_id",
+            "model_metadata",
+            "expected_name",
+            "expected_class",
+            "expected_model",
+            "expected_kwargs",
+        ),
+        [
+            (
+                "code_suggestions/generations",
+                None,
+                "Claude 3 Code Generations Agent",
+                Prompt,
+                "claude-3-5-sonnet-20240620",
+                {"stop": ["</new_code>"]},
+            ),
+        ],
+    )
+    def test_get_code_generations_base(
+        self,
+        model_factories: dict[ModelClassProvider, TypeModelFactory],
+        prompt_id: str,
+        model_metadata: ModelMetadata | None,
+        expected_name: str,
+        expected_class: Type[Prompt],
+        expected_model: str,
+        expected_kwargs: dict,
+    ):
+        registry = LocalPromptRegistry.from_local_yaml(
+            class_overrides={},
+            model_factories=model_factories,
+            default_prompts={},
+        )
+        prompt = registry.get(prompt_id, model_metadata)
+        chain = cast(RunnableSequence, prompt.bound)
+        binding = cast(RunnableBinding, chain.last)
+
+        assert prompt.name == expected_name
+        assert isinstance(prompt, expected_class)
+        assert prompt.model_name == expected_model
+        assert binding.kwargs == expected_kwargs
+
     def test_default_prompts(
         self,
         mock_fs: FakeFilesystem,

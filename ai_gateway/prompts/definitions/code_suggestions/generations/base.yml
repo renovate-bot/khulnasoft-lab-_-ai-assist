@@ -96,4 +96,7 @@ prompt_template:
   user: |
     {{user_instruction}}
   assistant: |
-    "<new_code>"
+    <new_code>
+params:
+  stop:
+    - </new_code>
