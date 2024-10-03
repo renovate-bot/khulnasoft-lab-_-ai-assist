@@ -511,6 +511,14 @@ class TestEditorContentGeneration:
             ],
             "trimmed_prefix": "# Create a fast binary search\n",
             "trimmed_suffix": "",
+            "related_files": [
+                '<file_content file_name="main.go">\npackage main\n\nfunc main()\nfullName("John", "Doe")\n}\n\n</file_content>\n'
+            ],
+            "related_snippets": [
+                '<snippet_content name="fullName">\nfunc fullName(first, last string) {\n  fmt.Println(first, last)\n}\n\n</snippet_content>\n'
+            ],
+            "libraries": ["some_library", "other_library"],
+            "user_instruction": "Generate the best possible code based on instructions.",
         }
 
         data = {
