@@ -73,6 +73,7 @@ USE_CASES_MODELS_MAP = {
         KindLiteLlmModel.DEEPSEEKCODER,
         KindLiteLlmModel.MISTRAL,
         KindLiteLlmModel.CLAUDE_3,
+        KindLiteLlmModel.GPT,
     },
 }
 

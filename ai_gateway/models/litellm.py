@@ -54,6 +54,7 @@ class KindLiteLlmModel(StrEnum):
     MISTRAL = "mistral"
     DEEPSEEKCODER = "deepseekcoder"
     CLAUDE_3 = "claude_3"
+    GPT = "gpt"
 
     def _chat_provider_prefix(self, provider):
         # Chat models hosted behind openai proxies should be prefixed with "openai/":
