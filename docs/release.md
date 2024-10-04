@@ -42,10 +42,10 @@ To view released versions of AI Gateway, visit the following links:
 
 ### AI Gateway and GitLab releases compatibility
 
-On each GitLab release, a new tag will be created named `gitlab-{gitlab-release}` on the same commit of the latest 
+On each GitLab release, a new tag will be created named `gitlab-{gitlab-release}` on the same commit of the latest
 AI Gateway release before the cutoff. Users on self-hosted environments can use this to download a version of AI Gateway
-that is compatible with their GitLab installation. These images are available both on 
-[GitLab container registry](https://gitlab.com/gitlab-org/modelops/applied-ml/code-suggestions/ai-assist/container_registry/3809284) 
+that is compatible with their GitLab installation. These images are available both on
+[GitLab container registry](https://gitlab.com/gitlab-org/modelops/applied-ml/code-suggestions/ai-assist/container_registry/3809284)
 and on [DockerHub](https://hub.docker.com/repository/docker/gitlab/model-gateway/tags).
 
 ## Release a new version of AI Gateway
