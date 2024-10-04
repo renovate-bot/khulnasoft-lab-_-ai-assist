@@ -49,6 +49,7 @@ class PromptPayload(BaseModel):
     params: Optional[AnthropicParams] = None
     model_endpoint: Optional[str] = None
     model_api_key: Optional[str] = None
+    model_identifier: Optional[str] = None
 
 
 class PromptComponent(BaseModel):

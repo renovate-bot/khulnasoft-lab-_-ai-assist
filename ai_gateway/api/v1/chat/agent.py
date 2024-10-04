@@ -94,6 +94,7 @@ async def chat(
                 endpoint=payload.model_endpoint,
                 api_key=payload.model_api_key,
                 provider=payload.provider,
+                identifier=payload.model_identifier,
             )
 
             completion = await model.generate(
