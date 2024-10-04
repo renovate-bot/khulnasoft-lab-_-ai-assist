@@ -1,6 +1,6 @@
 from contextlib import contextmanager
 from pathlib import Path
-from typing import Any, AsyncIterator, Type, Optional
+from typing import Any, AsyncIterator, Optional, Type
 from unittest.mock import AsyncMock, Mock, patch
 
 import pytest
@@ -12,7 +12,7 @@ from langchain_core.outputs import ChatGenerationChunk
 from starlette.middleware import Middleware
 from starlette_context.middleware import RawContextMiddleware
 
-from ai_gateway.api.middleware import MiddlewareAuthentication, AccessLogMiddleware
+from ai_gateway.api.middleware import AccessLogMiddleware, MiddlewareAuthentication
 from ai_gateway.code_suggestions.base import CodeSuggestionsChunk, CodeSuggestionsOutput
 from ai_gateway.code_suggestions.processing.base import ModelEngineOutput
 from ai_gateway.code_suggestions.processing.typing import (
@@ -79,15 +79,22 @@ def test_client(fast_api_router, stub_auth_provider, request):
 
     return client
 
+
 @pytest.fixture
 def mock_track_internal_event():
     with patch("ai_gateway.internal_events.InternalEventsClient.track_event") as mock:
         yield mock
 
+
+@pytest.fixture
+def mock_detect_abuse():
+    with patch("ai_gateway.abuse_detection.AbuseDetector.detect") as mock:
+        yield mock
+
+
 @pytest.fixture
 def mock_client(test_client, stub_auth_provider, auth_user, mock_container):
-    """Setup all the needed mocks to perform requests in the test environment
-    """
+    """Setup all the needed mocks to perform requests in the test environment"""
     with patch.object(stub_auth_provider, "authenticate", return_value=auth_user):
         yield test_client
 
@@ -100,7 +107,9 @@ def mock_connect_vertex():
 
 @pytest.fixture
 def mock_connect_vertex_search():
-    with patch("ai_gateway.searches.container.discoveryengine.SearchServiceAsyncClient"):
+    with patch(
+        "ai_gateway.searches.container.discoveryengine.SearchServiceAsyncClient"
+    ):
         yield
 
 
@@ -110,7 +119,9 @@ def mock_config():
 
 
 @pytest.fixture
-def mock_container(mock_config: Config, mock_connect_vertex: Mock, mock_connect_vertex_search: Mock):
+def mock_container(
+    mock_config: Config, mock_connect_vertex: Mock, mock_connect_vertex_search: Mock
+):
     container_application = ContainerApplication()
     container_application.config.from_dict(mock_config.model_dump())
 
@@ -149,55 +160,73 @@ def _mock_async_generate(klass: str, mock_output: TextGenModelOutput):
 
 @pytest.fixture
 def mock_code_bison(mock_output: CodeSuggestionsOutput):
-    with _mock_generate("ai_gateway.models.vertex_text.PalmCodeBisonModel", mock_output) as mock:
+    with _mock_generate(
+        "ai_gateway.models.vertex_text.PalmCodeBisonModel", mock_output
+    ) as mock:
         yield mock
 
 
 @pytest.fixture
 def mock_code_gecko(mock_output: CodeSuggestionsOutput):
-    with _mock_generate("ai_gateway.models.vertex_text.PalmCodeGeckoModel", mock_output) as mock:
+    with _mock_generate(
+        "ai_gateway.models.vertex_text.PalmCodeGeckoModel", mock_output
+    ) as mock:
         yield mock
 
 
 @pytest.fixture
 def mock_anthropic(mock_output: TextGenModelOutput):
-    with _mock_generate("ai_gateway.models.anthropic.AnthropicModel", mock_output) as mock:
+    with _mock_generate(
+        "ai_gateway.models.anthropic.AnthropicModel", mock_output
+    ) as mock:
         yield mock
 
 
 @pytest.fixture
 def mock_anthropic_chat(mock_output: TextGenModelOutput):
-    with _mock_generate("ai_gateway.models.anthropic.AnthropicChatModel", mock_output) as mock:
+    with _mock_generate(
+        "ai_gateway.models.anthropic.AnthropicChatModel", mock_output
+    ) as mock:
         yield mock
 
 
 @pytest.fixture
 def mock_anthropic_stream(mock_output: TextGenModelOutput):
-    with _mock_async_generate("ai_gateway.models.anthropic.AnthropicModel", mock_output) as mock:
+    with _mock_async_generate(
+        "ai_gateway.models.anthropic.AnthropicModel", mock_output
+    ) as mock:
         yield mock
 
 
 @pytest.fixture
 def mock_anthropic_chat_stream(mock_output: TextGenModelOutput):
-    with _mock_async_generate("ai_gateway.models.anthropic.AnthropicChatModel", mock_output) as mock:
+    with _mock_async_generate(
+        "ai_gateway.models.anthropic.AnthropicChatModel", mock_output
+    ) as mock:
         yield mock
 
 
 @pytest.fixture
 def mock_llm_chat(mock_output: TextGenModelOutput):
-    with _mock_generate("ai_gateway.models.litellm.LiteLlmChatModel", mock_output) as mock:
+    with _mock_generate(
+        "ai_gateway.models.litellm.LiteLlmChatModel", mock_output
+    ) as mock:
         yield mock
 
 
 @pytest.fixture
 def mock_llm_text(mock_output: TextGenModelOutput):
-    with _mock_generate("ai_gateway.models.litellm.LiteLlmTextGenModel", mock_output) as mock:
+    with _mock_generate(
+        "ai_gateway.models.litellm.LiteLlmTextGenModel", mock_output
+    ) as mock:
         yield mock
 
 
 @pytest.fixture
 def mock_agent_model(mock_output: TextGenModelOutput):
-    with _mock_generate("ai_gateway.models.agent_model.AgentModel", mock_output) as mock:
+    with _mock_generate(
+        "ai_gateway.models.agent_model.AgentModel", mock_output
+    ) as mock:
         yield mock
 
 
@@ -224,7 +253,6 @@ def mock_completions_legacy_output(mock_completions_legacy_output_texts: str):
                     experiments=[
                         ExperimentTelemetry(name="truncate_suffix", variant=1)
                     ],
-
                 ),
                 tokens_consumption_metadata=TokensConsumptionMetadata(
                     input_tokens=1, output_tokens=2
@@ -233,6 +261,7 @@ def mock_completions_legacy_output(mock_completions_legacy_output_texts: str):
         )
 
     yield output
+
 
 @pytest.fixture
 def mock_suggestions_output_text():
@@ -250,11 +279,17 @@ def mock_suggestions_engine():
 
 
 @pytest.fixture
-def mock_suggestions_output(mock_suggestions_output_text: str, mock_suggestions_model: str, mock_suggestions_engine: str):
+def mock_suggestions_output(
+    mock_suggestions_output_text: str,
+    mock_suggestions_model: str,
+    mock_suggestions_engine: str,
+):
     yield CodeSuggestionsOutput(
         text=mock_suggestions_output_text,
         score=0,
-        model=ModelMetadata(name=mock_suggestions_model, engine=mock_suggestions_engine),
+        model=ModelMetadata(
+            name=mock_suggestions_model, engine=mock_suggestions_engine
+        ),
         lang_id=LanguageId.PYTHON,
         metadata=CodeSuggestionsOutput.Metadata(experiments=[]),
     )
@@ -262,7 +297,10 @@ def mock_suggestions_output(mock_suggestions_output_text: str, mock_suggestions_
 
 @pytest.fixture
 def mock_completions_legacy(mock_completions_legacy_output: list[ModelEngineOutput]):
-    with patch("ai_gateway.code_suggestions.CodeCompletionsLegacy.execute", return_value=mock_completions_legacy_output) as mock:
+    with patch(
+        "ai_gateway.code_suggestions.CodeCompletionsLegacy.execute",
+        return_value=mock_completions_legacy_output,
+    ) as mock:
         yield mock
 
 
@@ -274,13 +312,17 @@ def _mock_execute(klass: str, mock_suggestions_output: CodeSuggestionsOutput):
 
 @pytest.fixture
 def mock_generations(mock_suggestions_output: CodeSuggestionsOutput):
-    with _mock_execute("ai_gateway.code_suggestions.CodeGenerations", mock_suggestions_output) as mock:
+    with _mock_execute(
+        "ai_gateway.code_suggestions.CodeGenerations", mock_suggestions_output
+    ) as mock:
         yield mock
 
 
 @pytest.fixture
 def mock_completions(mock_suggestions_output: CodeSuggestionsOutput):
-    with _mock_execute("ai_gateway.code_suggestions.CodeCompletions", mock_suggestions_output) as mock:
+    with _mock_execute(
+        "ai_gateway.code_suggestions.CodeCompletions", mock_suggestions_output
+    ) as mock:
         yield mock
 
 
@@ -296,19 +338,25 @@ def _mock_async_execute(klass: str, mock_suggestions_output: CodeSuggestionsOutp
 
 @pytest.fixture
 def mock_generations_stream(mock_suggestions_output: CodeSuggestionsOutput):
-    with _mock_async_execute("ai_gateway.code_suggestions.CodeGenerations", mock_suggestions_output) as mock:
+    with _mock_async_execute(
+        "ai_gateway.code_suggestions.CodeGenerations", mock_suggestions_output
+    ) as mock:
         yield mock
 
 
 @pytest.fixture
 def mock_completions_stream(mock_suggestions_output: CodeSuggestionsOutput):
-     with _mock_async_execute("ai_gateway.code_suggestions.CodeCompletions", mock_suggestions_output) as mock:
+    with _mock_async_execute(
+        "ai_gateway.code_suggestions.CodeCompletions", mock_suggestions_output
+    ) as mock:
         yield mock
 
 
 @pytest.fixture
 def mock_with_prompt_prepared():
-    with patch("ai_gateway.code_suggestions.CodeGenerations.with_prompt_prepared") as mock:
+    with patch(
+        "ai_gateway.code_suggestions.CodeGenerations.with_prompt_prepared"
+    ) as mock:
         yield mock
 
 
@@ -358,9 +406,11 @@ def model_engine():
 def model_name():
     yield "fake-model"
 
+
 @pytest.fixture
 def model_error():
     yield None
+
 
 class FakeModel(FakeListChatModel):
     model_engine: str
@@ -374,9 +424,11 @@ class FakeModel(FakeListChatModel):
     @property
     def _identifying_params(self) -> dict[str, Any]:
         return {**super()._identifying_params, **{"model": self.model_name}}
-    
+
     async def _astream(
-        self, *args, **kwargs,
+        self,
+        *args,
+        **kwargs,
     ) -> AsyncIterator[ChatGenerationChunk]:
         async for c in super(FakeModel, self)._astream(*args, **kwargs):
             yield c
@@ -384,12 +436,20 @@ class FakeModel(FakeListChatModel):
         if self.model_error:
             raise self.model_error
 
+
 @pytest.fixture
-def model(model_response: str, model_engine: str, model_name: str, model_error: Exception):
+def model(
+    model_response: str, model_engine: str, model_name: str, model_error: Exception
+):
     # our default Assistant prompt template already contains "Thought: "
     text = model_response.removeprefix("Thought: ") if model_response else ""
 
-    yield FakeModel(model_engine=model_engine, model_name=model_name, responses=[text], model_error=model_error)
+    yield FakeModel(
+        model_engine=model_engine,
+        model_name=model_name,
+        responses=[text],
+        model_error=model_error,
+    )
 
 
 @pytest.fixture
@@ -442,9 +502,11 @@ def prompt_config(
 def model_metadata():
     yield None
 
+
 @pytest.fixture
 def prompt_kwargs():
     yield {}
+
 
 @pytest.fixture
 def prompt_class():
