@@ -8,6 +8,7 @@ from ai_gateway.chat.tools.gitlab import (
     EpicReader,
     GitlabDocumentation,
     IssueReader,
+    MergeRequestReader,
 )
 from ai_gateway.feature_flags import FeatureFlag, is_feature_enabled
 from ai_gateway.gitlab_features import GitLabUnitPrimitive, WrongUnitPrimitives
@@ -60,6 +61,15 @@ class DuoChatToolsRegistry(BaseToolsRegistry):
                     name=GitLabUnitPrimitive.ASK_BUILD,
                     min_required_gl_version="17.5.0-pre",
                     tools=[BuildReader()],
+                )
+            )
+
+        if is_feature_enabled(FeatureFlag.AI_MERGE_REQUEST_READER_FOR_CHAT):
+            toolsets.append(
+                UnitPrimitiveToolset(
+                    name=GitLabUnitPrimitive.ASK_MERGE_REQUEST,
+                    min_required_gl_version="17.5.0-pre",
+                    tools=[MergeRequestReader()],
                 )
             )
 

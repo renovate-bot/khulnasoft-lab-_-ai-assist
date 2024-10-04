@@ -11,6 +11,7 @@ class FeatureFlag(StrEnum):
     EXPANDED_AI_LOGGING = "expanded_ai_logging"
     AI_BUILD_READER_FOR_CHAT = "ai_build_reader_for_chat"
     AI_COMMIT_READER_FOR_CHAT = "ai_commit_reader_for_chat"
+    AI_MERGE_REQUEST_READER_FOR_CHAT = "ai_merge_request_reader_for_chat"
 
 
 def is_feature_enabled(feature_name: FeatureFlag | str) -> bool:

@@ -5,6 +5,7 @@ from ai_gateway.chat.tools.base import BaseRemoteTool
 __all__ = [
     "CiEditorAssistant",
     "CommitReader",
+    "MergeRequestReader",
     "IssueReader",
     "GitlabDocumentation",
     "EpicReader",
@@ -177,3 +178,38 @@ class BuildReader(BaseRemoteTool):
             Based on this information you can present final answer.
         Action: build_reader
         Action Input: Please identify the author of &123 build."""
+
+
+class MergeRequestReader(BaseRemoteTool):
+    name: str = "merge_request_reader"
+    resource: str = "merge_requests"
+
+    description: str = dedent(
+        """\
+        This tool retrieves the content of a specific merge request
+        ONLY if the user question fulfills the strict usage conditions below.
+
+        **Strict Usage Conditions:**
+        * **Condition 1: Merge request ID Provided:** This tool MUST be used ONLY when the user provides a valid merge request ID.
+        * **Condition 2: Merge request URL Context:** This tool MUST be used ONLY when the user is actively viewing
+          a specific merge request URL or a specific URL is provided by the user.
+
+        **Do NOT** attempt to search for or identify merge requests based on descriptions, keywords, or user questions.
+
+        **Action Input:**
+        * The original question asked by the user.
+
+        **Important:**  Reject any input that does not strictly adhere to the usage conditions above.
+        Return a message stating you are unable to search for merge requests without a valid identifier."""
+    )
+
+    example: str = dedent(
+        """\
+        Question: Please identify the author of #123 merge request
+         Thought: You have access to the same resources as user who asks a question.
+             Question is about the content of a merge request, so you need to use "MergeRequestReader" tool to retrieve
+             and read merge request.
+             Based on this information you can present final answer about merge request.
+         Action: MergeRequestReader
+         Action Input: Please identify the author of #123 merge request"""
+    )
