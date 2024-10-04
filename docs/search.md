@@ -38,7 +38,7 @@ Process:
    <https://cloud.google.com/generative-ai-app-builder/docs/refresh-data>.
 1. Create a new search app in Vertex AI Search that connects to the data store. If the search app already exists, skip this step.
 
-As a result, the search app `gitlab-docs-17-0` is connected to the data store `gitlab-docs-17-0`, which was imported from the bigquery table `ai-enablement-dev-69497ba7.gitlab_docs_17_0.2024-04-25-12-43-30`. 
+As a result, the search app `gitlab-docs-17-0` is connected to the data store `gitlab-docs-17-0`, which was imported from the bigquery table `ai-enablement-dev-69497ba7.gitlab_docs_17_0.2024-04-25-12-43-30`.
 
 A few notes:
 
@@ -126,14 +126,14 @@ Here is a [quota and usage percentage for `ai-enablement-dev-69497ba7` GCP proje
 
 ## GitLab documentation on self-hosted AI Gateway
 
-Customer that self-hosted their AI Gateway instance do not have access to GitLab VertexAI instance. As an alternative 
-way of searching for documentation, the AI Gateway self-hosted image already includes embedded search on tags `self-hosted-17.4.0-ee` and 
+Customer that self-hosted their AI Gateway instance do not have access to GitLab VertexAI instance. As an alternative
+way of searching for documentation, the AI Gateway self-hosted image already includes embedded search on tags `self-hosted-17.4.0-ee` and
 later.
 
-To achieve this, we use [a full-text search using bm25 on a sqlite database](https://www.sqlite.org/fts5.html). The corpus 
-is generated when building the Docker image and is updated for every version, users are not required to take any action. 
-This mechanism is light and simple, but the results are not robust towards user query. It is recommended to strip away unnecessary 
-words and pass only the intent. For example, instead of querying `How can I create an issue`, better results are obtained 
+To achieve this, we use [a full-text search using bm25 on a sqlite database](https://www.sqlite.org/fts5.html). The corpus
+is generated when building the Docker image and is updated for every version, users are not required to take any action.
+This mechanism is light and simple, but the results are not robust towards user query. It is recommended to strip away unnecessary
+words and pass only the intent. For example, instead of querying `How can I create an issue`, better results are obtained
 by querying `create issue`.
 
 To generate the corpus, run:
