@@ -22,6 +22,7 @@ class GitLabUnitPrimitive(StrEnum):
     ASK_COMMIT = "ask_commit"
     ASK_EPIC = "ask_epic"
     ASK_ISSUE = "ask_issue"
+    ASK_MERGE_REQUEST = "ask_merge_request"
     CATEGORIZE_DUO_CHAT_QUESTION = "categorize_duo_chat_question"
     CODE_SUGGESTIONS = "code_suggestions"
     DOCUMENTATION_SEARCH = "documentation_search"
@@ -54,6 +55,7 @@ FEATURE_CATEGORIES_FOR_PROXY_ENDPOINTS = {
     GitLabUnitPrimitive.ASK_COMMIT: GitLabFeatureCategory.DUO_CHAT,
     GitLabUnitPrimitive.ASK_EPIC: GitLabFeatureCategory.DUO_CHAT,
     GitLabUnitPrimitive.ASK_ISSUE: GitLabFeatureCategory.DUO_CHAT,
+    GitLabUnitPrimitive.ASK_MERGE_REQUEST: GitLabFeatureCategory.DUO_CHAT,
     GitLabUnitPrimitive.CATEGORIZE_DUO_CHAT_QUESTION: GitLabFeatureCategory.DUO_CHAT,
     GitLabUnitPrimitive.DOCUMENTATION_SEARCH: GitLabFeatureCategory.DUO_CHAT,
     GitLabUnitPrimitive.DUO_CHAT: GitLabFeatureCategory.DUO_CHAT,
@@ -84,6 +86,7 @@ UNIT_PRIMITIVE_AND_DESCRIPTION_MAPPING = {
     GitLabUnitPrimitive.ASK_COMMIT: "Ask questions about GitLab commits",
     GitLabUnitPrimitive.ASK_EPIC: "Ask questions about GitLab epics",
     GitLabUnitPrimitive.ASK_ISSUE: "Ask questions about GitLab issues",
+    GitLabUnitPrimitive.ASK_MERGE_REQUEST: "Ask questions about GitLab merge requests",
     GitLabUnitPrimitive.CATEGORIZE_DUO_CHAT_QUESTION: "Categorize user's question to GitLab Duo Chat for internal telemetry purpose",
     GitLabUnitPrimitive.DOCUMENTATION_SEARCH: "Perform semantic search on gitlab documentations for a given query.",
     GitLabUnitPrimitive.DUO_CHAT: "Ask various GitLab-related questions and tasks.",
