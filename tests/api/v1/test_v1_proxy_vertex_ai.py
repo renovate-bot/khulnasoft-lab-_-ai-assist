@@ -26,7 +26,9 @@ def auth_user():
 
 
 class TestProxyVertexAI:
-    def test_successful_request(self, mock_client, mock_track_internal_event):
+    def test_successful_request(
+        self, mock_client, mock_track_internal_event, mock_detect_abuse
+    ):
         with patch(
             "ai_gateway.proxy.clients.VertexAIProxyClient.proxy",
             return_value={"response": "test"},
