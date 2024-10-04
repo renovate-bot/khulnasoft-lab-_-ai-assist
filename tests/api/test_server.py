@@ -203,11 +203,6 @@ def test_middleware_log_request(fastapi_server_app: FastAPI, caplog):
 
     caplog.clear()
 
-    with caplog.at_level("INFO"):
-        client.post("/monitoring/healthz")
-        log_messages = [record.message for record in caplog.records]
-        assert all("correlation_id" not in msg for msg in log_messages)
-
 
 @pytest.mark.parametrize(
     "test_path,expected", [("/v1/chat/agent", True), ("/monitoring/healthz", False)]
