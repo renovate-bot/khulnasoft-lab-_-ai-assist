@@ -79,7 +79,7 @@ def create_fast_api_server(config: Config):
             ),
             Middleware(
                 AccessLogMiddleware,
-                skip_endpoints=_SKIP_ENDPOINTS,
+                skip_endpoints=[],
             ),
             Middleware(
                 DistributedTraceMiddleware,
