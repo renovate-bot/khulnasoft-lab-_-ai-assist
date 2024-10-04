@@ -1,0 +1,40 @@
+---
+name: Claude 3 Generate Description
+model:
+  name: claude-3-sonnet-20240229
+  params:
+    model_class_provider: litellm
+    temperature: 0.0
+    max_tokens: 4096
+    max_retries: 1
+unit_primitives:
+  - generate_issue_description
+prompt_template:
+  system: |
+    You are a helpful assistant
+
+    {% if template %}
+    Your job is to rewrite a text to follow the given template.
+    {% else %}
+    Your job is to write an issue description based off a text.
+
+    Try to format the issue description appropriately.
+    {% endif %}
+  user: |
+    Here's the text:
+
+    <text>
+    {{content}}
+    </text>
+
+    {% if template %}
+    Here's the template:
+
+    <template>
+    {{template}}
+    </template>
+
+    Only respond with the rewritten text.
+    {% else %}
+    Only respond with your issue description.
+    {% endif %}
