@@ -63,7 +63,7 @@ include:
     inputs:
       runway_service_id: ai-gateway
       image: "$CI_REGISTRY_IMAGE/model-gateway:${CI_COMMIT_SHORT_SHA}"
-      runway_version: v3.35.1
+      runway_version: v3.43.3
   - component: ${CI_SERVER_FQDN}/gitlab-org/components/danger-review/danger-review@1.4.1
     rules:
       - if: $CI_SERVER_HOST == "gitlab.com"
