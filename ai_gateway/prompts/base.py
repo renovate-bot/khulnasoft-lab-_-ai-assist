@@ -18,6 +18,7 @@ from ai_gateway.prompts.typing import ModelMetadata, TypeModelFactory
 __all__ = [
     "Prompt",
     "BasePromptRegistry",
+    "jinja2_formatter",
 ]
 
 Input = TypeVar("Input")
