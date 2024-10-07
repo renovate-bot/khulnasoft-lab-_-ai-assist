@@ -9,7 +9,7 @@ metadata:
   department: eng-dev
   department_group: eng-dev-modelops-applied-ml
   product_category: custom_models
-  owner_email_handle: igor.drozdov
+  owner_email_handle: sean_carroll
 spec:
   image: "$CI_REGISTRY_IMAGE/model-gateway:${CI_COMMIT_SHORT_SHA}"
   regions:
