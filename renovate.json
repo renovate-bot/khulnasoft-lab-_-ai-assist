@@ -13,5 +13,5 @@
     "stanhu",
     "tle_gitlab"
   ],
-  "ignoreDeps": ["errata-ai/vale", "node", "ruby"]
+  "ignoreDeps": ["errata-ai/vale", "DavidAnson/markdownlint-cli2", "node", "ruby"]
 }
