@@ -9,7 +9,7 @@ from pydantic_core import Url
 
 from ai_gateway.api.v1 import api_router
 from ai_gateway.auth import User, UserClaims
-from ai_gateway.chat.agents import ReActAgent, ReActAgentInputs
+from ai_gateway.chat.agents import ReActAgent
 from ai_gateway.config import Config
 from ai_gateway.gitlab_features import GitLabUnitPrimitive
 from ai_gateway.prompts import Prompt
@@ -76,7 +76,6 @@ def prompt(
             prompt_config,
             model_metadata,
             chat_history="chat_history",
-            agent_inputs=ReActAgentInputs(),
             **prompt_kwargs,
         )
     else:
