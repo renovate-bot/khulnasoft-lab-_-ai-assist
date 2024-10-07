@@ -1,0 +1,38 @@
+# https://gitlab-com.gitlab.io/gl-infra/platform/runway/runwayctl/manifest.schema.html
+#
+# This configuration is related to AI Gateway deployment for custom models
+# It's going to be used by Staging Ref environment to test AI features powered by custom models
+apiVersion: runway/v1
+kind: RunwayService
+metadata:
+  name: ai_gateway_custom
+  department: eng-dev
+  department_group: eng-dev-modelops-applied-ml
+  product_category: custom_models
+  owner_email_handle: igor.drozdov
+spec:
+  image: "$CI_REGISTRY_IMAGE/model-gateway:${CI_COMMIT_SHORT_SHA}"
+  regions:
+    - us-east1
+  deployment:
+    strategy: "expedited"
+  request_timeout: 60
+  observability:
+    scrape_targets:
+      - "localhost:8082"
+  startup_probe:
+    path: "/monitoring/healthz"
+  liveness_probe:
+    path: "/monitoring/healthz"
+  scalability:
+    min_instances: 1
+    max_instances: 8
+    max_instance_request_concurrency: 40
+  resources:
+    startup_cpu_boost: true
+    limits:
+      cpu: 2000m
+      memory: 8G
+  load_balancing:
+    external_load_balancer:
+      backend_protocol: HTTPS
