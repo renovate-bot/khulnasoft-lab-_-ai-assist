@@ -77,7 +77,6 @@ async def chat(
         model_metadata=agent_request.model_metadata,
         unavailable_resources=agent_request.unavailable_resources,
         additional_context=agent_request.options.additional_context,
-        messages=agent_request.messages,
     )
 
     try:

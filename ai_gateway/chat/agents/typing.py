@@ -1,9 +1,7 @@
 import json
-from typing import Annotated, Literal, Optional, TypeVar
+from typing import Literal, Optional, TypeVar
 
-from pydantic import BaseModel, StringConstraints
-
-from ai_gateway.models.base_chat import Role
+from pydantic import BaseModel
 
 __all__ = [
     "AgentToolAction",
@@ -17,7 +15,6 @@ __all__ = [
     "Context",
     "CurrentFile",
     "AdditionalContext",
-    "Message",
 ]
 
 
@@ -80,11 +77,3 @@ class AdditionalContext(BaseModel):
     category: Optional[str] = None
     content: Optional[str] = None
     metadata: Optional[dict] = None
-
-
-class Message(BaseModel):
-    role: Role
-    content: Annotated[str, StringConstraints(max_length=400000)]
-    context: Optional[Context] = None
-    current_file: Optional[CurrentFile] = None
-    additional_context: Optional[list[AdditionalContext]] = None

@@ -6,7 +6,7 @@ import pytest
 from dependency_injector import containers, providers
 from pydantic_core import Url
 
-from ai_gateway.chat.agents.react import ReActAgent, ReActAgentInputs
+from ai_gateway.chat.agents.react import ReActAgent
 from ai_gateway.config import Config
 from ai_gateway.prompts import Prompt
 from ai_gateway.prompts.registry import LocalPromptRegistry
@@ -43,10 +43,7 @@ def test_container(mock_container: containers.DeclarativeContainer):
             )
 
         prompt = registry.get(
-            str(prompt_id),
-            model_metadata=model_metadata,
-            chat_history="test",
-            agent_inputs=ReActAgentInputs(),
+            str(prompt_id), model_metadata=model_metadata, chat_history="test"
         )
         assert isinstance(prompt, Prompt)
 

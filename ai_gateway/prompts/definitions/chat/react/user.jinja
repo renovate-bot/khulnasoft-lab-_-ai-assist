@@ -1,15 +1,1 @@
-{%- if message -%}
-    {%- with context = message.context %}
-        {%- include 'chat/react/partials/context.jinja' %}
-    {%- endwith %}
-    {%- with current_file = message.current_file %}
-        {%- include 'chat/react/partials/current_file.jinja' %}
-    {%- endwith %}
-    {%- with additional_context = message.additional_context %}
-        {%- include 'chat/react/partials/additional_context.jinja' %}
-    {%- endwith %}
-    {# Context should be placed before the query https://docs.anthropic.com/en/docs/build-with-claude/prompt-engineering/long-context-tips. #}
-    {{message.content}}
-{%- else -%}
-    {{question}}
-{%- endif -%}
+{{question}}

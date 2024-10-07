@@ -69,11 +69,9 @@ class GLAgentRemoteExecutor(Generic[TypeAgentInputs, TypeAgentEvent]):
     def _process_inputs(
         self, inputs: TypeAgentInputs
     ) -> tuple[Prompt, TypeAgentInputs]:
-        inputs.tools = self.tools
         prompt = self.agent_factory(
-            chat_history=inputs.chat_history,
-            agent_inputs=inputs,
-            model_metadata=inputs.model_metadata,
+            chat_history=inputs.chat_history, model_metadata=inputs.model_metadata
         )
+        inputs.tools = self.tools
 
         return prompt, inputs

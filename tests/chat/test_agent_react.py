@@ -19,13 +19,10 @@ from ai_gateway.chat.agents.typing import (
     AgentStep,
     Context,
     CurrentFile,
-    Message,
 )
 from ai_gateway.chat.tools.base import BaseTool
-from ai_gateway.chat.tools.gitlab import IssueReader
 from ai_gateway.feature_flags.context import current_feature_flag_context
-from ai_gateway.models.base_chat import Message as LegacyMessage
-from ai_gateway.models.base_chat import Role
+from ai_gateway.models.base_chat import Message, Role
 
 
 @pytest.fixture
@@ -37,18 +34,17 @@ def prompt_class():
 def prompt_kwargs():
     yield {
         "chat_history": [
-            LegacyMessage(role=Role.USER, content="Hi, how are you?"),
-            LegacyMessage(role=Role.ASSISTANT, content="I'm good!"),
-        ],
-        "agent_inputs": ReActAgentInputs(),
+            Message(role=Role.USER, content="Hi, how are you?"),
+            Message(role=Role.ASSISTANT, content="I'm good!"),
+        ]
     }
 
 
-async def _assert_legacy_agent_invoked(
+async def _assert_agent_invoked(
     prompt: ReActAgent,
     question: str,
     agent_scratchpad: list[AgentStep],
-    chat_history: list[LegacyMessage] | list[str] | str,
+    chat_history: list[Message] | list[str] | str,
     expected_actions: list[AgentToolAction | AgentFinalAnswer | AgentUnknownAction],
     stream: bool,
 ):
@@ -79,9 +75,9 @@ async def _assert_legacy_agent_invoked(
 @pytest.fixture
 def prompt_template():
     yield {
-        "system": "{% include 'chat/react/system.jinja' %}",
-        "user": "{% include 'chat/react/user.jinja' %}",
-        "assistant": "{% include 'chat/react/assistant.jinja' %}",
+        "system": "You are a DevSecOps Assistant named 'GitLab Duo Chat' created by GitLab.",
+        "user": "{{question}}",
+        "assistant": "{{agent_scratchpad}}",
     }
 
 
@@ -116,15 +112,15 @@ def stub_feature_flags():
         (["str1", "str2"], "str1\nstr2"),
         (
             [
-                LegacyMessage(role=Role.USER, content="Hi, how are you?"),
-                LegacyMessage(role=Role.ASSISTANT, content="I'm good!"),
+                Message(role=Role.USER, content="Hi, how are you?"),
+                Message(role=Role.ASSISTANT, content="I'm good!"),
             ],
             None,
         ),
     ],
 )
 def test_react_input_parser(
-    chat_history: list[LegacyMessage] | list[str] | str, expected_chat_history
+    chat_history: list[Message] | list[str] | str, expected_chat_history
 ):
     additional_context = AdditionalContext(
         id="hello.py",
@@ -165,8 +161,8 @@ def test_react_input_parser(
         assert "chat_history" not in parsed_inputs
     assert parsed_inputs["agent_scratchpad"] == ""
     assert parsed_inputs["additional_context"] == [additional_context]
-    assert parsed_inputs["context"].type == "issue"
-    assert parsed_inputs["context"].content == "This is an incredibly interesting issue"
+    assert parsed_inputs["context_type"] == "issue"
+    assert parsed_inputs["context_content"] == "This is an incredibly interesting issue"
     assert parsed_inputs["current_file"] == current_file
     assert parsed_inputs["unavailable_resources"] == ["Merge Requests", "Pipelines"]
     assert len(parsed_inputs["tools"]) == 1 and isinstance(
@@ -263,264 +259,6 @@ class TestReActAgent:
     @pytest.mark.asyncio
     @pytest.mark.parametrize(
         (
-            "prompt_kwargs",
-            "model_response",
-            "expected_actions",
-        ),
-        [
-            (
-                {
-                    "agent_inputs": ReActAgentInputs(
-                        messages=[
-                            Message(
-                                role=Role.USER,
-                                content="What's the title of this issue?",
-                            ),
-                        ],
-                        agent_scratchpad=[],
-                        tools=[IssueReader()],
-                    )
-                },
-                "Thought: I'm thinking...\nAction: issue_reader\nAction Input: random input",
-                [
-                    AgentToolAction(
-                        thought="I'm thinking...",
-                        tool="issue_reader",
-                        tool_input="random input",
-                    ),
-                ],
-            ),
-            (
-                {
-                    "agent_inputs": ReActAgentInputs(
-                        messages=[
-                            Message(role=Role.USER, content="How can I log output?"),
-                            Message(role=Role.ASSISTANT, content="Use print function"),
-                            Message(
-                                role=Role.USER,
-                                content="Can you explain the print function?",
-                            ),
-                        ],
-                        agent_scratchpad=[],
-                    )
-                },
-                "Thought: I'm thinking...\nFinal Answer: A",
-                [
-                    AgentFinalAnswer(text="A"),
-                ],
-            ),
-            (
-                {
-                    "agent_inputs": ReActAgentInputs(
-                        messages=[
-                            Message(
-                                role=Role.USER,
-                                content="what's the description of this issue",
-                            ),
-                            Message(role=Role.ASSISTANT, content="PoC ReAct"),
-                            Message(role=Role.USER, content="What's your name?"),
-                        ],
-                        agent_scratchpad=[
-                            AgentStep(
-                                action=AgentToolAction(
-                                    thought="thought",
-                                    tool="ci_issue_reader",
-                                    tool_input="random input",
-                                ),
-                                observation="observation",
-                            )
-                        ],
-                    )
-                },
-                "Thought: I'm thinking...\nFinal Answer: Bar",
-                [
-                    AgentFinalAnswer(
-                        text="B",
-                    ),
-                    AgentFinalAnswer(text="a"),
-                    AgentFinalAnswer(text="r"),
-                ],
-            ),
-            (
-                {
-                    "agent_inputs": ReActAgentInputs(
-                        messages=[
-                            Message(
-                                role=Role.USER,
-                                content="Explain this issue",
-                                context=Context(
-                                    type="issue", content="this issue is about Duo Chat"
-                                ),
-                            ),
-                        ],
-                    )
-                },
-                "Thought: I'm thinking...\nFinal Answer: A",
-                [
-                    AgentFinalAnswer(
-                        text="A",
-                    ),
-                ],
-            ),
-            (
-                {
-                    "agent_inputs": ReActAgentInputs(
-                        messages=[
-                            Message(
-                                role=Role.USER,
-                                content="Explain this code",
-                                current_file=CurrentFile(
-                                    file_path="main.py",
-                                    data="print",
-                                    selected_code=True,
-                                ),
-                            ),
-                        ],
-                    )
-                },
-                "Thought: I'm thinking...\nFinal Answer: A",
-                [
-                    AgentFinalAnswer(
-                        text="A",
-                    ),
-                ],
-            ),
-            (
-                {
-                    "agent_inputs": ReActAgentInputs(
-                        messages=[
-                            Message(
-                                role=Role.USER,
-                                content="Explain this code",
-                                additional_context=[
-                                    AdditionalContext(
-                                        id="id",
-                                        category="code",
-                                        content="print",
-                                        metadata={"a": "b"},
-                                    )
-                                ],
-                            ),
-                        ],
-                    )
-                },
-                "Thought: I'm thinking...\nFinal Answer: A",
-                [
-                    AgentFinalAnswer(
-                        text="A",
-                    ),
-                ],
-            ),
-            (
-                {
-                    "agent_inputs": ReActAgentInputs(
-                        messages=[
-                            Message(
-                                role=Role.USER,
-                                content="Hi, how are you? Do not include Final Answer:, Thought: and Action: in response.",
-                            ),
-                        ],
-                        agent_scratchpad=[],
-                    )
-                },
-                "I'm good. How about you?",
-                [
-                    AgentUnknownAction(
-                        text="I'm good. How about you?",
-                    ),
-                ],
-            ),
-        ],
-    )
-    async def test_stream(
-        self,
-        prompt_kwargs: dict,
-        model_response: str,
-        expected_actions: list[AgentToolAction | AgentFinalAnswer | AgentUnknownAction],
-        prompt: ReActAgent,
-    ):
-        inputs = prompt_kwargs["agent_inputs"]
-
-        with capture_logs() as cap_logs, request_cycle_context({}):
-            actual_actions = [action async for action in prompt.astream(inputs)]
-
-            if isinstance(expected_actions[0], AgentToolAction):
-                assert (
-                    context.get("duo_chat.agent_tool_action")
-                    == expected_actions[0].tool
-                )
-
-        assert actual_actions == expected_actions
-        assert cap_logs[-1]["event"] == "Response streaming"
-
-    @pytest.mark.asyncio
-    @pytest.mark.parametrize(
-        (
-            "prompt_kwargs",
-            "model_error",
-            "error_message",
-            "expected_events",
-        ),
-        [
-            (
-                {
-                    "agent_inputs": ReActAgentInputs(
-                        messages=[
-                            Message(
-                                role=Role.USER,
-                                content="What's the title of this epic?",
-                            ),
-                        ],
-                    )
-                },
-                ValueError("overloaded_error"),
-                "overloaded_error",
-                [
-                    AgentError(message="overloaded_error", retryable=True),
-                ],
-            ),
-            (
-                {
-                    "agent_inputs": ReActAgentInputs(
-                        messages=[
-                            Message(
-                                role=Role.USER,
-                                content="What's the title of this epic?",
-                            ),
-                        ],
-                    )
-                },
-                ValueError("api_error"),
-                "api_error",
-                [
-                    AgentError(message="api_error", retryable=False),
-                ],
-            ),
-        ],
-    )
-    async def test_stream_error(
-        self,
-        prompt_kwargs: dict,
-        model_error: Exception,
-        error_message: str,
-        expected_events: list[AgentError],
-        prompt: ReActAgent,
-    ):
-        inputs = prompt_kwargs["agent_inputs"]
-
-        actual_events = []
-        with pytest.raises(ValueError) as exc_info:
-            async for event in prompt.astream(inputs):
-                actual_events.append(event)
-
-        assert actual_events == expected_events
-        assert str(exc_info.value) == error_message
-
-
-class TestLegacyReActAgent:
-    @pytest.mark.asyncio
-    @pytest.mark.parametrize(
-        (
             "question",
             "chat_history",
             "agent_scratchpad",
@@ -579,7 +317,7 @@ class TestLegacyReActAgent:
     ):
         expected_action = request.getfixturevalue(expected_action_fixture)
 
-        await _assert_legacy_agent_invoked(
+        await _assert_agent_invoked(
             prompt=prompt,
             question=question,
             chat_history=chat_history,
@@ -614,8 +352,8 @@ class TestLegacyReActAgent:
             (
                 "Can you explain the print function?",
                 [
-                    LegacyMessage(role=Role.USER, content="How can I log output?"),
-                    LegacyMessage(role=Role.ASSISTANT, content="Use print function"),
+                    Message(role=Role.USER, content="How can I log output?"),
+                    Message(role=Role.ASSISTANT, content="Use print function"),
                 ],
                 [],
                 "Thought: I'm thinking...\nFinal Answer: A",
@@ -661,13 +399,13 @@ class TestLegacyReActAgent:
     async def test_stream(
         self,
         question: str,
-        chat_history: list[LegacyMessage] | list[str] | str,
+        chat_history: list[Message] | list[str] | str,
         agent_scratchpad: list[AgentStep],
         model_response: str,
         expected_actions: list[AgentToolAction | AgentFinalAnswer],
         prompt: ReActAgent,
     ):
-        await _assert_legacy_agent_invoked(
+        await _assert_agent_invoked(
             prompt=prompt,
             question=question,
             chat_history=chat_history,
