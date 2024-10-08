@@ -14,7 +14,7 @@ prompt_template:
   system: |
     {% include 'chat/react/system.jinja' %}
   user: |
-    {% include 'chat/react/user_with_prefix.jinja' %}
+    {% include 'chat/react/user.jinja' %}
   assistant: |
     {% include 'chat/react/assistant.jinja' %}
 params:
