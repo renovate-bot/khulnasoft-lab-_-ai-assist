@@ -649,7 +649,7 @@ class TestLiteLlmTextGenModel:
             top_p=0.95,
             stream=False,
             timeout=60.0,
-            stop=["\n\n", "}"],
+            stop=["\n\n", "\n+++++", "}"],
         )
 
         assert isinstance(output, TextGenModelOutput)
@@ -681,32 +681,32 @@ class TestLiteLlmTextGenModel:
             (
                 "func hello(name){",
                 "}",
-                ["\n\n", "}"],
+                ["\n\n", "\n+++++", "}"],
             ),
             (
                 "    func hello(name){",
                 "\n    }\n}",
-                ["\n\n", "    }"],
+                ["\n\n", "\n+++++", "    }"],
             ),
             (
                 "func hello(name):",
                 "",
-                ["\n\n"],
+                ["\n\n", "\n+++++"],
             ),
             (
                 "func hello(name):",
                 "\n    \n    \n    \n    \n",
-                ["\n\n"],
+                ["\n\n", "\n+++++"],
             ),
             (
                 "    def hello(name)",
                 "\n    end\n  end",
-                ["\n\n", "    end"],
+                ["\n\n", "\n+++++", "    end"],
             ),
             (
                 "    def hello(name)",
                 "\n\n    \n    \n    end\n  end",
-                ["\n\n", "    end"],
+                ["\n\n", "\n+++++", "    end"],
             ),
         ],
     )
