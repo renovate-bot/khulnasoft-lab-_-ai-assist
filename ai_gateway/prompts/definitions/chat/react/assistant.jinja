@@ -1,2 +1,7 @@
+{%- if agent_scratchpad is string -%}
 {{agent_scratchpad}}
 Thought
+{%- else -%}
+{% include 'chat/react/partials/agent_scratchpad.jinja' %}
+Thought: 
+{%- endif %}
