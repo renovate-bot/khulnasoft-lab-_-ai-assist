@@ -304,8 +304,15 @@ class MiddlewareAuthentication(Middleware):
                     raise AuthenticationError(f"Header mismatch '{header}'")
 
             duo_seat_count_header = headers.get(X_GITLAB_DUO_SEAT_COUNT_HEADER)
-            if error := validate_duo_seat_count_header(claims, duo_seat_count_header):
-                raise AuthenticationError(error)
+            try:
+                if error := validate_duo_seat_count_header(
+                    claims, duo_seat_count_header
+                ):
+                    raise AuthenticationError(error)
+            except AuthenticationError as e:
+                # Instead of raising an error, we currently log the error and allow
+                # the request to continue. See: https://gitlab.com/gitlab-org/modelops/applied-ml/code-suggestions/ai-assist/-/issues/672
+                log_exception(e)
 
     @staticmethod
     def on_auth_error(_: Request, e: Exception):
