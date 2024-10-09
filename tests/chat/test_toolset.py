@@ -28,6 +28,7 @@ class TestDuoChatToolRegistry:
                     GitlabDocumentation,
                     EpicReader,
                     IssueReader,
+                    MergeRequestReader,
                 ]
             )
         ],
@@ -100,11 +101,6 @@ class TestDuoChatToolRegistry:
         "feature_flag, unit_primitive, reader_tool_type",
         [
             ("ai_commit_reader_for_chat", GitLabUnitPrimitive.ASK_COMMIT, CommitReader),
-            (
-                "ai_merge_request_reader_for_chat",
-                GitLabUnitPrimitive.ASK_MERGE_REQUEST,
-                MergeRequestReader,
-            ),
             ("ai_build_reader_for_chat", GitLabUnitPrimitive.ASK_BUILD, BuildReader),
         ],
     )

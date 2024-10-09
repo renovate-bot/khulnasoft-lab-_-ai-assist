@@ -44,6 +44,11 @@ class DuoChatToolsRegistry(BaseToolsRegistry):
                 min_required_gl_version=None,
                 tools=[IssueReader()],
             ),
+            UnitPrimitiveToolset(
+                name=GitLabUnitPrimitive.ASK_MERGE_REQUEST,
+                min_required_gl_version="17.5.0-pre",
+                tools=[MergeRequestReader()],
+            ),
         ]
 
         if is_feature_enabled(FeatureFlag.AI_COMMIT_READER_FOR_CHAT):
@@ -61,15 +66,6 @@ class DuoChatToolsRegistry(BaseToolsRegistry):
                     name=GitLabUnitPrimitive.ASK_BUILD,
                     min_required_gl_version="17.5.0-pre",
                     tools=[BuildReader()],
-                )
-            )
-
-        if is_feature_enabled(FeatureFlag.AI_MERGE_REQUEST_READER_FOR_CHAT):
-            toolsets.append(
-                UnitPrimitiveToolset(
-                    name=GitLabUnitPrimitive.ASK_MERGE_REQUEST,
-                    min_required_gl_version="17.5.0-pre",
-                    tools=[MergeRequestReader()],
                 )
             )
 
