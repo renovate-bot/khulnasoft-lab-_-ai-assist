@@ -71,30 +71,17 @@ Final Answer: the final answer to the original input question.
 When concluding your response, provide the final answer as "Final Answer:". Format the answer using Markdown syntax.
 It should contain everything that user needs to see, including answer from "Observation" section.
 
-{%- if current_file %}
-    {%- if current_file.selected_code %}
-        User selected code below enclosed in <code></code> tags in file {{ current_file.file_path }} to work with:
-
-        <code>
-          {{ current_file.data }}
-        </code>
-    {%- else %}
-        The current code file that user sees is {{current_file.file_path}} and has the following content:
-        <content>
-        {{ current_file.data }}
-        </content>
-   {%- endif %}
-{%- endif %}
-
 You have access to the following GitLab resources:
+{%- if tools %}
 {%- for tool in tools -%}
     {% if tool.resource -%}
         {{ tool.resource }}
         {%- if not loop.last %}, {% endif %}
     {%- endif %}
-{%- endfor -%}.
+{%- endfor -%}
+{%- endif -%}.
 You also have access to all information that can be helpful to someone working in software development of any kind.
-At the moment, you do not have access to the following GitLab resources: Merge Requests, Pipelines, Vulnerabilities.
+At the moment, you do not have access to the following GitLab resources: {{unavailable_resources}}.
 At the moment, you do not have the ability to search Issues or Epics based on a description or keywords.
 You can only read information about a specific issue/epic IF the user is on the specific issue/epic's page, or provides a URL or ID.
 
