@@ -1,5 +1,4 @@
 import httpx
-from anthropic import AsyncAnthropic
 from dependency_injector import containers, providers
 from google.cloud.aiplatform.gapic import PredictionServiceAsyncClient
 
@@ -7,7 +6,7 @@ from ai_gateway.config import ConfigModelConcurrency
 from ai_gateway.models import mock
 from ai_gateway.models.agent_model import AgentModel
 from ai_gateway.models.anthropic import AnthropicChatModel, AnthropicModel
-from ai_gateway.models.base import connect_anthropic, grpc_connect_vertex
+from ai_gateway.models.base import grpc_connect_vertex, init_anthropic_client
 from ai_gateway.models.litellm import LiteLlmChatModel, LiteLlmTextGenModel
 from ai_gateway.models.vertex_text import (
     PalmCodeBisonModel,
@@ -30,15 +29,6 @@ def _init_vertex_grpc_client(
         return None
 
     return grpc_connect_vertex({"api_endpoint": endpoint})
-
-
-def _init_anthropic_client(
-    mock_model_responses: bool,
-) -> AsyncAnthropic | None:
-    if mock_model_responses:
-        return None
-
-    return connect_anthropic()
 
 
 def _init_anthropic_proxy_client(
@@ -84,7 +74,7 @@ class ContainerModels(containers.DeclarativeContainer):
     )
 
     http_client_anthropic = providers.Singleton(
-        _init_anthropic_client,
+        init_anthropic_client,
         mock_model_responses=config.mock_model_responses,
     )
 

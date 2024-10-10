@@ -1,11 +1,14 @@
 import json
 import re
-from typing import Any, AsyncIterator, Callable, Optional, TypeVar
+from typing import Any, AsyncIterator, Callable, List, Optional, TypeVar
 from unittest.mock import AsyncMock
 
 import fastapi
 import httpx
 from anthropic.types import Message
+from langchain_core.callbacks import CallbackManagerForLLMRun
+from langchain_core.language_models.chat_models import SimpleChatModel
+from langchain_core.messages import BaseMessage
 
 from ai_gateway.models.base import ModelMetadata, SafetyAttributes
 from ai_gateway.models.base_chat import ChatModelBase
@@ -116,6 +119,25 @@ class LLM(TextGenModelBase):
             score=0,
             safety_attributes=SafetyAttributes(),
         )
+
+
+class FakeModel(SimpleChatModel):
+    @property
+    def _llm_type(self) -> str:
+        return "fake-provider"
+
+    @property
+    def _identifying_params(self) -> dict[str, Any]:
+        return {"model": "fake-model"}
+
+    def _call(
+        self,
+        messages: List[BaseMessage],
+        stop: Optional[List[str]] = None,
+        run_manager: Optional[CallbackManagerForLLMRun] = None,
+        **kwargs: Any,
+    ) -> str:
+        return "mock"
 
 
 class ChatModel(ChatModelBase):

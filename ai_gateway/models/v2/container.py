@@ -1,17 +1,13 @@
-from anthropic import AsyncAnthropic
 from dependency_injector import containers, providers
 from langchain_community.chat_models import ChatLiteLLM
 
-from ai_gateway.models.base import connect_anthropic
+from ai_gateway.models import mock
+from ai_gateway.models.base import init_anthropic_client
 from ai_gateway.models.v2.anthropic_claude import ChatAnthropic
 
 __all__ = [
     "ContainerModels",
 ]
-
-
-def _init_anthropic_client() -> AsyncAnthropic:
-    return connect_anthropic()
 
 
 class ContainerModels(containers.DeclarativeContainer):
@@ -20,11 +16,23 @@ class ContainerModels(containers.DeclarativeContainer):
 
     config = providers.Configuration(strict=True)
 
-    http_async_client_anthropic = providers.Singleton(_init_anthropic_client)
+    _mock_selector = providers.Callable(
+        lambda mock_model_responses: "mocked" if mock_model_responses else "original",
+        config.mock_model_responses,
+    )
 
-    anthropic_claude_chat_fn = providers.Factory(
-        ChatAnthropic,
-        async_client=http_async_client_anthropic,
+    http_async_client_anthropic = providers.Singleton(
+        init_anthropic_client,
+        mock_model_responses=config.mock_model_responses,
+    )
+
+    anthropic_claude_chat_fn = providers.Selector(
+        _mock_selector,
+        original=providers.Factory(
+            ChatAnthropic,
+            async_client=http_async_client_anthropic,
+        ),
+        mocked=providers.Factory(mock.FakeModel),
     )
 
     lite_llm_chat_fn = providers.Factory(ChatLiteLLM)
