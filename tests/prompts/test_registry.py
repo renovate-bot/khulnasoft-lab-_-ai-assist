@@ -313,6 +313,36 @@ class TestLocalPromptRegistry:
                     "max_retries": 6,
                 },
             ),
+            (
+                "chat/react",
+                ModelMetadata(
+                    name="custom",
+                    endpoint=HttpUrl("http://localhost:4000/"),
+                    api_key="token",
+                    provider="custom_openai",
+                    identifier="custom_openai/mistralai/Mistral-7B-Instruct-v0.3",
+                ),
+                "Chat react custom prompt",
+                MockPromptClass,
+                [("system", "Template1"), ("user", "Template2")],
+                "custom",
+                {
+                    "stop": ["Foo", "Bar"],
+                    "timeout": 60,
+                    "model": "mistralai/Mistral-7B-Instruct-v0.3",
+                    "custom_llm_provider": "custom_openai",
+                    "api_key": "token",
+                    "api_base": "http://localhost:4000/",
+                    "vertex_location": "us-east1",
+                },
+                {
+                    "temperature": 0.1,
+                    "top_p": 0.8,
+                    "top_k": 40,
+                    "max_tokens": 256,
+                    "max_retries": 6,
+                },
+            ),
         ],
     )
     def test_get(
