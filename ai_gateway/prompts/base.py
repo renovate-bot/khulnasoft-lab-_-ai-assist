@@ -81,14 +81,14 @@ class Prompt(RunnableBinding[Input, Output]):
             kwargs["api_key"] = str(model_metadata.api_key)
 
             if model_metadata.identifier:
-                splits = model_metadata.identifier.split("/")
+                provider, _, model_name = model_metadata.identifier.partition("/")
 
-                if len(splits) == 1:
-                    kwargs["custom_llm_provider"] = "custom_openai"
-                    kwargs["model"] = splits[0]
+                if model_name:
+                    kwargs["custom_llm_provider"] = provider
+                    kwargs["model"] = model_name
                 else:
-                    kwargs["custom_llm_provider"] = splits[0]
-                    kwargs["model"] = splits[1]
+                    kwargs["custom_llm_provider"] = "custom_openai"
+                    kwargs["model"] = model_metadata.identifier
             else:
                 kwargs["model"] = model_metadata.name
                 kwargs["custom_llm_provider"] = model_metadata.provider
