@@ -28,7 +28,7 @@ __all__ = [
     "SafetyAttributes",
     "ModelBase",
     "grpc_connect_vertex",
-    "connect_anthropic",
+    "init_anthropic_client",
 ]
 
 log = structlog.stdlib.get_logger("models")
@@ -146,3 +146,12 @@ def connect_anthropic(**kwargs: Any) -> AsyncAnthropic:
     )
 
     return AsyncAnthropic(http_client=http_client, **kwargs)
+
+
+def init_anthropic_client(
+    mock_model_responses: bool,
+) -> AsyncAnthropic | None:
+    if mock_model_responses:
+        return None
+
+    return connect_anthropic()
