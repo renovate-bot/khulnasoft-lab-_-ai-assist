@@ -22,7 +22,7 @@ from starlette.middleware.authentication import (
 )
 from starlette.middleware.base import BaseHTTPMiddleware, Request
 from starlette.responses import JSONResponse
-from starlette_context import context
+from starlette_context import context as starlette_context
 from uvicorn.protocols.utils import get_path_with_query_string
 
 from ai_gateway.api.timing import timing
@@ -35,7 +35,11 @@ from ai_gateway.cloud_connector.auth.validators import (
 )
 from ai_gateway.feature_flags import current_feature_flag_context
 from ai_gateway.instrumentators.base import Telemetry, TelemetryInstrumentator
-from ai_gateway.internal_events import EventContext, current_event_context
+from ai_gateway.internal_events import (
+    EventContext,
+    current_event_context,
+    tracked_internal_events,
+)
 from ai_gateway.tracking.errors import log_exception
 
 __all__ = [
@@ -136,9 +140,9 @@ class AccessLogMiddleware:
         try:
             await self.app(scope, receive, send_wrapper)
         except Exception as e:
-            context.data["exception_message"] = str(e)
-            context.data["exception_class"] = type(e).__name__
-            context.data["exception_backtrace"] = traceback.format_exc()
+            starlette_context.data["exception_message"] = str(e)
+            starlette_context.data["exception_class"] = type(e).__name__
+            starlette_context.data["exception_backtrace"] = traceback.format_exc()
             log_exception(e)
             raise e
         finally:
@@ -187,7 +191,7 @@ class AccessLogMiddleware:
                     X_GITLAB_DUO_SEAT_COUNT_HEADER
                 ),
             }
-            fields.update(context.data)
+            fields.update(starlette_context.data)
 
             # Recreate the Uvicorn access log format, but add all parameters as structured information
             access_logger.info(
@@ -265,12 +269,12 @@ class MiddlewareAuthentication(Middleware):
             auth_provider = self._auth_provider(headers)
 
             user = auth_provider.authenticate(token)
-            context["token_issuer"] = user.claims.issuer
+            starlette_context["token_issuer"] = user.claims.issuer
             # We will send this with an HTTP header field going forward since we are
             # retiring direct access to the gateway from clients, which was the main
             # reason this value was carried in the access token.
             if user.claims.gitlab_realm:
-                context["gitlab_realm"] = user.claims.gitlab_realm
+                starlette_context["gitlab_realm"] = user.claims.gitlab_realm
 
             if not user.authenticated:
                 raise AuthenticationError("Forbidden by auth provider")
@@ -317,8 +321,8 @@ class MiddlewareAuthentication(Middleware):
     @staticmethod
     def on_auth_error(_: Request, e: Exception):
         content = jsonable_encoder({"error": str(e)})
-        context["auth_error_details"] = str(e)
-        context["http_exception_details"] = str(e)
+        starlette_context["auth_error_details"] = str(e)
+        starlette_context["http_exception_details"] = str(e)
         return JSONResponse(status_code=401, content=content)
 
     def __init__(
@@ -400,6 +404,10 @@ class InternalEventMiddleware:
 
         await self.app(scope, receive, send)
 
+        starlette_context["tracked_internal_events"] = list(
+            tracked_internal_events.get()
+        )
+
 
 class DistributedTraceMiddleware:
     """Middleware for distributed tracing."""
@@ -460,7 +468,7 @@ class FeatureFlagMiddleware:
             enabled_feature_flags = enabled_feature_flags.difference(disallowed_flags)
 
         current_feature_flag_context.set(enabled_feature_flags)
-        context["enabled_feature_flags"] = ",".join(enabled_feature_flags)
+        starlette_context["enabled_feature_flags"] = ",".join(enabled_feature_flags)
 
         await self.app(scope, receive, send)
 

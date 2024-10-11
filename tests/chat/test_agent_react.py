@@ -395,7 +395,7 @@ class TestReActAgent:
                                 additional_context=[
                                     AdditionalContext(
                                         id="id",
-                                        category="code",
+                                        category="file",
                                         content="print",
                                         metadata={"a": "b"},
                                     )

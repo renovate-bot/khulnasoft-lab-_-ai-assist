@@ -1,25 +1,32 @@
 import json
 from typing import AsyncIterator
-from unittest.mock import Mock, PropertyMock, patch
+from unittest.mock import Mock, PropertyMock, call, patch
 
 import pytest
 from langchain_core.language_models.chat_models import BaseChatModel
 from starlette.testclient import TestClient
 
 from ai_gateway.api.v2 import api_router
-from ai_gateway.api.v2.chat.typing import AgentRequestOptions, ReActAgentScratchpad
+from ai_gateway.api.v2.chat.typing import (
+    AgentRequest,
+    AgentRequestOptions,
+    ReActAgentScratchpad,
+)
 from ai_gateway.auth import GitLabUser, User, UserClaims
 from ai_gateway.chat.agents import (
+    AdditionalContext,
     AgentBaseEvent,
     AgentStep,
     AgentToolAction,
     Context,
     CurrentFile,
+    Message,
     ReActAgentInputs,
 )
 from ai_gateway.chat.agents.typing import AgentFinalAnswer, TypeAgentEvent
 from ai_gateway.config import Config
 from ai_gateway.gitlab_features import WrongUnitPrimitives
+from ai_gateway.models.base_chat import Role
 from ai_gateway.prompts.typing import ModelMetadata
 
 
@@ -58,22 +65,6 @@ def mocked_tools():
         yield mock
 
 
-@pytest.fixture()
-def mocked_on_behalf():
-    def _on_behalf(user: GitLabUser, gl_version: str) -> AsyncIterator[TypeAgentEvent]:
-        if len(user.unit_primitives) == 0:
-            # We don't expect any unit primitives allocated by the user
-            raise WrongUnitPrimitives()
-        else:
-            raise Exception("raised exception to catch broken tests")
-
-    with patch(
-        "ai_gateway.chat.executor.GLAgentRemoteExecutor.on_behalf",
-        side_effect=_on_behalf,
-    ) as mock:
-        yield mock
-
-
 @pytest.fixture
 def mock_config():
     config = Config()
@@ -89,6 +80,89 @@ def chunk_to_model(chunk: str, klass: AgentBaseEvent) -> str:
 
 
 class TestReActAgentStream:
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize(
+        ("agent_request", "model_response", "expected_events"),
+        [
+            (
+                AgentRequest(
+                    messages=[
+                        Message(
+                            role=Role.USER,
+                            content="How can I write hello world in python?",
+                        ),
+                    ]
+                ),
+                "thought\nFinal Answer: answer\n",
+                [AgentFinalAnswer(text=c) for c in "answer"],
+            ),
+            (
+                AgentRequest(
+                    messages=[
+                        Message(role=Role.USER, content="chat history"),
+                        Message(role=Role.ASSISTANT, content="chat history"),
+                        Message(
+                            role=Role.USER,
+                            content="What's the title of this issue?",
+                            context=Context(type="issue", content="issue content"),
+                            current_file=CurrentFile(
+                                file_path="main.py",
+                                data="def main()",
+                                selected_code=True,
+                            ),
+                        ),
+                    ],
+                    options=AgentRequestOptions(
+                        agent_scratchpad=ReActAgentScratchpad(
+                            agent_type="react",
+                            steps=[
+                                ReActAgentScratchpad.AgentStep(
+                                    thought="thought",
+                                    tool="tool",
+                                    tool_input="tool_input",
+                                    observation="observation",
+                                )
+                            ],
+                        ),
+                    ),
+                    model_metadata=ModelMetadata(
+                        name="mistral",
+                        provider="litellm",
+                        endpoint="http://localhost:4000",
+                        api_key="token",
+                    ),
+                    unavailable_resources=["Mystery Resource 1", "Mystery Resource 2"],
+                ),
+                "thought\nFinal Answer: answer\n",
+                [AgentFinalAnswer(text=c) for c in "answer"],
+            ),
+        ],
+    )
+    async def test_success(
+        self,
+        mock_client: TestClient,
+        mock_model: Mock,
+        mocked_tools: Mock,
+        agent_request: AgentRequest,
+        expected_events: list[TypeAgentEvent],
+    ):
+        response = mock_client.post(
+            "/chat/agent",
+            headers={
+                "Authorization": "Bearer 12345",
+                "X-Gitlab-Authentication-Type": "oidc",
+            },
+            json=agent_request.model_dump(mode="json"),
+        )
+
+        actual_events = [
+            chunk_to_model(chunk, AgentFinalAnswer)
+            for chunk in response.text.strip().split("\n")
+        ]
+
+        assert response.status_code == 200
+        assert actual_events == expected_events
+
     @pytest.mark.asyncio
     @pytest.mark.parametrize(
         (
@@ -146,7 +220,7 @@ class TestReActAgentStream:
             )
         ],
     )
-    async def test_success(
+    async def test_legacy_success(
         self,
         mock_client: TestClient,
         mocked_stream: Mock,
@@ -216,14 +290,102 @@ class TestReActAgentStream:
 
     @pytest.mark.asyncio
     @pytest.mark.parametrize(
-        "auth_user",
-        [(User(authenticated=True, claims=UserClaims(scopes="wrong_scope")))],
+        "auth_user,agent_request,expected_status_code,expected_error,expected_internal_events",
+        [
+            (
+                User(authenticated=True, claims=UserClaims(scopes=["duo_chat"])),
+                AgentRequest(messages=[Message(role=Role.USER, content="Hi")]),
+                200,
+                "",
+                [call("request_duo_chat", category="ai_gateway.api.v2.chat.agent")],
+            ),
+            (
+                User(authenticated=True, claims=UserClaims(scopes="wrong_scope")),
+                AgentRequest(messages=[Message(role=Role.USER, content="Hi")]),
+                403,
+                '{"detail":"Unauthorized to access duo chat"}',
+                [],
+            ),
+            (
+                User(
+                    authenticated=True,
+                    claims=UserClaims(scopes=["duo_chat", "include_file_context"]),
+                ),
+                AgentRequest(
+                    messages=[
+                        Message(
+                            role=Role.USER,
+                            content="Hi",
+                            additional_context=[AdditionalContext(category="file")],
+                        )
+                    ]
+                ),
+                200,
+                "",
+                [
+                    call(
+                        "request_include_file_context",
+                        category="ai_gateway.api.v2.chat.agent",
+                    ),
+                ],
+            ),
+            (
+                User(authenticated=True, claims=UserClaims(scopes=["duo_chat"])),
+                AgentRequest(
+                    messages=[
+                        Message(
+                            role=Role.USER,
+                            content="Hi",
+                            additional_context=[],
+                        )
+                    ]
+                ),
+                200,
+                "",
+                [call("request_duo_chat", category="ai_gateway.api.v2.chat.agent")],
+            ),
+            (
+                User(authenticated=True, claims=UserClaims(scopes=["duo_chat"])),
+                AgentRequest(
+                    messages=[
+                        Message(
+                            role=Role.USER,
+                            content="Hi",
+                            additional_context=None,
+                        )
+                    ]
+                ),
+                200,
+                "",
+                [call("request_duo_chat", category="ai_gateway.api.v2.chat.agent")],
+            ),
+            (
+                User(authenticated=True, claims=UserClaims(scopes=["duo_chat"])),
+                AgentRequest(
+                    messages=[
+                        Message(
+                            role=Role.USER,
+                            content="Hi",
+                            additional_context=[AdditionalContext(category="file")],
+                        )
+                    ]
+                ),
+                403,
+                '{"detail":"Unauthorized to access include_file_context"}',
+                [],
+            ),
+        ],
     )
-    async def test_exception_403(
+    async def test_authorization(
         self,
         auth_user: User,
+        agent_request: AgentRequest,
         mock_client: TestClient,
-        mocked_on_behalf: Mock,
+        mock_model: Mock,
+        expected_status_code: int,
+        expected_error: str,
+        expected_internal_events,
+        mock_track_internal_event: Mock,
     ):
         response = mock_client.post(
             "/chat/agent",
@@ -231,20 +393,15 @@ class TestReActAgentStream:
                 "Authorization": "Bearer 12345",
                 "X-Gitlab-Authentication-Type": "oidc",
             },
-            json={
-                "prompt": "random prompt",
-                "options": AgentRequestOptions(
-                    chat_history="chat history",
-                    agent_scratchpad=ReActAgentScratchpad(
-                        agent_type="react",
-                        steps=[],
-                    ),
-                ).model_dump(mode="json"),
-            },
+            json=agent_request.model_dump(mode="json"),
         )
 
-        assert response.status_code == 403
-        mocked_on_behalf.assert_called_once()
+        assert response.status_code == expected_status_code
+
+        if expected_error:
+            assert response.text == expected_error
+        else:
+            mock_track_internal_event.assert_has_calls(expected_internal_events)
 
 
 class TestChatAgent:
@@ -281,6 +438,7 @@ class TestChatAgent:
                         data="int main() {}",
                         selected_code=True,
                     ),
+                    additional_context=[AdditionalContext(category="merge_request")],
                 ),
                 "thought\nFinal Answer: answer\n",
                 [
