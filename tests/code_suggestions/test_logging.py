@@ -34,7 +34,6 @@ def test_x_gitlab_headers_logged_when_set(mock_log_exception):
                 "X-Gitlab-Instance-Id": "ABC",
                 "X-Gitlab-Global-User-Id": "DEF",
                 "X-Gitlab-Host-Name": "awesome-org.com",
-                "X-Gitlab-Saas-Namespace-Ids": "1,2,3",
                 "X-Gitlab-Realm": "saas",
             },
             data={"foo": "bar"},
@@ -45,7 +44,6 @@ def test_x_gitlab_headers_logged_when_set(mock_log_exception):
     assert cap_logs[0]["gitlab_instance_id"] == "ABC"
     assert cap_logs[0]["gitlab_global_user_id"] == "DEF"
     assert cap_logs[0]["gitlab_host_name"] == "awesome-org.com"
-    assert cap_logs[0]["gitlab_saas_namespace_ids"] == "1,2,3"
     assert cap_logs[0]["gitlab_realm"] == "saas"
 
 

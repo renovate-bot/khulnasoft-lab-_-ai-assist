@@ -29,17 +29,34 @@ class SnowplowClientConfiguration:
 class SnowplowEventContext:
     """Additional context attached to SnowplowEvent."""
 
-    prefix_length: int
-    suffix_length: int
-    language: str
-    user_agent: str
     gitlab_realm: str
-    is_direct_connection: Optional[bool] = None
-    gitlab_instance_id: Optional[str] = None
-    gitlab_global_user_id: Optional[str] = None
     gitlab_host_name: Optional[str] = None
-    gitlab_saas_namespace_ids: Optional[list[int]] = None
+    gitlab_instance_id: Optional[str] = None
+    gitlab_instance_version: Optional[str] = None
+    gitlab_global_user_id: Optional[str] = None
     gitlab_saas_duo_pro_namespace_ids: Optional[list[int]] = None
+    language: Optional[str] = None
+    model_engine: Optional[str] = None
+    model_name: Optional[str] = None
+    prefix_length: Optional[int] = None
+    suffix_length: Optional[int] = None
+    suggestion_source: Optional[str] = None
+    api_status_code: Optional[int] = None
+    debounce_interval: Optional[int] = None
+    is_streaming: Optional[bool] = None
+    is_invoked: Optional[bool] = None
+    options_count: Optional[int] = None
+    accepted_option: Optional[int] = None
+    has_advanced_context: Optional[bool] = None
+    is_direct_connection: Optional[bool] = None
+    total_context_size_bytes: Optional[int] = None
+    content_above_cursor_size_bytes: Optional[int] = None
+    content_below_cursor_size_bytes: Optional[int] = None
+    context_items: Optional[list[str]] = None
+    input_tokens: Optional[int] = None
+    output_tokens: Optional[int] = None
+    context_tokens_sent: Optional[int] = None
+    context_tokens_used: Optional[int] = None
 
 
 @dataclass
@@ -66,7 +83,7 @@ class SnowplowClient(Client):
         configuration: A SnowplowClientConfiguration using to initialize the Snowplow tracker.
     """
 
-    SCHEMA = "iglu:com.gitlab/code_suggestions_context/jsonschema/1-0-0"
+    SCHEMA = "iglu:com.gitlab/code_suggestions_context/jsonschema/3-5-0"
 
     def __init__(self, configuration: SnowplowClientConfiguration) -> None:
         emitter = AsyncEmitter(

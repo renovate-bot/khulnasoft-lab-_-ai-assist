@@ -119,14 +119,13 @@ class TestEditorContentCompletion:
             prefix_length=30,
             suffix_length=1,
             language="python",
-            user_agent="testclient",
             gitlab_realm="self-managed",
             is_direct_connection=False,
             gitlab_instance_id="1234",
             gitlab_global_user_id="test-user-id",
             gitlab_host_name="",
-            gitlab_saas_namespace_ids=[],
             gitlab_saas_duo_pro_namespace_ids=[],
+            suggestion_source="network",
         )
         mock_completions_legacy.assert_called_with(
             prefix=payload["content_above_cursor"],
@@ -304,14 +303,13 @@ class TestEditorContentCompletion:
             prefix_length=30,
             suffix_length=1,
             language="python",
-            user_agent="testclient",
             gitlab_realm="self-managed",
             is_direct_connection=False,
             gitlab_instance_id="1234",
             gitlab_global_user_id="test-user-id",
             gitlab_host_name="",
-            gitlab_saas_namespace_ids=[],
             gitlab_saas_duo_pro_namespace_ids=[],
+            suggestion_source="network",
         )
         mock_completions_stream.assert_called_with(
             prefix=payload["content_above_cursor"],
@@ -422,14 +420,13 @@ class TestEditorContentGeneration:
             prefix_length=30,
             suffix_length=1,
             language="python",
-            user_agent="testclient",
             gitlab_realm="self-managed",
             is_direct_connection=False,
             gitlab_instance_id="1234",
             gitlab_global_user_id="test-user-id",
             gitlab_host_name="",
-            gitlab_saas_namespace_ids=[],
             gitlab_saas_duo_pro_namespace_ids=[],
+            suggestion_source="network",
         )
         mock_generations.assert_called_with(
             prefix=payload["content_above_cursor"],
@@ -563,14 +560,13 @@ class TestEditorContentGeneration:
             prefix_length=30,
             suffix_length=1,
             language="python",
-            user_agent="testclient",
             gitlab_realm="self-managed",
             is_direct_connection=False,
             gitlab_instance_id="1234",
             gitlab_global_user_id="test-user-id",
             gitlab_host_name="",
-            gitlab_saas_namespace_ids=[],
             gitlab_saas_duo_pro_namespace_ids=[],
+            suggestion_source="network",
         )
         mock_generations.assert_called_with(
             prefix="# Create a fast binary search\n",

@@ -70,13 +70,11 @@ class TestSnowplowClient:
                         prefix_length=2048,
                         suffix_length=1024,
                         language="python",
-                        user_agent="vs-code-gitlab-workflow",
                         gitlab_realm="saas",
                         is_direct_connection=True,
                         gitlab_instance_id="ABCDEF",
                         gitlab_global_user_id="123XYZ",
                         gitlab_host_name="gitlab.com",
-                        gitlab_saas_namespace_ids=[12345],
                         gitlab_saas_duo_pro_namespace_ids=[54321],
                     ),
                 )

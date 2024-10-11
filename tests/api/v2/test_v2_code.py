@@ -893,19 +893,14 @@ class TestCodeCompletions:
                 prefix_length=len(current_file.get("content_above_cursor", "")),
                 suffix_length=len(current_file.get("content_below_cursor", "")),
                 language=expected_language,
-                user_agent=request_headers.get("User-Agent", ""),
                 gitlab_realm=request_headers.get("X-Gitlab-Realm", ""),
                 is_direct_connection=True,
+                suggestion_source="network",
                 gitlab_instance_id=request_headers.get("X-Gitlab-Instance-Id", ""),
                 gitlab_global_user_id=request_headers.get(
                     "X-Gitlab-Global-User-Id", ""
                 ),
                 gitlab_host_name=request_headers.get("X-Gitlab-Host-Name", ""),
-                gitlab_saas_namespace_ids=list(
-                    CommaSeparatedStrings(
-                        request_headers.get("X-Gitlab-Saas-Namespace-Ids", "")
-                    )
-                ),
                 gitlab_saas_duo_pro_namespace_ids=list(
                     CommaSeparatedStrings(
                         request_headers.get("X-Gitlab-Saas-Duo-Pro-Namespace-Ids", "")
@@ -1673,19 +1668,14 @@ class TestCodeGenerations:
                 prefix_length=len(current_file.get("content_above_cursor", "")),
                 suffix_length=len(current_file.get("content_below_cursor", "")),
                 language=expected_language,
-                user_agent=request_headers.get("User-Agent", ""),
                 gitlab_realm=request_headers.get("X-Gitlab-Realm", ""),
                 is_direct_connection=False,
+                suggestion_source="network",
                 gitlab_instance_id=request_headers.get("X-Gitlab-Instance-Id", ""),
                 gitlab_global_user_id=request_headers.get(
                     "X-Gitlab-Global-User-Id", ""
                 ),
                 gitlab_host_name=request_headers.get("X-Gitlab-Host-Name", ""),
-                gitlab_saas_namespace_ids=list(
-                    CommaSeparatedStrings(
-                        request_headers.get("X-Gitlab-Saas-Namespace-Ids", "")
-                    )
-                ),
                 gitlab_saas_duo_pro_namespace_ids=list(
                     CommaSeparatedStrings(
                         request_headers.get("X-Gitlab-Saas-Duo-Pro-Namespace-Ids", "")
