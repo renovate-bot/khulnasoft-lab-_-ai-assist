@@ -401,6 +401,7 @@ class InternalEventMiddleware:
             correlation_id=correlation_id.get(),
         )
         current_event_context.set(context)
+        tracked_internal_events.set(set())
 
         await self.app(scope, receive, send)
 
