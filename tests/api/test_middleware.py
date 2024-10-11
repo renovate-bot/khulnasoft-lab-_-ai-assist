@@ -17,7 +17,7 @@ from ai_gateway.api.middleware import (
     InternalEventMiddleware,
 )
 from ai_gateway.cloud_connector.auth.validators import X_GITLAB_DUO_SEAT_COUNT_HEADER
-from ai_gateway.internal_events import EventContext, tracked_internal_events
+from ai_gateway.internal_events import EventContext
 
 
 @pytest.fixture
@@ -125,11 +125,12 @@ async def test_middleware_set_context(internal_event_middleware):
     scope = request.scope
     receive = AsyncMock()
     send = AsyncMock()
-    tracked_internal_events.set(set())
 
     with request_cycle_context({}), patch(
         "ai_gateway.api.middleware.current_event_context"
-    ) as mock_event_context:
+    ) as mock_event_context, patch(
+        "ai_gateway.api.middleware.tracked_internal_events"
+    ) as mock_tracked_internal_events:
         await internal_event_middleware(scope, receive, send)
 
         expected_context = EventContext(
@@ -147,6 +148,7 @@ async def test_middleware_set_context(internal_event_middleware):
             ].context_generated_at,
         )
         mock_event_context.set.assert_called_once_with(expected_context)
+        mock_tracked_internal_events.set.assert_called_once_with(set())
         assert context["tracked_internal_events"] == []
 
     internal_event_middleware.app.assert_called_once_with(scope, receive, send)
