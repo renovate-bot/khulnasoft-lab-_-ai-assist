@@ -67,7 +67,7 @@ class InternalEventsClient:
 
         structured_event = StructuredEvent(
             context=[SelfDescribingJson(self.STANDARD_CONTEXT_SCHEMA, new_context)],
-            category=category,
+            category=category,  # type: ignore[arg-type]
             action=event_name,
             label=additional_properties.label,
             value=additional_properties.value,
