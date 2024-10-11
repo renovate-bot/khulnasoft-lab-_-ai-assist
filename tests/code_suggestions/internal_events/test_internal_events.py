@@ -9,6 +9,7 @@ from ai_gateway.internal_events.context import (
     EventContext,
     InternalEventAdditionalProperties,
     current_event_context,
+    tracked_internal_events,
 )
 
 
@@ -78,6 +79,7 @@ class TestInternalEventsClient:
 
             # Set up current event context
             current_event_context.set(EventContext())
+            tracked_internal_events.set(set())
 
             client = InternalEventsClient(
                 enabled=True,
@@ -107,3 +109,4 @@ class TestInternalEventsClient:
             context = event_init_args["context"][0]
             assert isinstance(context, SelfDescribingJson)
             assert context.to_json()["schema"] == client.STANDARD_CONTEXT_SCHEMA
+            assert tracked_internal_events.get() == {event_name}

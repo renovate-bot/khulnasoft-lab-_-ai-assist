@@ -6,6 +6,7 @@ from ai_gateway.internal_events.context import (
     EventContext,
     InternalEventAdditionalProperties,
     current_event_context,
+    tracked_internal_events,
 )
 
 __all__ = ["InternalEventsClient"]
@@ -75,3 +76,4 @@ class InternalEventsClient:
         )
 
         self.snowplow_tracker.track(structured_event)
+        tracked_internal_events.get().add(event_name)
