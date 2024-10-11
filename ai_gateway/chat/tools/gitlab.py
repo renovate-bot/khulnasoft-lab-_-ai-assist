@@ -77,7 +77,7 @@ class GitlabDocumentation(BaseRemoteTool):
         """\
         This tool is beneficial when you need to answer questions concerning GitLab and its features.
         Questions can be about GitLab's projects, groups, issues, merge requests,
-        epics, milestones, labels, CI/CD pipelines, git repositories, and more."""
+        epics, work items, milestones, labels, CI/CD pipelines, git repositories, and more."""
     )
 
     example: str = dedent(
@@ -95,21 +95,21 @@ class EpicReader(BaseRemoteTool):
 
     description: str = dedent(
         """\
-        This tool retrieves the content of a specific epic
+        This tool retrieves the content of a specific epic or work item.
         ONLY if the user question fulfills the strict usage conditions below.
 
         **Strict Usage Conditions:**
-        * **Condition 1: epic ID Provided:** This tool MUST be used ONLY when the user provides a valid epic ID.
+        * **Condition 1: epic ID Provided:** This tool MUST be used ONLY when the user provides a valid epic or work item ID.
         * **Condition 2: epic URL Context:** This tool MUST be used ONLY when the user is actively viewing
-          a specific epic URL or a specific URL is provided by the user.
+          a specific epic or work item URL or a specific URL is provided by the user.
 
-        **Do NOT** attempt to search for or identify epics based on descriptions, keywords, or user questions.
+        **Do NOT** attempt to search for or identify epics or work items based on descriptions, keywords, or user questions.
 
         **Action Input:**
         * The original question asked by the user.
 
         **Important:**  Reject any input that does not strictly adhere to the usage conditions above.
-        Return a message stating you are unable to search for epics without a valid identifier."""
+        Return a message stating you are unable to search for epics or work items without a valid identifier."""
     )
 
     example: str = dedent(
