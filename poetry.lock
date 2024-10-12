@@ -1129,13 +1129,13 @@ grpc = ["grpcio (>=1.38.0,<2.0dev)", "grpcio-status (>=1.38.0,<2.0.dev0)"]
 
 [[package]]
 name = "google-cloud-discoveryengine"
-version = "0.12.2"
+version = "0.12.3"
 description = "Google Cloud Discoveryengine API client library"
 optional = false
 python-versions = ">=3.7"
 files = [
-    {file = "google_cloud_discoveryengine-0.12.2-py3-none-any.whl", hash = "sha256:138e790af9fb5ea39a6e3cb5d0368a2a3e8b842561423e19b5840a7443955ec3"},
-    {file = "google_cloud_discoveryengine-0.12.2.tar.gz", hash = "sha256:a90949895bf0f6cea39187b70a4dd8e5d6a1b07b6b3877e48d22c27e1a4efd16"},
+    {file = "google_cloud_discoveryengine-0.12.3-py3-none-any.whl", hash = "sha256:23c87ebcd700dffebe05416d36a837845f5c0ce1e645bc9104c08f6f60671adb"},
+    {file = "google_cloud_discoveryengine-0.12.3.tar.gz", hash = "sha256:1f3397688cf5ac59f8483308177f058990c3a7f1195a911a4d5b894bf26c8ace"},
 ]
 
 [package.dependencies]
