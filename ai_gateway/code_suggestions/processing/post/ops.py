@@ -17,6 +17,7 @@ __all__ = [
     "clean_model_reflection",
     "trim_by_min_allowed_context",
     "fix_end_block_errors",
+    "fix_end_block_errors_with_comparison",
     "strip_code_block_markdown",
     "prepend_new_line",
 ]
@@ -106,6 +107,8 @@ async def clean_model_reflection(context: str, completion: str, **kwargs: Any) -
     return completion
 
 
+# This trims the suggestion to the minimum allowed block, i.e.: the smallest block surrounding the cursor
+# Introduced in https://gitlab.com/gitlab-org/modelops/applied-ml/code-suggestions/ai-assist/-/merge_requests/308
 async def trim_by_min_allowed_context(
     prefix: str,
     completion: str,
@@ -165,6 +168,56 @@ async def fix_end_block_errors(
         code_sample = f"{prefix}{completion_lookup}{suffix}"
         parser = await CodeParser.from_language_id(code_sample, lang_id)
         if len(parser.errors()) == 0:
+            completion = completion_lookup
+    except ValueError as e:
+        log.warning(f"Failed to parse code: {e}")
+
+    return completion
+
+
+async def fix_end_block_errors_with_comparison(
+    prefix: str,
+    completion: str,
+    suffix: str,
+    lang_id: Optional[LanguageId] = None,
+) -> str:
+    stripped_suffix = suffix.strip()
+    if len(stripped_suffix) == 0:
+        return completion
+
+    # Hypothesis 1: the suffix contains only one line.
+    suffix_first_line = stripped_suffix
+
+    # Hypothesis 2: the suffix contains more than one line; this overrides Hypothesis 1
+    idx_suffix_new_line = suffix_first_line.find("\n")
+    if idx_suffix_new_line != -1:
+        # Hypothesis confirmed: keep only the first line within the variable.
+        suffix_first_line = suffix_first_line[:idx_suffix_new_line]
+
+    completion_lookup = completion.rstrip()
+    if not completion_lookup.endswith(suffix_first_line):
+        # Return the original copy of the completion.
+        return completion
+
+    try:
+        # Remove the suffix from the completion.
+        completion_lookup = completion_lookup[: -len(suffix_first_line)].rstrip()
+
+        # Check for errors in the original code
+        code_sample_before_suggestion = f"{prefix}{suffix}"
+        parser_before_suggestion = await CodeParser.from_language_id(
+            code_sample_before_suggestion, lang_id
+        )
+        errors_before_suggestion = len(parser_before_suggestion.errors())
+
+        # Check if there are any new errors when inserting the code suggestion
+        code_sample_after_suggestion = f"{prefix}{completion_lookup}{suffix}"
+        parser_after_suggestion = await CodeParser.from_language_id(
+            code_sample_after_suggestion, lang_id
+        )
+        errors_after_suggestion = len(parser_after_suggestion.errors())
+
+        if errors_after_suggestion <= errors_before_suggestion:
             completion = completion_lookup
     except ValueError as e:
         log.warning(f"Failed to parse code: {e}")

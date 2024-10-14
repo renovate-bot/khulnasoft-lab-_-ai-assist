@@ -11,6 +11,9 @@ from ai_gateway.code_suggestions.processing import ModelEngineCompletions
 from ai_gateway.code_suggestions.processing.post.completions import (
     PostProcessor as PostProcessorCompletions,
 )
+from ai_gateway.code_suggestions.processing.post.completions import (
+    PostProcessorOperation,
+)
 from ai_gateway.code_suggestions.processing.pre import TokenizerTokenStrategy
 from ai_gateway.experimentation import experiment_registry_provider
 from ai_gateway.models import KindAnthropicModel, KindModelProvider, KindVertexTextModel
@@ -156,6 +159,9 @@ class ContainerCodeCompletions(containers.DeclarativeContainer):
         ),
         post_processor=providers.Factory(
             PostProcessorCompletions,
+            overrides={
+                PostProcessorOperation.FIX_END_BLOCK_ERRORS: PostProcessorOperation.FIX_END_BLOCK_ERRORS_WITH_COMPARISON,
+            },
             exclude=config.excl_post_proc,
         ).provider,
     )
