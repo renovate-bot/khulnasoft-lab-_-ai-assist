@@ -8,7 +8,7 @@ model:
     max_tokens: 2_048
     max_retries: 1
 unit_primitives:
-  - duo_chat
+  - write_tests
 prompt_template:
   system: |
     {% include 'chat/summarize_comments/system.jinja' %}

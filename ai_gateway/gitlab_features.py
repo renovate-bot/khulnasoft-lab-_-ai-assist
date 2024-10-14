@@ -30,6 +30,7 @@ class GitLabUnitPrimitive(StrEnum):
     EXPLAIN_CODE = "explain_code"
     EXPLAIN_VULNERABILITY = "explain_vulnerability"
     FILL_IN_MERGE_REQUEST_TEMPLATE = "fill_in_merge_request_template"
+    FIX_CODE = "fix_code"
     GENERATE_COMMIT_MESSAGE = "generate_commit_message"
     GENERATE_CUBE_QUERY = "generate_cube_query"
     GENERATE_ISSUE_DESCRIPTION = "generate_issue_description"
@@ -38,6 +39,7 @@ class GitLabUnitPrimitive(StrEnum):
     INCLUDE_ISSUE_CONTEXT = "include_issue_context"
     INCLUDE_MERGE_REQUEST_CONTEXT = "include_merge_request_context"
     INCLUDE_SNIPPET_CONTEXT = "include_snippet_context"
+    REFACTOR_CODE = "refactor_code"
     RESOLVE_VULNERABILITY = "resolve_vulnerability"
     REVIEW_MERGE_REQUEST = "review_merge_request"
     SEMANTIC_SEARCH_ISSUE = "semantic_search_issue"
@@ -47,6 +49,7 @@ class GitLabUnitPrimitive(StrEnum):
     SUMMARIZE_SUBMITTED_REVIEW = "summarize_submitted_review"
     SUMMARIZE_COMMENTS = "summarize_comments"
     TROUBLESHOOT_JOB = "troubleshoot_job"
+    WRITE_TESTS = "write_tests"
 
 
 class WrongUnitPrimitives(Exception):
@@ -66,10 +69,12 @@ FEATURE_CATEGORIES_FOR_PROXY_ENDPOINTS = {
     GitLabUnitPrimitive.EXPLAIN_CODE: GitLabFeatureCategory.SOURCE_CODE_MANAGEMENT,
     GitLabUnitPrimitive.EXPLAIN_VULNERABILITY: GitLabFeatureCategory.VULNERABILITY_MANAGEMENT,
     GitLabUnitPrimitive.FILL_IN_MERGE_REQUEST_TEMPLATE: GitLabFeatureCategory.CODE_REVIEW_WORKFLOW,
+    GitLabUnitPrimitive.FIX_CODE: GitLabFeatureCategory.DUO_CHAT,
     GitLabUnitPrimitive.GENERATE_COMMIT_MESSAGE: GitLabFeatureCategory.CODE_REVIEW_WORKFLOW,
     GitLabUnitPrimitive.GENERATE_CUBE_QUERY: GitLabFeatureCategory.PRODUCT_ANALYTICS_VISUALIZATION,
     GitLabUnitPrimitive.GENERATE_ISSUE_DESCRIPTION: GitLabFeatureCategory.TEAM_PLANNING,
     GitLabUnitPrimitive.GLAB_ASK_GIT_COMMAND: GitLabFeatureCategory.CODE_REVIEW_WORKFLOW,
+    GitLabUnitPrimitive.REFACTOR_CODE: GitLabFeatureCategory.DUO_CHAT,
     GitLabUnitPrimitive.RESOLVE_VULNERABILITY: GitLabFeatureCategory.VULNERABILITY_MANAGEMENT,
     GitLabUnitPrimitive.REVIEW_MERGE_REQUEST: GitLabFeatureCategory.CODE_REVIEW_WORKFLOW,
     GitLabUnitPrimitive.SEMANTIC_SEARCH_ISSUE: GitLabFeatureCategory.GLOBAL_SEARCH,
@@ -79,6 +84,7 @@ FEATURE_CATEGORIES_FOR_PROXY_ENDPOINTS = {
     GitLabUnitPrimitive.SUMMARIZE_SUBMITTED_REVIEW: GitLabFeatureCategory.CODE_REVIEW_WORKFLOW,
     GitLabUnitPrimitive.TROUBLESHOOT_JOB: GitLabFeatureCategory.CONTINUOUS_INTEGRATION,
     GitLabUnitPrimitive.SUMMARIZE_COMMENTS: GitLabFeatureCategory.TEAM_PLANNING,
+    GitLabUnitPrimitive.WRITE_TESTS: GitLabFeatureCategory.DUO_CHAT,
 }
 
 # TODO: Move these metadata to cloud connector yamls, which are accessible via the cloud connector python client.
@@ -97,9 +103,11 @@ UNIT_PRIMITIVE_AND_DESCRIPTION_MAPPING = {
     GitLabUnitPrimitive.EXPLAIN_CODE: "Explain function or method of the selected code",
     GitLabUnitPrimitive.EXPLAIN_VULNERABILITY: "Explain a security vulnerability of the given CVE or code.",
     GitLabUnitPrimitive.FILL_IN_MERGE_REQUEST_TEMPLATE: "Fill code change summary in a description of new merge request.",
+    GitLabUnitPrimitive.FIX_CODE: "Fix the selected code.",
     GitLabUnitPrimitive.GENERATE_COMMIT_MESSAGE: "Generate a Git commit message.",
     GitLabUnitPrimitive.GENERATE_CUBE_QUERY: "Convert plain text questions about event data in to a structured query in JSON format.",
     GitLabUnitPrimitive.GENERATE_ISSUE_DESCRIPTION: "Generate an issue description.",
+    GitLabUnitPrimitive.REFACTOR_CODE: "Refactor the selected code.",
     GitLabUnitPrimitive.RESOLVE_VULNERABILITY: "Write code that fixes the vulnerability.",
     GitLabUnitPrimitive.REVIEW_MERGE_REQUEST: "Review new hunk and old hunk of a merge request diff.",
     GitLabUnitPrimitive.SUMMARIZE_ISSUE_DISCUSSIONS: "Summarize discussions of the issue from the comments.",
@@ -108,4 +116,5 @@ UNIT_PRIMITIVE_AND_DESCRIPTION_MAPPING = {
     GitLabUnitPrimitive.SUMMARIZE_SUBMITTED_REVIEW: "Summarize submitted reviews of the merge request.",
     GitLabUnitPrimitive.TROUBLESHOOT_JOB: "Troubleshoot why a GitLab CI job failed and suggest a fix for it.",
     GitLabUnitPrimitive.SUMMARIZE_COMMENTS: "Summarize comments of the issue or epic.",
+    GitLabUnitPrimitive.WRITE_TESTS: "Write tests for the selected code.",
 }
