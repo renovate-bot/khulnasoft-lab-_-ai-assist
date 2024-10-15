@@ -23,7 +23,6 @@ def send_and_check_completion_request(user_jwt, host_name, realm):
         headers.update(
             {
                 "X-Gitlab-Saas-Duo-Pro-Namespace-Ids": "9970,6543",
-                "X-Gitlab-Saas-Namespace-Ids": "",
             }
         )
 
