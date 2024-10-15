@@ -81,6 +81,7 @@ class ContainerApplication(containers.DeclarativeContainer):
         ContainerChat,
         prompts=pkg_prompts,
         models=pkg_models,
+        internal_event=internal_event,
     )
     self_signed_jwt = providers.Container(
         ContainerSelfSignedJwt,

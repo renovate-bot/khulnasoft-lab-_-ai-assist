@@ -1,6 +1,8 @@
 from textwrap import dedent
+from typing import Optional
 
 from ai_gateway.chat.tools.base import BaseRemoteTool
+from ai_gateway.gitlab_features import GitLabUnitPrimitive
 
 __all__ = [
     "CiEditorAssistant",
@@ -16,6 +18,8 @@ __all__ = [
 class CiEditorAssistant(BaseRemoteTool):
     name: str = "ci_editor_assistant"
     resource: str = "ci editor answers"
+    unit_primitive: GitLabUnitPrimitive = GitLabUnitPrimitive.DUO_CHAT
+    min_required_gl_version: Optional[str] = None
 
     description: str = dedent(
         """\
@@ -38,6 +42,8 @@ class CiEditorAssistant(BaseRemoteTool):
 class IssueReader(BaseRemoteTool):
     name: str = "issue_reader"
     resource: str = "issues"
+    unit_primitive: GitLabUnitPrimitive = GitLabUnitPrimitive.ASK_ISSUE
+    min_required_gl_version: Optional[str] = None
 
     description: str = dedent(
         """\
@@ -72,6 +78,8 @@ class IssueReader(BaseRemoteTool):
 class GitlabDocumentation(BaseRemoteTool):
     name: str = "gitlab_documentation"
     resource: str = "documentation answers"
+    unit_primitive: GitLabUnitPrimitive = GitLabUnitPrimitive.DOCUMENTATION_SEARCH
+    min_required_gl_version: Optional[str] = None
 
     description: str = dedent(
         """\
@@ -92,6 +100,8 @@ class GitlabDocumentation(BaseRemoteTool):
 class EpicReader(BaseRemoteTool):
     name: str = "epic_reader"
     resource: str = "epics"
+    unit_primitive: GitLabUnitPrimitive = GitLabUnitPrimitive.ASK_EPIC
+    min_required_gl_version: Optional[str] = None
 
     description: str = dedent(
         """\
@@ -126,6 +136,8 @@ class EpicReader(BaseRemoteTool):
 class CommitReader(BaseRemoteTool):
     name: str = "commit_reader"
     resource: str = "commits"
+    unit_primitive: GitLabUnitPrimitive = GitLabUnitPrimitive.ASK_COMMIT
+    min_required_gl_version: Optional[str] = "17.5.0-pre"
 
     description: str = """This tool retrieves the content of a specific commit
         ONLY if the user question fulfills the strict usage conditions below.
@@ -155,6 +167,8 @@ class CommitReader(BaseRemoteTool):
 class BuildReader(BaseRemoteTool):
     name: str = "build_reader"
     resource: str = "builds"
+    unit_primitive: GitLabUnitPrimitive = GitLabUnitPrimitive.ASK_BUILD
+    min_required_gl_version: Optional[str] = "17.5.0-pre"
 
     description: str = """This tool retrieves the content of a specific build
         ONLY if the user question fulfills the strict usage conditions below.
@@ -183,6 +197,8 @@ class BuildReader(BaseRemoteTool):
 class MergeRequestReader(BaseRemoteTool):
     name: str = "merge_request_reader"
     resource: str = "merge_requests"
+    unit_primitive: GitLabUnitPrimitive = GitLabUnitPrimitive.ASK_MERGE_REQUEST
+    min_required_gl_version: Optional[str] = "17.5.0-pre"
 
     description: str = dedent(
         """\

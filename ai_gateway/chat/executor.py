@@ -1,13 +1,15 @@
 from typing import AsyncIterator, Generic, Protocol
 
+import starlette_context
 import structlog
 from langchain_core.runnables import Runnable
 
 from ai_gateway.api.auth_utils import StarletteUser
-from ai_gateway.chat.agents import TypeAgentEvent, TypeAgentInputs
+from ai_gateway.chat.agents import AgentToolAction, TypeAgentEvent, TypeAgentInputs
 from ai_gateway.chat.base import BaseToolsRegistry
 from ai_gateway.chat.tools import BaseTool
 from ai_gateway.feature_flags import FeatureFlag, is_feature_enabled
+from ai_gateway.internal_events import InternalEventsClient
 from ai_gateway.prompts import Prompt
 from ai_gateway.prompts.typing import ModelMetadata
 
@@ -15,6 +17,8 @@ __all__ = [
     "TypeAgentFactory",
     "GLAgentRemoteExecutor",
 ]
+
+_REACT_AGENT_AVAILABLE_TOOL_NAMES_CONTEXT_KEY = "duo_chat.agent_available_tools"
 
 log = structlog.stdlib.get_logger("gl_agent_remote_executor")
 
@@ -33,9 +37,11 @@ class GLAgentRemoteExecutor(Generic[TypeAgentInputs, TypeAgentEvent]):
         *,
         agent_factory: TypeAgentFactory,
         tools_registry: BaseToolsRegistry,
+        internal_event_client: InternalEventsClient,
     ):
         self.agent_factory = agent_factory
         self.tools_registry = tools_registry
+        self.internal_event_client = internal_event_client
         self._tools: list[BaseTool] | None = None
 
     @property
@@ -44,6 +50,10 @@ class GLAgentRemoteExecutor(Generic[TypeAgentInputs, TypeAgentEvent]):
             self._tools = self.tools_registry.get_all()
 
         return self._tools
+
+    @property
+    def tools_by_name(self) -> list[BaseTool]:
+        return {tool.name: tool for tool in self.tools}
 
     def on_behalf(self, user: StarletteUser, gl_version: str):
         # Access the user tools as soon as possible to raise an exception
@@ -59,12 +69,24 @@ class GLAgentRemoteExecutor(Generic[TypeAgentInputs, TypeAgentEvent]):
 
     async def stream(self, *, inputs: TypeAgentInputs) -> AsyncIterator[TypeAgentEvent]:
         agent, inputs = self._process_inputs(inputs)
+        tools_by_name = self.tools_by_name
+
+        starlette_context.context[_REACT_AGENT_AVAILABLE_TOOL_NAMES_CONTEXT_KEY] = list(
+            tools_by_name.keys()
+        )
 
         if is_feature_enabled(FeatureFlag.EXPANDED_AI_LOGGING):
             log.info("Processed inputs", source=__name__, inputs=inputs)
 
-        async for action in agent.astream(inputs):
-            yield action
+        async for event in agent.astream(inputs):
+            yield event
+
+            if isinstance(event, AgentToolAction) and event.tool in tools_by_name:
+                tool = tools_by_name[event.tool]
+                self.internal_event_client.track_event(
+                    f"request_{tool.unit_primitive}",
+                    category=__name__,
+                )
 
     def _process_inputs(
         self, inputs: TypeAgentInputs

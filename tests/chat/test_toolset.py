@@ -16,7 +16,7 @@ from ai_gateway.chat.tools.gitlab import (
 from ai_gateway.chat.toolset import DuoChatToolsRegistry
 from ai_gateway.cloud_connector import CloudConnectorUser, UserClaims
 from ai_gateway.feature_flags.context import current_feature_flag_context
-from ai_gateway.gitlab_features import GitLabUnitPrimitive, WrongUnitPrimitives
+from ai_gateway.gitlab_features import GitLabUnitPrimitive
 
 
 class TestDuoChatToolRegistry:
@@ -79,7 +79,7 @@ class TestDuoChatToolRegistry:
             )
         )
 
-        tools = DuoChatToolsRegistry().get_on_behalf(user, "", raise_exception=False)
+        tools = DuoChatToolsRegistry().get_on_behalf(user, "")
         actual_tools = [type(tool) for tool in tools]
 
         assert actual_tools == expected_tools
@@ -88,7 +88,7 @@ class TestDuoChatToolRegistry:
         "unit_primitives",
         [([GitLabUnitPrimitive.CODE_SUGGESTIONS, GitLabUnitPrimitive.EXPLAIN_CODE])],
     )
-    def test_get_on_behalf_error(
+    def test_get_on_behalf_empty(
         self,
         unit_primitives: list[GitLabUnitPrimitive],
     ):
@@ -99,8 +99,9 @@ class TestDuoChatToolRegistry:
             )
         )
 
-        with pytest.raises(WrongUnitPrimitives):
-            DuoChatToolsRegistry().get_on_behalf(user, "", raise_exception=True)
+        tools = DuoChatToolsRegistry().get_on_behalf(user, "")
+
+        assert len(tools) == 0
 
     @pytest.mark.parametrize(
         "feature_flag, unit_primitive, reader_tool_type",
@@ -129,18 +130,14 @@ class TestDuoChatToolRegistry:
             )
         )
 
-        tools = DuoChatToolsRegistry().get_on_behalf(
-            user, "17.5.0-pre", raise_exception=False
-        )
+        tools = DuoChatToolsRegistry().get_on_behalf(user, "17.5.0-pre")
         actual_tools = [type(tool) for tool in tools]
 
         assert actual_tools == [CiEditorAssistant, reader_tool_type]
 
         current_feature_flag_context.set(set())
 
-        tools = DuoChatToolsRegistry().get_on_behalf(
-            user, "17.5.0-pre", raise_exception=False
-        )
+        tools = DuoChatToolsRegistry().get_on_behalf(user, "17.5.0-pre")
         actual_tools = [type(tool) for tool in tools]
 
         assert actual_tools == [CiEditorAssistant]

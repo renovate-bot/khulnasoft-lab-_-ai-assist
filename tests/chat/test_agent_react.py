@@ -24,6 +24,7 @@ from ai_gateway.chat.agents.typing import (
 from ai_gateway.chat.tools.base import BaseTool
 from ai_gateway.chat.tools.gitlab import IssueReader
 from ai_gateway.feature_flags.context import current_feature_flag_context
+from ai_gateway.gitlab_features import GitLabUnitPrimitive
 from ai_gateway.models.base_chat import Message as LegacyMessage
 from ai_gateway.models.base_chat import Role
 
@@ -150,7 +151,13 @@ def test_react_input_parser(
         context=context,
         current_file=current_file,
         unavailable_resources=["Merge Requests", "Pipelines"],
-        tools=[BaseTool(name="test_tool", description="A test tool")],
+        tools=[
+            BaseTool(
+                name="test_tool",
+                description="A test tool",
+                unit_primitive=GitLabUnitPrimitive.DUO_CHAT,
+            )
+        ],
     )
 
     parser = ReActInputParser()
