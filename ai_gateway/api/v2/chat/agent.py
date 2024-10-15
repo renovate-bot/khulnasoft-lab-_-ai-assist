@@ -21,11 +21,7 @@ from ai_gateway.chat.agents import (
 )
 from ai_gateway.chat.executor import GLAgentRemoteExecutor
 from ai_gateway.feature_flags import FeatureFlag, is_feature_enabled
-from ai_gateway.gitlab_features import (
-    GitLabFeatureCategory,
-    GitLabUnitPrimitive,
-    WrongUnitPrimitives,
-)
+from ai_gateway.gitlab_features import GitLabFeatureCategory, GitLabUnitPrimitive
 from ai_gateway.internal_events import InternalEventsClient
 
 __all__ = [
@@ -67,6 +63,17 @@ def authorize_agent_request(
     agent_request: AgentRequest,
     internal_event_client: InternalEventsClient,
 ):
+    if current_user.can(GitLabUnitPrimitive.DUO_CHAT):
+        internal_event_client.track_event(
+            f"request_{GitLabUnitPrimitive.DUO_CHAT}",
+            category=__name__,
+        )
+    else:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Unauthorized to access duo chat",
+        )
+
     if agent_request.messages:
         for message in agent_request.messages:
             if message.additional_context:
@@ -128,20 +135,8 @@ async def chat(
     if agent_request.options and agent_request.options.additional_context:
         inputs.additional_context = agent_request.options.additional_context
 
-    try:
-        gl_version = request.headers.get(X_GITLAB_VERSION_HEADER, "")
-        gl_agent_remote_executor.on_behalf(current_user, gl_version)
-    except WrongUnitPrimitives as ex:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Unauthorized to access duo chat",
-        ) from ex
-
-    # TODO: Refactor `gl_agent_remote_executor.on_behalf` to return accessed unit primitives for tool filtering.
-    internal_event_client.track_event(
-        f"request_{GitLabUnitPrimitive.DUO_CHAT}",
-        category=__name__,
-    )
+    gl_version = request.headers.get(X_GITLAB_VERSION_HEADER, "")
+    gl_agent_remote_executor.on_behalf(current_user, gl_version)
 
     if is_feature_enabled(FeatureFlag.EXPANDED_AI_LOGGING):
         log.info("Request to V2 Chat Agent", source=__name__, inputs=inputs)

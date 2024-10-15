@@ -1,31 +1,36 @@
-from unittest.mock import AsyncMock, Mock
+from unittest.mock import AsyncMock, Mock, call
 
 import pytest
 from langchain_core.runnables import Runnable
+from starlette_context import context, request_cycle_context
 
 from ai_gateway.api.auth_utils import StarletteUser
-from ai_gateway.chat import BaseToolsRegistry, GLAgentRemoteExecutor, TypeAgentFactory
-from ai_gateway.chat.agents import AgentToolAction, ReActAgentInputs
-from ai_gateway.chat.tools.gitlab import EpicReader, IssueReader
-from ai_gateway.cloud_connector import CloudConnectorUser
-
-expected_tool_action = AgentToolAction(
-    thought="thought", tool="tool", tool_input="tool_input"
+from ai_gateway.chat import GLAgentRemoteExecutor, TypeAgentFactory
+from ai_gateway.chat.agents import (
+    AgentFinalAnswer,
+    AgentToolAction,
+    Message,
+    ReActAgentInputs,
 )
-
-expected_tools = [IssueReader(), EpicReader()]
+from ai_gateway.chat.toolset import DuoChatToolsRegistry
+from ai_gateway.cloud_connector import CloudConnectorUser, UserClaims
+from ai_gateway.internal_events import InternalEventsClient
+from ai_gateway.models.base_chat import Role
 
 
 @pytest.fixture()
-def agent():
+def agent_events():
+    return [AgentToolAction(thought="thought", tool="tool", tool_input="tool_input")]
+
+
+@pytest.fixture()
+def agent(agent_events):
     async def _stream_agent(*_args, **_kwargs):
-        for action in [expected_tool_action]:
+        for action in agent_events:
             yield action
 
     agent = Mock(spec=Runnable)
-    agent.ainvoke = AsyncMock(
-        side_effect=lambda *_args, **_kwargs: expected_tool_action
-    )
+    agent.ainvoke = AsyncMock(side_effect=lambda *_args, **_kwargs: agent_events)
     agent.astream = Mock(side_effect=_stream_agent)
 
     return agent
@@ -42,13 +47,13 @@ def agent_factory(agent):
 
 @pytest.fixture()
 def tools_registry():
-    tools_registry = Mock(spec=BaseToolsRegistry)
-    tools_registry.get_all = Mock(side_effect=lambda: expected_tools)
-    tools_registry.get_on_behalf = Mock(
-        side_effect=lambda _user, _gl_version: expected_tools
-    )
+    return DuoChatToolsRegistry()
 
-    return tools_registry
+
+@pytest.fixture()
+def internal_event_client():
+    internal_event_client = Mock(spec=InternalEventsClient)
+    return internal_event_client
 
 
 @pytest.mark.parametrize(
@@ -60,7 +65,13 @@ def tools_registry():
                 chat_history="debug chat_history",
                 agent_scratchpad=[],
             ),
-            StarletteUser(CloudConnectorUser(authenticated=True, is_debug=True)),
+            StarletteUser(
+                CloudConnectorUser(
+                    authenticated=True,
+                    is_debug=True,
+                    claims=UserClaims(scopes=["ask_issue"]),
+                )
+            ),
         ),
         (
             ReActAgentInputs(
@@ -68,7 +79,13 @@ def tools_registry():
                 chat_history="chat_history",
                 agent_scratchpad=[],
             ),
-            StarletteUser(CloudConnectorUser(authenticated=True, is_debug=False)),
+            StarletteUser(
+                CloudConnectorUser(
+                    authenticated=True,
+                    is_debug=False,
+                    claims=UserClaims(scopes=["ask_issue"]),
+                )
+            ),
         ),
     ],
 )
@@ -78,12 +95,16 @@ class TestGLAgentRemoteExecutor:
         self,
         agent: Mock,
         agent_factory: Mock,
-        tools_registry: Mock,
+        agent_events,
+        tools_registry: DuoChatToolsRegistry,
+        internal_event_client: Mock,
         inputs: ReActAgentInputs,
         user: StarletteUser,
     ):
         executor = GLAgentRemoteExecutor(
-            agent_factory=agent_factory, tools_registry=tools_registry
+            agent_factory=agent_factory,
+            tools_registry=tools_registry,
+            internal_event_client=internal_event_client,
         )
 
         gl_version = "17.2.0"
@@ -91,41 +112,47 @@ class TestGLAgentRemoteExecutor:
 
         actual_action = await executor.invoke(inputs=inputs)
 
-        if user.is_debug:
-            tools_registry.get_all.assert_called_once_with()
-        else:
-            tools_registry.get_on_behalf.assert_called_once_with(user, gl_version)
-
         agent_factory.assert_called_once_with(
             chat_history=inputs.chat_history,
             model_metadata=inputs.model_metadata,
             agent_inputs=inputs,
         )
         agent.ainvoke.assert_called_once_with(inputs)
-        assert actual_action == expected_tool_action
+        assert actual_action == agent_events
 
     @pytest.mark.asyncio
     async def test_stream(
         self,
         agent: Mock,
         agent_factory: Mock,
-        tools_registry: Mock,
+        agent_events,
+        tools_registry: DuoChatToolsRegistry,
+        internal_event_client: Mock,
         inputs: ReActAgentInputs,
         user: StarletteUser,
     ):
         executor = GLAgentRemoteExecutor(
-            agent_factory=agent_factory, tools_registry=tools_registry
+            agent_factory=agent_factory,
+            tools_registry=tools_registry,
+            internal_event_client=internal_event_client,
         )
 
         gl_version = "17.2.0"
         executor.on_behalf(user, gl_version)
 
-        actual_actions = [action async for action in executor.stream(inputs=inputs)]
+        with request_cycle_context({}):
+            actual_actions = [action async for action in executor.stream(inputs=inputs)]
 
-        if user.is_debug:
-            tools_registry.get_all.assert_called_once_with()
-        else:
-            tools_registry.get_on_behalf.assert_called_once_with(user, gl_version)
+            if user.is_debug:
+                assert context.get("duo_chat.agent_available_tools") == [
+                    "ci_editor_assistant",
+                    "gitlab_documentation",
+                    "epic_reader",
+                    "issue_reader",
+                    "merge_request_reader",
+                ]
+            else:
+                assert context.get("duo_chat.agent_available_tools") == ["issue_reader"]
 
         agent_factory.assert_called_once_with(
             chat_history=inputs.chat_history,
@@ -133,4 +160,171 @@ class TestGLAgentRemoteExecutor:
             agent_inputs=inputs,
         )
         agent.astream.assert_called_once_with(inputs)
-        assert actual_actions == [expected_tool_action]
+        assert actual_actions == agent_events
+
+
+class TestGLAgentRemoteExecutorToolAction:
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize(
+        (
+            "user",
+            "gl_version",
+            "inputs",
+            "agent_events",
+            "expected_available_tools",
+            "expected_internal_events",
+        ),
+        [
+            (
+                StarletteUser(
+                    CloudConnectorUser(
+                        authenticated=True,
+                        claims=UserClaims(scopes=["duo_chat"]),
+                    )
+                ),
+                "17.2.0",
+                ReActAgentInputs(messages=[Message(role=Role.USER, content="Hi")]),
+                [
+                    AgentToolAction(
+                        thought="", tool="ci_editor_assistant", tool_input=""
+                    )
+                ],
+                ["ci_editor_assistant"],
+                [call("request_duo_chat", category="ai_gateway.chat.executor")],
+            ),
+            (
+                StarletteUser(
+                    CloudConnectorUser(
+                        authenticated=True,
+                        claims=UserClaims(scopes=["ask_issue"]),
+                    )
+                ),
+                "17.2.0",
+                ReActAgentInputs(messages=[Message(role=Role.USER, content="Hi")]),
+                [AgentToolAction(thought="", tool="issue_reader", tool_input="")],
+                ["issue_reader"],
+                [call("request_ask_issue", category="ai_gateway.chat.executor")],
+            ),
+            (
+                StarletteUser(
+                    CloudConnectorUser(
+                        authenticated=True,
+                        claims=UserClaims(scopes=["ask_epic"]),
+                    )
+                ),
+                "17.2.0",
+                ReActAgentInputs(messages=[Message(role=Role.USER, content="Hi")]),
+                [AgentToolAction(thought="", tool="epic_reader", tool_input="")],
+                ["epic_reader"],
+                [call("request_ask_epic", category="ai_gateway.chat.executor")],
+            ),
+            (
+                StarletteUser(
+                    CloudConnectorUser(
+                        authenticated=True,
+                        claims=UserClaims(scopes=["documentation_search"]),
+                    )
+                ),
+                "17.2.0",
+                ReActAgentInputs(messages=[Message(role=Role.USER, content="Hi")]),
+                [
+                    AgentToolAction(
+                        thought="", tool="gitlab_documentation", tool_input=""
+                    )
+                ],
+                ["gitlab_documentation"],
+                [
+                    call(
+                        "request_documentation_search",
+                        category="ai_gateway.chat.executor",
+                    )
+                ],
+            ),
+            (
+                StarletteUser(
+                    CloudConnectorUser(
+                        authenticated=True,
+                        claims=UserClaims(scopes=["documentation_search"]),
+                    )
+                ),
+                "17.2.0",
+                ReActAgentInputs(messages=[Message(role=Role.USER, content="Hi")]),
+                [
+                    AgentToolAction(
+                        thought="", tool="GitlabDocumentationTool", tool_input=""
+                    )
+                ],
+                ["gitlab_documentation"],
+                [],
+            ),
+            (
+                StarletteUser(
+                    CloudConnectorUser(
+                        authenticated=True,
+                        claims=UserClaims(scopes=["documentation_search"]),
+                    )
+                ),
+                "17.2.0",
+                ReActAgentInputs(messages=[Message(role=Role.USER, content="Hi")]),
+                [AgentToolAction(thought="", tool="", tool_input="")],
+                ["gitlab_documentation"],
+                [],
+            ),
+            (
+                StarletteUser(
+                    CloudConnectorUser(
+                        authenticated=True,
+                        claims=UserClaims(scopes=["documentation_search"]),
+                    )
+                ),
+                "17.2.0",
+                ReActAgentInputs(messages=[Message(role=Role.USER, content="Hi")]),
+                [AgentFinalAnswer(text="I'm good")],
+                ["gitlab_documentation"],
+                [],
+            ),
+            (
+                StarletteUser(
+                    CloudConnectorUser(
+                        authenticated=True,
+                        claims=UserClaims(scopes=[]),
+                    )
+                ),
+                "17.2.0",
+                ReActAgentInputs(messages=[Message(role=Role.USER, content="Hi")]),
+                [],
+                [],
+                [],
+            ),
+        ],
+    )
+    async def test_stream_tool_action(
+        self,
+        agent: Mock,
+        agent_factory: Mock,
+        tools_registry: DuoChatToolsRegistry,
+        internal_event_client: Mock,
+        inputs: ReActAgentInputs,
+        user: StarletteUser,
+        gl_version: str,
+        expected_available_tools,
+        expected_internal_events,
+    ):
+        executor = GLAgentRemoteExecutor(
+            agent_factory=agent_factory,
+            tools_registry=tools_registry,
+            internal_event_client=internal_event_client,
+        )
+
+        executor.on_behalf(user, gl_version)
+
+        with request_cycle_context({}):
+            async for _ in executor.stream(inputs=inputs):
+                pass
+
+            assert (
+                context.get("duo_chat.agent_available_tools")
+                == expected_available_tools
+            )
+
+        internal_event_client.track_event.assert_has_calls(expected_internal_events)

@@ -26,6 +26,7 @@ def _react_agent_factory(
 class ContainerChat(containers.DeclarativeContainer):
     prompts = providers.DependenciesContainer()
     models = providers.DependenciesContainer()
+    internal_event = providers.DependenciesContainer()
 
     # The dependency injector does not allow us to override the FactoryAggregate provider directly.
     # However, we can still override its internal sub-factories to achieve the same goal.
@@ -49,4 +50,5 @@ class ContainerChat(containers.DeclarativeContainer):
         GLAgentRemoteExecutor,
         agent_factory=_react_agent_factory,
         tools_registry=DuoChatToolsRegistry(),
+        internal_event_client=internal_event.client,
     )
