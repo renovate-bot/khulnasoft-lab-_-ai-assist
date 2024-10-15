@@ -45,6 +45,7 @@ litellm = "^1.35.20"
 langchain = "^0.2.0"
 langchain-anthropic = "^0.1.13"
 langchain-community = "^0.2.1"
+boto3 = "^1.35.37"
 
 [tool.poetry.group.test]
 optional = true

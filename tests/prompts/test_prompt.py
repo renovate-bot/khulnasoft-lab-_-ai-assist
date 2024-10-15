@@ -8,11 +8,13 @@ from langchain_community.chat_models import ChatLiteLLM
 from langchain_core.language_models.chat_models import BaseChatModel
 from langchain_core.runnables import Runnable
 from litellm.exceptions import Timeout
+from pydantic import HttpUrl
 
 from ai_gateway.gitlab_features import GitLabUnitPrimitive
 from ai_gateway.models.v2.anthropic_claude import ChatAnthropic
-from ai_gateway.prompts.base import Prompt
+from ai_gateway.prompts.base import Prompt, model_metadata_to_params
 from ai_gateway.prompts.config.base import PromptParams
+from ai_gateway.prompts.typing import ModelMetadata
 
 
 class TestPrompt:
@@ -106,3 +108,76 @@ class TestPromptTimeout:
             await prompt.ainvoke(
                 {"name": "Duo", "content": "Print pi with 400 decimals"}
             )
+
+
+class TestModelMetadataToParams:
+    def test_without_identifier(self):
+        model_metadata = ModelMetadata(
+            name="model_family",
+            provider="provider",
+            endpoint=HttpUrl("https://api.example.com"),
+            api_key="abcde",
+            identifier=None,
+        )
+
+        params = model_metadata_to_params(model_metadata)
+
+        assert params == {
+            "api_base": "https://api.example.com/",
+            "api_key": "abcde",
+            "model": "model_family",
+            "custom_llm_provider": "provider",
+        }
+
+    def test_with_identifier_no_provider(self):
+        model_metadata = ModelMetadata(
+            name="model_family",
+            provider="provider",
+            endpoint=HttpUrl("https://api.example.com"),
+            api_key="abcde",
+            identifier="model_identifier",
+        )
+
+        params = model_metadata_to_params(model_metadata)
+
+        assert params == {
+            "api_base": "https://api.example.com/",
+            "api_key": "abcde",
+            "model": "model_identifier",
+            "custom_llm_provider": "custom_openai",
+        }
+
+    def test_with_identifier_with_provider(self):
+        model_metadata = ModelMetadata(
+            name="model_family",
+            provider="provider",
+            endpoint=HttpUrl("https://api.example.com"),
+            api_key="abcde",
+            identifier="custom_provider/model/identifier",
+        )
+
+        params = model_metadata_to_params(model_metadata)
+
+        assert params == {
+            "api_base": "https://api.example.com/",
+            "api_key": "abcde",
+            "model": "model/identifier",
+            "custom_llm_provider": "custom_provider",
+        }
+
+    def test_with_identifier_with_bedrock_provider(self):
+        model_metadata = ModelMetadata(
+            name="model_family",
+            provider="provider",
+            endpoint=HttpUrl("https://api.example.com"),
+            api_key="abcde",
+            identifier="bedrock/model/identifier",
+        )
+
+        params = model_metadata_to_params(model_metadata)
+
+        assert params == {
+            "model": "model/identifier",
+            "api_key": "abcde",
+            "custom_llm_provider": "bedrock",
+        }
