@@ -42,8 +42,11 @@ def get_snowplow_code_suggestion_context(
         gitlab_instance_id=req.headers.get(X_GITLAB_INSTANCE_ID_HEADER, ""),
         gitlab_global_user_id=global_user_id,
         gitlab_saas_duo_pro_namespace_ids=list(
-            CommaSeparatedStrings(
-                req.headers.get(X_GITLAB_SAAS_DUO_PRO_NAMESPACE_IDS_HEADER, "")
+            map(
+                int,
+                CommaSeparatedStrings(
+                    req.headers.get(X_GITLAB_SAAS_DUO_PRO_NAMESPACE_IDS_HEADER, "")
+                ),
             )
         ),
         language=language,
