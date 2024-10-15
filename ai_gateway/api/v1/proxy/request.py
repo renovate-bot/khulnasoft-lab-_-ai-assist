@@ -4,8 +4,8 @@ import typing
 from fastapi import BackgroundTasks, HTTPException, Request, status
 
 from ai_gateway.abuse_detection import AbuseDetector
+from ai_gateway.api.auth_utils import StarletteUser
 from ai_gateway.api.feature_category import X_GITLAB_UNIT_PRIMITIVE
-from ai_gateway.auth.user import GitLabUser
 from ai_gateway.gitlab_features import (
     UNIT_PRIMITIVE_AND_DESCRIPTION_MAPPING,
     GitLabUnitPrimitive,
@@ -58,7 +58,7 @@ async def _validate_request(
 
     unit_primitive = GitLabUnitPrimitive(unit_primitive)
 
-    current_user: GitLabUser = request.user
+    current_user: StarletteUser = request.user
 
     if not current_user.can(unit_primitive):
         raise HTTPException(
@@ -67,7 +67,8 @@ async def _validate_request(
         )
 
     if abuse_detector.should_detect():
-        body = await request.body()
-        body = body.decode("utf-8", errors="ignore")
+        body_bytes = await request.body()
+        body = body_bytes.decode("utf-8", errors="ignore")
+
         description = UNIT_PRIMITIVE_AND_DESCRIPTION_MAPPING.get(unit_primitive, "")
         background_tasks.add_task(abuse_detector.detect, request, body, description)

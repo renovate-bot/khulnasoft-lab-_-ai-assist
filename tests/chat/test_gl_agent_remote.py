@@ -3,10 +3,11 @@ from unittest.mock import AsyncMock, Mock
 import pytest
 from langchain_core.runnables import Runnable
 
-from ai_gateway.auth import GitLabUser
+from ai_gateway.api.auth_utils import StarletteUser
 from ai_gateway.chat import BaseToolsRegistry, GLAgentRemoteExecutor, TypeAgentFactory
 from ai_gateway.chat.agents import AgentToolAction, ReActAgentInputs
 from ai_gateway.chat.tools.gitlab import EpicReader, IssueReader
+from ai_gateway.cloud_connector import CloudConnectorUser
 
 expected_tool_action = AgentToolAction(
     thought="thought", tool="tool", tool_input="tool_input"
@@ -59,7 +60,7 @@ def tools_registry():
                 chat_history="debug chat_history",
                 agent_scratchpad=[],
             ),
-            GitLabUser(authenticated=True, is_debug=True),
+            StarletteUser(CloudConnectorUser(authenticated=True, is_debug=True)),
         ),
         (
             ReActAgentInputs(
@@ -67,7 +68,7 @@ def tools_registry():
                 chat_history="chat_history",
                 agent_scratchpad=[],
             ),
-            GitLabUser(authenticated=True, is_debug=False),
+            StarletteUser(CloudConnectorUser(authenticated=True, is_debug=False)),
         ),
     ],
 )
@@ -79,7 +80,7 @@ class TestGLAgentRemoteExecutor:
         agent_factory: Mock,
         tools_registry: Mock,
         inputs: ReActAgentInputs,
-        user: GitLabUser,
+        user: StarletteUser,
     ):
         executor = GLAgentRemoteExecutor(
             agent_factory=agent_factory, tools_registry=tools_registry
@@ -110,7 +111,7 @@ class TestGLAgentRemoteExecutor:
         agent_factory: Mock,
         tools_registry: Mock,
         inputs: ReActAgentInputs,
-        user: GitLabUser,
+        user: StarletteUser,
     ):
         executor = GLAgentRemoteExecutor(
             agent_factory=agent_factory, tools_registry=tools_registry

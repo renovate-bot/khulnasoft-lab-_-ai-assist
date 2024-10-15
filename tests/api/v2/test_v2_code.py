@@ -14,7 +14,7 @@ from structlog.testing import capture_logs
 
 from ai_gateway.api.error_utils import capture_validation_errors
 from ai_gateway.api.v2 import api_router
-from ai_gateway.auth import User, UserClaims
+from ai_gateway.cloud_connector import User, UserClaims
 from ai_gateway.config import Config
 from ai_gateway.models.base_chat import Message, Role
 from ai_gateway.tracking.container import ContainerTracking

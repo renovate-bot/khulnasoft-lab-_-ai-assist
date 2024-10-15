@@ -12,7 +12,7 @@ from ai_gateway.api.v1.search.typing import (
     SearchResponseMetadata,
     SearchResult,
 )
-from ai_gateway.auth import User, UserClaims
+from ai_gateway.cloud_connector import User, UserClaims
 from ai_gateway.config import Config
 from ai_gateway.internal_events import InternalEventAdditionalProperties
 

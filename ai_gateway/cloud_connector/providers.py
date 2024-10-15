@@ -7,10 +7,9 @@ import requests
 from jose import JWTError, jwk, jwt
 from jose.exceptions import JWKError
 
-from ai_gateway.auth.cache import LocalAuthCache
-from ai_gateway.auth.user import User, UserClaims
-from ai_gateway.config import ConfigSelfSignedJwt
-from ai_gateway.tracking.errors import log_exception
+from ai_gateway.cloud_connector.cache import LocalAuthCache
+from ai_gateway.cloud_connector.logging import log_exception
+from ai_gateway.cloud_connector.user import User, UserClaims
 
 __all__ = [
     "AuthProvider",
@@ -99,7 +98,7 @@ class CompositeProvider(AuthProvider):
         if jwks_record and jwks_record.exp > datetime.now():
             return jwks_record.value
 
-        jwks = defaultdict()
+        jwks: defaultdict[str, list] = defaultdict()
         jwks["keys"] = []
         for provider in self.providers:
             try:
@@ -119,12 +118,12 @@ class CompositeProvider(AuthProvider):
 class LocalAuthProvider(JwksProvider):
     ALGORITHM = CompositeProvider.RS256_ALGORITHM
 
-    def __init__(self, self_signed_jwt: ConfigSelfSignedJwt) -> None:
-        self.signing_key = self_signed_jwt.signing_key
-        self.validation_key = self_signed_jwt.validation_key
+    def __init__(self, signing_key: str, validation_key: str) -> None:
+        self.signing_key = signing_key
+        self.validation_key = validation_key
 
     def jwks(self) -> dict:
-        jwks = defaultdict(list)
+        jwks: defaultdict[str, list] = defaultdict(list)
         jwks["keys"] = []
 
         try:

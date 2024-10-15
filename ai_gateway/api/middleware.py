@@ -25,14 +25,15 @@ from starlette.responses import JSONResponse
 from starlette_context import context as starlette_context
 from uvicorn.protocols.utils import get_path_with_query_string
 
+from ai_gateway.api.auth_utils import StarletteUser
 from ai_gateway.api.timing import timing
-from ai_gateway.auth import AuthProvider, UserClaims
-from ai_gateway.auth.self_signed_jwt import SELF_SIGNED_TOKEN_ISSUER
-from ai_gateway.auth.user import GitLabUser
-from ai_gateway.cloud_connector.auth.validators import (
+from ai_gateway.cloud_connector import (
     X_GITLAB_DUO_SEAT_COUNT_HEADER,
-    validate_duo_seat_count_header,
+    AuthProvider,
+    CloudConnectorAuthError,
+    CloudConnectorUser,
 )
+from ai_gateway.cloud_connector import authenticate as cloud_connector_authenticate
 from ai_gateway.feature_flags import current_feature_flag_context
 from ai_gateway.instrumentators.base import Telemetry, TelemetryInstrumentator
 from ai_gateway.internal_events import (
@@ -198,10 +199,6 @@ class AccessLogMiddleware:
 
 class MiddlewareAuthentication(Middleware):
     class AuthBackend(AuthenticationBackend):
-        PREFIX_BEARER_HEADER = "bearer"
-        AUTH_HEADER = "Authorization"
-        AUTH_TYPE_HEADER = "X-Gitlab-Authentication-Type"
-        OIDC_AUTH = "oidc"
 
         def __init__(
             self,
@@ -217,21 +214,23 @@ class MiddlewareAuthentication(Middleware):
 
         async def authenticate(
             self, conn: HTTPConnection
-        ) -> Optional[Tuple[AuthCredentials, GitLabUser]]:
+        ) -> Optional[Tuple[AuthCredentials, StarletteUser]]:
             """
             Ref: https://www.starlette.io/authentication/
             """
-            global_user_id = conn.headers.get(X_GITLAB_GLOBAL_USER_ID_HEADER)
 
             if self.path_resolver.skip_path(conn.url.path):
                 return None
 
             if self.bypass_auth:
                 log.critical("Auth is disabled, all users allowed")
-
-                return AuthCredentials(), GitLabUser(
-                    authenticated=True, is_debug=True, global_user_id=global_user_id
+                cloud_connector_user, _cloud_connector_error = (
+                    cloud_connector_authenticate(
+                        dict(conn.headers), None, bypass_auth=True
+                    )
                 )
+
+                return AuthCredentials(), StarletteUser(cloud_connector_user)
 
             if (
                 self.bypass_auth_with_header  # Should only be set and used for test & dev
@@ -240,79 +239,44 @@ class MiddlewareAuthentication(Middleware):
                 log.critical(
                     "Auth is disabled, all requests with `Bypass-Auth` header set allowed"
                 )
-
-                return AuthCredentials(), GitLabUser(
-                    authenticated=True, is_debug=True, global_user_id=global_user_id
+                cloud_connector_user, _cloud_connector_error = (
+                    cloud_connector_authenticate(
+                        dict(conn.headers), None, bypass_auth=True
+                    )
                 )
 
-            if self.AUTH_HEADER not in conn.headers:
-                raise AuthenticationError("No authorization header presented")
+                return AuthCredentials(), StarletteUser(cloud_connector_user)
 
-            header = conn.headers[self.AUTH_HEADER]
-            bearer, _, token = header.partition(" ")
-            if bearer.lower() != self.PREFIX_BEARER_HEADER:
-                raise AuthenticationError("Invalid authorization header")
-
-            authenticated, claims = self.authenticate_with_token(conn.headers, token)
-            self._validate_headers(claims, conn.headers)
-
-            return AuthCredentials(claims.scopes), GitLabUser(
-                authenticated, claims=claims, global_user_id=global_user_id
+            cloud_connector_user, cloud_connector_error = self.cloud_connector_auth(
+                conn.headers
             )
 
-        @timing("auth_duration_s")
-        def authenticate_with_token(self, headers, token) -> Tuple[bool, UserClaims]:
-            auth_provider = self._auth_provider(headers)
+            if hasattr(cloud_connector_user.claims, "issuer"):
+                starlette_context["token_issuer"] = cloud_connector_user.claims.issuer
 
-            user = auth_provider.authenticate(token)
-            starlette_context["token_issuer"] = user.claims.issuer
             # We will send this with an HTTP header field going forward since we are
             # retiring direct access to the gateway from clients, which was the main
             # reason this value was carried in the access token.
-            if user.claims.gitlab_realm:
-                starlette_context["gitlab_realm"] = user.claims.gitlab_realm
+            if (
+                hasattr(cloud_connector_user.claims, "gitlab_realm")
+                and cloud_connector_user.claims.gitlab_realm
+            ):
+                starlette_context["gitlab_realm"] = (
+                    cloud_connector_user.claims.gitlab_realm
+                )
 
-            if not user.authenticated:
-                raise AuthenticationError("Forbidden by auth provider")
+            if cloud_connector_error:
+                raise AuthenticationError(cloud_connector_error.error_message)
 
-            return user.authenticated, user.claims
-
-        def _auth_provider(self, headers):
-            auth_type = headers.get(self.AUTH_TYPE_HEADER)
-
-            if auth_type == self.OIDC_AUTH:
-                return self.oidc_auth_provider
-
-            raise AuthenticationError(
-                "Invalid authentication token type - only OIDC is supported"
+            return AuthCredentials(cloud_connector_user.claims.scopes), StarletteUser(
+                cloud_connector_user
             )
 
-        def _validate_headers(self, claims, headers):
-            claim_header_mapping = {
-                "gitlab_realm": X_GITLAB_REALM_HEADER,
-                "gitlab_instance_id": X_GITLAB_INSTANCE_ID_HEADER,
-                "subject": (
-                    X_GITLAB_GLOBAL_USER_ID_HEADER
-                    if claims.issuer == SELF_SIGNED_TOKEN_ISSUER
-                    else X_GITLAB_INSTANCE_ID_HEADER
-                ),
-            }
-
-            for claim, header in claim_header_mapping.items():
-                claim_val = getattr(claims, claim)
-                if claim_val and claim_val != headers.get(header):
-                    raise AuthenticationError(f"Header mismatch '{header}'")
-
-            duo_seat_count_header = headers.get(X_GITLAB_DUO_SEAT_COUNT_HEADER)
-            try:
-                if error := validate_duo_seat_count_header(
-                    claims, duo_seat_count_header
-                ):
-                    raise AuthenticationError(error)
-            except AuthenticationError as e:
-                # Instead of raising an error, we currently log the error and allow
-                # the request to continue. See: https://gitlab.com/gitlab-org/modelops/applied-ml/code-suggestions/ai-assist/-/issues/672
-                log_exception(e)
+        @timing("auth_duration_s")
+        def cloud_connector_auth(
+            self, headers
+        ) -> Tuple[CloudConnectorUser, Optional[CloudConnectorAuthError]]:
+            return cloud_connector_authenticate(dict(headers), self.oidc_auth_provider)
 
     @staticmethod
     def on_auth_error(_: Request, e: Exception):

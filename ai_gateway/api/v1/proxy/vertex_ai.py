@@ -3,12 +3,12 @@ from fastapi import APIRouter, BackgroundTasks, Depends, Request
 
 from ai_gateway.abuse_detection import AbuseDetector
 from ai_gateway.api.feature_category import X_GITLAB_UNIT_PRIMITIVE, feature_categories
+from ai_gateway.api.v1.proxy.request import authorize_with_unit_primitive_header
 from ai_gateway.async_dependency_resolver import (
     get_abuse_detector,
     get_internal_event_client,
     get_vertex_ai_proxy_client,
 )
-from ai_gateway.auth.request import authorize_with_unit_primitive_header
 from ai_gateway.gitlab_features import FEATURE_CATEGORIES_FOR_PROXY_ENDPOINTS
 from ai_gateway.internal_events import InternalEventsClient
 from ai_gateway.models.base import KindModelProvider

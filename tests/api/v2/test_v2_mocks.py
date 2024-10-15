@@ -2,7 +2,7 @@ import pytest
 from fastapi.testclient import TestClient
 
 from ai_gateway.api.v2 import api_router
-from ai_gateway.auth import User, UserClaims
+from ai_gateway.cloud_connector import User, UserClaims
 from ai_gateway.config import Config
 
 

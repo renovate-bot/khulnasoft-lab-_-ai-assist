@@ -1,13 +1,16 @@
 import pytest
 
-from ai_gateway.auth.user import GitLabUser, UserClaims
+from ai_gateway.api.auth_utils import StarletteUser
+from ai_gateway.cloud_connector import CloudConnectorUser, UserClaims
 from ai_gateway.gitlab_features import GitLabUnitPrimitive, WrongUnitPrimitives
 from ai_gateway.prompts import BasePromptRegistry, Prompt
 
 
 @pytest.fixture
 def user(scopes: list[str]):
-    yield GitLabUser(authenticated=True, claims=UserClaims(scopes=scopes))
+    yield StarletteUser(
+        CloudConnectorUser(authenticated=True, claims=UserClaims(scopes=scopes))
+    )
 
 
 @pytest.fixture
@@ -46,7 +49,7 @@ class TestBaseRegistry:
     def test_get_on_behalf(
         self,
         registry: BasePromptRegistry,
-        user: GitLabUser,
+        user: StarletteUser,
         prompt: Prompt,
         unit_primitives: list[GitLabUnitPrimitive],
         scopes: list[str],

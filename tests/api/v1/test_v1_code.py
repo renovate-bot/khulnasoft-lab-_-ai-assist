@@ -6,10 +6,8 @@ from fastapi.testclient import TestClient
 from jose import jwt
 
 from ai_gateway.api.v1 import api_router
-from ai_gateway.auth import User, UserClaims
-from ai_gateway.auth.providers import CompositeProvider
+from ai_gateway.cloud_connector import CompositeProvider, User, UserClaims
 from ai_gateway.config import Config, ConfigAuth, ConfigSelfSignedJwt
-from ai_gateway.internal_events import InternalEventAdditionalProperties
 
 # JSON Web Key can be generated via https://mkjwk.org/
 # Private key: X.509 PEM format

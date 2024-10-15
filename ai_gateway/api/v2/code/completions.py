@@ -6,6 +6,7 @@ import structlog
 from dependency_injector.providers import Factory
 from fastapi import APIRouter, Body, Depends, HTTPException, Request, status
 
+from ai_gateway.api.auth_utils import StarletteUser, get_current_user
 from ai_gateway.api.error_utils import capture_validation_errors
 from ai_gateway.api.feature_category import feature_category
 from ai_gateway.api.middleware import X_GITLAB_LANGUAGE_SERVER_VERSION
@@ -35,8 +36,7 @@ from ai_gateway.async_dependency_resolver import (
     get_internal_event_client,
     get_snowplow_instrumentator,
 )
-from ai_gateway.auth.self_signed_jwt import SELF_SIGNED_TOKEN_ISSUER
-from ai_gateway.auth.user import GitLabUser, get_current_user
+from ai_gateway.cloud_connector import SELF_SIGNED_TOKEN_ISSUER
 from ai_gateway.code_suggestions import (
     CodeCompletions,
     CodeCompletionsLegacy,
@@ -94,7 +94,7 @@ async def get_prompt_registry():
 async def completions(
     request: Request,
     payload: CompletionsRequestWithVersion,
-    current_user: Annotated[GitLabUser, Depends(get_current_user)],
+    current_user: Annotated[StarletteUser, Depends(get_current_user)],
     prompt_registry: Annotated[BasePromptRegistry, Depends(get_prompt_registry)],
     completions_legacy_factory: Factory[CodeCompletionsLegacy] = Depends(
         get_code_suggestions_completions_vertex_legacy_provider
@@ -242,7 +242,7 @@ async def completions(
 async def generations(
     request: Request,
     payload: GenerationsRequestWithVersion,
-    current_user: Annotated[GitLabUser, Depends(get_current_user)],
+    current_user: Annotated[StarletteUser, Depends(get_current_user)],
     prompt_registry: Annotated[BasePromptRegistry, Depends(get_prompt_registry)],
     generations_vertex_factory: Factory[CodeGenerations] = Depends(
         get_code_suggestions_generations_vertex_provider
@@ -389,7 +389,7 @@ def _resolve_code_generations_anthropic_chat(
 
 def _resolve_prompt_code_generations(
     payload: SuggestionsRequest,
-    current_user: GitLabUser,
+    current_user: StarletteUser,
     prompt_registry: BasePromptRegistry,
     generations_agent_factory: Factory[CodeGenerations],
 ) -> CodeGenerations:
@@ -410,7 +410,7 @@ def _resolve_prompt_code_generations(
 
 def _resolve_code_completions_litellm(
     payload: SuggestionsRequest,
-    current_user: GitLabUser,
+    current_user: StarletteUser,
     prompt_registry: BasePromptRegistry,
     completions_agent_factory: Factory[CodeCompletions],
     completions_litellm_factory: Factory[CodeCompletions],
@@ -454,7 +454,7 @@ def _resolve_code_completions_vertex_codestral(
 
 def _resolve_agent_code_completions(
     model_metadata: ModelMetadata,
-    current_user: GitLabUser,
+    current_user: StarletteUser,
     prompt_registry: BasePromptRegistry,
     completions_agent_factory: Factory[CodeCompletions],
 ) -> CodeCompletions:

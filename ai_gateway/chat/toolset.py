@@ -1,4 +1,4 @@
-from ai_gateway.auth import GitLabUser
+from ai_gateway.api.auth_utils import StarletteUser
 from ai_gateway.chat.base import BaseToolsRegistry, UnitPrimitiveToolset
 from ai_gateway.chat.tools import BaseTool
 from ai_gateway.chat.tools.gitlab import (
@@ -72,7 +72,7 @@ class DuoChatToolsRegistry(BaseToolsRegistry):
         return toolsets
 
     def get_on_behalf(
-        self, user: GitLabUser, gl_version: str, raise_exception: bool = True
+        self, user: StarletteUser, gl_version: str, raise_exception: bool = True
     ) -> list[BaseTool]:
         tools = []
         user_unit_primitives = user.unit_primitives

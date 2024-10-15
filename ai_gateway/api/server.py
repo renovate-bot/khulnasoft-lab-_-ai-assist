@@ -25,7 +25,11 @@ from ai_gateway.api.monitoring import router as http_monitoring_router
 from ai_gateway.api.v1 import api_router as http_api_router_v1
 from ai_gateway.api.v2 import api_router as http_api_router_v2
 from ai_gateway.api.v3 import api_router as http_api_router_v3
-from ai_gateway.auth import CompositeProvider, GitLabOidcProvider, LocalAuthProvider
+from ai_gateway.cloud_connector import (
+    CompositeProvider,
+    GitLabOidcProvider,
+    LocalAuthProvider,
+)
 from ai_gateway.config import Config
 from ai_gateway.container import ContainerApplication
 from ai_gateway.instrumentators.threads import monitor_threads
@@ -89,7 +93,10 @@ def create_fast_api_server(config: Config):
             MiddlewareAuthentication(
                 CompositeProvider(
                     [
-                        LocalAuthProvider(self_signed_jwt=config.self_signed_jwt),
+                        LocalAuthProvider(
+                            signing_key=config.self_signed_jwt.signing_key,
+                            validation_key=config.self_signed_jwt.validation_key,
+                        ),
                         GitLabOidcProvider(
                             oidc_providers={
                                 "Gitlab": config.gitlab_url,

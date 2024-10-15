@@ -9,7 +9,7 @@ from langchain_core.prompts.chat import MessageLikeRepresentation
 from langchain_core.prompts.string import DEFAULT_FORMATTER_MAPPING
 from langchain_core.runnables import Runnable, RunnableBinding, RunnableConfig
 
-from ai_gateway.auth.user import GitLabUser
+from ai_gateway.api.auth_utils import StarletteUser
 from ai_gateway.gitlab_features import GitLabUnitPrimitive, WrongUnitPrimitives
 from ai_gateway.instrumentators.model_requests import ModelRequestInstrumentator
 from ai_gateway.prompts.config.base import ModelConfig, PromptConfig, PromptParams
@@ -174,7 +174,7 @@ class BasePromptRegistry(ABC):
 
     def get_on_behalf(
         self,
-        user: GitLabUser,
+        user: StarletteUser,
         prompt_id: str,
         model_metadata: Optional[ModelMetadata] = None,
     ) -> Prompt:

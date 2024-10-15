@@ -1,12 +1,12 @@
 import pytest
 
-from ai_gateway.auth.user import GitLabUser, UserClaims
+from ai_gateway.cloud_connector import CloudConnectorUser, UserClaims
 from ai_gateway.gitlab_features import GitLabUnitPrimitive
 
 
 @pytest.fixture
 def user():
-    return GitLabUser(
+    return CloudConnectorUser(
         authenticated=True,
         claims=UserClaims(
             scopes=["code_suggestions"],
@@ -18,13 +18,13 @@ def user():
     )
 
 
-def test_issuer_not_in_disallowed_issuers(user: GitLabUser):
+def test_issuer_not_in_disallowed_issuers(user: CloudConnectorUser):
     assert user.can(
         GitLabUnitPrimitive.CODE_SUGGESTIONS, disallowed_issuers=["gitlab-ai-gateway"]
     )
 
 
-def test_issuer_in_disallowed_issuers(user: GitLabUser):
+def test_issuer_in_disallowed_issuers(user: CloudConnectorUser):
     assert not user.can(
         GitLabUnitPrimitive.CODE_SUGGESTIONS,
         disallowed_issuers=["https://customers.gitlab.com"],
@@ -35,23 +35,23 @@ def test_issuer_in_disallowed_issuers(user: GitLabUser):
     ("user", "expected_unit_primitives"),
     [
         (
-            GitLabUser(
+            CloudConnectorUser(
                 authenticated=True, claims=UserClaims(scopes=["code_suggestions"])
             ),
             [GitLabUnitPrimitive.CODE_SUGGESTIONS],
         ),
         (
-            GitLabUser(
+            CloudConnectorUser(
                 authenticated=True,
                 claims=UserClaims(scopes=["code_suggestions", "unknown"]),
             ),
             [GitLabUnitPrimitive.CODE_SUGGESTIONS],
         ),
-        (GitLabUser(authenticated=True, claims=None), []),
+        (CloudConnectorUser(authenticated=True, claims=None), []),
     ],
 )
 def test_user_unit_primitives(
-    user: GitLabUser,
+    user: CloudConnectorUser,
     expected_unit_primitives: list[GitLabUnitPrimitive],
 ):
     actual_unit_primitives = user.unit_primitives

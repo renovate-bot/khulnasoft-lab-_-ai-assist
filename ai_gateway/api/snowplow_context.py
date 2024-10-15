@@ -9,7 +9,7 @@ from ai_gateway.api.middleware import (
     X_GITLAB_REALM_HEADER,
     X_GITLAB_SAAS_DUO_PRO_NAMESPACE_IDS_HEADER,
 )
-from ai_gateway.auth import SELF_SIGNED_TOKEN_ISSUER
+from ai_gateway.cloud_connector import SELF_SIGNED_TOKEN_ISSUER
 from ai_gateway.tracking import SnowplowEventContext
 
 
