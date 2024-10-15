@@ -12,7 +12,6 @@ from ai_gateway.api.v2.chat.typing import (
     AgentRequestOptions,
     ReActAgentScratchpad,
 )
-from ai_gateway.auth import GitLabUser, User, UserClaims
 from ai_gateway.chat.agents import (
     AdditionalContext,
     AgentBaseEvent,
@@ -24,6 +23,7 @@ from ai_gateway.chat.agents import (
     ReActAgentInputs,
 )
 from ai_gateway.chat.agents.typing import AgentFinalAnswer, TypeAgentEvent
+from ai_gateway.cloud_connector import User, UserClaims
 from ai_gateway.config import Config
 from ai_gateway.gitlab_features import WrongUnitPrimitives
 from ai_gateway.models.base_chat import Role

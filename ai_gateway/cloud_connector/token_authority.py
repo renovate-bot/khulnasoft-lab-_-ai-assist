@@ -3,9 +3,9 @@ from datetime import datetime, timedelta, timezone
 
 from jose import JWTError, jwt
 
-from ai_gateway.auth.providers import CompositeProvider
+from ai_gateway.cloud_connector.logging import log_exception
+from ai_gateway.cloud_connector.providers import CompositeProvider
 from ai_gateway.gitlab_features import GitLabUnitPrimitive
-from ai_gateway.tracking.errors import log_exception
 
 __all__ = [
     "SELF_SIGNED_TOKEN_ISSUER",

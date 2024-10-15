@@ -3,14 +3,14 @@ from typing import Annotated
 import structlog
 from fastapi import APIRouter, Depends, HTTPException, Request, status
 
+from ai_gateway.api.auth_utils import StarletteUser, get_current_user
 from ai_gateway.api.feature_category import feature_category
 from ai_gateway.api.v1.x_ray.typing import XRayRequest, XRayResponse
 from ai_gateway.async_dependency_resolver import (
     get_internal_event_client,
     get_x_ray_anthropic_claude,
 )
-from ai_gateway.auth.self_signed_jwt import SELF_SIGNED_TOKEN_ISSUER
-from ai_gateway.auth.user import GitLabUser, get_current_user
+from ai_gateway.cloud_connector import SELF_SIGNED_TOKEN_ISSUER
 from ai_gateway.gitlab_features import GitLabFeatureCategory, GitLabUnitPrimitive
 from ai_gateway.internal_events import InternalEventsClient
 from ai_gateway.models import AnthropicModel
@@ -29,7 +29,7 @@ router = APIRouter()
 async def libraries(
     request: Request,
     payload: XRayRequest,
-    current_user: Annotated[GitLabUser, Depends(get_current_user)],
+    current_user: Annotated[StarletteUser, Depends(get_current_user)],
     model: AnthropicModel = Depends(get_x_ray_anthropic_claude),
     internal_event_client: InternalEventsClient = Depends(get_internal_event_client),
 ):

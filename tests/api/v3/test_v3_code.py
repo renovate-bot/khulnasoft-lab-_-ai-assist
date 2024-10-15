@@ -5,7 +5,7 @@ from dependency_injector import containers
 from fastapi.testclient import TestClient
 
 from ai_gateway.api.v3 import api_router
-from ai_gateway.auth import User, UserClaims
+from ai_gateway.cloud_connector import User, UserClaims
 from ai_gateway.tracking import SnowplowEventContext
 
 

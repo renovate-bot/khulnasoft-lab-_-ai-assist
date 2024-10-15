@@ -6,6 +6,7 @@ from dependency_injector.providers import Factory
 from dependency_injector.wiring import Provide, inject
 from fastapi import APIRouter, Depends, HTTPException, Request, status
 
+from ai_gateway.api.auth_utils import StarletteUser, get_current_user
 from ai_gateway.api.feature_category import feature_category
 from ai_gateway.api.middleware import X_GITLAB_LANGUAGE_SERVER_VERSION
 from ai_gateway.api.snowplow_context import get_snowplow_code_suggestion_context
@@ -21,8 +22,7 @@ from ai_gateway.api.v3.code.typing import (
     StreamSuggestionsResponse,
 )
 from ai_gateway.async_dependency_resolver import get_container_application
-from ai_gateway.auth.self_signed_jwt import SELF_SIGNED_TOKEN_ISSUER
-from ai_gateway.auth.user import GitLabUser, get_current_user
+from ai_gateway.cloud_connector import SELF_SIGNED_TOKEN_ISSUER
 from ai_gateway.code_suggestions import (
     CodeCompletions,
     CodeCompletionsLegacy,
@@ -55,7 +55,7 @@ async def get_prompt_registry():
 async def completions(
     request: Request,
     payload: CompletionRequest,
-    current_user: Annotated[GitLabUser, Depends(get_current_user)],
+    current_user: Annotated[StarletteUser, Depends(get_current_user)],
     prompt_registry: Annotated[BasePromptRegistry, Depends(get_prompt_registry)],
 ):
     if not current_user.can(
@@ -176,7 +176,7 @@ def _completion_suggestion_choices(suggestions: list) -> list:
 @inject
 async def code_generation(
     payload: EditorContentGenerationPayload,
-    current_user: GitLabUser,
+    current_user: StarletteUser,
     prompt_registry: BasePromptRegistry,
     generations_vertex_factory: Factory[CodeGenerations] = Provide[
         ContainerApplication.code_suggestions.generations.vertex.provider

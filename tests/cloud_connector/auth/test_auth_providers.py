@@ -6,8 +6,11 @@ import requests
 import responses
 from jose import jwt
 
-from ai_gateway.auth import CompositeProvider, GitLabOidcProvider, LocalAuthProvider
-from ai_gateway.config import ConfigSelfSignedJwt
+from ai_gateway.cloud_connector import (
+    CompositeProvider,
+    GitLabOidcProvider,
+    LocalAuthProvider,
+)
 
 
 class TestCompositeProvider:
@@ -285,7 +288,9 @@ UGw3kIW+604fnnXLDm4TaLA=
             algorithm=CompositeProvider.RS256_ALGORITHM,
         )
 
-        with patch("ai_gateway.auth.providers.log_exception") as mock_log_exception:
+        with patch(
+            "ai_gateway.cloud_connector.providers.log_exception"
+        ) as mock_log_exception:
             user = auth_provider.authenticate(token)
 
             if problematic_provider and isinstance(config_response_body, Exception):
@@ -428,14 +433,12 @@ UGw3kIW+604fnnXLDm4TaLA=
             status=200,
         )
 
-        self_signed_jwt = ConfigSelfSignedJwt(
-            signing_key=self.private_key_ai_gateway_signing_key_test,
-            validation_key=self.private_key_ai_gateway_validation_key_test,
-        )
+        signing_key = self.private_key_ai_gateway_signing_key_test
+        validation_key = self.private_key_ai_gateway_validation_key_test
 
         auth_provider = CompositeProvider(
             [
-                LocalAuthProvider(self_signed_jwt),
+                LocalAuthProvider(signing_key, validation_key),
                 GitLabOidcProvider(
                     oidc_providers={
                         "Gitlab": "http://test.com",

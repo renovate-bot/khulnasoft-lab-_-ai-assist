@@ -3,7 +3,7 @@ from typing import AsyncIterator, Generic, Protocol
 import structlog
 from langchain_core.runnables import Runnable
 
-from ai_gateway.auth import GitLabUser
+from ai_gateway.api.auth_utils import StarletteUser
 from ai_gateway.chat.agents import TypeAgentEvent, TypeAgentInputs
 from ai_gateway.chat.base import BaseToolsRegistry
 from ai_gateway.chat.tools import BaseTool
@@ -45,7 +45,7 @@ class GLAgentRemoteExecutor(Generic[TypeAgentInputs, TypeAgentEvent]):
 
         return self._tools
 
-    def on_behalf(self, user: GitLabUser, gl_version: str):
+    def on_behalf(self, user: StarletteUser, gl_version: str):
         # Access the user tools as soon as possible to raise an exception
         # (in case of invalid unit primitives) before starting the data stream.
         # Reason: https://github.com/tiangolo/fastapi/discussions/10138

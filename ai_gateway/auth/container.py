@@ -1,6 +1,6 @@
 from dependency_injector import containers, providers
 
-from ai_gateway.auth.self_signed_jwt import TokenAuthority
+from ai_gateway.cloud_connector import TokenAuthority
 
 __all__ = ["ContainerSelfSignedJwt"]
 

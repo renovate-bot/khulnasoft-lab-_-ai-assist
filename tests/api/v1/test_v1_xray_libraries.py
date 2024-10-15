@@ -5,7 +5,7 @@ from fastapi import status
 
 from ai_gateway.api.v1 import api_router
 from ai_gateway.api.v1.x_ray.typing import AnyPromptComponent
-from ai_gateway.auth import User, UserClaims
+from ai_gateway.cloud_connector import User, UserClaims
 from ai_gateway.internal_events import InternalEventAdditionalProperties
 
 

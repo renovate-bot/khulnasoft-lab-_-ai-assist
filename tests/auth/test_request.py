@@ -4,9 +4,9 @@ import pytest
 from fastapi import BackgroundTasks, HTTPException, Request
 
 from ai_gateway.abuse_detection import AbuseDetector
+from ai_gateway.api.auth_utils import StarletteUser
 from ai_gateway.api.feature_category import X_GITLAB_UNIT_PRIMITIVE
-from ai_gateway.auth.request import authorize_with_unit_primitive_header
-from ai_gateway.auth.user import GitLabUser
+from ai_gateway.api.v1.proxy.request import authorize_with_unit_primitive_header
 from ai_gateway.gitlab_features import GitLabUnitPrimitive
 
 
@@ -14,7 +14,7 @@ from ai_gateway.gitlab_features import GitLabUnitPrimitive
 def mock_request():
     request = Mock(spec=Request)
     request.headers = {}
-    request.user = Mock(spec=GitLabUser)
+    request.user = Mock(spec=StarletteUser)
     return request
 
 

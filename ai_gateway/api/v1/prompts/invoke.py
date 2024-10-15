@@ -4,12 +4,12 @@ from fastapi import APIRouter, Depends, HTTPException, Request, status
 from pydantic import BaseModel, RootModel
 from starlette.responses import StreamingResponse
 
+from ai_gateway.api.auth_utils import StarletteUser, get_current_user
 from ai_gateway.api.feature_category import feature_category
 from ai_gateway.async_dependency_resolver import (
     get_container_application,
     get_internal_event_client,
 )
-from ai_gateway.auth.user import GitLabUser, get_current_user
 from ai_gateway.gitlab_features import GitLabFeatureCategory, WrongUnitPrimitives
 from ai_gateway.internal_events import InternalEventsClient
 from ai_gateway.prompts import BasePromptRegistry, Prompt
@@ -43,7 +43,7 @@ async def prompt(
     request: Request,
     prompt_request: PromptRequest,
     prompt_id: str,
-    current_user: Annotated[GitLabUser, Depends(get_current_user)],
+    current_user: Annotated[StarletteUser, Depends(get_current_user)],
     prompt_registry: Annotated[BasePromptRegistry, Depends(get_prompt_registry)],
     internal_event_client: InternalEventsClient = Depends(get_internal_event_client),
 ):

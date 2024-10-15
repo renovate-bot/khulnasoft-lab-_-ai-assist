@@ -5,6 +5,7 @@ import structlog
 from dependency_injector.providers import Factory
 from fastapi import APIRouter, Depends, HTTPException, Request, status
 
+from ai_gateway.api.auth_utils import StarletteUser, get_current_user
 from ai_gateway.api.feature_category import feature_category
 from ai_gateway.api.v1.search.typing import (
     SearchRequest,
@@ -17,7 +18,6 @@ from ai_gateway.async_dependency_resolver import (
     get_internal_event_client,
     get_search_factory_provider,
 )
-from ai_gateway.auth.user import GitLabUser, get_current_user
 from ai_gateway.gitlab_features import GitLabFeatureCategory, GitLabUnitPrimitive
 from ai_gateway.internal_events import InternalEventsClient
 from ai_gateway.searches import Searcher
@@ -37,7 +37,7 @@ router = APIRouter()
 @feature_category(GitLabFeatureCategory.DUO_CHAT)
 async def docs(
     request: Request,
-    current_user: Annotated[GitLabUser, Depends(get_current_user)],
+    current_user: Annotated[StarletteUser, Depends(get_current_user)],
     search_request: SearchRequest,
     search_factory: Factory[Searcher] = Depends(get_search_factory_provider),
     internal_event_client: InternalEventsClient = Depends(get_internal_event_client),

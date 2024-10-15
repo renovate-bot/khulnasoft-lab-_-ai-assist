@@ -4,6 +4,7 @@ import structlog
 from fastapi import APIRouter, Depends, HTTPException, Request, status
 from starlette.responses import StreamingResponse
 
+from ai_gateway.api.auth_utils import StarletteUser, get_current_user
 from ai_gateway.api.feature_category import feature_category
 from ai_gateway.api.middleware import X_GITLAB_VERSION_HEADER
 from ai_gateway.api.v2.chat.typing import AgentRequest
@@ -11,7 +12,6 @@ from ai_gateway.async_dependency_resolver import (
     get_container_application,
     get_internal_event_client,
 )
-from ai_gateway.auth.user import GitLabUser, get_current_user
 from ai_gateway.chat.agents import (
     AdditionalContext,
     AgentStep,
@@ -43,7 +43,7 @@ async def get_gl_agent_remote_executor():
 
 
 def authorize_additional_context(
-    current_user: GitLabUser,
+    current_user: StarletteUser,
     additional_context: AdditionalContext,
     internal_event_client: InternalEventsClient,
 ):
@@ -63,7 +63,7 @@ def authorize_additional_context(
 
 
 def authorize_agent_request(
-    current_user: GitLabUser,
+    current_user: StarletteUser,
     agent_request: AgentRequest,
     internal_event_client: InternalEventsClient,
 ):
@@ -81,7 +81,7 @@ def authorize_agent_request(
 async def chat(
     request: Request,
     agent_request: AgentRequest,
-    current_user: Annotated[GitLabUser, Depends(get_current_user)],
+    current_user: Annotated[StarletteUser, Depends(get_current_user)],
     gl_agent_remote_executor: GLAgentRemoteExecutor[
         ReActAgentInputs, TypeAgentEvent
     ] = Depends(get_gl_agent_remote_executor),

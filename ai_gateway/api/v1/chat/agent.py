@@ -5,6 +5,7 @@ import structlog
 from dependency_injector.providers import Factory, FactoryAggregate
 from fastapi import APIRouter, Depends, HTTPException, Request, status
 
+from ai_gateway.api.auth_utils import StarletteUser, get_current_user
 from ai_gateway.api.feature_category import track_metadata
 from ai_gateway.api.v1.chat.auth import ChatInvokable, authorize_with_unit_primitive
 from ai_gateway.api.v1.chat.typing import (
@@ -19,7 +20,6 @@ from ai_gateway.async_dependency_resolver import (
     get_chat_litellm_factory_provider,
     get_internal_event_client,
 )
-from ai_gateway.auth.user import GitLabUser, get_current_user
 from ai_gateway.gitlab_features import GitLabUnitPrimitive
 from ai_gateway.internal_events import InternalEventsClient
 from ai_gateway.models import (
@@ -72,7 +72,7 @@ async def chat(
     request: Request,
     chat_request: ChatRequest,
     chat_invokable: str,
-    current_user: Annotated[GitLabUser, Depends(get_current_user)],
+    current_user: Annotated[StarletteUser, Depends(get_current_user)],
     anthropic_claude_factory: FactoryAggregate = Depends(
         get_chat_anthropic_claude_factory_provider
     ),

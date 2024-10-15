@@ -1,11 +1,8 @@
 from typing import NamedTuple, Optional
 
-from fastapi import Request
-from starlette.authentication import BaseUser
-
 from ai_gateway.gitlab_features import GitLabUnitPrimitive
 
-__all__ = ["User", "UserClaims", "GitLabUser"]
+__all__ = ["User", "UserClaims", "CloudConnectorUser"]
 
 
 class UserClaims(NamedTuple):
@@ -22,7 +19,7 @@ class User(NamedTuple):
     claims: UserClaims
 
 
-class GitLabUser(BaseUser):
+class CloudConnectorUser:
     def __init__(
         self,
         authenticated: bool,
@@ -36,7 +33,7 @@ class GitLabUser(BaseUser):
         self._global_user_id = global_user_id
 
     @property
-    def global_user_id(self) -> str:
+    def global_user_id(self) -> str | None:
         return self._global_user_id
 
     @property
@@ -67,7 +64,9 @@ class GitLabUser(BaseUser):
         return unit_primitives
 
     def can(
-        self, unit_primitive: GitLabUnitPrimitive, disallowed_issuers: list[str] = None
+        self,
+        unit_primitive: GitLabUnitPrimitive,
+        disallowed_issuers: Optional[list[str]] = None,
     ) -> bool:
         if not unit_primitive:
             return False
@@ -75,11 +74,10 @@ class GitLabUser(BaseUser):
         if self.is_debug:
             return True
 
+        if not self._claims:
+            return False
+
         if disallowed_issuers and self._claims.issuer in disallowed_issuers:
             return False
 
         return unit_primitive in self._claims.scopes
-
-
-async def get_current_user(request: Request) -> GitLabUser:
-    return request.user

@@ -2,7 +2,7 @@ from typing import Type
 
 import pytest
 
-from ai_gateway.auth import GitLabUser, UserClaims
+from ai_gateway.api.auth_utils import StarletteUser
 from ai_gateway.chat.tools import BaseTool
 from ai_gateway.chat.tools.gitlab import (
     BuildReader,
@@ -14,6 +14,7 @@ from ai_gateway.chat.tools.gitlab import (
     MergeRequestReader,
 )
 from ai_gateway.chat.toolset import DuoChatToolsRegistry
+from ai_gateway.cloud_connector import CloudConnectorUser, UserClaims
 from ai_gateway.feature_flags.context import current_feature_flag_context
 from ai_gateway.gitlab_features import GitLabUnitPrimitive, WrongUnitPrimitives
 
@@ -71,9 +72,11 @@ class TestDuoChatToolRegistry:
         unit_primitives: list[GitLabUnitPrimitive],
         expected_tools: list[Type[BaseTool]],
     ):
-        user = GitLabUser(
-            authenticated=True,
-            claims=UserClaims(scopes=[u.value for u in unit_primitives]),
+        user = StarletteUser(
+            CloudConnectorUser(
+                authenticated=True,
+                claims=UserClaims(scopes=[u.value for u in unit_primitives]),
+            )
         )
 
         tools = DuoChatToolsRegistry().get_on_behalf(user, "", raise_exception=False)
@@ -89,9 +92,11 @@ class TestDuoChatToolRegistry:
         self,
         unit_primitives: list[GitLabUnitPrimitive],
     ):
-        user = GitLabUser(
-            authenticated=True,
-            claims=UserClaims(scopes=[u.value for u in unit_primitives]),
+        user = StarletteUser(
+            CloudConnectorUser(
+                authenticated=True,
+                claims=UserClaims(scopes=[u.value for u in unit_primitives]),
+            )
         )
 
         with pytest.raises(WrongUnitPrimitives):
@@ -112,14 +117,16 @@ class TestDuoChatToolRegistry:
     ):
         current_feature_flag_context.set({feature_flag})
 
-        user = GitLabUser(
-            authenticated=True,
-            claims=UserClaims(
-                scopes=[
-                    unit_primitive.value,
-                    GitLabUnitPrimitive.DUO_CHAT.value,
-                ]
-            ),
+        user = StarletteUser(
+            CloudConnectorUser(
+                authenticated=True,
+                claims=UserClaims(
+                    scopes=[
+                        unit_primitive.value,
+                        GitLabUnitPrimitive.DUO_CHAT.value,
+                    ]
+                ),
+            )
         )
 
         tools = DuoChatToolsRegistry().get_on_behalf(

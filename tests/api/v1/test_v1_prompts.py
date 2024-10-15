@@ -8,8 +8,8 @@ from langchain_core.messages import BaseMessage
 from pydantic_core import Url
 
 from ai_gateway.api.v1 import api_router
-from ai_gateway.auth import User, UserClaims
 from ai_gateway.chat.agents import ReActAgent, ReActAgentInputs
+from ai_gateway.cloud_connector import User, UserClaims
 from ai_gateway.config import Config
 from ai_gateway.gitlab_features import GitLabUnitPrimitive
 from ai_gateway.prompts import Prompt

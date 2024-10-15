@@ -6,9 +6,9 @@ from fastapi.testclient import TestClient
 from starlette.responses import JSONResponse
 from structlog.testing import capture_logs
 
+from ai_gateway.api.auth_utils import StarletteUser, get_current_user
 from ai_gateway.api.middleware import MiddlewareAuthentication
-from ai_gateway.auth import User, UserClaims
-from ai_gateway.auth.user import GitLabUser, get_current_user
+from ai_gateway.cloud_connector import User, UserClaims
 
 router = APIRouter(
     prefix="",
@@ -18,7 +18,7 @@ router = APIRouter(
 
 @router.post("/")
 def homepage(
-    request: Request, current_user: Annotated[GitLabUser, Depends(get_current_user)]
+    request: Request, current_user: Annotated[StarletteUser, Depends(get_current_user)]
 ):
     if not (
         (current_user.can("feature1") or current_user.can("feature2"))
@@ -97,7 +97,7 @@ invalid_authentication_token_type_error = {
                 claims=UserClaims(scopes=["feature1", "feature3"]),
             ),
             {"error": "No authorization header presented"},
-            ["auth_error_details", "http_exception_details"],
+            ["auth_duration_s", "auth_error_details", "http_exception_details"],
         ),
         (
             {"Authorization": "invalid"},
@@ -108,7 +108,7 @@ invalid_authentication_token_type_error = {
                 claims=UserClaims(scopes=["feature1", "feature3"]),
             ),
             {"error": "Invalid authorization header"},
-            ["auth_error_details", "http_exception_details"],
+            ["auth_duration_s", "auth_error_details", "http_exception_details"],
         ),
         (
             {"Authorization": "Bearer 12345"},
@@ -119,7 +119,12 @@ invalid_authentication_token_type_error = {
                 claims=UserClaims(scopes=["feature1", "feature3"]),
             ),
             invalid_authentication_token_type_error,
-            ["auth_duration_s", "auth_error_details", "http_exception_details"],
+            [
+                "auth_duration_s",
+                "auth_error_details",
+                "http_exception_details",
+                "token_issuer",
+            ],
         ),
         (
             {

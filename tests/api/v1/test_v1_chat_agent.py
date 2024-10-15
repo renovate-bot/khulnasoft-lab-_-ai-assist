@@ -7,9 +7,10 @@ from fastapi import HTTPException, Request
 from fastapi.testclient import TestClient
 from structlog.testing import capture_logs
 
+from ai_gateway.api.auth_utils import StarletteUser
 from ai_gateway.api.v1 import api_router
 from ai_gateway.api.v1.chat.auth import ChatInvokable, authorize_with_unit_primitive
-from ai_gateway.auth import GitLabUser, User, UserClaims
+from ai_gateway.cloud_connector import User, UserClaims
 from ai_gateway.gitlab_features import GitLabUnitPrimitive
 from ai_gateway.models import (
     AnthropicAPIConnectionError,
@@ -562,7 +563,7 @@ class TestAuthorizeWithUnitPrimitive:
         request = mock.Mock(spec=Request)
         request.headers = {}
         request.path_params = {}
-        request.user = mock.Mock(spec=GitLabUser)
+        request.user = mock.Mock(spec=StarletteUser)
         return request
 
     async def test_not_found(self, mock_request: mock.Mock):

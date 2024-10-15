@@ -4,7 +4,7 @@ from typing import Optional
 from packaging.version import InvalidVersion, Version
 from pydantic import BaseModel
 
-from ai_gateway.auth import GitLabUser
+from ai_gateway.api.auth_utils import StarletteUser
 from ai_gateway.chat.tools import BaseTool
 from ai_gateway.gitlab_features import GitLabUnitPrimitive
 
@@ -46,7 +46,7 @@ class UnitPrimitiveToolset(BaseModel):
 class BaseToolsRegistry(ABC):
     @abstractmethod
     def get_on_behalf(
-        self, user: GitLabUser, gl_version: str, raise_exception: bool = True
+        self, user: StarletteUser, gl_version: str, raise_exception: bool = True
     ) -> list[BaseTool]:
         pass
 

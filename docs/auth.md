@@ -144,17 +144,19 @@ You can get a currently authenticated user and check if the user has permission 
 This is useful to granularly switch the business logic per user permissions. Example:
 
 ```python
-from ai_gateway.auth.user import GitLabUser, get_current_user
+from ai_gateway.api.auth_utils import get_current_user, StarletteUser
+
 
 @router.post("/awesome_feature")
 async def awesome_feature(
-    request: Request,
-    current_user: Annotated[GitLabUser, Depends(get_current_user)]
+        request: Request,
+        current_user: Annotated[StarletteUser, Depends(get_current_user)]
 ):
     if current_user.can(GitLabUnitPrimitive.AWESOME_FEATURE_1):
-        # Do X
-    elif: current_user.can(GitLabUnitPrimitive.AWESOME_FEATURE_2):
-        # Do Y
+    # Do X
+    elif:
+        current_user.can(GitLabUnitPrimitive.AWESOME_FEATURE_2):
+    # Do Y
     else:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
@@ -170,14 +172,15 @@ This decorator reads the `x-gitlab-unit-primitive` header from requests and
 checks if the user has permission to access the unit primitive. Example:
 
 ```python
-from ai_gateway.auth.request import authorize_with_unit_primitive_header
+from ai_gateway.api.v1.proxy.request import authorize_with_unit_primitive_header
+
 
 @router.post("/awesome_feature")
 @authorize_with_unit_primitive_header()
 async def awesome_feature(
-    request: Request,
+        request: Request,
 ):
-    # Do something
+# Do something
 ```
 
 This decorator also validates that the request is not modified at client side.

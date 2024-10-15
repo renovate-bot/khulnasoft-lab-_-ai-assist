@@ -3,14 +3,14 @@ from typing import Annotated
 import structlog
 from fastapi import APIRouter, Depends, Header, HTTPException, Request, status
 
+from ai_gateway.api.auth_utils import StarletteUser, get_current_user
 from ai_gateway.api.feature_category import feature_category
 from ai_gateway.api.v1.code.typing import Token
 from ai_gateway.async_dependency_resolver import (
     get_internal_event_client,
     get_token_authority,
 )
-from ai_gateway.auth.self_signed_jwt import SELF_SIGNED_TOKEN_ISSUER, TokenAuthority
-from ai_gateway.auth.user import GitLabUser, get_current_user
+from ai_gateway.cloud_connector import SELF_SIGNED_TOKEN_ISSUER, TokenAuthority
 from ai_gateway.gitlab_features import GitLabFeatureCategory, GitLabUnitPrimitive
 from ai_gateway.internal_events import InternalEventsClient
 
@@ -28,7 +28,7 @@ router = APIRouter()
 @feature_category(GitLabFeatureCategory.CODE_SUGGESTIONS)
 async def user_access_token(
     request: Request,
-    current_user: Annotated[GitLabUser, Depends(get_current_user)],
+    current_user: Annotated[StarletteUser, Depends(get_current_user)],
     token_authority: TokenAuthority = Depends(get_token_authority),
     x_gitlab_global_user_id: Annotated[
         str, Header()

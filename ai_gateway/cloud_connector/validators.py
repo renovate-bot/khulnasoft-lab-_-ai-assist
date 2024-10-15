@@ -1,4 +1,4 @@
-from ai_gateway.auth import UserClaims
+from ai_gateway.cloud_connector.user import UserClaims
 
 X_GITLAB_DUO_SEAT_COUNT_HEADER = "X-Gitlab-Duo-Seat-Count"
 

@@ -16,7 +16,7 @@ from ai_gateway.api.middleware import (
     FeatureFlagMiddleware,
     InternalEventMiddleware,
 )
-from ai_gateway.cloud_connector.auth.validators import X_GITLAB_DUO_SEAT_COUNT_HEADER
+from ai_gateway.cloud_connector import X_GITLAB_DUO_SEAT_COUNT_HEADER
 from ai_gateway.internal_events import EventContext
 
 
