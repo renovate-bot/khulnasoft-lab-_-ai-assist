@@ -71,29 +71,10 @@ class Prompt(RunnableBinding[Input, Output]):
         params: PromptParams | None,
         model_metadata: Optional[ModelMetadata] | None,
     ) -> Mapping[str, Any]:
-        kwargs = {}
-
-        if params:
-            kwargs = {**params.model_dump(exclude_none=True)}
-
-        if model_metadata:
-            kwargs["api_base"] = str(model_metadata.endpoint)
-            kwargs["api_key"] = str(model_metadata.api_key)
-
-            if model_metadata.identifier:
-                provider, _, model_name = model_metadata.identifier.partition("/")
-
-                if model_name:
-                    kwargs["custom_llm_provider"] = provider
-                    kwargs["model"] = model_name
-                else:
-                    kwargs["custom_llm_provider"] = "custom_openai"
-                    kwargs["model"] = model_metadata.identifier
-            else:
-                kwargs["model"] = model_metadata.name
-                kwargs["custom_llm_provider"] = model_metadata.provider
-
-        return kwargs
+        return {
+            **(params.model_dump(exclude_none=True) if params else {}),
+            **(model_metadata_to_params(model_metadata) if model_metadata else {}),
+        }
 
     def _build_model(
         self,
@@ -185,3 +166,29 @@ class BasePromptRegistry(ABC):
                 raise WrongUnitPrimitives
 
         return prompt
+
+
+def model_metadata_to_params(model_metadata: ModelMetadata) -> dict[str, str]:
+    params = {
+        "api_base": str(model_metadata.endpoint),
+        "api_key": str(model_metadata.api_key),
+        "model": model_metadata.name,
+        "custom_llm_provider": model_metadata.provider,
+    }
+
+    if not model_metadata.identifier:
+        return params
+
+    provider, _, model_name = model_metadata.identifier.partition("/")
+
+    if model_name:
+        params["custom_llm_provider"] = provider
+        params["model"] = model_name
+
+        if provider == "bedrock":
+            del params["api_base"]
+    else:
+        params["custom_llm_provider"] = "custom_openai"
+        params["model"] = model_metadata.identifier
+
+    return params
