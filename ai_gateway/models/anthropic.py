@@ -67,8 +67,6 @@ class AnthropicAPITimeoutError(ModelAPIError):
 class KindAnthropicModel(StrEnum):
     # Avoid using model versions that only specify the major version number.
     # More info - https://docs.anthropic.com/claude/reference/selecting-a-model
-    CLAUDE_INSTANT_1_1 = "claude-instant-1.1"
-    CLAUDE_INSTANT_1_2 = "claude-instant-1.2"
     CLAUDE_2_0 = "claude-2.0"
     CLAUDE_2_1 = "claude-2.1"
     CLAUDE_3_OPUS = "claude-3-opus-20240229"

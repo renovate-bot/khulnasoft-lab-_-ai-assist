@@ -174,7 +174,7 @@ class TestEditorContentCompletion:
                 },
                 {
                     "engine": "anthropic",
-                    "name": "claude-instant-1.2",
+                    "name": "claude-2.1",
                     "lang": "python",
                 },
             ),

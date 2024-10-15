@@ -127,7 +127,7 @@ class ContainerCodeCompletions(containers.DeclarativeContainer):
         CodeCompletions,
         model=providers.Factory(
             anthropic_claude,
-            name=KindAnthropicModel.CLAUDE_INSTANT_1_2,
+            name=KindAnthropicModel.CLAUDE_2_1,
             stop_sequences=["</new_code>", anthropic.HUMAN_PROMPT],
             max_tokens_to_sample=128,
         ),

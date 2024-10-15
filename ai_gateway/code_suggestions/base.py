@@ -48,8 +48,7 @@ PROVIDERS_MODELS_MAP = {
 
 USE_CASES_MODELS_MAP = {
     KindUseCase.CODE_COMPLETIONS: {
-        KindAnthropicModel.CLAUDE_INSTANT_1_1,
-        KindAnthropicModel.CLAUDE_INSTANT_1_2,
+        KindAnthropicModel.CLAUDE_2_1,
         KindVertexTextModel.CODE_GECKO_002,
         KindVertexTextModel.CODESTRAL_2405,
         KindLiteLlmModel.CODEGEMMA_2B,
