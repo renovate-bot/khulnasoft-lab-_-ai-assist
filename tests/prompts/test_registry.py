@@ -302,7 +302,7 @@ class TestLocalPromptRegistry:
                     "model": "claude-3-haiku-20240307",
                     "custom_llm_provider": "anthropic",
                     "api_key": "token",
-                    "api_base": "http://localhost:4000/",
+                    "api_base": "http://localhost:4000",
                     "vertex_location": "us-east1",
                 },
                 {
@@ -332,7 +332,7 @@ class TestLocalPromptRegistry:
                     "model": "mistralai/Mistral-7B-Instruct-v0.3",
                     "custom_llm_provider": "custom_openai",
                     "api_key": "token",
-                    "api_base": "http://localhost:4000/",
+                    "api_base": "http://localhost:4000",
                     "vertex_location": "us-east1",
                 },
                 {

@@ -123,7 +123,7 @@ class TestModelMetadataToParams:
         params = model_metadata_to_params(model_metadata)
 
         assert params == {
-            "api_base": "https://api.example.com/",
+            "api_base": "https://api.example.com",
             "api_key": "abcde",
             "model": "model_family",
             "custom_llm_provider": "provider",
@@ -141,7 +141,7 @@ class TestModelMetadataToParams:
         params = model_metadata_to_params(model_metadata)
 
         assert params == {
-            "api_base": "https://api.example.com/",
+            "api_base": "https://api.example.com",
             "api_key": "abcde",
             "model": "model_identifier",
             "custom_llm_provider": "custom_openai",
@@ -159,7 +159,7 @@ class TestModelMetadataToParams:
         params = model_metadata_to_params(model_metadata)
 
         assert params == {
-            "api_base": "https://api.example.com/",
+            "api_base": "https://api.example.com",
             "api_key": "abcde",
             "model": "model/identifier",
             "custom_llm_provider": "custom_provider",

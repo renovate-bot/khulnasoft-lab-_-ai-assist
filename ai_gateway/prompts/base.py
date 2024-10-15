@@ -170,7 +170,7 @@ class BasePromptRegistry(ABC):
 
 def model_metadata_to_params(model_metadata: ModelMetadata) -> dict[str, str]:
     params = {
-        "api_base": str(model_metadata.endpoint),
+        "api_base": str(model_metadata.endpoint).removesuffix("/"),
         "api_key": str(model_metadata.api_key),
         "model": model_metadata.name,
         "custom_llm_provider": model_metadata.provider,
