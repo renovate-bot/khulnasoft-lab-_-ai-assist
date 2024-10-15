@@ -902,8 +902,13 @@ class TestCodeCompletions:
                 ),
                 gitlab_host_name=request_headers.get("X-Gitlab-Host-Name", ""),
                 gitlab_saas_duo_pro_namespace_ids=list(
-                    CommaSeparatedStrings(
-                        request_headers.get("X-Gitlab-Saas-Duo-Pro-Namespace-Ids", "")
+                    map(
+                        int,
+                        CommaSeparatedStrings(
+                            request_headers.get(
+                                "X-Gitlab-Saas-Duo-Pro-Namespace-Ids", ""
+                            )
+                        ),
                     )
                 ),
             )
@@ -1677,8 +1682,13 @@ class TestCodeGenerations:
                 ),
                 gitlab_host_name=request_headers.get("X-Gitlab-Host-Name", ""),
                 gitlab_saas_duo_pro_namespace_ids=list(
-                    CommaSeparatedStrings(
-                        request_headers.get("X-Gitlab-Saas-Duo-Pro-Namespace-Ids", "")
+                    map(
+                        int,
+                        CommaSeparatedStrings(
+                            request_headers.get(
+                                "X-Gitlab-Saas-Duo-Pro-Namespace-Ids", ""
+                            )
+                        ),
                     )
                 ),
             )
