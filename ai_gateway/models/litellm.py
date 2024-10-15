@@ -98,9 +98,7 @@ MODEL_STOP_TOKENS = {
     ],
     # Ref: https://docs.litellm.ai/docs/providers/vertex#mistral-api
     # This model is served by Vertex AI but accessed through LiteLLM abstraction
-    KindVertexTextModel.CODESTRAL_2405: [
-        "\n\n",
-    ],
+    KindVertexTextModel.CODESTRAL_2405: ["\n\n", "\n+++++"],
 }
 
 MODEL_SPECIFICATIONS = {

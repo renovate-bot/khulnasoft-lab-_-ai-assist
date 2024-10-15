@@ -1043,7 +1043,7 @@ class TestCodeCompletions:
             top_p=0.95,
             stream=False,
             timeout=60,
-            stop=["\n\n"],
+            stop=["\n\n", "\n+++++"],
         )
 
         mock_post_processor.assert_called_with("Test text completion response")
