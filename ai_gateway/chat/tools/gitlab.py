@@ -127,7 +127,9 @@ class CommitReader(BaseRemoteTool):
     name: str = "commit_reader"
     resource: str = "commits"
 
-    description: str = """This tool retrieves the content of a specific commit
+    description: str = dedent(
+        """\
+        This tool retrieves the content of a specific commit
         ONLY if the user question fulfills the strict usage conditions below.
 
         **Strict Usage Conditions:**
@@ -142,21 +144,27 @@ class CommitReader(BaseRemoteTool):
 
         **Important:**  Reject any input that does not strictly adhere to the usage conditions above.
         Return a message stating you are unable to search for commits without a valid identifier."""
+    )
 
-    example: str = """Question: Please identify the author of #123 commit
-         Thought: You have access to the same resources as user who asks a question.
-             Question is about the content of a commit, so you need to use "CommitReader" tool to retrieve
-             and read commit.
-             Based on this information you can present final answer about commit.
-         Action: CommitReader
-         Action Input: Please identify the author of #123 commit"""
+    example: str = dedent(
+        """\
+        Question: Please identify the author of #123 commit
+        Thought: You have access to the same resources as user who asks a question.
+            Question is about the content of a commit, so you need to use "commit_reader" tool to retrieve
+            and read commit.
+            Based on this information you can present final answer about commit.
+        Action: commit_reader
+        Action Input: Please identify the author of #123 commit"""
+    )
 
 
 class BuildReader(BaseRemoteTool):
     name: str = "build_reader"
     resource: str = "builds"
 
-    description: str = """This tool retrieves the content of a specific build
+    description: str = dedent(
+        """\
+        This tool retrieves the content of a specific build
         ONLY if the user question fulfills the strict usage conditions below.
 
         **Strict Usage Conditions:**
@@ -171,13 +179,17 @@ class BuildReader(BaseRemoteTool):
 
         **Important:**  Reject any input that does not strictly adhere to the usage conditions above.
         Return a message stating you are unable to search for builds without a valid identifier."""
+    )
 
-    example: str = """Question: Please identify the author of &123 build.
+    example: str = dedent(
+        """\
+        Question: Please identify the author of &123 build.
         Thought: You have access to the same resources as user who asks a question.
-            The question is about an build, so you need to use "build_reader" tool.
+            The question is about a build, so you need to use "build_reader" tool.
             Based on this information you can present final answer.
         Action: build_reader
         Action Input: Please identify the author of &123 build."""
+    )
 
 
 class MergeRequestReader(BaseRemoteTool):
@@ -207,9 +219,9 @@ class MergeRequestReader(BaseRemoteTool):
         """\
         Question: Please identify the author of #123 merge request
          Thought: You have access to the same resources as user who asks a question.
-             Question is about the content of a merge request, so you need to use "MergeRequestReader" tool to retrieve
+             Question is about the content of a merge request, so you need to use "merge_request_reader" tool to retrieve
              and read merge request.
              Based on this information you can present final answer about merge request.
-         Action: MergeRequestReader
+         Action: merge_request_reader
          Action Input: Please identify the author of #123 merge request"""
     )
