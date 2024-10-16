@@ -1,6 +1,4 @@
-from typing import Any, AsyncIterator, Union
-
-from langchain_core.runnables import Runnable
+from typing import Any, AsyncIterator
 
 from ai_gateway.models.base import ModelMetadata, SafetyAttributes
 from ai_gateway.models.base_text import (
@@ -8,6 +6,7 @@ from ai_gateway.models.base_text import (
     TextGenModelChunk,
     TextGenModelOutput,
 )
+from ai_gateway.prompts.base import Prompt
 
 __all__ = [
     "AgentModel",
@@ -19,7 +18,7 @@ AGENT = "agent"
 class AgentModel(TextGenModelBase):
     def __init__(
         self,
-        prompt: Runnable,  # TODO: should be Prompt, but SafetyAttributes complain about model_class_provider from TypeModelParams
+        prompt: Prompt,
     ):
         self.prompt = prompt
         self._metadata = ModelMetadata(
@@ -31,12 +30,13 @@ class AgentModel(TextGenModelBase):
     def metadata(self) -> ModelMetadata:
         return self._metadata
 
-    async def generate(
+    async def generate(  # type: ignore[override]
         self,
         params: dict[str, Any],
         stream: bool = False,
-    ) -> Union[TextGenModelOutput, AsyncIterator[TextGenModelChunk]]:
-
+    ) -> (
+        TextGenModelOutput | list[TextGenModelOutput] | AsyncIterator[TextGenModelChunk]
+    ):
         if stream:
             return self._handle_stream(params)
 

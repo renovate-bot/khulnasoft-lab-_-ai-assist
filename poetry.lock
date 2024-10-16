@@ -122,13 +122,13 @@ files = [
 
 [[package]]
 name = "anthropic"
-version = "0.36.0"
+version = "0.36.1"
 description = "The official Python library for the anthropic API"
 optional = false
 python-versions = ">=3.7"
 files = [
-    {file = "anthropic-0.36.0-py3-none-any.whl", hash = "sha256:9183b9eaa0f409f2047244d7ef02c9c3eb916959c0b2960f7605dcb6cabbf548"},
-    {file = "anthropic-0.36.0.tar.gz", hash = "sha256:7b0b1457096605572a29559d9a8ce224b9389d379b410e7d1bf5e0c1379f9ee2"},
+    {file = "anthropic-0.36.1-py3-none-any.whl", hash = "sha256:908968f89ecdf9747c34cf632e2099668ee515a38293d455ef7ad79a3d4f527c"},
+    {file = "anthropic-0.36.1.tar.gz", hash = "sha256:8a343caa335aefc3ce64e2e559c88ca01af409ace5d8c4f83bd0b586315a43a2"},
 ]
 
 [package.dependencies]
@@ -1884,22 +1884,22 @@ referencing = ">=0.31.0"
 
 [[package]]
 name = "langchain"
-version = "0.2.16"
+version = "0.3.0"
 description = "Building applications with LLMs through composability"
 optional = false
-python-versions = "<4.0,>=3.8.1"
+python-versions = "<4.0,>=3.9"
 files = [
-    {file = "langchain-0.2.16-py3-none-any.whl", hash = "sha256:8f59ee8b45f268df4b924ea3b9c63e49286efa756d16b3f6a9de5c6e502c36e1"},
-    {file = "langchain-0.2.16.tar.gz", hash = "sha256:ffb426a76a703b73ac69abad77cd16eaf03dda76b42cff55572f592d74944166"},
+    {file = "langchain-0.3.0-py3-none-any.whl", hash = "sha256:59a75a6a1eb7bfd2a6bf0c7a5816409a8fdc9046187b07af287b23b9899617af"},
+    {file = "langchain-0.3.0.tar.gz", hash = "sha256:a7c23892440bd1f5b9e029ff0dd709dd881ae927c4c0a3210ac64dba9bbf3f7f"},
 ]
 
 [package.dependencies]
 aiohttp = ">=3.8.3,<4.0.0"
-langchain-core = ">=0.2.38,<0.3.0"
-langchain-text-splitters = ">=0.2.0,<0.3.0"
+langchain-core = ">=0.3.0,<0.4.0"
+langchain-text-splitters = ">=0.3.0,<0.4.0"
 langsmith = ">=0.1.17,<0.2.0"
 numpy = {version = ">=1,<2", markers = "python_version < \"3.12\""}
-pydantic = ">=1,<3"
+pydantic = ">=2.7.4,<3.0.0"
 PyYAML = ">=5.3"
 requests = ">=2,<3"
 SQLAlchemy = ">=1.4,<3"
@@ -1907,38 +1907,40 @@ tenacity = ">=8.1.0,<8.4.0 || >8.4.0,<9.0.0"
 
 [[package]]
 name = "langchain-anthropic"
-version = "0.1.23"
+version = "0.2.1"
 description = "An integration package connecting AnthropicMessages and LangChain"
 optional = false
-python-versions = "<4.0,>=3.8.1"
+python-versions = "<4.0,>=3.9"
 files = [
-    {file = "langchain_anthropic-0.1.23-py3-none-any.whl", hash = "sha256:89cafdaf4c9e522484b0ca8bafcceb0a5e4ffca89f7c7c9cec1e2ba411208208"},
-    {file = "langchain_anthropic-0.1.23.tar.gz", hash = "sha256:f2ce045bd0ae09d5f11fed4b84a38ce306822b7bcac77232345f40115df66d51"},
+    {file = "langchain_anthropic-0.2.1-py3-none-any.whl", hash = "sha256:fb3e6cc7f7da323326d37ab4d021bdd2e13ce546192fdfa0ae4fcee38e68b1f4"},
+    {file = "langchain_anthropic-0.2.1.tar.gz", hash = "sha256:acc1113274284ccbce708a44b7a154abe282da04df2cdb9bfdad4b1ff34f9ea5"},
 ]
 
 [package.dependencies]
 anthropic = ">=0.30.0,<1"
 defusedxml = ">=0.7.1,<0.8.0"
-langchain-core = ">=0.2.26,<0.3.0"
+langchain-core = ">=0.3.1,<0.4.0"
+pydantic = ">=2.7.4,<3.0.0"
 
 [[package]]
 name = "langchain-community"
-version = "0.2.12"
+version = "0.3.0"
 description = "Community contributed LangChain integrations."
 optional = false
-python-versions = "<4.0,>=3.8.1"
+python-versions = "<4.0,>=3.9"
 files = [
-    {file = "langchain_community-0.2.12-py3-none-any.whl", hash = "sha256:50e74473dd2309bdef561760afbbf0c5ea17ed91fc4dfa0d52279dd16d6d34e0"},
-    {file = "langchain_community-0.2.12.tar.gz", hash = "sha256:d671cfc6a4f3b65f49a2e59ab420d0164f109d0a56fc4b4996518205c63b8c7e"},
+    {file = "langchain_community-0.3.0-py3-none-any.whl", hash = "sha256:40084f1f785f0fb56c8698ff059bbda8bd8c683cbdffa7902a0e04e72961496c"},
+    {file = "langchain_community-0.3.0.tar.gz", hash = "sha256:1ee8a469ad66977f21b9d96bdcdd8549c5281c474f0f9cc13b932efd63a78105"},
 ]
 
 [package.dependencies]
 aiohttp = ">=3.8.3,<4.0.0"
 dataclasses-json = ">=0.5.7,<0.7"
-langchain = ">=0.2.13,<0.3.0"
-langchain-core = ">=0.2.30,<0.3.0"
-langsmith = ">=0.1.0,<0.2.0"
+langchain = ">=0.3.0,<0.4.0"
+langchain-core = ">=0.3.0,<0.4.0"
+langsmith = ">=0.1.112,<0.2.0"
 numpy = {version = ">=1,<2", markers = "python_version < \"3.12\""}
+pydantic-settings = ">=2.4.0,<3.0.0"
 PyYAML = ">=5.3"
 requests = ">=2,<3"
 SQLAlchemy = ">=1.4,<3"
@@ -1946,50 +1948,51 @@ tenacity = ">=8.1.0,<8.4.0 || >8.4.0,<9.0.0"
 
 [[package]]
 name = "langchain-core"
-version = "0.2.38"
+version = "0.3.5"
 description = "Building applications with LLMs through composability"
 optional = false
-python-versions = "<4.0,>=3.8.1"
+python-versions = "<4.0,>=3.9"
 files = [
-    {file = "langchain_core-0.2.38-py3-none-any.whl", hash = "sha256:8a5729bc7e68b4af089af20eff44fe4e7ca21d0e0c87ec21cef7621981fd1a4a"},
-    {file = "langchain_core-0.2.38.tar.gz", hash = "sha256:eb69dbedd344f2ee1f15bcea6c71a05884b867588fadc42d04632e727c1238f3"},
+    {file = "langchain_core-0.3.5-py3-none-any.whl", hash = "sha256:2b5f86c1101beb013cb264c5722ad21931641493b4dc86e6f0575da698bf5cff"},
+    {file = "langchain_core-0.3.5.tar.gz", hash = "sha256:67e5510559454f3f7a0526e7ef91fd0f12b45c0cdc70720e44909f62b5becf5a"},
 ]
 
 [package.dependencies]
 jsonpatch = ">=1.33,<2.0"
-langsmith = ">=0.1.75,<0.2.0"
+langsmith = ">=0.1.125,<0.2.0"
 packaging = ">=23.2,<25"
-pydantic = {version = ">=1,<3", markers = "python_full_version < \"3.12.4\""}
+pydantic = {version = ">=2.5.2,<3.0.0", markers = "python_full_version < \"3.12.4\""}
 PyYAML = ">=5.3"
 tenacity = ">=8.1.0,<8.4.0 || >8.4.0,<9.0.0"
 typing-extensions = ">=4.7"
 
 [[package]]
 name = "langchain-text-splitters"
-version = "0.2.2"
+version = "0.3.0"
 description = "LangChain text splitting utilities"
 optional = false
-python-versions = "<4.0,>=3.8.1"
+python-versions = "<4.0,>=3.9"
 files = [
-    {file = "langchain_text_splitters-0.2.2-py3-none-any.whl", hash = "sha256:1c80d4b11b55e2995f02d2a326c0323ee1eeff24507329bb22924e420c782dff"},
-    {file = "langchain_text_splitters-0.2.2.tar.gz", hash = "sha256:a1e45de10919fa6fb080ef0525deab56557e9552083600455cb9fa4238076140"},
+    {file = "langchain_text_splitters-0.3.0-py3-none-any.whl", hash = "sha256:e84243e45eaff16e5b776cd9c81b6d07c55c010ebcb1965deb3d1792b7358e83"},
+    {file = "langchain_text_splitters-0.3.0.tar.gz", hash = "sha256:f9fe0b4d244db1d6de211e7343d4abc4aa90295aa22e1f0c89e51f33c55cd7ce"},
 ]
 
 [package.dependencies]
-langchain-core = ">=0.2.10,<0.3.0"
+langchain-core = ">=0.3.0,<0.4.0"
 
 [[package]]
 name = "langsmith"
-version = "0.1.93"
+version = "0.1.126"
 description = "Client library to connect to the LangSmith LLM Tracing and Evaluation Platform."
 optional = false
 python-versions = "<4.0,>=3.8.1"
 files = [
-    {file = "langsmith-0.1.93-py3-none-any.whl", hash = "sha256:811210b9d5f108f36431bd7b997eb9476a9ecf5a2abd7ddbb606c1cdcf0f43ce"},
-    {file = "langsmith-0.1.93.tar.gz", hash = "sha256:285b6ad3a54f50fa8eb97b5f600acc57d0e37e139dd8cf2111a117d0435ba9b4"},
+    {file = "langsmith-0.1.126-py3-none-any.whl", hash = "sha256:16c38ba5dae37a3cc715b6bc5d87d9579228433c2f34d6fa328345ee2b2bcc2a"},
+    {file = "langsmith-0.1.126.tar.gz", hash = "sha256:40f72e2d1d975473dd69269996053122941c1252915bcea55787607e2a7f949a"},
 ]
 
 [package.dependencies]
+httpx = ">=0.23.0,<1"
 orjson = ">=3.9.14,<4.0.0"
 pydantic = {version = ">=1,<3", markers = "python_full_version < \"3.12.4\""}
 requests = ">=2,<3"
@@ -2089,13 +2092,13 @@ rapidfuzz = ">=3.9.0,<4.0.0"
 
 [[package]]
 name = "litellm"
-version = "1.49.2"
+version = "1.49.4"
 description = "Library to easily interface with LLM API providers"
 optional = false
 python-versions = "!=2.7.*,!=3.0.*,!=3.1.*,!=3.2.*,!=3.3.*,!=3.4.*,!=3.5.*,!=3.6.*,!=3.7.*,>=3.8"
 files = [
-    {file = "litellm-1.49.2-py3-none-any.whl", hash = "sha256:fa098963bb95fbe61fe3af24bfd020dd318b5483184ff8bd9c26b7938a47e298"},
-    {file = "litellm-1.49.2.tar.gz", hash = "sha256:f3a493264aae492fc292bb86c88b0c929c0b13267162272183727ce4a99e3859"},
+    {file = "litellm-1.49.4-py3-none-any.whl", hash = "sha256:3094a9f74979da993f4b3298372ec4416f7a3f82d11a0831c9c616098b3fb50a"},
+    {file = "litellm-1.49.4.tar.gz", hash = "sha256:5f16d40bfa7747fcc21f45f340454c57cbc705178244fe7326abac7c0759e05e"},
 ]
 
 [package.dependencies]
@@ -4722,4 +4725,4 @@ test = ["big-O", "importlib-resources", "jaraco.functools", "jaraco.itertools", 
 [metadata]
 lock-version = "2.0"
 python-versions = "~3.11.0"
-content-hash = "68d84774b553fbbef1d703ae402b295325ebb1d22e50a836b1fe155716d98e0b"
+content-hash = "1400cfea62540c51f449d7af8d6514da0255f0c3019f502008b13c343bfbb401"
