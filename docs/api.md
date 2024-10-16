@@ -133,7 +133,7 @@ Example response:
   "metadata": {
     "model": {
       "engine": "anthropic",
-      "name": "claude-2.1",
+      "name": "claude-2.0",
       "lang": "go"
     },
     "timestamp": 1702389469
@@ -154,8 +154,8 @@ Example response:
 Given a prompt, the service will return one suggestion. This endpoint supports
 two versions of payloads.
 
-- If `vertex-ai` model provider is selected, we use `code-gecko@002`.
-- If `anthropic` model provider is selected, we use `claude-2.1`.
+- If `vertex-ai` model provider is selected, we uses `code-gecko@002`.
+- If `anthropic` model provider is selected, we uses `claude-instant-1.2`.
 
 ```plaintext
 POST /v2/completions
@@ -297,7 +297,7 @@ curl --request POST \
     "project_path": "gitlab-org/gitlab-shell",
     "project_id": 33191677,
     "model_provider": "anthropic",
-    "model_name": "claude-2.1",
+    "model_name": "claude-instant-1.2",
     "current_file": {
       "file_name": "test.py",
       "content_above_cursor": "def is_even(n: int) ->",
@@ -306,7 +306,7 @@ curl --request POST \
     "telemetry": [
       {
         "model_engine": "anthropic",
-        "model_name": "claude-2.1",
+        "model_name": "claude-instant-1.2",
         "lang": "python",
         "experiments": [
           {
@@ -329,7 +329,7 @@ Example response:
   "id": "id",
   "model": {
     "engine": "anthropic",
-    "name": "claude-2.1",
+    "name": "claude-instant-1.2",
     "lang": "python"
   },
   "experiments": [
@@ -571,7 +571,7 @@ POST /v1/agent/chat
 | `prompt_components.payload`                    | hash   | yes      | The data of the current prompt component.                                                                                                       |                                                       |
 | `prompt_components.payload.content`            | [string, array]  | yes      | The complete AI prompt (max_len: **400 000**). See [Claude Message API](https://docs.anthropic.com/en/api/messages) for conversation roles payload.models in `claude-3` family. | `content: "hi how are you"`       |
 | `prompt_components.payload.provider`           | string | yes      | The AI provider for which the prompt is designed for. Valid value is: `anthropic`.                                                              | `anthropic`                                           |
-| `prompt_components.payload.model`              | string | yes      | The AI model for which the prompt is designed for. Valid values are: `claude-3-5-sonnet-20240620`,`claude-3-sonnet-20240229`,`claude-3-haiku-2024030`, `claude-3-opus-20240229`, `claude-2.1`.         | `claude-2.0`                            |
+| `prompt_components.payload.model`              | string | yes      | The AI model for which the prompt is designed for. Valid values are: `claude-3-5-sonnet-20240620`,`claude-3-sonnet-20240229`,`claude-3-haiku-2024030`, `claude-3-opus-20240229`, `claude-2.1` and `claude-instant-1.2`.         | `claude-2.0`                            |
 | `prompt_components.prompt_components.metadata` | hash   | no       | The metadata of the prompt component. Only string - string key value pairs are accepted.                                                        |                                                       |
 | `prompt_components.metadata.source`            | string | yes      | The source of the prompt component (max_len: **100**).                                                                                          | `GitLab EE`                                           |
 | `prompt_components.metadata.version`           | string | yes      | The version of the source (max_len: **100**).                                                                                                   | `16.7.0`                                              |
@@ -658,7 +658,7 @@ curl --request POST \
       "payload":{
         "prompt": "Human: Parse following content of Gemfile. Respond using only valid JSON with list of libraries available to use and their short description\n\nGemfile content:\n\n```\n gem kaminari\n```\n\n Assistant: {{\n\"libraries\":[{{\"name\": \"",
         "provider": "anthropic",
-        "model": "claude-2.1"
+        "model": "claude-2.0"
       },
       "metadata": {
         "scannerVersion": "0.0.1"

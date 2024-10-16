@@ -14,7 +14,7 @@ __all__ = [
 class PackageFilePromptPayload(BaseModel):
     prompt: Annotated[str, StringConstraints(max_length=400000)]
     provider: Literal[KindModelProvider.ANTHROPIC]
-    model: Literal[KindAnthropicModel.CLAUDE_2_1]
+    model: Literal[KindAnthropicModel.CLAUDE_INSTANT_1_2, KindAnthropicModel.CLAUDE_2_0]
 
 
 class AnyPromptComponent(BaseModel):

@@ -270,7 +270,7 @@ def mock_suggestions_output_text():
 
 @pytest.fixture
 def mock_suggestions_model():
-    yield "claude-2.1"
+    yield "claude-instant-1.2"
 
 
 @pytest.fixture

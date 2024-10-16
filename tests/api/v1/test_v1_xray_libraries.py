@@ -66,7 +66,7 @@ class TestXRayLibraries:
                         "payload": {
                             "prompt": "Human: Parse Gemfile content: `gem kaminari`. Respond using only valid JSON with list of libraries",
                             "provider": "anthropic",
-                            "model": "claude-2.1",
+                            "model": "claude-2.0",
                         },
                         "metadata": {"scannerVersion": "0.0.1"},
                     }
@@ -117,7 +117,7 @@ class TestUnauthorizedScopes:
                         "payload": {
                             "prompt": "Human: Parse Gemfile content: `gem kaminari`. Respond using only valid JSON with list of libraries",
                             "provider": "anthropic",
-                            "model": "claude-2.1",
+                            "model": "claude-2.0",
                         },
                         "metadata": {"scannerVersion": "0.0.1"},
                     }
@@ -159,7 +159,7 @@ class TestUnauthorizedIssuer:
                         "payload": {
                             "prompt": "Human: Parse Gemfile content: `gem kaminari`. Respond using only valid JSON with list of libraries",
                             "provider": "anthropic",
-                            "model": "claude-2.1",
+                            "model": "claude-2.0",
                         },
                         "metadata": {"scannerVersion": "0.0.1"},
                     }
