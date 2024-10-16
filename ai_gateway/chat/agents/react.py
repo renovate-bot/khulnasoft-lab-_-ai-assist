@@ -135,12 +135,12 @@ def agent_scratchpad_plain_text_renderer(
 
 
 class ReActPlainTextParser(BaseCumulativeTransformOutputParser):
-    re_thought = re.compile(
+    re_thought: re.Pattern = re.compile(
         r"<message>Thought:\s*([\s\S]*?)\s*(?:Action|Final Answer):"
     )
-    re_action = re.compile(r"Action:\s*([\s\S]*?)\s*Action", re.DOTALL)
-    re_action_input = re.compile(r"Action Input:\s*([\s\S]*?)\s*</message>")
-    re_final_answer = re.compile(r"Final Answer:\s*([\s\S]*?)\s*</message>")
+    re_action: re.Pattern = re.compile(r"Action:\s*([\s\S]*?)\s*Action", re.DOTALL)
+    re_action_input: re.Pattern = re.compile(r"Action Input:\s*([\s\S]*?)\s*</message>")
+    re_final_answer: re.Pattern = re.compile(r"Final Answer:\s*([\s\S]*?)\s*</message>")
 
     def _parse_final_answer(self, message: str) -> Optional[AgentFinalAnswer]:
         if match_answer := self.re_final_answer.search(message):
@@ -200,7 +200,7 @@ class ReActPlainTextParser(BaseCumulativeTransformOutputParser):
 
 
 class ReActAgent(Prompt[ReActAgentInputs, TypeAgentEvent]):
-    RETRYABLE_ERRORS = ["overloaded_error"]
+    RETRYABLE_ERRORS: list[str] = ["overloaded_error"]
 
     @staticmethod
     def _build_chain(

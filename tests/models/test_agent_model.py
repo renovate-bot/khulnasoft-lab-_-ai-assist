@@ -1,29 +1,30 @@
-from unittest.mock import AsyncMock, Mock
+from unittest.mock import AsyncMock, MagicMock
 
 import pytest
-from langchain_core.runnables import Runnable
 
 from ai_gateway.models.agent_model import AgentModel
 from ai_gateway.models.base_text import TextGenModelOutput
+from ai_gateway.prompts.base import Prompt
 
 
 class TestAgentModel:
     @pytest.fixture
-    def prompt(self):
+    def prompt(self) -> Prompt:
         async def _stream_prompt(*_args, **_kwargs):
             for action in [AsyncMock(content="part 1"), AsyncMock(content="part 2")]:
                 yield action
 
-        prompt = Mock(spec=Runnable)
+        prompt = MagicMock(spec=Prompt)
+        prompt.name = "test"
         prompt.ainvoke = AsyncMock(
             side_effect=lambda *_args, **_kwargs: AsyncMock(content="whole part")
         )
-        prompt.astream = Mock(side_effect=_stream_prompt)
+        prompt.astream = MagicMock(side_effect=_stream_prompt)
 
         return prompt
 
     @pytest.fixture
-    def model(self, prompt):
+    def model(self, prompt: Prompt):
         return AgentModel(prompt)
 
     @pytest.fixture
@@ -32,7 +33,7 @@ class TestAgentModel:
 
     def test_init(self, prompt, model):
         assert model.prompt == prompt
-        assert model.metadata.name == prompt.name
+        assert model.metadata.name == "test"
         assert model.metadata.engine == "agent"
 
     @pytest.mark.asyncio
