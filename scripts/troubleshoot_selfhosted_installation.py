@@ -1,8 +1,10 @@
+#!/usr/bin/env python3
 # A script that tests if a connection to the server works
 
 import argparse
 import os
 
+import boto3
 import requests
 
 
@@ -30,7 +32,43 @@ def check_aigw_endpoint(endpoint="localhost:5052"):
     raise RuntimeError(error_message)
 
 
-def check_env_variables():
+def check_provider_accessible(provider):
+    # pylint: disable=direct-environment-variable-reference
+    provider_name = provider.capitalize()
+    print(f"Testing if provider {provider_name} is accessible ...")
+
+    if provider == "bedrock":
+        boto3_bedrock = boto3.client(
+            provider,
+            aws_access_key_id=os.getenv("AWS_ACCESS_KEY_ID"),
+            aws_secret_access_key=os.getenv("AWS_SECRET_ACCESS_KEY"),
+            region_name=os.getenv("AWS_REGION_NAME"),
+        )
+
+        try:
+            boto3_bedrock.list_foundation_models()
+        except Exception as e:
+            print(f": {e}")
+            error_message = f"""
+                >> An error occurred while contacting provider {provider}: {e}
+                >> Potential cause(s) are:
+                >> - Access keys are not valid:
+                >>   Make sure the following environment variables are set to the correct values:
+                >>   - AWS_ACCESS_KEY_ID
+                >>   - AWS_SECRET_ACCESS_KEY
+                >>   - AWS_REGION_NAME
+                >> - Network issues:
+                >>   Verify if you can reach the internet from the server.
+                """
+            raise RuntimeError(error_message)
+
+    else:
+        raise ValueError(f"Provider {provider_name} is not a supported provider.")
+
+    print(f">> Provider {provider_name} is accessible ✔\n")
+
+
+def check_general_env_variables():
     # pylint: disable=direct-environment-variable-reference
     print("Testing environment variables ...")
 
@@ -53,10 +91,40 @@ def check_env_variables():
     print(">> Env variables are set correctly ✔\n")
 
 
-def check_suggestions_model_access(endpoint, model_name, model_endpoint, model_key):
-    print(f"Testing if model {model_name} is accessible")
+def check_provider_specific_env_variables(provider):
+    # pylint: disable=direct-environment-variable-reference
+    provider_name = provider.capitalize()
+    missing_vars = []
 
-    url = f"http://{endpoint}/v2/code/completions"
+    if provider == "bedrock":
+        required_vars = [
+            "AWS_ACCESS_KEY_ID",
+            "AWS_SECRET_ACCESS_KEY",
+            "AWS_REGION_NAME",
+        ]
+    else:
+        raise ValueError(f"Provider {provider_name} is not a supported provider.")
+
+    print(f"Testing specific environment variables for provider {provider_name} ...")
+
+    for var in required_vars:
+        if not os.getenv(var):
+            missing_vars.append(var)
+
+    if missing_vars:
+        error_message = f"Missing environment variables: {', '.join(missing_vars)} for provider {provider_name}\n"
+        raise ValueError(error_message)
+    print(
+        f">> Specific environment variables for provider {provider_name} are set correctly ✔\n"
+    )
+
+
+def check_suggestions_model_access(
+    endpoint, model_name, model_endpoint, model_key, model_identifier
+):
+    print(f"Testing if model {model_name} is accessible for Code Generation ...")
+
+    url = f"http://{endpoint}/v2/code/generations"
 
     headers = {"accept": "application/json", "Content-Type": "application/json"}
     payload = {
@@ -69,15 +137,18 @@ def check_suggestions_model_access(endpoint, model_name, model_endpoint, model_k
             "content_below_cursor": "",
         },
         "model_provider": "litellm",
-        "model_endpoint": "http://localhost:4000",
-        "model_api_key": "",
-        "model_name": "codegemma_7b",
+        "model_endpoint": model_endpoint,
+        "model_api_key": model_key,
+        "model_identifier": model_identifier,
+        "model_name": model_name,
         "telemetry": [],
         "stream": False,
-        "choices_count": 1,
+        "choices_count": 0,
         "context": [],
         "agent_id": "string",
+        "prompt_id": "code_suggestions/generations",
         "prompt_version": 2,
+        "prompt": "",
     }
 
     error_message = f"""
@@ -114,23 +185,53 @@ def check_suggestions_model_access(endpoint, model_name, model_endpoint, model_k
 
 
 if __name__ == "__main__":
-    # PArse the endpoint, model_name, model_endpoint, model_key with argparse
+    # Parse the endpoint, model_name, model_endpoint, model_key, model_identifier with argparse
 
     parser = argparse.ArgumentParser(description="Test AI Gateway and model access")
     parser.add_argument(
         "--endpoint", default="localhost:5052", help="AI Gateway endpoint"
     )
     parser.add_argument("--model-name", required=True, help="Name of the model to test")
-    parser.add_argument("--model-endpoint", required=True, help="Endpoint of the model")
+    parser.add_argument(
+        "--model-endpoint",
+        required=False,
+        default="http://localhost:4000",
+        help="Endpoint of the model. Example: http://localhost:4000. "
+        "When using a model from an online provider like Bedrock, "
+        "this can be left empty.",
+    )
+    parser.add_argument(
+        "--model-identifier", required=False, help="Identifier of the model"
+    )
     parser.add_argument("--model-key", required=False, help="API key for the model")
 
     args = parser.parse_args()
 
+    # Check if model_endpoint is required but not provided
+    if args.model_identifier is None and args.model_endpoint is None:
+        parser.error(
+            "--model-endpoint is required when --model-identifier is not provided"
+        )
+
+    # If model_endpoint is not provided, set a default value
+    if args.model_endpoint is None:
+        args.model_endpoint = "http://localhost:4000"
+
     endpoint = args.endpoint
     model_name = args.model_name
     model_endpoint = args.model_endpoint
+    model_identifier = args.model_identifier
     model_key = args.model_key
 
-    check_env_variables()
+    # if model_identifier is provided, extract the provider
+    # example: extract `bedrock` from `bedrock/anthropic.claude-3-5-sonnet-20240620-v1:0`
+    provider = model_identifier.split("/")[0] if model_identifier else None
+
+    check_general_env_variables()
     check_aigw_endpoint(endpoint)
-    check_suggestions_model_access(endpoint, model_name, model_endpoint, model_key)
+    if provider:
+        check_provider_specific_env_variables(provider)
+        check_provider_accessible(provider)
+    check_suggestions_model_access(
+        endpoint, model_name, model_endpoint, model_key, model_identifier
+    )
