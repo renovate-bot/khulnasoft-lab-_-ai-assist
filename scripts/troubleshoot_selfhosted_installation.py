@@ -191,7 +191,9 @@ if __name__ == "__main__":
     parser.add_argument(
         "--endpoint", default="localhost:5052", help="AI Gateway endpoint"
     )
-    parser.add_argument("--model-name", required=True, help="Name of the model to test")
+    parser.add_argument(
+        "--model-name", required=False, help="Name of the model to test"
+    )
     parser.add_argument(
         "--model-endpoint",
         required=False,
@@ -229,9 +231,12 @@ if __name__ == "__main__":
 
     check_general_env_variables()
     check_aigw_endpoint(endpoint)
-    if provider:
-        check_provider_specific_env_variables(provider)
-        check_provider_accessible(provider)
-    check_suggestions_model_access(
-        endpoint, model_name, model_endpoint, model_key, model_identifier
-    )
+
+    if model_name:
+        if provider:
+            check_provider_specific_env_variables(provider)
+            check_provider_accessible(provider)
+
+        check_suggestions_model_access(
+            endpoint, model_name, model_endpoint, model_key, model_identifier
+        )
