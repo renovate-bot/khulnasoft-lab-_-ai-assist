@@ -8,7 +8,6 @@ from langchain_core.messages import BaseMessage
 from pydantic_core import Url
 
 from ai_gateway.api.v1 import api_router
-from ai_gateway.chat.agents import ReActAgent, ReActAgentInputs
 from ai_gateway.cloud_connector import User, UserClaims
 from ai_gateway.config import Config
 from ai_gateway.gitlab_features import GitLabUnitPrimitive
@@ -70,19 +69,7 @@ def prompt(
     model_metadata: ModelMetadata | None,
     prompt_kwargs: dict,
 ):
-    if prompt_class is ReActAgent:
-        yield prompt_class(
-            model_factory,
-            prompt_config,
-            model_metadata,
-            chat_history="chat_history",
-            agent_inputs=ReActAgentInputs(),
-            **prompt_kwargs,
-        )
-    else:
-        yield prompt_class(
-            model_factory, prompt_config, model_metadata, **prompt_kwargs
-        )
+    yield prompt_class(model_factory, prompt_config, model_metadata, **prompt_kwargs)
 
 
 @pytest.fixture
@@ -149,13 +136,6 @@ class TestPrompt:
                 {
                     "detail": "\"Input to ChatPromptTemplate is missing variables {'age'}.  Expected: ['age', 'name'] Received: ['name']"
                 },
-            ),
-            (
-                ReActAgent,
-                {"name": "John", "age": 20},
-                None,
-                422,
-                {"detail": "Prompt 'test' is not supported"},
             ),
         ],
     )

@@ -7,7 +7,9 @@ from dependency_injector import containers, providers
 from pydantic_core import Url
 
 from ai_gateway.chat.agents.react import ReActAgent, ReActAgentInputs
+from ai_gateway.chat.agents.typing import Message
 from ai_gateway.config import Config
+from ai_gateway.models.base_chat import Role
 from ai_gateway.prompts import Prompt
 from ai_gateway.prompts.registry import LocalPromptRegistry
 from ai_gateway.prompts.typing import ModelMetadata
@@ -45,8 +47,9 @@ def test_container(mock_container: containers.DeclarativeContainer):
         prompt = registry.get(
             str(prompt_id),
             model_metadata=model_metadata,
-            chat_history="test",
-            agent_inputs=ReActAgentInputs(),
+            agent_inputs=ReActAgentInputs(
+                messages=[Message(role=Role.USER, content="hi")]
+            ),
         )
         assert isinstance(prompt, Prompt)
 
@@ -55,5 +58,5 @@ def test_container(mock_container: containers.DeclarativeContainer):
         else:
             prompt_template = prompt.bound.first  # type: ignore[attr-defined]
 
-        # Check that the messages are populated correctly
-        assert len(prompt_template.format_messages()) > 0
+            # Check that the messages are populated correctly
+            assert len(prompt_template.format_messages()) > 0

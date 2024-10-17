@@ -166,7 +166,7 @@ class TestReActAgentStream:
     @pytest.mark.asyncio
     @pytest.mark.parametrize(
         (
-            "prompt",
+            "messages",
             "agent_options",
             "actions",
             "model_metadata",
@@ -175,9 +175,21 @@ class TestReActAgentStream:
         ),
         [
             (
-                "What's the title of this issue?",
+                [
+                    Message(role=Role.USER, content="chat history"),
+                    Message(role=Role.ASSISTANT, content="chat history"),
+                    Message(
+                        role=Role.USER,
+                        content="What's the title of this issue?",
+                        context=Context(type="issue", content="issue content"),
+                        current_file=CurrentFile(
+                            file_path="main.py",
+                            data="def main()",
+                            selected_code=True,
+                        ),
+                    ),
+                ],
                 AgentRequestOptions(
-                    chat_history="chat history",
                     agent_scratchpad=ReActAgentScratchpad(
                         agent_type="react",
                         steps=[
@@ -188,12 +200,6 @@ class TestReActAgentStream:
                                 observation="observation",
                             )
                         ],
-                    ),
-                    context=Context(type="issue", content="issue content"),
-                    current_file=CurrentFile(
-                        file_path="main.py",
-                        data="def main()",
-                        selected_code=True,
                     ),
                 ),
                 [
@@ -225,7 +231,7 @@ class TestReActAgentStream:
         mock_client: TestClient,
         mocked_stream: Mock,
         mock_track_internal_event,
-        prompt: str,
+        messages: list[Message],
         agent_options: AgentRequestOptions,
         actions: list[TypeAgentEvent],
         expected_actions: list[TypeAgentEvent],
@@ -245,7 +251,7 @@ class TestReActAgentStream:
                 "X-Gitlab-Authentication-Type": "oidc",
             },
             json={
-                "prompt": prompt,
+                "messages": [m.model_dump(mode="json") for m in messages],
                 "options": agent_options.model_dump(mode="json"),
                 "model_metadata": model_metadata.model_dump(mode="json"),
                 "unavailable_resources": unavailable_resources,
@@ -270,11 +276,8 @@ class TestReActAgentStream:
         ]
 
         agent_inputs = ReActAgentInputs(
-            question=prompt,
-            chat_history=agent_options.chat_history,
+            messages=messages,
             agent_scratchpad=agent_scratchpad,
-            context=agent_options.context,
-            current_file=agent_options.current_file,
             model_metadata=model_metadata,
             unavailable_resources=unavailable_resources,
         )
@@ -408,16 +411,15 @@ class TestChatAgent:
     @pytest.mark.asyncio
     @pytest.mark.parametrize(
         (
-            "question",
+            "messages",
             "agent_options",
             "model_response",
             "expected_actions",
         ),
         [
             (
-                "Basic request",
+                [Message(role=Role.USER, content="Basic request")],
                 AgentRequestOptions(
-                    chat_history="",
                     agent_scratchpad=ReActAgentScratchpad(agent_type="react", steps=[]),
                 ),
                 "thought\nFinal Answer: answer\n",
@@ -429,16 +431,19 @@ class TestChatAgent:
                 ],
             ),
             (
-                "Request with '{}' in the input",
+                [
+                    Message(
+                        role=Role.USER,
+                        content="Request with '{}' in the input",
+                        current_file=CurrentFile(
+                            file_path="main.c",
+                            data="int main() {}",
+                            selected_code=True,
+                        ),
+                    )
+                ],
                 AgentRequestOptions(
-                    chat_history="",
                     agent_scratchpad=ReActAgentScratchpad(agent_type="react", steps=[]),
-                    current_file=CurrentFile(
-                        file_path="main.c",
-                        data="int main() {}",
-                        selected_code=True,
-                    ),
-                    additional_context=[AdditionalContext(category="merge_request")],
                 ),
                 "thought\nFinal Answer: answer\n",
                 [
@@ -456,7 +461,7 @@ class TestChatAgent:
         mock_model: Mock,
         mocked_tools: Mock,
         mock_track_internal_event,
-        question: str,
+        messages: list[Message],
         agent_options: AgentRequestOptions,
         expected_actions: list[TypeAgentEvent],
     ):
@@ -467,7 +472,7 @@ class TestChatAgent:
                 "X-Gitlab-Authentication-Type": "oidc",
             },
             json={
-                "prompt": question,
+                "messages": [m.model_dump(mode="json") for m in messages],
                 "options": agent_options.model_dump(mode="json"),
             },
         )
