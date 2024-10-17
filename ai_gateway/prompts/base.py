@@ -111,12 +111,17 @@ class Prompt(RunnableBinding[Input, Output]):
 
     async def astream(
         self,
-        input: Input,
+        input: Optional[Input] = None,
         config: Optional[RunnableConfig] = None,
         **kwargs: Optional[Any],
     ) -> AsyncIterator[Output]:
+        if input:
+            lc_input = input
+        else:
+            lc_input = cast(Input, {})
+
         with self.instrumentator.watch(stream=True) as watcher:
-            async for item in super().astream(input, config, **kwargs):
+            async for item in super().astream(lc_input, config, **kwargs):
                 yield item
 
             await watcher.afinish()

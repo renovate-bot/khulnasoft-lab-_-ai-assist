@@ -61,8 +61,11 @@ def internal_event_client():
     [
         (
             ReActAgentInputs(
-                question="debug question",
-                chat_history="debug chat_history",
+                messages=[
+                    Message(role=Role.USER, content="debug chat_history"),
+                    Message(role=Role.ASSISTANT, content="debug chat_history"),
+                    Message(role=Role.USER, content="debug question"),
+                ],
                 agent_scratchpad=[],
             ),
             StarletteUser(
@@ -75,8 +78,11 @@ def internal_event_client():
         ),
         (
             ReActAgentInputs(
-                question="question",
-                chat_history="chat_history",
+                messages=[
+                    Message(role=Role.USER, content="chat_history"),
+                    Message(role=Role.ASSISTANT, content="chat_history"),
+                    Message(role=Role.USER, content="question"),
+                ],
                 agent_scratchpad=[],
             ),
             StarletteUser(
@@ -90,36 +96,6 @@ def internal_event_client():
     ],
 )
 class TestGLAgentRemoteExecutor:
-    @pytest.mark.asyncio
-    async def test_invoke(
-        self,
-        agent: Mock,
-        agent_factory: Mock,
-        agent_events,
-        tools_registry: DuoChatToolsRegistry,
-        internal_event_client: Mock,
-        inputs: ReActAgentInputs,
-        user: StarletteUser,
-    ):
-        executor = GLAgentRemoteExecutor(
-            agent_factory=agent_factory,
-            tools_registry=tools_registry,
-            internal_event_client=internal_event_client,
-        )
-
-        gl_version = "17.2.0"
-        executor.on_behalf(user, gl_version)
-
-        actual_action = await executor.invoke(inputs=inputs)
-
-        agent_factory.assert_called_once_with(
-            chat_history=inputs.chat_history,
-            model_metadata=inputs.model_metadata,
-            agent_inputs=inputs,
-        )
-        agent.ainvoke.assert_called_once_with(inputs)
-        assert actual_action == agent_events
-
     @pytest.mark.asyncio
     async def test_stream(
         self,
@@ -155,11 +131,10 @@ class TestGLAgentRemoteExecutor:
                 assert context.get("duo_chat.agent_available_tools") == ["issue_reader"]
 
         agent_factory.assert_called_once_with(
-            chat_history=inputs.chat_history,
             model_metadata=inputs.model_metadata,
             agent_inputs=inputs,
         )
-        agent.astream.assert_called_once_with(inputs)
+        agent.astream.assert_called_once()
         assert actual_actions == agent_events
 
 

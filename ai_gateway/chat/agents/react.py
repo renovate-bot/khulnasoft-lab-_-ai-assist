@@ -1,5 +1,5 @@
 import re
-from typing import Annotated, Any, AsyncIterator, Optional, Sequence
+from typing import Any, AsyncIterator, Optional, Sequence
 
 import starlette_context
 import structlog
@@ -9,23 +9,19 @@ from langchain_core.output_parsers import BaseCumulativeTransformOutputParser
 from langchain_core.outputs import Generation
 from langchain_core.prompts.chat import MessageLikeRepresentation
 from langchain_core.runnables import Runnable, RunnableConfig
-from pydantic import BaseModel, Field
+from pydantic import BaseModel
 
 from ai_gateway.chat.agents.typing import (
-    AdditionalContext,
     AgentError,
     AgentFinalAnswer,
     AgentStep,
     AgentToolAction,
     AgentUnknownAction,
-    Context,
-    CurrentFile,
     Message,
     TypeAgentEvent,
 )
 from ai_gateway.chat.tools.base import BaseTool
 from ai_gateway.feature_flags import FeatureFlag, is_feature_enabled
-from ai_gateway.models.base_chat import Message as LegacyMessage
 from ai_gateway.models.base_chat import Role
 from ai_gateway.prompts import Prompt, jinja2_formatter
 from ai_gateway.prompts.typing import ModelMetadata
@@ -42,96 +38,13 @@ log = structlog.stdlib.get_logger("react")
 
 
 class ReActAgentInputs(BaseModel):
-    # Deprecated in favor of `messages`
-    question: Annotated[Optional[str], Field(deprecated=True)] = None
-    # Deprecated in favor of `messages`
-    chat_history: Optional[
-        Annotated[list[LegacyMessage] | list[str] | str, Field(deprecated=True)]
-    ] = None
+    messages: list[Message]
     agent_scratchpad: Optional[list[AgentStep]] = None
-    # Deprecated in favor of `messages`
-    context: Annotated[Optional[Context], Field(deprecated=True)] = None
-    # Deprecated in favor of `messages`
-    current_file: Annotated[Optional[CurrentFile], Field(deprecated=True)] = None
     model_metadata: Optional[ModelMetadata] = None
-    # Deprecated in favor of `messages`
-    additional_context: Annotated[
-        Optional[list[AdditionalContext]], Field(deprecated=True)
-    ] = None
     unavailable_resources: Optional[list[str]] = [
         "Merge Requests, Pipelines, Vulnerabilities"
     ]
     tools: Optional[list[BaseTool]] = None
-    messages: Optional[list[Message]] = None
-
-
-# ReActInputParser is deprecated in favor of ReActAgent._build_messages_from_messages
-class ReActInputParser(Runnable[ReActAgentInputs, dict]):
-    def invoke(
-        self, input: ReActAgentInputs, config: Optional[RunnableConfig] = None
-    ) -> dict:
-        final_inputs = {
-            "additional_context": input.additional_context,
-            "question": input.question,
-            "agent_scratchpad": agent_scratchpad_plain_text_renderer(
-                input.agent_scratchpad
-            ),
-            "current_file": input.current_file,
-            "unavailable_resources": input.unavailable_resources,
-            "tools": input.tools,
-        }
-
-        if isinstance(input.chat_history, list) and any(
-            isinstance(m, LegacyMessage) for m in input.chat_history
-        ):
-            pass  # no-op
-        else:
-            # Legacy support for chat history as a string
-            final_inputs.update(
-                {"chat_history": chat_history_plain_text_renderer(input.chat_history)}
-            )
-
-        if context := input.context:
-            final_inputs.update({"context": context})
-
-        if is_feature_enabled(FeatureFlag.EXPANDED_AI_LOGGING):
-            log.info("ReActInputParser", source=__name__, final_inputs=final_inputs)
-
-        return final_inputs
-
-
-def chat_history_plain_text_renderer(chat_history: list | str) -> str:
-    if isinstance(chat_history, list):
-        return "\n".join(chat_history)
-
-    return chat_history
-
-
-def agent_scratchpad_plain_text_renderer(
-    scratchpad: list[AgentStep],
-) -> str:
-    if not scratchpad:
-        return ""
-
-    tpl = (
-        "Thought: {thought}\n"
-        "Action: {action}\n"
-        "Action Input: {action_input}\n"
-        "Observation: {observation}"
-    )
-
-    steps = [
-        tpl.format(
-            thought=pad.action.thought,
-            action=pad.action.tool,
-            action_input=pad.action.tool_input,
-            observation=pad.observation,
-        )
-        for pad in scratchpad
-        if isinstance(pad.action, AgentToolAction)
-    ]
-
-    return "\n".join(steps)
 
 
 class ReActPlainTextParser(BaseCumulativeTransformOutputParser):
@@ -206,25 +119,10 @@ class ReActAgent(Prompt[ReActAgentInputs, TypeAgentEvent]):
     def _build_chain(
         chain: Runnable[ReActAgentInputs, TypeAgentEvent]
     ) -> Runnable[ReActAgentInputs, TypeAgentEvent]:
-        return ReActInputParser() | chain | ReActPlainTextParser()
+        return chain | ReActPlainTextParser()
 
     @classmethod
     def build_messages(
-        cls,
-        prompt_template: dict[str, str],
-        agent_inputs: ReActAgentInputs,
-        chat_history: Optional[list[LegacyMessage] | list[str] | str] = None,
-        **kwargs,
-    ) -> Sequence[MessageLikeRepresentation]:
-        if isinstance(agent_inputs.messages, list) and all(
-            isinstance(m, Message) for m in agent_inputs.messages
-        ):
-            return cls._build_messages_from_messages(prompt_template, agent_inputs)
-
-        return cls._build_messages_from_prompt(prompt_template, chat_history)
-
-    @classmethod
-    def _build_messages_from_messages(
         cls,
         prompt_template: dict[str, str],
         agent_inputs: ReActAgentInputs,
@@ -266,47 +164,13 @@ class ReActAgent(Prompt[ReActAgentInputs, TypeAgentEvent]):
         )
         return messages
 
-    @classmethod
-    def _build_messages_from_prompt(
-        cls,
-        prompt_template: dict[str, str],
-        chat_history: list[LegacyMessage] | list[str] | str,
-    ) -> Sequence[MessageLikeRepresentation]:
-        messages = []
-
-        if "system" in prompt_template:
-            messages.append(("system", prompt_template["system"]))
-
-        # NOTE: You MUST encapsulate arbitrary inputs into HumanMessage or AIMessage.
-        # Do NOT use other types (e.g. tuple).
-        # See https://gitlab.com/gitlab-org/modelops/applied-ml/code-suggestions/ai-assist/-/issues/604
-        if isinstance(chat_history, list) and all(
-            isinstance(m, LegacyMessage) for m in chat_history
-        ):
-            for m in chat_history:
-                if m.role is Role.USER:
-                    messages.append(HumanMessage(m.content))
-                elif m.role is Role.ASSISTANT:
-                    messages.append(AIMessage(m.content))
-                else:
-                    raise ValueError("Unsupported message")
-
-        if "user" in prompt_template:
-            messages.append(("user", prompt_template["user"]))
-
-        if "assistant" in prompt_template:
-            messages.append(("assistant", prompt_template["assistant"]))
-
-        return messages
-
     async def astream(
         self,
-        input: ReActAgentInputs,
         config: Optional[RunnableConfig] = None,
         **kwargs: Optional[Any],
     ) -> AsyncIterator[TypeAgentEvent]:
         events = []
-        astream = super().astream(input, config=config, **kwargs)
+        astream = super().astream(config=config, **kwargs)
         len_final_answer = 0
 
         try:

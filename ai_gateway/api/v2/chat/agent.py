@@ -116,24 +116,11 @@ async def chat(
         scratchpad = []
 
     inputs = ReActAgentInputs(
-        question=agent_request.prompt,
+        messages=agent_request.messages,
         agent_scratchpad=scratchpad,
         model_metadata=agent_request.model_metadata,
         unavailable_resources=agent_request.unavailable_resources,
-        messages=agent_request.messages,
     )
-
-    if agent_request.options and agent_request.options.chat_history:
-        inputs.chat_history = agent_request.options.chat_history
-
-    if agent_request.options and agent_request.options.context:
-        inputs.context = agent_request.options.context
-
-    if agent_request.options and agent_request.options.current_file:
-        inputs.current_file = agent_request.options.current_file
-
-    if agent_request.options and agent_request.options.additional_context:
-        inputs.additional_context = agent_request.options.additional_context
 
     gl_version = request.headers.get(X_GITLAB_VERSION_HEADER, "")
     gl_agent_remote_executor.on_behalf(current_user, gl_version)
