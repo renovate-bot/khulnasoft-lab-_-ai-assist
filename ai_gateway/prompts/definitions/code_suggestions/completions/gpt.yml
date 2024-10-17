@@ -1,0 +1,28 @@
+---
+name: GPT Code Completions
+model:
+  name: gpt
+  params:
+    model_class_provider: litellm
+    temperature: 0.0
+    max_tokens: 128
+    max_retries: 1
+unit_primitives:
+  - code_suggestions
+prompt_template:
+  user: |
+    You are a code completion tool that performs Fill-in-the-middle. You must fill the code between the prefix and the suffix.
+    Important: 
+    - You MUST NOT output any additional human text or explanation
+    - You MUST output code exclusively. 
+    - The suggested code MUST work by simpling concatenating to the provided code. 
+    - You MUST not include any sort of markdown markup.
+    
+    <SUFFIX>
+    {{suffix}}
+    </SUFFIX>
+    <PREFIX>
+    {{prefix}}
+    </PREFIX>
+params:
+  timeout: 60
