@@ -3,6 +3,7 @@ import os
 from contextlib import asynccontextmanager
 
 import litellm
+import structlog
 from fastapi import APIRouter, FastAPI
 from fastapi.exception_handlers import http_exception_handler
 from fastapi.middleware.cors import CORSMiddleware
@@ -94,16 +95,19 @@ def create_fast_api_server(config: Config):
                 CompositeProvider(
                     [
                         LocalAuthProvider(
+                            structlog,
                             signing_key=config.self_signed_jwt.signing_key,
                             validation_key=config.self_signed_jwt.validation_key,
                         ),
                         GitLabOidcProvider(
+                            structlog,
                             oidc_providers={
                                 "Gitlab": config.gitlab_url,
                                 "CustomersDot": config.customer_portal_url,
-                            }
+                            },
                         ),
-                    ]
+                    ],
+                    structlog,
                 ),
                 bypass_auth=config.auth.bypass_external,
                 bypass_auth_with_header=config.auth.bypass_external_with_header,

@@ -8,8 +8,8 @@ from jose import JWTError, jwk, jwt
 from jose.exceptions import JWKError
 
 from ai_gateway.cloud_connector.cache import LocalAuthCache
-from ai_gateway.cloud_connector.logging import log_exception
 from ai_gateway.cloud_connector.user import User, UserClaims
+from ai_gateway.tracking.errors import log_exception
 
 __all__ = [
     "AuthProvider",
@@ -29,12 +29,24 @@ class AuthProvider(ABC):
 
 
 class JwksProvider:
-    @abstractmethod
+    def __init__(self, log_provider) -> None:
+        self.logger = log_provider.getLogger("cloud_connector")
+
     def jwks(self, *args, **kwargs) -> dict:
+        new_jwks = self.load_jwks(*args, **kwargs)
+        self._log_keyset_update(new_jwks)
+        return new_jwks
+
+    @abstractmethod
+    def load_jwks(self, *args, **kwargs) -> dict:
         pass
 
+    def _log_keyset_update(self, jwks):
+        kids = [key["kid"] for key in jwks["keys"]]
+        self.logger.info("JWKS refreshed", kids=kids, provider=self.__class__.__name__)
 
-class CompositeProvider(AuthProvider):
+
+class CompositeProvider(JwksProvider, AuthProvider):
     RS256_ALGORITHM = "RS256"
     SUPPORTED_ALGORITHMS = [RS256_ALGORITHM]
     AUDIENCE = "gitlab-ai-gateway"
@@ -43,13 +55,16 @@ class CompositeProvider(AuthProvider):
     class CriticalAuthError(Exception):
         pass
 
-    def __init__(self, providers: list[JwksProvider], expiry_seconds: int = 86400):
+    def __init__(
+        self, providers: list[JwksProvider], log_provider, expiry_seconds: int = 86400
+    ):
+        super().__init__(log_provider)
         self.providers = providers
         self.expiry_seconds = expiry_seconds
         self.cache = LocalAuthCache()
 
     def authenticate(self, token: str) -> User:
-        jwks = self._jwks()
+        jwks = self.jwks()
         is_allowed = False
         gitlab_realm = ""
         subject = ""
@@ -93,12 +108,12 @@ class CompositeProvider(AuthProvider):
             ),
         )
 
-    def _jwks(self) -> dict:
+    def load_jwks(self) -> dict:
         jwks_record = self.cache.get(self.CACHE_KEY)
         if jwks_record and jwks_record.exp > datetime.now():
             return jwks_record.value
 
-        jwks: defaultdict[str, list] = defaultdict()
+        jwks: dict[str, list] = defaultdict()
         jwks["keys"] = []
         for provider in self.providers:
             try:
@@ -118,12 +133,13 @@ class CompositeProvider(AuthProvider):
 class LocalAuthProvider(JwksProvider):
     ALGORITHM = CompositeProvider.RS256_ALGORITHM
 
-    def __init__(self, signing_key: str, validation_key: str) -> None:
+    def __init__(self, log_provider, signing_key: str, validation_key: str) -> None:
+        super().__init__(log_provider)
         self.signing_key = signing_key
         self.validation_key = validation_key
 
-    def jwks(self) -> dict:
-        jwks: defaultdict[str, list] = defaultdict(list)
+    def load_jwks(self) -> dict:
+        jwks: dict[str, list] = defaultdict(list)
         jwks["keys"] = []
 
         try:
@@ -169,10 +185,11 @@ class LocalAuthProvider(JwksProvider):
 
 
 class GitLabOidcProvider(JwksProvider):
-    def __init__(self, oidc_providers: dict[str, str]):
+    def __init__(self, log_provider, oidc_providers: dict[str, str]):
+        super().__init__(log_provider)
         self.oidc_providers = oidc_providers
 
-    def jwks(self) -> dict:
+    def load_jwks(self) -> dict:
         jwks = defaultdict(list)
 
         for oidc_provider, base_url in self.oidc_providers.items():

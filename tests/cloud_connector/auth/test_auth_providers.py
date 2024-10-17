@@ -1,5 +1,5 @@
 import json
-from unittest.mock import patch
+from unittest.mock import Mock, call, patch
 
 import pytest
 import requests
@@ -271,15 +271,18 @@ UGw3kIW+604fnnXLDm4TaLA=
             status=200,
         )
 
+        log_provider = Mock()
         auth_provider = CompositeProvider(
             [
                 GitLabOidcProvider(
+                    log_provider,
                     oidc_providers={
                         "Gitlab": "http://test.com",
                         "CustomersDot": "http://customers.test.com",
-                    }
+                    },
                 )
-            ]
+            ],
+            log_provider,
         )
 
         token = jwt.encode(
@@ -335,14 +338,17 @@ UGw3kIW+604fnnXLDm4TaLA=
             status=200,
         )
 
+        log_provider = Mock()
         auth_provider = CompositeProvider(
             [
                 GitLabOidcProvider(
+                    log_provider,
                     oidc_providers={
                         "Gitlab": "http://test.com",
-                    }
+                    },
                 ),
-            ]
+            ],
+            log_provider,
         )
         token = jwt.encode(
             {},
@@ -436,16 +442,19 @@ UGw3kIW+604fnnXLDm4TaLA=
         signing_key = self.private_key_ai_gateway_signing_key_test
         validation_key = self.private_key_ai_gateway_validation_key_test
 
+        log_provider = Mock()
         auth_provider = CompositeProvider(
             [
-                LocalAuthProvider(signing_key, validation_key),
+                LocalAuthProvider(log_provider, signing_key, validation_key),
                 GitLabOidcProvider(
+                    log_provider,
                     oidc_providers={
                         "Gitlab": "http://test.com",
                         "CustomersDot": "http://customers.test.com",
-                    }
+                    },
                 ),
-            ]
+            ],
+            log_provider,
         )
 
         token = jwt.encode(
@@ -476,3 +485,50 @@ UGw3kIW+604fnnXLDm4TaLA=
             "MFRZ2Sp4sCciuzxArGCtNP5w2X716R6prptJqYHpFBw",
             "ZoObadsnUfqW_C_EfXp9DM6LUdzl0R",
         ]
+
+    @responses.activate
+    def test_log_jwks_update(self):
+        responses.get(
+            "http://test.com/.well-known/openid-configuration",
+            body='{"jwks_uri": "http://test.com/oauth/discovery/keys"}',
+            status=200,
+        )
+        responses.get(
+            "http://test.com/oauth/discovery/keys",
+            body=f'{{"keys": [{json.dumps(self.public_key_test)}]}}',
+            status=200,
+        )
+
+        logger = Mock()
+        log_provider = Mock()
+        log_provider.getLogger.return_value = logger
+        auth_provider = CompositeProvider(
+            [
+                GitLabOidcProvider(
+                    log_provider,
+                    oidc_providers={
+                        "Gitlab": "http://test.com",
+                    },
+                ),
+            ],
+            log_provider,
+        )
+
+        jwks = auth_provider.jwks()
+        assert jwks is not None
+        assert len(jwks["keys"]) == 1
+
+        logger.info.assert_has_calls(
+            [
+                call(
+                    "JWKS refreshed",
+                    kids=["MFRZ2Sp4sCciuzxArGCtNP5w2X716R6prptJqYHpFBw"],
+                    provider="GitLabOidcProvider",
+                ),
+                call(
+                    "JWKS refreshed",
+                    kids=["MFRZ2Sp4sCciuzxArGCtNP5w2X716R6prptJqYHpFBw"],
+                    provider="CompositeProvider",
+                ),
+            ]
+        )
