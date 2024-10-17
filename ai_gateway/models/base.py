@@ -1,3 +1,4 @@
+import json
 from abc import ABC, abstractmethod
 from enum import StrEnum
 from typing import Any, NamedTuple, Optional
@@ -125,12 +126,17 @@ def grpc_connect_vertex(client_options: dict) -> PredictionServiceAsyncClient:
 
 async def log_anthropic_request(request: httpx.Request):
     if is_feature_enabled(FeatureFlag.EXPANDED_AI_LOGGING):
+        try:
+            request_content_json = json.loads(request.content.decode("utf8"))
+        except Exception:
+            request_content_json = {}
+
         log.info(
             "Request to Anthropic",
             source=__name__,
             request_method=request.method,
             request_url=request.url,
-            request_content=request.content,
+            request_content_json=request_content_json,
         )
 
 
