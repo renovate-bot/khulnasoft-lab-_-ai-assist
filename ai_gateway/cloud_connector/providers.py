@@ -33,9 +33,17 @@ class JwksProvider:
         self.logger = log_provider.getLogger("cloud_connector")
 
     def jwks(self, *args, **kwargs) -> dict:
+        cached_jwks = self.cached_jwks(*args, **kwargs)
+        if cached_jwks and len(cached_jwks) > 0:
+            return cached_jwks
+
         new_jwks = self.load_jwks(*args, **kwargs)
         self._log_keyset_update(new_jwks)
         return new_jwks
+
+    @abstractmethod
+    def cached_jwks(self, *args, **kwargs) -> dict:
+        pass
 
     @abstractmethod
     def load_jwks(self, *args, **kwargs) -> dict:
@@ -108,11 +116,14 @@ class CompositeProvider(JwksProvider, AuthProvider):
             ),
         )
 
-    def load_jwks(self) -> dict:
+    def cached_jwks(self) -> dict:
         jwks_record = self.cache.get(self.CACHE_KEY)
         if jwks_record and jwks_record.exp > datetime.now():
             return jwks_record.value
 
+        return defaultdict()
+
+    def load_jwks(self) -> dict:
         jwks: dict[str, list] = defaultdict()
         jwks["keys"] = []
         for provider in self.providers:
