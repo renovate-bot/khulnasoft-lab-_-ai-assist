@@ -11,8 +11,8 @@ unit_primitives:
   - write_tests
 prompt_template:
   system: |
-    {% include 'chat/summarize_comments/system.jinja' %}
+    {% include 'chat/write_tests/system.jinja' %}
   user: |
-    {% include 'chat/summarize_comments/user.jinja' %}
+    {% include 'chat/write_tests/user.jinja' %}
 params:
   timeout: 60
