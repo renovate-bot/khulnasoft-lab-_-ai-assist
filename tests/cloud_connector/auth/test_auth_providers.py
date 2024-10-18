@@ -514,10 +514,14 @@ UGw3kIW+604fnnXLDm4TaLA=
             log_provider,
         )
 
+        # Make sure to warm up the key cache; we only want log events
+        # when the cache is first populated or refreshed.
+        _ = auth_provider.jwks()
         jwks = auth_provider.jwks()
         assert jwks is not None
         assert len(jwks["keys"]) == 1
 
+        assert logger.info.call_count == 2
         logger.info.assert_has_calls(
             [
                 call(
