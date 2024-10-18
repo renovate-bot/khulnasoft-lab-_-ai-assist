@@ -1,5 +1,5 @@
 ---
-name: Claude 3 Commit Reader agent
+name: Claude 3 Merge Request Reader agent
 model:
   name: claude-3-sonnet-20240229
   params:
@@ -11,10 +11,10 @@ unit_primitives:
   - duo_chat
 prompt_template:
   system: |
-    {% include 'chat/commit_reader/system.jinja' %}
+    {% include 'chat/merge_request_reader/system.jinja' %}
   user: |
-    {% include 'chat/commit_reader/user.jinja' %}
+    {% include 'chat/merge_request_reader/user.jinja' %}
   assistant: |
-    {% include 'chat/commit_reader/assistant.jinja' %}
+    {% include 'chat/merge_request_reader/assistant.jinja' %}
 params:
   timeout: 60

@@ -1,7 +1,7 @@
 ---
-name: Claude 3 Commit Reader agent
+name: Mistral Commit Reader agent
 model:
-  name: claude-3-sonnet-20240229
+  name: mistral
   params:
     model_class_provider: litellm
     temperature: 0.0
