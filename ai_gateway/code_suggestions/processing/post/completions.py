@@ -1,5 +1,6 @@
 from enum import StrEnum
 from functools import partial
+from inspect import iscoroutinefunction
 from typing import Any, Callable, NewType, Optional
 
 from ai_gateway.code_suggestions.processing.ops import strip_whitespaces
@@ -9,6 +10,7 @@ from ai_gateway.code_suggestions.processing.post.ops import (
     fix_end_block_errors,
     fix_end_block_errors_with_comparison,
     remove_comment_only_completion,
+    strip_asterisks,
     trim_by_min_allowed_context,
 )
 from ai_gateway.code_suggestions.processing.typing import LanguageId
@@ -29,6 +31,7 @@ class PostProcessorOperation(StrEnum):
     FIX_END_BLOCK_ERRORS_WITH_COMPARISON = "fix_end_block_errors_with_comparison"
     CLEAN_MODEL_REFLECTION = "clean_model_reflection"
     STRIP_WHITESPACES = "strip_whitespaces"
+    STRIP_ASTERISKS = "strip_asterisks"
 
 
 # This is the ordered list of prost-processing functions
@@ -52,12 +55,14 @@ class PostProcessor(PostProcessorBase):
             dict[PostProcessorOperation, PostProcessorOperation]
         ] = None,
         exclude: Optional[list] = None,
+        extras: Optional[list] = None,
     ):
         self.code_context = code_context
         self.lang_id = lang_id
         self.suffix = suffix if suffix else ""
         self.overrides = overrides if overrides else {}
         self.exclude = set(exclude) if exclude else []
+        self.extras = extras if extras else []
 
     @property
     def ops(self) -> list[AliasOpsRecord]:
@@ -84,22 +89,33 @@ class PostProcessor(PostProcessorBase):
                 clean_model_reflection, self.code_context
             ),
             PostProcessorOperation.STRIP_WHITESPACES: strip_whitespaces,
+            PostProcessorOperation.STRIP_ASTERISKS: strip_asterisks,
         }
 
     async def process(self, completion: str, **kwargs: Any) -> str:
-        for processor in ORDERED_POST_PROCESSORS:
+        for processor in self._ordered_post_processors():
             if str(processor) in self.exclude:
                 continue
 
-            func = self._get_processor_function(processor)
+            completion = await self._apply_post_processor(processor, completion)
 
-            completion = await func(completion)
             if completion == "":
                 return ""
 
         return completion
 
-    def _get_processor_function(self, processor_key):
+    def _ordered_post_processors(self):
+        return ORDERED_POST_PROCESSORS + self.extras
+
+    async def _apply_post_processor(self, processor_key, completion):
         # Override post-processor if present in `overrides`, else use the given processor
         actual_processor_key = self.overrides.get(processor_key, processor_key)
-        return self.ops[actual_processor_key]
+        func = self.ops[actual_processor_key]
+
+        if self._is_async(func):
+            return await func(completion)
+
+        return func(completion)
+
+    def _is_async(self, func):
+        return iscoroutinefunction(func)

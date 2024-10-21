@@ -20,6 +20,7 @@ __all__ = [
     "fix_end_block_errors_with_comparison",
     "strip_code_block_markdown",
     "prepend_new_line",
+    "strip_asterisks",
 ]
 
 log = structlog.stdlib.get_logger("codesuggestions")
@@ -28,6 +29,7 @@ log = structlog.stdlib.get_logger("codesuggestions")
 _COMMENT_IDENTIFIERS = ["/*", "//", "#"]
 _SPECIAL_CHARS = "()[];.,$%&^*@#!{}/"
 _RE_MARKDOWN_CODE_BLOCK_BEGIN = re.compile(r"^`{3}\S*\n", flags=re.MULTILINE)
+_RE_LEADING_ASTERISKS = r"^\s*\*{5,}"
 
 
 async def clean_model_reflection(context: str, completion: str, **kwargs: Any) -> str:
@@ -278,4 +280,17 @@ async def remove_comment_only_completion(
     except ValueError as e:
         log.warning(f"Failed to parse code: {e}")
 
+    return completion
+
+
+# This trims leading asterisks in the suggestion
+# https://gitlab.com/gitlab-org/modelops/applied-ml/code-suggestions/ai-assist/-/merge_requests/1470
+def strip_asterisks(completion: str) -> str:
+    # search first part of completion for a string of asterisks
+    # if there is a match, return an empty completion
+    if re.search(_RE_LEADING_ASTERISKS, completion):
+        return ""
+
+    # else, return the original completion
+    # if there is no match for a string of asterisks, no need to clean the completion
     return completion
