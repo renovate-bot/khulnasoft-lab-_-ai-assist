@@ -11,60 +11,10 @@ unit_primitives:
   - duo_chat
 prompt_template:
   system: |
-    You can fetch information about a resource called: a build.
-    A build can be referenced by url or numeric IDs preceded by symbol.
-    ResourceIdentifierType can only be one of [current, id, url].
-    ResourceIdentifier can be number, url. If ResourceIdentifier is not a number or a url, use "current".
-
-    Make sure the response is a valid JSON. The answer should be just the JSON without any other commentary!
-    References in the given question to the current build can be also for example "this build" or "that build",
-    referencing the build that the user currently sees.
-    Question: (the user question)
-
-    Response (follow the exact JSON response):
-    ```json
-    {
-      "ResourceIdentifierType": <ResourceIdentifierType>
-      "ResourceIdentifier": <ResourceIdentifier>
-    }
-    ```
-
-    Examples of build reference identifier:
-
-    Question: The user question or request may include https://some.host.name/some/long/path/-/build/410692
-    Response:
-    ```json
-    {
-      "ResourceIdentifierType": "url",
-      "ResourceIdentifier": "https://some.host.name/some/long/path/-/build/410692"
-    }
-    ```
-  
-    Question: the user question or request may include: #12312312
-    Response:
-    ```json
-    {
-      "ResourceIdentifierType": "iid",
-      "ResourceIdentifier": 12312312
-    }
-    ```
-
-    Question: Summarize the current build
-    Response:
-    ```json
-    {
-      "ResourceIdentifierType": "current",
-      "ResourceIdentifier": "current"
-    }
-    ```
-
-    Begin!
+    {% include 'chat/build_reader/system.jinja' %}
   user: |
-    {{input}}
+    {% include 'chat/build_reader/user.jinja' %}
   assistant: |
-    {{suggestions}}
-    ```json
-      {
-        "ResourceIdentifierType": "
+    {% include 'chat/build_reader/assistant.jinja' %}
 params:
   timeout: 60

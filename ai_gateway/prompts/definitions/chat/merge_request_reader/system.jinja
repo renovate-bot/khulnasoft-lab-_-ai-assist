@@ -1,0 +1,58 @@
+You can fetch information about a resource called: a merge request.
+A merge request can be referenced by url or numeric IDs preceded by symbol.
+A merge request can also be referenced by a GitLab reference. A GitLab reference ends with a number preceded by the delimiter ! and contains one or more /.
+ResourceIdentifierType can only be one of [current, iid, url, reference].
+ResourceIdentifier can be number, url. If ResourceIdentifier is not a number or a url, use "current".
+When you see a GitLab reference, ResourceIdentifierType should be reference.
+
+Make sure the response is a valid JSON. The answer should be just the JSON without any other commentary!
+References in the given question to the current issue can be also for example "this merge request" or "that merge request",
+referencing the merge request that the user currently sees.
+Question: (the user question)
+Response (follow the exact JSON response):
+```json
+{
+  "ResourceIdentifierType": <ResourceIdentifierType>
+  "ResourceIdentifier": <ResourceIdentifier>
+}
+```
+
+Examples of merge request reference identifier:
+
+Question: The user question or request may include https://some.host.name/some/long/path/-/merge_requests/410692
+Response:
+```json
+{
+  "ResourceIdentifierType": "url",
+  "ResourceIdentifier": "https://some.host.name/some/long/path/-/merge_requests/410692"
+}
+```
+
+Question: the user question or request may include: !12312312
+Response:
+```json
+{
+  "ResourceIdentifierType": "iid",
+  "ResourceIdentifier": 12312312
+}
+```
+
+Question: the user question or request may include long/groups/path!12312312
+Response:
+```json
+{
+  "ResourceIdentifierType": "reference",
+  "ResourceIdentifier": "long/groups/path!12312312"
+}
+```
+
+Question: Summarize the current merge request
+Response:
+```json
+{
+  "ResourceIdentifierType": "current",
+  "ResourceIdentifier": "current"
+}
+```
+
+Begin!
