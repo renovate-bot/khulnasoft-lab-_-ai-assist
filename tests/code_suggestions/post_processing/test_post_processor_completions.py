@@ -71,6 +71,16 @@ def mock_strip_whitespaces():
         yield mock
 
 
+@pytest.fixture
+def mock_strip_asterisks():
+    with patch(
+        "ai_gateway.code_suggestions.processing.post.completions.strip_asterisks"
+    ) as mock:
+        mock.return_value = "processed completion"
+
+        yield mock
+
+
 class TestPostProcessorCompletions:
     @pytest.mark.asyncio
     async def test_process(
@@ -107,6 +117,7 @@ class TestPostProcessorCompletions:
         mock_fix_end_block_errors_with_comparison: Mock,
         mock_clean_model_reflection: Mock,
         mock_strip_whitespaces: Mock,
+        mock_strip_asterisks: Mock,
     ):
         code_context = "test code context"
         lang_id = LanguageId.RUBY
@@ -120,6 +131,9 @@ class TestPostProcessorCompletions:
             overrides={
                 PostProcessorOperation.FIX_END_BLOCK_ERRORS: PostProcessorOperation.FIX_END_BLOCK_ERRORS_WITH_COMPARISON,
             },
+            extras=[
+                PostProcessorOperation.STRIP_ASTERISKS,
+            ],
         )
         await post_processor.process(completion)
 
@@ -131,6 +145,7 @@ class TestPostProcessorCompletions:
 
         mock_clean_model_reflection.assert_called_once()
         mock_strip_whitespaces.assert_called_once()
+        mock_strip_asterisks.assert_called_once()
 
     @pytest.mark.asyncio
     async def test_process_with_exclusions(

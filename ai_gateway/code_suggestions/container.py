@@ -162,6 +162,7 @@ class ContainerCodeCompletions(containers.DeclarativeContainer):
             overrides={
                 PostProcessorOperation.FIX_END_BLOCK_ERRORS: PostProcessorOperation.FIX_END_BLOCK_ERRORS_WITH_COMPARISON,
             },
+            extras=[PostProcessorOperation.STRIP_ASTERISKS],
             exclude=config.excl_post_proc,
         ).provider,
     )
