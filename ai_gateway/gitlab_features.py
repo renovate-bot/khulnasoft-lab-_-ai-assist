@@ -27,6 +27,7 @@ class GitLabUnitPrimitive(StrEnum):
     CODE_SUGGESTIONS = "code_suggestions"
     DOCUMENTATION_SEARCH = "documentation_search"
     DUO_CHAT = "duo_chat"
+    EPIC_READER = "epic_reader"
     EXPLAIN_CODE = "explain_code"
     EXPLAIN_VULNERABILITY = "explain_vulnerability"
     FILL_IN_MERGE_REQUEST_TEMPLATE = "fill_in_merge_request_template"
@@ -39,6 +40,7 @@ class GitLabUnitPrimitive(StrEnum):
     INCLUDE_ISSUE_CONTEXT = "include_issue_context"
     INCLUDE_MERGE_REQUEST_CONTEXT = "include_merge_request_context"
     INCLUDE_SNIPPET_CONTEXT = "include_snippet_context"
+    ISSUE_READER = "issue_reader"
     REFACTOR_CODE = "refactor_code"
     RESOLVE_VULNERABILITY = "resolve_vulnerability"
     REVIEW_MERGE_REQUEST = "review_merge_request"
@@ -66,6 +68,7 @@ FEATURE_CATEGORIES_FOR_PROXY_ENDPOINTS = {
     GitLabUnitPrimitive.CATEGORIZE_DUO_CHAT_QUESTION: GitLabFeatureCategory.DUO_CHAT,
     GitLabUnitPrimitive.DOCUMENTATION_SEARCH: GitLabFeatureCategory.DUO_CHAT,
     GitLabUnitPrimitive.DUO_CHAT: GitLabFeatureCategory.DUO_CHAT,
+    GitLabUnitPrimitive.EPIC_READER: GitLabFeatureCategory.DUO_CHAT,
     GitLabUnitPrimitive.EXPLAIN_CODE: GitLabFeatureCategory.SOURCE_CODE_MANAGEMENT,
     GitLabUnitPrimitive.EXPLAIN_VULNERABILITY: GitLabFeatureCategory.VULNERABILITY_MANAGEMENT,
     GitLabUnitPrimitive.FILL_IN_MERGE_REQUEST_TEMPLATE: GitLabFeatureCategory.CODE_REVIEW_WORKFLOW,
@@ -74,6 +77,7 @@ FEATURE_CATEGORIES_FOR_PROXY_ENDPOINTS = {
     GitLabUnitPrimitive.GENERATE_CUBE_QUERY: GitLabFeatureCategory.PRODUCT_ANALYTICS_VISUALIZATION,
     GitLabUnitPrimitive.GENERATE_ISSUE_DESCRIPTION: GitLabFeatureCategory.TEAM_PLANNING,
     GitLabUnitPrimitive.GLAB_ASK_GIT_COMMAND: GitLabFeatureCategory.CODE_REVIEW_WORKFLOW,
+    GitLabUnitPrimitive.ISSUE_READER: GitLabFeatureCategory.DUO_CHAT,
     GitLabUnitPrimitive.REFACTOR_CODE: GitLabFeatureCategory.DUO_CHAT,
     GitLabUnitPrimitive.RESOLVE_VULNERABILITY: GitLabFeatureCategory.VULNERABILITY_MANAGEMENT,
     GitLabUnitPrimitive.REVIEW_MERGE_REQUEST: GitLabFeatureCategory.CODE_REVIEW_WORKFLOW,
@@ -100,6 +104,7 @@ UNIT_PRIMITIVE_AND_DESCRIPTION_MAPPING = {
     GitLabUnitPrimitive.CATEGORIZE_DUO_CHAT_QUESTION: "Categorize user's question to GitLab Duo Chat for internal telemetry purpose",
     GitLabUnitPrimitive.DOCUMENTATION_SEARCH: "Perform semantic search on gitlab documentations for a given query.",
     GitLabUnitPrimitive.DUO_CHAT: "Ask various GitLab-related questions and tasks.",
+    GitLabUnitPrimitive.EPIC_READER: "Retrieves the contents of a specific epic or work item.",
     GitLabUnitPrimitive.EXPLAIN_CODE: "Explain function or method of the selected code",
     GitLabUnitPrimitive.EXPLAIN_VULNERABILITY: "Explain a security vulnerability of the given CVE or code.",
     GitLabUnitPrimitive.FILL_IN_MERGE_REQUEST_TEMPLATE: "Fill code change summary in a description of new merge request.",
@@ -107,6 +112,7 @@ UNIT_PRIMITIVE_AND_DESCRIPTION_MAPPING = {
     GitLabUnitPrimitive.GENERATE_COMMIT_MESSAGE: "Generate a Git commit message.",
     GitLabUnitPrimitive.GENERATE_CUBE_QUERY: "Convert plain text questions about event data in to a structured query in JSON format.",
     GitLabUnitPrimitive.GENERATE_ISSUE_DESCRIPTION: "Generate an issue description.",
+    GitLabUnitPrimitive.ISSUE_READER: "Retrieves the contents of a specific issue.",
     GitLabUnitPrimitive.REFACTOR_CODE: "Refactor the selected code.",
     GitLabUnitPrimitive.RESOLVE_VULNERABILITY: "Write code that fixes the vulnerability.",
     GitLabUnitPrimitive.REVIEW_MERGE_REQUEST: "Review new hunk and old hunk of a merge request diff.",
