@@ -391,6 +391,7 @@ class TestLocalPromptRegistry:
             "expected_class",
             "expected_model",
             "expected_kwargs",
+            "expected_input_variables",
         ),
         [
             (
@@ -400,6 +401,17 @@ class TestLocalPromptRegistry:
                 Prompt,
                 "claude-3-5-sonnet-20240620",
                 {"stop": ["</new_code>"]},
+                [
+                    "examples_array",
+                    "file_name",
+                    "language",
+                    "libraries",
+                    "related_files",
+                    "related_snippets",
+                    "trimmed_content_above_cursor",
+                    "trimmed_content_below_cursor",
+                    "user_instruction",
+                ],
             ),
         ],
     )
@@ -412,6 +424,7 @@ class TestLocalPromptRegistry:
         expected_class: Type[Prompt],
         expected_model: str,
         expected_kwargs: dict,
+        expected_input_variables: list[str],
     ):
         registry = LocalPromptRegistry.from_local_yaml(
             class_overrides={},
@@ -422,6 +435,7 @@ class TestLocalPromptRegistry:
         chain = cast(RunnableSequence, prompt.bound)
         binding = cast(RunnableBinding, chain.last)
 
+        assert prompt.prompt_tpl.input_variables == expected_input_variables
         assert prompt.name == expected_name
         assert isinstance(prompt, expected_class)
         assert prompt.model_name == expected_model
