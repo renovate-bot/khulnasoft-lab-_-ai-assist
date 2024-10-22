@@ -167,7 +167,7 @@ def create_database(output_path: str, sql_tuples: list):
         connection.commit()
 
 
-if __name__ == "__main__":
+def build_indexed_docs():
     args = parse_arguments()
 
     docs_path = fetch_documents(version_tag=args.version_tag)

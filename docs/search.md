@@ -139,5 +139,5 @@ by querying `create issue`.
 To generate the corpus, run:
 
 ```shell
-poetry run python scripts/index_docs_as_sqlite.py -o <tmp/output-database-path> -v <gitlab-version-tag>
+poetry run index_docs -o <tmp/output-database-path> -v <gitlab-version-tag>
 ```
