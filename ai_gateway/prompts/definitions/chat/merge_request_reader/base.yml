@@ -8,7 +8,7 @@ model:
     max_tokens: 2_048
     max_retries: 1
 unit_primitives:
-  - duo_chat
+  - ask_merge_request
 prompt_template:
   system: |
     {% include 'chat/merge_request_reader/system.jinja' %}
