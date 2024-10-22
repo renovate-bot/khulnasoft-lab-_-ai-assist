@@ -31,9 +31,9 @@ prompt_template:
     </examples>
     {%- endif %}
 
-    {%- if trimmed_prefix or trimmed_suffix %}
+    {%- if trimmed_content_above_cursor or trimmed_content_below_cursor %}
     <existing_code>
-    {{trimmed_prefix}}{% raw %}{{cursor}}{% endraw %}{{trimmed_suffix}}
+    {{trimmed_content_above_cursor}}{% raw %}{{cursor}}{% endraw %}{{trimmed_content_above_cursor}}
     </existing_code>
 
     The existing code is provided in <existing_code></existing_code> tags.
