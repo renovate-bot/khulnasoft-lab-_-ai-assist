@@ -184,7 +184,7 @@ def check_suggestions_model_access(
     raise RuntimeError(error_message)
 
 
-if __name__ == "__main__":
+def troubleshoot():
     # Parse the endpoint, model_name, model_endpoint, model_key, model_identifier with argparse
 
     parser = argparse.ArgumentParser(description="Test AI Gateway and model access")

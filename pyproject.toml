@@ -83,6 +83,8 @@ asyncio_default_fixture_loop_scope = "function"
 
 [tool.poetry.scripts]
 ai_gateway = "ai_gateway.main:run_app"
+index_docs = "ai_gateway.scripts.index_docs_as_sqlite:build_indexed_docs"
+troubleshoot = "ai_gateway.scripts.troubleshoot_selfhosted_installation:troubleshoot"
 
 [tool.isort]
 profile = "black"
