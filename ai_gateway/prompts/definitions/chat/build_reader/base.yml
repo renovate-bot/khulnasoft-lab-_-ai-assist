@@ -1,7 +1,7 @@
 ---
 name: Claude 3 Build Reader agent
 model:
-  name: claude-3-sonnet-20240229
+  name: claude-3-5-sonnet-20241022
   params:
     model_class_provider: anthropic
     temperature: 0.0
