@@ -474,7 +474,7 @@ def prompt_template():
 
 @pytest.fixture
 def unit_primitives():
-    yield ["analyze_ci_job_failure"]
+    yield ["code_suggestions"]
 
 
 @pytest.fixture

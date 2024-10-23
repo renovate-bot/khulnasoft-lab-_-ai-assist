@@ -28,18 +28,15 @@ class TestBaseRegistry:
         [
             ([GitLabUnitPrimitive.CODE_SUGGESTIONS], ["code_suggestions"], True),
             (
-                [
-                    GitLabUnitPrimitive.CODE_SUGGESTIONS,
-                    GitLabUnitPrimitive.ANALYZE_CI_JOB_FAILURE,
-                ],
-                ["code_suggestions", "analyze_ci_job_failure"],
+                [GitLabUnitPrimitive.CODE_SUGGESTIONS, GitLabUnitPrimitive.ASK_BUILD],
+                ["code_suggestions", "ask_build"],
                 True,
             ),
             ([GitLabUnitPrimitive.CODE_SUGGESTIONS], [], False),
             (
                 [
                     GitLabUnitPrimitive.CODE_SUGGESTIONS,
-                    GitLabUnitPrimitive.ANALYZE_CI_JOB_FAILURE,
+                    GitLabUnitPrimitive.ASK_BUILD,
                 ],
                 ["code_suggestions"],
                 False,

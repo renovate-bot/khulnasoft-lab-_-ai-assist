@@ -17,7 +17,6 @@ class GitLabFeatureCategory(StrEnum):
 
 # Make sure these unit primitives are defined in `ee/config/cloud_connector/access_data.yml`
 class GitLabUnitPrimitive(StrEnum):
-    ANALYZE_CI_JOB_FAILURE = "analyze_ci_job_failure"
     ASK_BUILD = "ask_build"
     ASK_COMMIT = "ask_commit"
     ASK_EPIC = "ask_epic"
@@ -57,7 +56,6 @@ class WrongUnitPrimitives(Exception):
 
 
 FEATURE_CATEGORIES_FOR_PROXY_ENDPOINTS = {
-    GitLabUnitPrimitive.ANALYZE_CI_JOB_FAILURE: GitLabFeatureCategory.CONTINUOUS_INTEGRATION,
     GitLabUnitPrimitive.ASK_BUILD: GitLabFeatureCategory.DUO_CHAT,
     GitLabUnitPrimitive.ASK_COMMIT: GitLabFeatureCategory.DUO_CHAT,
     GitLabUnitPrimitive.ASK_EPIC: GitLabFeatureCategory.DUO_CHAT,
@@ -91,7 +89,6 @@ FEATURE_CATEGORIES_FOR_PROXY_ENDPOINTS = {
 # See https://gitlab.com/gitlab-org/gitlab/-/issues/465221
 # TODO: Ask stage groups to give better descriptions for these UPs.
 UNIT_PRIMITIVE_AND_DESCRIPTION_MAPPING = {
-    GitLabUnitPrimitive.ANALYZE_CI_JOB_FAILURE: "Explain why a GitLab CI job failed and suggest a fix for it",
     GitLabUnitPrimitive.ASK_BUILD: "Ask questions about GitLab builds",
     GitLabUnitPrimitive.ASK_COMMIT: "Ask questions about GitLab commits",
     GitLabUnitPrimitive.ASK_EPIC: "Ask questions about GitLab epics",
