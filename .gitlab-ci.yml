@@ -36,6 +36,8 @@ variables:
 
   SAST_EXCLUDED_PATHS: "tests, tmp, api"
 
+  CLOUD_CONNECTOR_SERVICE_NAME: "gitlab-ai-gateway"
+
 include:
   - local: .gitlab/ci/build.gitlab-ci.yml
   - local: .gitlab/ci/lint.gitlab-ci.yml
@@ -118,6 +120,7 @@ build-docker-model-gateway:
   variables:
     KANIKO_BUILD_FILE: Dockerfile
     KANIKO_DESTINATION: "${TARGET_IMAGE}"
+    CLOUD_CONNECTOR_SERVICE_NAME: "${CLOUD_CONNECTOR_SERVICE_NAME}"
 
 tests:unit:
   extends: .poetry

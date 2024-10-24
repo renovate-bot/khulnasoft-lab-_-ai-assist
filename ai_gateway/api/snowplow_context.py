@@ -9,7 +9,7 @@ from ai_gateway.api.middleware import (
     X_GITLAB_REALM_HEADER,
     X_GITLAB_SAAS_DUO_PRO_NAMESPACE_IDS_HEADER,
 )
-from ai_gateway.cloud_connector import SELF_SIGNED_TOKEN_ISSUER
+from ai_gateway.cloud_connector import CloudConnectorConfig
 from ai_gateway.tracking import SnowplowEventContext
 
 
@@ -32,7 +32,7 @@ def get_snowplow_code_suggestion_context(
     if (
         req.user
         and req.user.claims
-        and req.user.claims.issuer == SELF_SIGNED_TOKEN_ISSUER
+        and req.user.claims.issuer == CloudConnectorConfig().service_name
     ):
         is_direct_connection = True
 

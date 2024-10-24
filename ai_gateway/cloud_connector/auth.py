@@ -1,8 +1,8 @@
 from typing import Dict, Optional, Tuple
 
+from ai_gateway.cloud_connector.config import CloudConnectorConfig
 from ai_gateway.cloud_connector.logging import log_exception
 from ai_gateway.cloud_connector.providers import AuthProvider
-from ai_gateway.cloud_connector.token_authority import SELF_SIGNED_TOKEN_ISSUER
 from ai_gateway.cloud_connector.user import CloudConnectorUser, UserClaims
 from ai_gateway.cloud_connector.validators import (
     X_GITLAB_DUO_SEAT_COUNT_HEADER,
@@ -101,7 +101,7 @@ def _validate_headers(claims, headers) -> Optional[CloudConnectorAuthError]:
         "gitlab_instance_id": X_GITLAB_INSTANCE_ID_HEADER,
         "subject": (
             X_GITLAB_GLOBAL_USER_ID_HEADER
-            if claims.issuer == SELF_SIGNED_TOKEN_ISSUER
+            if claims.issuer == CloudConnectorConfig().service_name
             else X_GITLAB_INSTANCE_ID_HEADER
         ),
     }

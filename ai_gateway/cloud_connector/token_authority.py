@@ -3,17 +3,13 @@ from datetime import datetime, timedelta, timezone
 
 from jose import JWTError, jwt
 
+from ai_gateway.cloud_connector.config import CloudConnectorConfig
 from ai_gateway.cloud_connector.logging import log_exception
 from ai_gateway.cloud_connector.providers import CompositeProvider
-from ai_gateway.gitlab_features import GitLabUnitPrimitive
 
 __all__ = [
-    "SELF_SIGNED_TOKEN_ISSUER",
     "TokenAuthority",
 ]
-
-
-SELF_SIGNED_TOKEN_ISSUER = "gitlab-ai-gateway"
 
 
 class TokenAuthority:
@@ -23,21 +19,22 @@ class TokenAuthority:
         self.signing_key = signing_key
 
     def encode(
-        self, sub, gitlab_realm, current_user, gitlab_instance_id
+        self, sub, gitlab_realm, current_user, gitlab_instance_id, scopes
     ) -> tuple[str, int]:
         expires_at = datetime.now(timezone.utc) + timedelta(hours=1)
         try:
+            self_signed_token_issuer = CloudConnectorConfig().service_name
             claims = {
-                "iss": SELF_SIGNED_TOKEN_ISSUER,
+                "iss": self_signed_token_issuer,
                 "sub": sub,
-                "aud": SELF_SIGNED_TOKEN_ISSUER,
+                "aud": self_signed_token_issuer,
                 "exp": expires_at,
                 "nbf": datetime.now(timezone.utc),
                 "iat": datetime.now(timezone.utc),
                 "jti": str(uuid.uuid4()),
                 "gitlab_realm": gitlab_realm,
                 "gitlab_instance_id": gitlab_instance_id,
-                "scopes": [GitLabUnitPrimitive.CODE_SUGGESTIONS],
+                "scopes": scopes,
             }
 
             duo_seat_count = getattr(current_user.claims, "duo_seat_count", "")

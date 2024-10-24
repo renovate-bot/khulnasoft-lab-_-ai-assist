@@ -8,6 +8,7 @@ from jose import JWTError, jwk, jwt
 from jose.exceptions import JWKError
 
 from ai_gateway.cloud_connector.cache import LocalAuthCache
+from ai_gateway.cloud_connector.config import CloudConnectorConfig
 from ai_gateway.cloud_connector.user import User, UserClaims
 from ai_gateway.tracking.errors import log_exception
 
@@ -31,6 +32,10 @@ class AuthProvider(ABC):
 class JwksProvider:
     def __init__(self, log_provider) -> None:
         self.logger = log_provider.getLogger("cloud_connector")
+
+    @property
+    def cloud_connector_service_name(self) -> str:
+        return CloudConnectorConfig().service_name
 
     def jwks(self, *args, **kwargs) -> dict:
         cached_jwks = self.cached_jwks(*args, **kwargs)
@@ -57,7 +62,6 @@ class JwksProvider:
 class CompositeProvider(JwksProvider, AuthProvider):
     RS256_ALGORITHM = "RS256"
     SUPPORTED_ALGORITHMS = [RS256_ALGORITHM]
-    AUDIENCE = "gitlab-ai-gateway"
     CACHE_KEY = "jwks"
 
     class CriticalAuthError(Exception):
@@ -90,7 +94,7 @@ class CompositeProvider(JwksProvider, AuthProvider):
             jwt_claims = jwt.decode(
                 token,
                 jwks,
-                audience=self.AUDIENCE,
+                audience=self.cloud_connector_service_name,
                 algorithms=self.SUPPORTED_ALGORITHMS,
             )
             gitlab_realm = jwt_claims.get("gitlab_realm", "")
@@ -164,7 +168,7 @@ class LocalAuthProvider(JwksProvider):
             )
             signing_key.update(
                 {
-                    "kid": "gitlab_ai_gateway_signing_key",
+                    "kid": f"{self.cloud_connector_service_name}_signing_key",
                     "use": "sig",
                 }
             )
@@ -182,7 +186,7 @@ class LocalAuthProvider(JwksProvider):
             )
             validation_key.update(
                 {
-                    "kid": "gitlab_ai_gateway_validation_key",
+                    "kid": f"{self.cloud_connector_service_name}_validation_key",
                     "use": "sig",
                 }
             )
