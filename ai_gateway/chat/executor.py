@@ -5,6 +5,7 @@ from langchain_core.runnables import Runnable
 
 from ai_gateway.api.auth_utils import StarletteUser
 from ai_gateway.chat.agents import (
+    AgentError,
     AgentToolAction,
     ReActAgent,
     TypeAgentEvent,
@@ -56,7 +57,7 @@ class GLAgentRemoteExecutor(Generic[TypeAgentInputs, TypeAgentEvent]):
         return self._tools
 
     @property
-    def tools_by_name(self) -> list[BaseTool]:
+    def tools_by_name(self) -> dict:
         return {tool.name: tool for tool in self.tools}
 
     def on_behalf(self, user: StarletteUser, gl_version: str):
@@ -82,11 +83,15 @@ class GLAgentRemoteExecutor(Generic[TypeAgentInputs, TypeAgentEvent]):
         log.info("Processed inputs", source=__name__, inputs=inputs)
 
         async for event in agent.astream():
-            yield event
-
-            if isinstance(event, AgentToolAction) and event.tool in tools_by_name:
-                tool = tools_by_name[event.tool]
-                self.internal_event_client.track_event(
-                    f"request_{tool.unit_primitive}",
-                    category=__name__,
-                )
+            if isinstance(event, AgentToolAction):
+                if event.tool in tools_by_name:
+                    tool = tools_by_name[event.tool]
+                    self.internal_event_client.track_event(
+                        f"request_{tool.unit_primitive}",
+                        category=__name__,
+                    )
+                    yield event
+                else:
+                    yield AgentError(message="tool not available", retryable=False)
+            else:
+                yield event
