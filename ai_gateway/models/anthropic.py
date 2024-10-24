@@ -73,7 +73,7 @@ class KindAnthropicModel(StrEnum):
     CLAUDE_2_1 = "claude-2.1"
     CLAUDE_3_OPUS = "claude-3-opus-20240229"
     CLAUDE_3_SONNET = "claude-3-sonnet-20240229"
-    CLAUDE_3_5_SONNET = "claude-3-5-sonnet-20241022"
+    CLAUDE_3_5_SONNET = "claude-3-5-sonnet-20240620"
     CLAUDE_3_HAIKU = "claude-3-haiku-20240307"
 
 
