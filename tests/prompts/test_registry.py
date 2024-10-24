@@ -399,7 +399,7 @@ class TestLocalPromptRegistry:
                 None,
                 "Claude 3 Code Generations Agent",
                 Prompt,
-                "claude-3-5-sonnet-20240620",
+                "claude-3-5-sonnet-20241022",
                 {"stop": ["</new_code>"]},
                 [
                     "examples_array",

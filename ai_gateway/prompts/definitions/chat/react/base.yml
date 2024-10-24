@@ -1,7 +1,7 @@
 ---
 name: Claude 3 ReAct Chat agent
 model:
-  name: claude-3-5-sonnet-20240620
+  name: claude-3-5-sonnet-20241022
   params:
     model_class_provider: anthropic
     temperature: 0.1

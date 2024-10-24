@@ -105,7 +105,7 @@ class TestAgentSuccessfulRequest:
             (
                 "chat_content",
                 "anthropic",
-                "claude-3-5-sonnet-20240620",
+                "claude-3-5-sonnet-20241022",
                 {
                     "temperature": 0.3,
                     "stop_sequences": ["\n\nHuman", "Observation:"],
