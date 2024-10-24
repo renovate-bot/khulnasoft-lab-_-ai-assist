@@ -183,6 +183,9 @@ class AccessLogMiddleware:
                 "gitlab_saas_duo_pro_namespace_ids": request.headers.get(
                     X_GITLAB_SAAS_DUO_PRO_NAMESPACE_IDS_HEADER
                 ),
+                "gitlab_feature_enabled_by_namespace_ids": request.headers.get(
+                    X_GITLAB_FEATURE_ENABLED_BY_NAMESPACE_IDS_HEADER
+                ),
                 "gitlab_realm": request.headers.get(X_GITLAB_REALM_HEADER),
                 "gitlab_duo_seat_count": request.headers.get(
                     X_GITLAB_DUO_SEAT_COUNT_HEADER

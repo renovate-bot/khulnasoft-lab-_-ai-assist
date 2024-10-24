@@ -85,7 +85,6 @@ class ModelRequestInstrumentator:
             self.finish()
 
         def _detail_labels(self) -> dict[str, str]:
-
             detail_labels = {
                 "error": "yes" if self.error else "no",
                 "streaming": "yes" if self.streaming else "no",
