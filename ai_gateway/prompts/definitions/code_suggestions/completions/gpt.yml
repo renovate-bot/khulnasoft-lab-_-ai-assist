@@ -1,4 +1,3 @@
----
 name: GPT Code Completions
 model:
   name: gpt
@@ -10,19 +9,27 @@ model:
 unit_primitives:
   - code_suggestions
 prompt_template:
-  user: |
-    You are a code completion tool that performs Fill-in-the-middle. You must fill the code between the prefix and the suffix.
-    Important: 
-    - You MUST NOT output any additional human text or explanation
-    - You MUST output code exclusively. 
-    - The suggested code MUST work by simpling concatenating to the provided code. 
+  system: |
+    You are a code completion tool that performs Fill-in-the-middle. Your task is to complete the code between the given prefix and suffix.
+    Important:
+    - You MUST NOT output any additional human text or explanation.
+    - You MUST output code exclusively.
+    - The suggested code MUST work by simply concatenating to the provided code.
     - You MUST not include any sort of markdown markup.
-    
-    <SUFFIX>
-    {{suffix}}
-    </SUFFIX>
+    - You MUST NOT repeat or modify any part of the prefix or suffix.
+    - You MUST only provide the missing code that fits between them.
+  user: |
     <PREFIX>
     {{prefix}}
     </PREFIX>
+    <cursor />
+    <SUFFIX>
+    {{suffix}}
+    </SUFFIX>
 params:
   timeout: 60
+  stop:
+    - "[INST]"
+    - "[/INST]"
+    - "</PREFIX>"
+    - "</SUFFIX>"
