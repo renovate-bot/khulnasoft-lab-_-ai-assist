@@ -990,6 +990,26 @@ test-full = ["adlfs", "aiohttp (!=4.0.0a0,!=4.0.0a1)", "cloudpickle", "dask", "d
 tqdm = ["tqdm"]
 
 [[package]]
+name = "gitlab-cloud-connector"
+version = "0.1.1"
+description = ""
+optional = false
+python-versions = ">=3.10,<4.0"
+files = [
+    {file = "gitlab_cloud_connector-0.1.1-py3-none-any.whl", hash = "sha256:ae0007cd8ca982af054c737b3bb2482de5b0f2ad3e8a49eb4e5b7b5cdac6ebbf"},
+    {file = "gitlab_cloud_connector-0.1.1.tar.gz", hash = "sha256:7d7866cafb40bfe5d3523e57e2523cb3a67a21cba196f1e2fafbb5b5fac63d9f"},
+]
+
+[package.dependencies]
+pydantic = ">=2.8.2,<3.0.0"
+pyyaml = ">=6.0.1,<7.0.0"
+
+[package.source]
+type = "legacy"
+url = "https://gitlab.com/api/v4/projects/58733651/packages/pypi/simple"
+reference = "gitlab_cloud_connector"
+
+[[package]]
 name = "google-api-core"
 version = "2.19.1"
 description = "Google API client core library"
@@ -4731,4 +4751,4 @@ test = ["big-O", "importlib-resources", "jaraco.functools", "jaraco.itertools", 
 [metadata]
 lock-version = "2.0"
 python-versions = "~3.11.0"
-content-hash = "5e154cb962d39dce58e18a8bdf0cba389ff148f302b9a0caa40039dd5e5dd21b"
+content-hash = "91d12d565d4478445c877649804df3189e2663d4f1955e4c7d3b2c7338f23664"
