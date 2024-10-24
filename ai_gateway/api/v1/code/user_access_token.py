@@ -10,7 +10,7 @@ from ai_gateway.async_dependency_resolver import (
     get_internal_event_client,
     get_token_authority,
 )
-from ai_gateway.cloud_connector import SELF_SIGNED_TOKEN_ISSUER, TokenAuthority
+from ai_gateway.cloud_connector import CloudConnectorConfig, TokenAuthority
 from ai_gateway.gitlab_features import GitLabFeatureCategory, GitLabUnitPrimitive
 from ai_gateway.internal_events import InternalEventsClient
 
@@ -43,7 +43,7 @@ async def user_access_token(
 ):
     if not current_user.can(
         GitLabUnitPrimitive.CODE_SUGGESTIONS,
-        disallowed_issuers=[SELF_SIGNED_TOKEN_ISSUER],
+        disallowed_issuers=[CloudConnectorConfig().service_name],
     ):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
@@ -79,6 +79,7 @@ async def user_access_token(
             x_gitlab_realm,
             current_user,
             x_gitlab_instance_id,
+            scopes=[GitLabUnitPrimitive.CODE_SUGGESTIONS],
         )
     except Exception:
         raise HTTPException(status_code=500, detail="Failed to generate JWT")

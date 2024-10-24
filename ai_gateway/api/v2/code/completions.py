@@ -36,7 +36,7 @@ from ai_gateway.async_dependency_resolver import (
     get_internal_event_client,
     get_snowplow_instrumentator,
 )
-from ai_gateway.cloud_connector import SELF_SIGNED_TOKEN_ISSUER
+from ai_gateway.cloud_connector import CloudConnectorConfig
 from ai_gateway.code_suggestions import (
     CodeCompletions,
     CodeCompletionsLegacy,
@@ -266,7 +266,7 @@ async def generations(
 ):
     if not current_user.can(
         GitLabUnitPrimitive.CODE_SUGGESTIONS,
-        disallowed_issuers=[SELF_SIGNED_TOKEN_ISSUER],
+        disallowed_issuers=[CloudConnectorConfig().service_name],
     ):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,

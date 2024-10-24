@@ -10,7 +10,7 @@ from ai_gateway.async_dependency_resolver import (
     get_internal_event_client,
     get_x_ray_anthropic_claude,
 )
-from ai_gateway.cloud_connector import SELF_SIGNED_TOKEN_ISSUER
+from ai_gateway.cloud_connector import CloudConnectorConfig
 from ai_gateway.gitlab_features import GitLabFeatureCategory, GitLabUnitPrimitive
 from ai_gateway.internal_events import InternalEventsClient
 from ai_gateway.models import AnthropicModel
@@ -35,7 +35,7 @@ async def libraries(
 ):
     if not current_user.can(
         GitLabUnitPrimitive.CODE_SUGGESTIONS,
-        disallowed_issuers=[SELF_SIGNED_TOKEN_ISSUER],
+        disallowed_issuers=[CloudConnectorConfig().service_name],
     ):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,

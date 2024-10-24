@@ -480,8 +480,8 @@ UGw3kIW+604fnnXLDm4TaLA=
 
         assert len(cached_keys["keys"]) == 4
         assert [key["kid"] for key in cached_keys["keys"]] == [
-            "gitlab_ai_gateway_signing_key",
-            "gitlab_ai_gateway_validation_key",
+            "gitlab-ai-gateway_signing_key",
+            "gitlab-ai-gateway_validation_key",
             "MFRZ2Sp4sCciuzxArGCtNP5w2X716R6prptJqYHpFBw",
             "ZoObadsnUfqW_C_EfXp9DM6LUdzl0R",
         ]
