@@ -4,6 +4,7 @@ from typing import Sequence, Type, cast
 import pytest
 from langchain_anthropic import ChatAnthropic
 from langchain_community.chat_models import ChatLiteLLM
+from langchain_core.language_models import BaseChatModel
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.prompts.chat import MessageLikeRepresentation
 from langchain_core.runnables import RunnableBinding, RunnableSequence
@@ -390,8 +391,10 @@ class TestLocalPromptRegistry:
             "expected_name",
             "expected_class",
             "expected_model",
+            "expected_model_class",
             "expected_kwargs",
             "expected_input_variables",
+            "default_prompt_env_config",
         ),
         [
             (
@@ -399,7 +402,29 @@ class TestLocalPromptRegistry:
                 None,
                 "Claude 3 Code Generations Agent",
                 Prompt,
+                "claude-3-5-sonnet@20240620",
+                ChatLiteLLM,
+                {"stop": ["</new_code>"], "vertex_location": "us-east5"},
+                [
+                    "examples_array",
+                    "file_name",
+                    "language",
+                    "libraries",
+                    "related_files",
+                    "related_snippets",
+                    "trimmed_content_above_cursor",
+                    "trimmed_content_below_cursor",
+                    "user_instruction",
+                ],
+                {"code_suggestions/generations": "vertex"},
+            ),
+            (
+                "code_suggestions/generations",
+                None,
+                "Claude 3 Code Generations Agent",
+                Prompt,
                 "claude-3-5-sonnet-20240620",
+                ChatAnthropic,
                 {"stop": ["</new_code>"]},
                 [
                     "examples_array",
@@ -412,6 +437,7 @@ class TestLocalPromptRegistry:
                     "trimmed_content_below_cursor",
                     "user_instruction",
                 ],
+                {},
             ),
         ],
     )
@@ -423,13 +449,15 @@ class TestLocalPromptRegistry:
         expected_name: str,
         expected_class: Type[Prompt],
         expected_model: str,
+        expected_model_class: Type[BaseChatModel],
         expected_kwargs: dict,
         expected_input_variables: list[str],
+        default_prompt_env_config: dict[str, str],
     ):
         registry = LocalPromptRegistry.from_local_yaml(
             class_overrides={},
             model_factories=model_factories,
-            default_prompts={},
+            default_prompts=default_prompt_env_config,
         )
         prompt = registry.get(prompt_id, model_metadata)
         chain = cast(RunnableSequence, prompt.bound)
@@ -438,6 +466,7 @@ class TestLocalPromptRegistry:
         assert prompt.prompt_tpl.input_variables == expected_input_variables
         assert prompt.name == expected_name
         assert isinstance(prompt, expected_class)
+        assert isinstance(prompt.model, expected_model_class)
         assert prompt.model_name == expected_model
         assert binding.kwargs == expected_kwargs
 
