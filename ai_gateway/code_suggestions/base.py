@@ -67,6 +67,7 @@ USE_CASES_MODELS_MAP = {
         KindAnthropicModel.CLAUDE_3_OPUS,
         KindAnthropicModel.CLAUDE_3_SONNET,
         KindAnthropicModel.CLAUDE_3_5_SONNET,
+        KindAnthropicModel.CLAUDE_3_5_SONNET_V2,
         KindAnthropicModel.CLAUDE_3_HAIKU,
         KindLiteLlmModel.CODEGEMMA,
         KindLiteLlmModel.CODELLAMA,
