@@ -226,7 +226,7 @@ def troubleshoot():
     model_key = args.model_key
 
     # if model_identifier is provided, extract the provider
-    # example: extract `bedrock` from `bedrock/anthropic.claude-3-5-sonnet-20240620-v1:0`
+    # example: extract `bedrock` from `bedrock/anthropic.claude-3-5-sonnet-20241022-v2:0`
     provider = model_identifier.split("/")[0] if model_identifier else None
 
     check_general_env_variables()
