@@ -193,6 +193,13 @@ async def code_generation(
     if payload.prompt_id:
         prompt = prompt_registry.get_on_behalf(current_user, payload.prompt_id)
         engine = agent_factory(model__prompt=prompt)
+
+        log.info(
+            "Executing code generation with prompt registry",
+            prompt_name=prompt.name,
+            prompt_model_class=prompt.model.__class__.__name__,
+            prompt_model_name=prompt.model_name,
+        )
     else:
         if payload.model_provider == KindModelProvider.ANTHROPIC:
             engine = generations_anthropic_factory()
