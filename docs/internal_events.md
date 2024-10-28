@@ -77,3 +77,9 @@ See `AIGW_INTERNAL_EVENT` prefixed variables in the [application settings](appli
 ## Internal Event Middleware
 
 Some of the fundamental event arguments are collected at `InternalEventMiddleware` and set to all events automatically.
+
+## Adding New Events
+
+If you are creating any new events, please create an event definition in the  `config/events` folder. This will help to discover which events are being tracked in [Metric dictionary](https://metrics.gitlab.com/events)
+
+If we are updating any existing events with new parameters like adding `label`,`property` or `value` we should document it in the existing event definition file as well. Follow event definition [guide](https://docs.gitlab.com/ee/development/internal_analytics/internal_event_instrumentation/event_definition_guide.html) to structure the event definition file.
