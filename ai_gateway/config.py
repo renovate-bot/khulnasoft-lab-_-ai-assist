@@ -83,7 +83,7 @@ class ConfigInternalEvent(BaseModel):
 
 
 # TODO: Migrate to InternalEvent
-# See https://gitlab.com/gitlab-org/modelops/applied-ml/code-suggestions/ai-assist/-/issues/491
+# See https://gitlab.com/gitlab-org/modelops/applied-ml/code-suggestions/ai-assist/-/issues/698
 class ConfigSnowplow(ConfigInternalEvent):
     enabled: bool = False
     endpoint: Optional[str] = None
