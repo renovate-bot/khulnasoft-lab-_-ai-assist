@@ -153,6 +153,9 @@ class LocalAuthProvider(JwksProvider):
         self.signing_key = signing_key
         self.validation_key = validation_key
 
+    def cached_jwks(self) -> dict:
+        return defaultdict()
+
     def load_jwks(self) -> dict:
         jwks: dict[str, list] = defaultdict(list)
         jwks["keys"] = []
@@ -203,6 +206,9 @@ class GitLabOidcProvider(JwksProvider):
     def __init__(self, log_provider, oidc_providers: dict[str, str]):
         super().__init__(log_provider)
         self.oidc_providers = oidc_providers
+
+    def cached_jwks(self) -> dict:
+        return defaultdict()
 
     def load_jwks(self) -> dict:
         jwks = defaultdict(list)
