@@ -266,7 +266,9 @@ We are supporting the following clients:
 
 ## Deployment
 
-Code suggestions is continuously deployed to [Runway](https://about.gitlab.com/handbook/engineering/infrastructure/platforms/tools/runway/).
+### For production environments
+
+AI Gateway is continuously deployed to [Runway](https://about.gitlab.com/handbook/engineering/infrastructure/platforms/tools/runway/).
 
 This deployment is currently available at `https://ai-gateway.runway.gitlab.net`.
 Note, however, that clients should not connect to this host directly, but use `cloud.gitlab.com/ai` instead,
@@ -275,6 +277,18 @@ which is managed by Cloudflare and is the entry point GitLab instances use inste
 When an MR gets merged, CI will build a new Docker image, and trigger a Runway downstream pipeline that will deploy this image to staging, and then production. Downstream pipelines run against the [deployment project](https://gitlab.com/gitlab-com/gl-infra/platform/runway/deployments/ai-gateway).
 
 The service overview dashboard is available at [https://dashboards.gitlab.net/d/ai-gateway-main/ai-gateway-overview](https://dashboards.gitlab.net/d/ai-gateway-main/ai-gateway-overview).
+
+### For staging-ref
+
+For [staging-ref](https://staging-ref.gitlab.com/) environment, the deployment is powered by [Runway](https://about.gitlab.com/handbook/engineering/infrastructure/platforms/tools/runway/), and is named as `ai-gateway-custom`.
+
+The deployment for staging-ref differs from other production environments in both its nature and configuration. This deployment specifically powers Code Suggestions and Duo Chat when using Custom Models, and may use a different set of secret variables compared to other production deployments. The Group Custom Models team (`#g_custom_models` on Slack) is responsible for managing changes to deployments in this environment and maintains ownership of it.
+
+Important MRs:
+
+- [Enabling runway deployments for Custom Models as `ai-gateway-custom`](https://gitlab.com/gitlab-org/modelops/applied-ml/code-suggestions/ai-assist/-/merge_requests/1407)
+- [Using the `ai-gateway-custom`'s URL as the AI Gateway endpoint for staging-ref](https://gitlab.com/gitlab-org/quality/gitlab-environment-toolkit-configs/staging-ref/-/merge_requests/190)
+- [Add `ai-gateway-custom` to Runway Provisioner](https://gitlab.com/gitlab-com/gl-infra/platform/runway/provisioner/-/merge_requests/399)
 
 For more information and assistance, please check out:
 
