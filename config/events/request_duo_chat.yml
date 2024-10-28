@@ -1,0 +1,13 @@
+---
+description: Tracks when duo chat API is called from GitLab instance
+action: request_duo_chat
+product_group: ai_framework
+milestone: '17.3'
+introduced_by_url: https://gitlab.com/gitlab-org/modelops/applied-ml/code-suggestions/ai-assist/-/merge_requests/1113
+distributions:
+  - ce
+  - ee
+tiers:
+  - free
+  - premium
+  - ultimate
