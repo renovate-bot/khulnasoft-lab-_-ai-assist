@@ -10,6 +10,8 @@ model:
 unit_primitives:
   - code_suggestions
 prompt_template:
+  system: |
+    {% include 'code_suggestions/completions/system.jinja' %}
   user: |
     <s>[SUFFIX]{{suffix}}[PREFIX]{{prefix}}
 params:
