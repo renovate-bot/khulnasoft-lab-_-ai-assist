@@ -1188,13 +1188,13 @@ grpc = ["grpcio (>=1.38.0,<2.0dev)", "grpcio-status (>=1.38.0,<2.0.dev0)"]
 
 [[package]]
 name = "google-cloud-discoveryengine"
-version = "0.12.3"
+version = "0.13.1"
 description = "Google Cloud Discoveryengine API client library"
 optional = false
 python-versions = ">=3.7"
 files = [
-    {file = "google_cloud_discoveryengine-0.12.3-py3-none-any.whl", hash = "sha256:23c87ebcd700dffebe05416d36a837845f5c0ce1e645bc9104c08f6f60671adb"},
-    {file = "google_cloud_discoveryengine-0.12.3.tar.gz", hash = "sha256:1f3397688cf5ac59f8483308177f058990c3a7f1195a911a4d5b894bf26c8ace"},
+    {file = "google_cloud_discoveryengine-0.13.1-py3-none-any.whl", hash = "sha256:58ab2f03909ddb142a163882eb42211f7d90ca79c8b8160009c3febac8babdbd"},
+    {file = "google_cloud_discoveryengine-0.13.1.tar.gz", hash = "sha256:94c68fbd59d1762b4a6814b5bb9eb0a5ce59efceb251abeae878b9020037b6f2"},
 ]
 
 [package.dependencies]
@@ -4752,4 +4752,4 @@ test = ["big-O", "importlib-resources", "jaraco.functools", "jaraco.itertools", 
 [metadata]
 lock-version = "2.0"
 python-versions = "~3.11.0"
-content-hash = "2dbf8d0a58d9442f7792e57ab2a8dbdc45dec6cb3ee97be959f409f4c527b6cd"
+content-hash = "8b692b9a3f40db962c44c4d02ce7f0ed6d5842ede0daf6f1ad4fef2e04e8e976"
