@@ -10,7 +10,7 @@ from langchain_core.prompts.string import DEFAULT_FORMATTER_MAPPING
 from langchain_core.runnables import Runnable, RunnableBinding, RunnableConfig
 
 from ai_gateway.api.auth_utils import StarletteUser
-from ai_gateway.gitlab_features import GitLabUnitPrimitive, WrongUnitPrimitives
+from ai_gateway.cloud_connector import GitLabUnitPrimitive, WrongUnitPrimitives
 from ai_gateway.instrumentators.model_requests import ModelRequestInstrumentator
 from ai_gateway.prompts.config.base import ModelConfig, PromptConfig, PromptParams
 from ai_gateway.prompts.typing import ModelMetadata, TypeModelFactory

@@ -4,7 +4,7 @@ import typing
 from fastapi import HTTPException, Request, status
 from starlette_context import context
 
-from ai_gateway.gitlab_features import (
+from ai_gateway.cloud_connector import (
     FEATURE_CATEGORIES_FOR_PROXY_ENDPOINTS,
     GitLabFeatureCategory,
     GitLabUnitPrimitive,

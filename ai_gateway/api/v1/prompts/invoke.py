@@ -10,7 +10,7 @@ from ai_gateway.async_dependency_resolver import (
     get_container_application,
     get_internal_event_client,
 )
-from ai_gateway.gitlab_features import GitLabFeatureCategory, WrongUnitPrimitives
+from ai_gateway.cloud_connector import GitLabFeatureCategory, WrongUnitPrimitives
 from ai_gateway.internal_events import InternalEventsClient
 from ai_gateway.prompts import BasePromptRegistry, Prompt
 from ai_gateway.prompts.typing import ModelMetadata

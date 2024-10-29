@@ -2,7 +2,7 @@ from textwrap import dedent
 from typing import Optional
 
 from ai_gateway.chat.tools.base import BaseRemoteTool
-from ai_gateway.gitlab_features import GitLabUnitPrimitive
+from ai_gateway.cloud_connector import GitLabUnitPrimitive
 
 __all__ = [
     "CiEditorAssistant",

@@ -4,7 +4,7 @@ from typing import Any, Optional
 from packaging.version import InvalidVersion, Version
 from pydantic import BaseModel
 
-from ai_gateway.gitlab_features import GitLabUnitPrimitive
+from ai_gateway.cloud_connector import GitLabUnitPrimitive
 
 __all__ = [
     "BaseTool",

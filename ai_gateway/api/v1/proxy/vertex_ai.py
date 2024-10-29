@@ -9,7 +9,7 @@ from ai_gateway.async_dependency_resolver import (
     get_internal_event_client,
     get_vertex_ai_proxy_client,
 )
-from ai_gateway.gitlab_features import FEATURE_CATEGORIES_FOR_PROXY_ENDPOINTS
+from ai_gateway.cloud_connector import FEATURE_CATEGORIES_FOR_PROXY_ENDPOINTS
 from ai_gateway.internal_events import InternalEventsClient
 from ai_gateway.models.base import KindModelProvider
 from ai_gateway.proxy.clients import VertexAIProxyClient

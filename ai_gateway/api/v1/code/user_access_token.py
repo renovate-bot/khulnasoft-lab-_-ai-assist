@@ -10,8 +10,12 @@ from ai_gateway.async_dependency_resolver import (
     get_internal_event_client,
     get_token_authority,
 )
-from ai_gateway.cloud_connector import CloudConnectorConfig, TokenAuthority
-from ai_gateway.gitlab_features import GitLabFeatureCategory, GitLabUnitPrimitive
+from ai_gateway.cloud_connector import (
+    CloudConnectorConfig,
+    GitLabFeatureCategory,
+    GitLabUnitPrimitive,
+    TokenAuthority,
+)
 from ai_gateway.internal_events import InternalEventsClient
 
 __all__ = [
