@@ -4,7 +4,6 @@ from typing import Sequence, Type, cast
 import pytest
 from langchain_anthropic import ChatAnthropic
 from langchain_community.chat_models import ChatLiteLLM
-from langchain_core.language_models import BaseChatModel
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.prompts.chat import MessageLikeRepresentation
 from langchain_core.runnables import RunnableBinding, RunnableSequence
@@ -19,7 +18,7 @@ from ai_gateway.prompts.config import (
     ModelConfig,
     PromptConfig,
 )
-from ai_gateway.prompts.typing import ModelMetadata, TypeModelFactory
+from ai_gateway.prompts.typing import Model, ModelMetadata, TypeModelFactory
 
 
 class MockPromptClass(Prompt):
@@ -449,7 +448,7 @@ class TestLocalPromptRegistry:
         expected_name: str,
         expected_class: Type[Prompt],
         expected_model: str,
-        expected_model_class: Type[BaseChatModel],
+        expected_model_class: Type[Model],
         expected_kwargs: dict,
         expected_input_variables: list[str],
         default_prompt_env_config: dict[str, str],

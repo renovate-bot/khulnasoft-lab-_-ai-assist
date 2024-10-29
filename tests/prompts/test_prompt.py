@@ -5,7 +5,6 @@ from unittest import mock
 import pytest
 from anthropic import APITimeoutError, AsyncAnthropic
 from langchain_community.chat_models import ChatLiteLLM
-from langchain_core.language_models.chat_models import BaseChatModel
 from langchain_core.runnables import Runnable
 from litellm.exceptions import Timeout
 from pydantic import HttpUrl
@@ -14,7 +13,7 @@ from ai_gateway.cloud_connector import GitLabUnitPrimitive
 from ai_gateway.models.v2.anthropic_claude import ChatAnthropic
 from ai_gateway.prompts.base import Prompt, model_metadata_to_params
 from ai_gateway.prompts.config.base import PromptParams
-from ai_gateway.prompts.typing import ModelMetadata
+from ai_gateway.prompts.typing import Model, ModelMetadata
 
 
 class TestPrompt:
@@ -102,7 +101,7 @@ class TestPromptTimeout:
         ],
     )
     async def test_timeout(
-        self, prompt: Prompt, model: BaseChatModel, expected_exception: Type
+        self, prompt: Prompt, model: Model, expected_exception: Type
     ):
         with pytest.raises(expected_exception):
             await prompt.ainvoke(

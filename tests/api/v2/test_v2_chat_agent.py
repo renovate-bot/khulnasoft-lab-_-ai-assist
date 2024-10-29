@@ -3,7 +3,6 @@ from typing import AsyncIterator
 from unittest.mock import Mock, PropertyMock, call, patch
 
 import pytest
-from langchain_core.language_models.chat_models import BaseChatModel
 from starlette.testclient import TestClient
 
 from ai_gateway.api.v2 import api_router
@@ -26,7 +25,7 @@ from ai_gateway.chat.agents.typing import AgentFinalAnswer, TypeAgentEvent
 from ai_gateway.cloud_connector import CloudConnectorUser, UserClaims
 from ai_gateway.config import Config
 from ai_gateway.models.base_chat import Role
-from ai_gateway.prompts.typing import ModelMetadata
+from ai_gateway.prompts.typing import Model, ModelMetadata
 
 
 @pytest.fixture(scope="class")
@@ -49,7 +48,7 @@ def mocked_stream():
 
 
 @pytest.fixture
-def mock_model(model: BaseChatModel):
+def mock_model(model: Model):
     with patch("ai_gateway.prompts.Prompt._build_model", return_value=model) as mock:
         yield mock
 
