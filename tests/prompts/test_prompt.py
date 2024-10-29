@@ -10,7 +10,7 @@ from langchain_core.runnables import Runnable
 from litellm.exceptions import Timeout
 from pydantic import HttpUrl
 
-from ai_gateway.gitlab_features import GitLabUnitPrimitive
+from ai_gateway.cloud_connector import GitLabUnitPrimitive
 from ai_gateway.models.v2.anthropic_claude import ChatAnthropic
 from ai_gateway.prompts.base import Prompt, model_metadata_to_params
 from ai_gateway.prompts.config.base import PromptParams

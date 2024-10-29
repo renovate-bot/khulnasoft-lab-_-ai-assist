@@ -1,6 +1,6 @@
 from typing import NamedTuple, Optional
 
-from ai_gateway.gitlab_features import GitLabUnitPrimitive
+from ai_gateway.cloud_connector.gitlab_features import GitLabUnitPrimitive
 
 __all__ = ["User", "UserClaims", "CloudConnectorUser"]
 

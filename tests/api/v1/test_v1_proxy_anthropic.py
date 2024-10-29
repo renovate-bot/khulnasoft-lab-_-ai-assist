@@ -3,9 +3,7 @@ from unittest.mock import patch
 import pytest
 
 from ai_gateway.api.v1 import api_router
-from ai_gateway.cloud_connector import User, UserClaims
-from ai_gateway.gitlab_features import GitLabUnitPrimitive
-from ai_gateway.internal_events import InternalEventAdditionalProperties
+from ai_gateway.cloud_connector import GitLabUnitPrimitive, User, UserClaims
 
 
 @pytest.fixture(scope="class")

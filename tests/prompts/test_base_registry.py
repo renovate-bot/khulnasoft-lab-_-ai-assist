@@ -1,8 +1,12 @@
 import pytest
 
 from ai_gateway.api.auth_utils import StarletteUser
-from ai_gateway.cloud_connector import CloudConnectorUser, UserClaims
-from ai_gateway.gitlab_features import GitLabUnitPrimitive, WrongUnitPrimitives
+from ai_gateway.cloud_connector import (
+    CloudConnectorUser,
+    GitLabUnitPrimitive,
+    UserClaims,
+    WrongUnitPrimitives,
+)
 from ai_gateway.prompts import BasePromptRegistry, Prompt
 
 

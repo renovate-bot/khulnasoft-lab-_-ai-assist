@@ -25,7 +25,6 @@ from ai_gateway.chat.agents import (
 from ai_gateway.chat.agents.typing import AgentFinalAnswer, TypeAgentEvent
 from ai_gateway.cloud_connector import User, UserClaims
 from ai_gateway.config import Config
-from ai_gateway.gitlab_features import WrongUnitPrimitives
 from ai_gateway.models.base_chat import Role
 from ai_gateway.prompts.typing import ModelMetadata
 

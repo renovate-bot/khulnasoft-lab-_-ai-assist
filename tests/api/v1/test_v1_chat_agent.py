@@ -10,8 +10,7 @@ from structlog.testing import capture_logs
 from ai_gateway.api.auth_utils import StarletteUser
 from ai_gateway.api.v1 import api_router
 from ai_gateway.api.v1.chat.auth import ChatInvokable, authorize_with_unit_primitive
-from ai_gateway.cloud_connector import User, UserClaims
-from ai_gateway.gitlab_features import GitLabUnitPrimitive
+from ai_gateway.cloud_connector import GitLabUnitPrimitive, User, UserClaims
 from ai_gateway.models import (
     AnthropicAPIConnectionError,
     AnthropicAPIStatusError,

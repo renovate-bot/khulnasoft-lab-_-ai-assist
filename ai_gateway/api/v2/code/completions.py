@@ -36,7 +36,11 @@ from ai_gateway.async_dependency_resolver import (
     get_internal_event_client,
     get_snowplow_instrumentator,
 )
-from ai_gateway.cloud_connector import CloudConnectorConfig
+from ai_gateway.cloud_connector import (
+    CloudConnectorConfig,
+    GitLabFeatureCategory,
+    GitLabUnitPrimitive,
+)
 from ai_gateway.code_suggestions import (
     CodeCompletions,
     CodeCompletionsLegacy,
@@ -48,7 +52,6 @@ from ai_gateway.code_suggestions.language_server import LanguageServerVersion
 from ai_gateway.code_suggestions.processing.base import ModelEngineOutput
 from ai_gateway.code_suggestions.processing.ops import lang_from_filename
 from ai_gateway.config import Config
-from ai_gateway.gitlab_features import GitLabFeatureCategory, GitLabUnitPrimitive
 from ai_gateway.instrumentators.base import TelemetryInstrumentator
 from ai_gateway.internal_events import InternalEventsClient
 from ai_gateway.models import KindAnthropicModel, KindModelProvider

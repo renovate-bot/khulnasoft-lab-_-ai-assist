@@ -13,7 +13,7 @@ from ai_gateway.api.feature_category import (
     feature_category,
     track_metadata,
 )
-from ai_gateway.gitlab_features import GitLabFeatureCategory, GitLabUnitPrimitive
+from ai_gateway.cloud_connector import GitLabFeatureCategory, GitLabUnitPrimitive
 
 
 class DummyGitLabFeatureCategory(StrEnum):

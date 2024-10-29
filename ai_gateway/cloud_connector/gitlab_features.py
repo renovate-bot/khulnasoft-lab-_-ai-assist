@@ -26,6 +26,8 @@ class GitLabUnitPrimitive(StrEnum):
     CODE_SUGGESTIONS = "code_suggestions"
     DOCUMENTATION_SEARCH = "documentation_search"
     DUO_CHAT = "duo_chat"
+    DUO_WORKFLOW_GENERATE_TOKEN = "duo_workflow_generate_token"
+    DUO_WORKFLOW_EXECUTE_WORKFLOW = "duo_workflow_execute_workflow"
     EXPLAIN_CODE = "explain_code"
     EXPLAIN_VULNERABILITY = "explain_vulnerability"
     FILL_IN_MERGE_REQUEST_TEMPLATE = "fill_in_merge_request_template"

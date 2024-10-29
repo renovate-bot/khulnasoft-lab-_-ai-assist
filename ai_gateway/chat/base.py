@@ -6,7 +6,7 @@ from pydantic import BaseModel
 
 from ai_gateway.api.auth_utils import StarletteUser
 from ai_gateway.chat.tools import BaseTool
-from ai_gateway.gitlab_features import GitLabUnitPrimitive
+from ai_gateway.cloud_connector import GitLabUnitPrimitive
 
 __all__ = [
     "UnitPrimitiveToolset",

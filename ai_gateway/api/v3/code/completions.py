@@ -22,7 +22,11 @@ from ai_gateway.api.v3.code.typing import (
     StreamSuggestionsResponse,
 )
 from ai_gateway.async_dependency_resolver import get_container_application
-from ai_gateway.cloud_connector import CloudConnectorConfig
+from ai_gateway.cloud_connector import (
+    CloudConnectorConfig,
+    GitLabFeatureCategory,
+    GitLabUnitPrimitive,
+)
 from ai_gateway.code_suggestions import (
     CodeCompletions,
     CodeCompletionsLegacy,
@@ -32,7 +36,6 @@ from ai_gateway.code_suggestions import (
     ModelProvider,
 )
 from ai_gateway.container import ContainerApplication
-from ai_gateway.gitlab_features import GitLabFeatureCategory, GitLabUnitPrimitive
 from ai_gateway.models import KindModelProvider
 from ai_gateway.prompts import BasePromptRegistry
 from ai_gateway.tracking import SnowplowEventContext

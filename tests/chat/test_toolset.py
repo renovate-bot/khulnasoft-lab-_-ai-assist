@@ -14,9 +14,12 @@ from ai_gateway.chat.tools.gitlab import (
     MergeRequestReader,
 )
 from ai_gateway.chat.toolset import DuoChatToolsRegistry
-from ai_gateway.cloud_connector import CloudConnectorUser, UserClaims
+from ai_gateway.cloud_connector import (
+    CloudConnectorUser,
+    GitLabUnitPrimitive,
+    UserClaims,
+)
 from ai_gateway.feature_flags.context import current_feature_flag_context
-from ai_gateway.gitlab_features import GitLabUnitPrimitive
 
 
 class TestDuoChatToolRegistry:

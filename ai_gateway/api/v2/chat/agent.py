@@ -20,8 +20,8 @@ from ai_gateway.chat.agents import (
     TypeAgentEvent,
 )
 from ai_gateway.chat.executor import GLAgentRemoteExecutor
+from ai_gateway.cloud_connector import GitLabFeatureCategory, GitLabUnitPrimitive
 from ai_gateway.feature_flags import FeatureFlag, is_feature_enabled
-from ai_gateway.gitlab_features import GitLabFeatureCategory, GitLabUnitPrimitive
 from ai_gateway.internal_events import InternalEventsClient
 
 __all__ = [
