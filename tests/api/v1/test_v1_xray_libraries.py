@@ -5,7 +5,7 @@ from fastapi import status
 
 from ai_gateway.api.v1 import api_router
 from ai_gateway.api.v1.x_ray.typing import AnyPromptComponent
-from ai_gateway.cloud_connector import User, UserClaims
+from ai_gateway.cloud_connector import CloudConnectorUser, UserClaims
 from ai_gateway.internal_events import InternalEventAdditionalProperties
 
 
@@ -16,7 +16,7 @@ def fast_api_router():
 
 @pytest.fixture
 def auth_user():
-    return User(
+    return CloudConnectorUser(
         authenticated=True,
         claims=UserClaims(
             scopes=["code_suggestions"], subject="1234", gitlab_realm="self-managed"
@@ -91,7 +91,7 @@ class TestXRayLibraries:
 class TestUnauthorizedScopes:
     @pytest.fixture
     def auth_user(self):
-        return User(
+        return CloudConnectorUser(
             authenticated=True,
             claims=UserClaims(
                 scopes=["unauthorized_scope"],
@@ -132,7 +132,7 @@ class TestUnauthorizedScopes:
 class TestUnauthorizedIssuer:
     @pytest.fixture
     def auth_user(self):
-        return User(
+        return CloudConnectorUser(
             authenticated=True,
             claims=UserClaims(
                 scopes=["code_suggestions"],

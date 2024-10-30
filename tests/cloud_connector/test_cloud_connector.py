@@ -1,11 +1,6 @@
 import pytest
 
-from ai_gateway.cloud_connector import (
-    AuthProvider,
-    CloudConnectorUser,
-    User,
-    UserClaims,
-)
+from ai_gateway.cloud_connector import AuthProvider, CloudConnectorUser, UserClaims
 from ai_gateway.cloud_connector import authenticate as cloud_connector_authenticate
 
 
@@ -297,7 +292,7 @@ class StubAuthProvider(AuthProvider):
 def test_cloud_connector_authenticate(
     headers, auth_provider_authenticated, expected_user, expected_error
 ):
-    auth_provider_result = User(
+    auth_provider_result = CloudConnectorUser(
         authenticated=auth_provider_authenticated, claims=expected_user.claims
     )
     cloud_connector_user, cloud_connector_error = cloud_connector_authenticate(

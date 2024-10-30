@@ -3,7 +3,11 @@ from unittest.mock import patch
 import pytest
 
 from ai_gateway.api.v1 import api_router
-from ai_gateway.cloud_connector import GitLabUnitPrimitive, User, UserClaims
+from ai_gateway.cloud_connector import (
+    CloudConnectorUser,
+    GitLabUnitPrimitive,
+    UserClaims,
+)
 
 
 @pytest.fixture(scope="class")
@@ -13,7 +17,7 @@ def fast_api_router():
 
 @pytest.fixture
 def auth_user():
-    return User(
+    return CloudConnectorUser(
         authenticated=True,
         claims=UserClaims(
             scopes=[
@@ -58,7 +62,7 @@ class TestProxyAnthropic:
 class TestUnauthorizedScopes:
     @pytest.fixture
     def auth_user(self):
-        return User(
+        return CloudConnectorUser(
             authenticated=True,
             claims=UserClaims(scopes=["unauthorized_scope"]),
         )

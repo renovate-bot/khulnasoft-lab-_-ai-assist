@@ -8,7 +8,7 @@ from structlog.testing import capture_logs
 
 from ai_gateway.api.auth_utils import StarletteUser, get_current_user
 from ai_gateway.api.middleware import MiddlewareAuthentication
-from ai_gateway.cloud_connector import User, UserClaims
+from ai_gateway.cloud_connector import CloudConnectorUser, UserClaims
 
 router = APIRouter(
     prefix="",
@@ -93,7 +93,7 @@ invalid_authentication_token_type_error = {
             None,
             None,
             401,
-            User(
+            CloudConnectorUser(
                 authenticated=True,
                 claims=UserClaims(scopes=["feature1", "feature3"]),
             ),
@@ -104,7 +104,7 @@ invalid_authentication_token_type_error = {
             {"Authorization": "invalid"},
             None,
             401,
-            User(
+            CloudConnectorUser(
                 authenticated=True,
                 claims=UserClaims(scopes=["feature1", "feature3"]),
             ),
@@ -115,7 +115,7 @@ invalid_authentication_token_type_error = {
             {"Authorization": "Bearer 12345"},
             None,
             401,
-            User(
+            CloudConnectorUser(
                 authenticated=True,
                 claims=UserClaims(scopes=["feature1", "feature3"]),
             ),
@@ -136,7 +136,7 @@ invalid_authentication_token_type_error = {
             },
             None,
             200,
-            User(
+            CloudConnectorUser(
                 authenticated=True,
                 claims=UserClaims(
                     scopes=["feature1", "feature3"],
@@ -161,7 +161,7 @@ invalid_authentication_token_type_error = {
             },
             None,
             200,
-            User(
+            CloudConnectorUser(
                 authenticated=True,
                 claims=UserClaims(
                     scopes=["feature2", "feature3"],
@@ -186,7 +186,7 @@ invalid_authentication_token_type_error = {
             },
             None,
             200,
-            User(
+            CloudConnectorUser(
                 authenticated=True,
                 claims=UserClaims(
                     scopes=["feature1", "feature2", "feature3"],
@@ -212,7 +212,7 @@ invalid_authentication_token_type_error = {
             },
             None,
             403,
-            User(
+            CloudConnectorUser(
                 authenticated=True,
                 claims=UserClaims(subject="1234", gitlab_realm="self-managed"),
             ),
@@ -229,7 +229,7 @@ invalid_authentication_token_type_error = {
             },
             None,
             403,
-            User(
+            CloudConnectorUser(
                 authenticated=True,
                 claims=UserClaims(
                     scopes=["feature1"],
@@ -251,7 +251,7 @@ invalid_authentication_token_type_error = {
             },
             None,
             403,
-            User(
+            CloudConnectorUser(
                 authenticated=True,
                 claims=UserClaims(
                     scopes=["feature3"],
@@ -273,7 +273,7 @@ invalid_authentication_token_type_error = {
             },
             None,
             403,
-            User(
+            CloudConnectorUser(
                 authenticated=True,
                 claims=UserClaims(
                     scopes=["unsupported_scope"],
@@ -295,7 +295,7 @@ invalid_authentication_token_type_error = {
             },
             None,
             401,
-            User(
+            CloudConnectorUser(
                 authenticated=False,
                 claims=UserClaims(
                     scopes=["feature1", "feature3"],
@@ -321,7 +321,7 @@ invalid_authentication_token_type_error = {
             },
             None,
             401,
-            User(
+            CloudConnectorUser(
                 authenticated=True,
                 claims=UserClaims(
                     scopes=["feature1", "feature3"],
@@ -347,7 +347,7 @@ invalid_authentication_token_type_error = {
             },
             None,
             401,
-            User(
+            CloudConnectorUser(
                 authenticated=True,
                 claims=UserClaims(
                     scopes=["feature1", "feature3"],
@@ -374,7 +374,7 @@ invalid_authentication_token_type_error = {
             },
             None,
             200,
-            User(
+            CloudConnectorUser(
                 authenticated=True,
                 claims=UserClaims(
                     scopes=["feature1", "feature3"],
@@ -398,7 +398,7 @@ invalid_authentication_token_type_error = {
             },
             None,
             401,
-            User(
+            CloudConnectorUser(
                 authenticated=True,
                 claims=UserClaims(
                     scopes=["feature1", "feature3"],
@@ -426,7 +426,7 @@ invalid_authentication_token_type_error = {
             },
             None,
             200,
-            User(
+            CloudConnectorUser(
                 authenticated=True,
                 claims=UserClaims(
                     scopes=["feature1", "feature3"],
@@ -455,7 +455,7 @@ invalid_authentication_token_type_error = {
             },
             None,
             200,
-            User(
+            CloudConnectorUser(
                 authenticated=True,
                 claims=UserClaims(
                     scopes=["feature1", "feature3"],
@@ -484,7 +484,7 @@ invalid_authentication_token_type_error = {
             },
             None,
             401,
-            User(
+            CloudConnectorUser(
                 authenticated=True,
                 claims=UserClaims(
                     scopes=["feature1", "feature3"],
@@ -515,7 +515,7 @@ invalid_authentication_token_type_error = {
             },
             None,
             401,
-            User(
+            CloudConnectorUser(
                 authenticated=True,
                 claims=UserClaims(
                     scopes=["feature1", "feature3"],
@@ -546,7 +546,7 @@ invalid_authentication_token_type_error = {
             },
             None,
             200,
-            User(
+            CloudConnectorUser(
                 authenticated=True,
                 claims=UserClaims(
                     scopes=["feature1", "feature3"],
@@ -606,7 +606,7 @@ def test_failed_authorization_logging(
             },
             None,
             200,
-            User(
+            CloudConnectorUser(
                 authenticated=True,
                 claims=UserClaims(
                     scopes=["feature1", "feature3"],
@@ -640,7 +640,7 @@ def test_failed_authorization_logging(
             },
             None,
             200,
-            User(
+            CloudConnectorUser(
                 authenticated=True,
                 claims=UserClaims(
                     scopes=["feature1", "feature3"],

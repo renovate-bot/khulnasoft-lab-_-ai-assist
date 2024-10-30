@@ -23,7 +23,7 @@ from ai_gateway.chat.agents import (
     ReActAgentInputs,
 )
 from ai_gateway.chat.agents.typing import AgentFinalAnswer, TypeAgentEvent
-from ai_gateway.cloud_connector import User, UserClaims
+from ai_gateway.cloud_connector import CloudConnectorUser, UserClaims
 from ai_gateway.config import Config
 from ai_gateway.models.base_chat import Role
 from ai_gateway.prompts.typing import ModelMetadata
@@ -36,7 +36,7 @@ def fast_api_router():
 
 @pytest.fixture
 def auth_user():
-    return User(
+    return CloudConnectorUser(
         authenticated=True,
         claims=UserClaims(scopes=["duo_chat"]),
     )
@@ -295,21 +295,25 @@ class TestReActAgentStream:
         "auth_user,agent_request,expected_status_code,expected_error,expected_internal_events",
         [
             (
-                User(authenticated=True, claims=UserClaims(scopes=["duo_chat"])),
+                CloudConnectorUser(
+                    authenticated=True, claims=UserClaims(scopes=["duo_chat"])
+                ),
                 AgentRequest(messages=[Message(role=Role.USER, content="Hi")]),
                 200,
                 "",
                 [call("request_duo_chat", category="ai_gateway.api.v2.chat.agent")],
             ),
             (
-                User(authenticated=True, claims=UserClaims(scopes="wrong_scope")),
+                CloudConnectorUser(
+                    authenticated=True, claims=UserClaims(scopes="wrong_scope")
+                ),
                 AgentRequest(messages=[Message(role=Role.USER, content="Hi")]),
                 403,
                 '{"detail":"Unauthorized to access duo chat"}',
                 [],
             ),
             (
-                User(
+                CloudConnectorUser(
                     authenticated=True,
                     claims=UserClaims(scopes=["duo_chat", "include_file_context"]),
                 ),
@@ -332,7 +336,9 @@ class TestReActAgentStream:
                 ],
             ),
             (
-                User(authenticated=True, claims=UserClaims(scopes=["duo_chat"])),
+                CloudConnectorUser(
+                    authenticated=True, claims=UserClaims(scopes=["duo_chat"])
+                ),
                 AgentRequest(
                     messages=[
                         Message(
@@ -347,7 +353,9 @@ class TestReActAgentStream:
                 [call("request_duo_chat", category="ai_gateway.api.v2.chat.agent")],
             ),
             (
-                User(authenticated=True, claims=UserClaims(scopes=["duo_chat"])),
+                CloudConnectorUser(
+                    authenticated=True, claims=UserClaims(scopes=["duo_chat"])
+                ),
                 AgentRequest(
                     messages=[
                         Message(
@@ -362,7 +370,9 @@ class TestReActAgentStream:
                 [call("request_duo_chat", category="ai_gateway.api.v2.chat.agent")],
             ),
             (
-                User(authenticated=True, claims=UserClaims(scopes=["duo_chat"])),
+                CloudConnectorUser(
+                    authenticated=True, claims=UserClaims(scopes=["duo_chat"])
+                ),
                 AgentRequest(
                     messages=[
                         Message(
@@ -380,7 +390,7 @@ class TestReActAgentStream:
     )
     async def test_authorization(
         self,
-        auth_user: User,
+        auth_user: CloudConnectorUser,
         agent_request: AgentRequest,
         mock_client: TestClient,
         mock_model: Mock,

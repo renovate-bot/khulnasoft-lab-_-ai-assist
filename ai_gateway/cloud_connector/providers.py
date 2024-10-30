@@ -9,7 +9,7 @@ from jose.exceptions import JWKError
 
 from ai_gateway.cloud_connector.cache import LocalAuthCache
 from ai_gateway.cloud_connector.config import CloudConnectorConfig
-from ai_gateway.cloud_connector.user import User, UserClaims
+from ai_gateway.cloud_connector.user import CloudConnectorUser, UserClaims
 from ai_gateway.tracking.errors import log_exception
 
 __all__ = [
@@ -25,7 +25,7 @@ REQUEST_TIMEOUT_SECONDS = 10
 
 class AuthProvider(ABC):
     @abstractmethod
-    def authenticate(self, *args, **kwargs) -> User:
+    def authenticate(self, *args, **kwargs) -> CloudConnectorUser:
         pass
 
 
@@ -75,7 +75,7 @@ class CompositeProvider(JwksProvider, AuthProvider):
         self.expiry_seconds = expiry_seconds
         self.cache = LocalAuthCache()
 
-    def authenticate(self, token: str) -> User:
+    def authenticate(self, token: str) -> CloudConnectorUser:
         jwks = self.jwks()
         is_allowed = False
         gitlab_realm = ""
@@ -108,7 +108,7 @@ class CompositeProvider(JwksProvider, AuthProvider):
         except JWTError as err:
             log_exception(err)
 
-        return User(
+        return CloudConnectorUser(
             authenticated=is_allowed,
             claims=UserClaims(
                 gitlab_realm=gitlab_realm,

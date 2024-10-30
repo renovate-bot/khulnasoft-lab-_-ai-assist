@@ -2,7 +2,7 @@ import pytest
 from fastapi.testclient import TestClient
 
 from ai_gateway.api.v2 import api_router
-from ai_gateway.cloud_connector import User, UserClaims
+from ai_gateway.cloud_connector import CloudConnectorUser, UserClaims
 from ai_gateway.config import Config
 
 
@@ -13,7 +13,7 @@ def fast_api_router():
 
 @pytest.fixture
 def auth_user():
-    return User(
+    return CloudConnectorUser(
         authenticated=True,
         claims=UserClaims(
             scopes=["code_suggestions"], subject="1234", gitlab_realm="self-managed"

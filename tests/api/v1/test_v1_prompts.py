@@ -8,7 +8,11 @@ from langchain_core.messages import BaseMessage
 from pydantic_core import Url
 
 from ai_gateway.api.v1 import api_router
-from ai_gateway.cloud_connector import GitLabUnitPrimitive, User, UserClaims
+from ai_gateway.cloud_connector import (
+    CloudConnectorUser,
+    GitLabUnitPrimitive,
+    UserClaims,
+)
 from ai_gateway.config import Config
 from ai_gateway.prompts import Prompt
 from ai_gateway.prompts.config.base import PromptConfig
@@ -94,7 +98,9 @@ def unit_primitives():
 
 @pytest.fixture
 def auth_user(unit_primitives: list[GitLabUnitPrimitive]):
-    return User(authenticated=True, claims=UserClaims(scopes=unit_primitives))
+    return CloudConnectorUser(
+        authenticated=True, claims=UserClaims(scopes=unit_primitives)
+    )
 
 
 class TestPrompt:
@@ -206,7 +212,7 @@ class TestPrompt:
 class TestUnauthorizedScopes:
     @pytest.fixture
     def auth_user(self):
-        return User(
+        return CloudConnectorUser(
             authenticated=True,
             claims=UserClaims(scopes=["unauthorized_scope"]),
         )

@@ -10,7 +10,11 @@ from structlog.testing import capture_logs
 from ai_gateway.api.auth_utils import StarletteUser
 from ai_gateway.api.v1 import api_router
 from ai_gateway.api.v1.chat.auth import ChatInvokable, authorize_with_unit_primitive
-from ai_gateway.cloud_connector import GitLabUnitPrimitive, User, UserClaims
+from ai_gateway.cloud_connector import (
+    CloudConnectorUser,
+    GitLabUnitPrimitive,
+    UserClaims,
+)
 from ai_gateway.models import (
     AnthropicAPIConnectionError,
     AnthropicAPIStatusError,
@@ -28,7 +32,7 @@ def fast_api_router():
 
 @pytest.fixture
 def auth_user():
-    return User(
+    return CloudConnectorUser(
         authenticated=True,
         claims=UserClaims(
             scopes=["duo_chat"], subject="1234", gitlab_realm="self-managed"
@@ -310,7 +314,7 @@ class TestAgentUnsupportedModel:
 class TestAnthropicInvalidScope:
     @pytest.fixture
     def auth_user(self):
-        return User(
+        return CloudConnectorUser(
             authenticated=True,
             claims=UserClaims(
                 scopes=["unauthorized_scope"],

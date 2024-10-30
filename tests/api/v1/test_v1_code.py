@@ -6,7 +6,7 @@ from fastapi.testclient import TestClient
 from jose import jwt
 
 from ai_gateway.api.v1 import api_router
-from ai_gateway.cloud_connector import CompositeProvider, User, UserClaims
+from ai_gateway.cloud_connector import CloudConnectorUser, CompositeProvider, UserClaims
 from ai_gateway.config import Config, ConfigAuth, ConfigSelfSignedJwt
 
 # JSON Web Key can be generated via https://mkjwk.org/
@@ -72,7 +72,7 @@ def auth_user(request):
         claims = UserClaims(
             scopes=["code_suggestions"], duo_seat_count=DUO_SEAT_COUNT_CLAIM_TEST_VALUE
         )
-    return User(authenticated=True, claims=claims)
+    return CloudConnectorUser(authenticated=True, claims=claims)
 
 
 @pytest.fixture
@@ -248,7 +248,7 @@ def test_user_access_token_gitlab_realm_header_missing(mock_client: TestClient):
 class TestUnauthorizedIssuer:
     @pytest.fixture
     def auth_user(self):
-        return User(
+        return CloudConnectorUser(
             authenticated=True,
             claims=UserClaims(
                 scopes=["code_suggestions"],
