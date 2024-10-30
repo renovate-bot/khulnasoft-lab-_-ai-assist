@@ -21,12 +21,16 @@ class DuoChatToolsRegistry(BaseToolsRegistry):
         # We can also read the list of tools and associated unit primitives from the file
         # similar to what we implemented for the Prompt Registry
         tools = [
-            CiEditorAssistant(),
             GitlabDocumentation(),
             EpicReader(),
             IssueReader(),
             MergeRequestReader(),
         ]
+
+        # We continue to use CIEditor tool unless the feature flag for its
+        # removal is turned on
+        if not is_feature_enabled(FeatureFlag.CI_EDITOR_TOOL_REMOVED):
+            tools.append(CiEditorAssistant())
 
         if is_feature_enabled(FeatureFlag.AI_COMMIT_READER_FOR_CHAT):
             tools.append(CommitReader())

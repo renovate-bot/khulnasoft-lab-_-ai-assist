@@ -121,11 +121,11 @@ class TestGLAgentRemoteExecutor:
 
             if user.is_debug:
                 assert context.get("duo_chat.agent_available_tools") == [
-                    "ci_editor_assistant",
                     "gitlab_documentation",
                     "epic_reader",
                     "issue_reader",
                     "merge_request_reader",
+                    "ci_editor_assistant",
                 ]
             else:
                 assert context.get("duo_chat.agent_available_tools") == ["issue_reader"]

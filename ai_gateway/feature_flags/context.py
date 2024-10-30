@@ -11,6 +11,7 @@ class FeatureFlag(StrEnum):
     EXPANDED_AI_LOGGING = "expanded_ai_logging"
     AI_BUILD_READER_FOR_CHAT = "ai_build_reader_for_chat"
     AI_COMMIT_READER_FOR_CHAT = "ai_commit_reader_for_chat"
+    CI_EDITOR_TOOL_REMOVED = "ci_editor_tool_removed"
 
 
 def is_feature_enabled(feature_name: FeatureFlag | str) -> bool:
