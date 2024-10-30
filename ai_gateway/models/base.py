@@ -13,6 +13,7 @@ from pydantic import BaseModel
 from ai_gateway.config import Config
 from ai_gateway.feature_flags import FeatureFlag, is_feature_enabled
 from ai_gateway.instrumentators.model_requests import ModelRequestInstrumentator
+from ai_gateway.structured_logging import get_request_logger
 
 # TODO: The instrumentator needs the config here to know what limit needs to be
 # reported for a model. This would be nicer if we dependency inject the instrumentator
@@ -33,6 +34,7 @@ __all__ = [
 ]
 
 log = structlog.stdlib.get_logger("models")
+request_log = get_request_logger("models")
 
 
 class KindModelProvider(StrEnum):
@@ -131,7 +133,7 @@ async def log_anthropic_request(request: httpx.Request):
         except Exception:
             request_content_json = {}
 
-        log.info(
+        request_log.info(
             "Request to Anthropic",
             source=__name__,
             request_method=request.method,

@@ -2,7 +2,6 @@ import re
 from typing import Any, AsyncIterator, Optional, Sequence
 
 import starlette_context
-import structlog
 from langchain_core.exceptions import OutputParserException
 from langchain_core.messages import AIMessage, HumanMessage, SystemMessage
 from langchain_core.output_parsers import BaseCumulativeTransformOutputParser
@@ -21,7 +20,6 @@ from ai_gateway.chat.agents.typing import (
     TypeAgentEvent,
 )
 from ai_gateway.chat.tools.base import BaseTool
-from ai_gateway.feature_flags import FeatureFlag, is_feature_enabled
 from ai_gateway.models.base_chat import Role
 from ai_gateway.prompts import Prompt, jinja2_formatter
 from ai_gateway.prompts.typing import ModelMetadata
@@ -32,9 +30,11 @@ __all__ = [
     "ReActAgent",
 ]
 
+from ai_gateway.structured_logging import get_request_logger
+
 _REACT_AGENT_TOOL_ACTION_CONTEXT_KEY = "duo_chat.agent_tool_action"
 
-log = structlog.stdlib.get_logger("react")
+request_log = get_request_logger("react")
 
 
 class ReActAgentInputs(BaseModel):
@@ -175,10 +175,9 @@ class ReActAgent(Prompt[ReActAgentInputs, TypeAgentEvent]):
 
         try:
             async for event in astream:
-                if is_feature_enabled(FeatureFlag.EXPANDED_AI_LOGGING):
-                    log.info(
-                        "Response streaming", source=__name__, streamed_event=event
-                    )
+                request_log.info(
+                    "Response streaming", source=__name__, streamed_event=event
+                )
 
                 if isinstance(event, AgentFinalAnswer) and len(event.text) > 0:
                     yield AgentFinalAnswer(

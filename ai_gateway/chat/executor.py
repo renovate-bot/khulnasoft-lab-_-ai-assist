@@ -1,7 +1,6 @@
 from typing import AsyncIterator, Generic, Protocol
 
 import starlette_context
-import structlog
 from langchain_core.runnables import Runnable
 
 from ai_gateway.api.auth_utils import StarletteUser
@@ -13,7 +12,6 @@ from ai_gateway.chat.agents import (
 )
 from ai_gateway.chat.base import BaseToolsRegistry
 from ai_gateway.chat.tools import BaseTool
-from ai_gateway.feature_flags import FeatureFlag, is_feature_enabled
 from ai_gateway.internal_events import InternalEventsClient
 from ai_gateway.prompts.typing import ModelMetadata
 
@@ -22,9 +20,11 @@ __all__ = [
     "GLAgentRemoteExecutor",
 ]
 
+from ai_gateway.structured_logging import get_request_logger
+
 _REACT_AGENT_AVAILABLE_TOOL_NAMES_CONTEXT_KEY = "duo_chat.agent_available_tools"
 
-log = structlog.stdlib.get_logger("gl_agent_remote_executor")
+log = get_request_logger("gl_agent_remote_executor")
 
 
 class TypeAgentFactory(Protocol[TypeAgentInputs, TypeAgentEvent]):
@@ -79,8 +79,7 @@ class GLAgentRemoteExecutor(Generic[TypeAgentInputs, TypeAgentEvent]):
             tools_by_name.keys()
         )
 
-        if is_feature_enabled(FeatureFlag.EXPANDED_AI_LOGGING):
-            log.info("Processed inputs", source=__name__, inputs=inputs)
+        log.info("Processed inputs", source=__name__, inputs=inputs)
 
         async for event in agent.astream():
             yield event
