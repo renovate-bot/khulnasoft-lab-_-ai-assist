@@ -4,17 +4,17 @@ ENV PYTHONUNBUFFERED=1 \
   PIP_NO_CACHE_DIR=1 \
   PIP_DISABLE_PIP_VERSION_CHECK=1 \
   POETRY_VERSION=1.8.4 \
+  POETRY_VIRTUALENVS_PATH=/home/aigateway/app/venv \
+  POETRY_CONFIG_DIR=/home/aigateway/app/.config/pypoetry \
+  POETRY_DATA_DIR=/home/aigateway/app/.local/share/pypoetry \
+  POETRY_CACHE_DIR=/home/aigateway/app/.cache/pypoetry \
   CLOUD_CONNECTOR_SERVICE_NAME=${CLOUD_CONNECTOR_SERVICE_NAME}
 
-WORKDIR /app
+WORKDIR /home/aigateway/app
 
 COPY poetry.lock pyproject.toml ./
 RUN pip install "poetry==$POETRY_VERSION"
-
-# Install all dependencies into /opt/venv
-# so that we can copy these resources between
-# build stages
-RUN poetry config virtualenvs.path /opt/venv
+RUN mkdir -p -m 777 $POETRY_CONFIG_DIR $POETRY_DATA_DIR $POETRY_CACHE_DIR
 
 ##
 ## Intermediate image contains build-essential for installing
@@ -28,7 +28,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential \
     && rm -rf /var/lib/apt/lists/*
 
-COPY scripts /app/scripts
+COPY scripts /home/aigateway/app/scripts
 
 RUN poetry install --no-interaction --no-ansi --no-cache --no-root --only main
 
@@ -37,16 +37,22 @@ RUN poetry install --no-interaction --no-ansi --no-cache --no-root --only main
 ##
 FROM base-image AS final
 
-COPY --from=install-image /opt/venv /opt/venv
+WORKDIR /home/aigateway/app
 
-COPY ai_gateway/ ai_gateway/
+RUN useradd aigateway
+RUN chown -R aigateway:aigateway /home/aigateway/
+USER aigateway
+
+COPY --chown=aigateway:aigateway --from=install-image /home/aigateway/app/venv/ /home/aigateway/app/venv/
+
+COPY --chown=aigateway:aigateway ai_gateway/ ai_gateway/
 
 # Environment variable TRANSFORMERS_CACHE controls where files are downloaded
-COPY --from=install-image /app/scripts/bootstrap.py .
+COPY --chown=aigateway:aigateway --from=install-image /home/aigateway/app/scripts/bootstrap.py .
+COPY --chown=aigateway:aigateway --from=install-image /home/aigateway/app/scripts/run.sh .
+
 RUN poetry run python bootstrap.py
 
-# Opening a default port for running it as a service container in CI/CD pipelines.
 EXPOSE 5052
 
-COPY --from=install-image /app/scripts/run.sh .
 CMD ["./run.sh"]
