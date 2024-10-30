@@ -8,8 +8,10 @@ from fastapi import FastAPI
 from structlog.types import EventDict, Processor
 
 from ai_gateway.config import ConfigLogging
+from ai_gateway.feature_flags import FeatureFlag, is_feature_enabled
 
 access_logger = structlog.stdlib.get_logger("api.access")
+ENABLE_REQUEST_LOGGING = False
 
 
 # https://github.com/hynek/structlog/issues/35#issuecomment-591321744
@@ -21,6 +23,7 @@ def rename_event_key(_, __, event_dict: EventDict) -> EventDict:
     See https://github.com/hynek/structlog/issues/35#issuecomment-591321744
     """
     event_dict["message"] = event_dict.pop("event")
+
     return event_dict
 
 
@@ -47,7 +50,10 @@ def setup_app_logging(app: FastAPI):
 
 
 def setup_logging(logging_config: ConfigLogging):
+    global ENABLE_REQUEST_LOGGING  # pylint: disable=global-statement
+
     timestamper = structlog.processors.TimeStamper(fmt="iso")
+    ENABLE_REQUEST_LOGGING = logging_config.enable_request_logging
 
     shared_processors: list[Processor] = [
         structlog.contextvars.merge_contextvars,
@@ -145,3 +151,16 @@ def setup_logging(logging_config: ConfigLogging):
         )
 
     sys.excepthook = handle_exception
+
+
+def prevent_logging_if_disabled(_, __, event_dict: EventDict) -> EventDict:
+    if ENABLE_REQUEST_LOGGING or is_feature_enabled(FeatureFlag.EXPANDED_AI_LOGGING):
+        return event_dict
+
+    raise structlog.DropEvent
+
+
+def get_request_logger(name: str):
+    return structlog.wrap_logger(
+        structlog.get_logger(name), processors=[prevent_logging_if_disabled]
+    )

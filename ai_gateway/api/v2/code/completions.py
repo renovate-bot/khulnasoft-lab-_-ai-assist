@@ -2,7 +2,6 @@ from time import time
 from typing import Annotated, AsyncIterator, Optional, Tuple, Union
 
 import anthropic
-import structlog
 from dependency_injector.providers import Factory
 from fastapi import APIRouter, Body, Depends, HTTPException, Request, status
 
@@ -59,6 +58,7 @@ from ai_gateway.models.base import TokensConsumptionMetadata
 from ai_gateway.models.vertex_text import KindVertexTextModel
 from ai_gateway.prompts import BasePromptRegistry
 from ai_gateway.prompts.typing import ModelMetadata
+from ai_gateway.structured_logging import get_request_logger
 from ai_gateway.tracking import SnowplowEvent, SnowplowEventContext
 from ai_gateway.tracking.errors import log_exception
 from ai_gateway.tracking.instrumentator import SnowplowInstrumentator
@@ -68,7 +68,7 @@ __all__ = [
 ]
 
 
-log = structlog.stdlib.get_logger("codesuggestions")
+request_log = get_request_logger("codesuggestions")
 
 router = APIRouter()
 
@@ -145,7 +145,7 @@ async def completions(
     except Exception as e:
         log_exception(e)
 
-    log.debug(
+    request_log.debug(
         "code completion input:",
         model_name=payload.model_name,
         model_provider=payload.model_provider,
@@ -296,7 +296,7 @@ async def generations(
     except Exception as e:
         log_exception(e)
 
-    log.debug(
+    request_log.debug(
         "code creation input:",
         prompt=payload.prompt if hasattr(payload, "prompt") else None,
         prefix=payload.current_file.content_above_cursor,
@@ -347,7 +347,7 @@ async def generations(
     if isinstance(suggestion, AsyncIterator):
         return await _handle_stream(suggestion)
 
-    log.debug(
+    request_log.debug(
         "code creation suggestion:",
         suggestion=suggestion.text,
         score=suggestion.score,
@@ -480,7 +480,7 @@ def _completion_suggestion_choices(
     choices = []
     tokens_consumption_metadata = None
     for suggestion in suggestions:
-        log.debug(
+        request_log.debug(
             "code completion suggestion:",
             suggestion=suggestion.text,
             score=suggestion.score,

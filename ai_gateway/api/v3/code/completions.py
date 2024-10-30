@@ -1,7 +1,6 @@
 from time import time
 from typing import Annotated, AsyncIterator, Optional
 
-import structlog
 from dependency_injector.providers import Factory
 from dependency_injector.wiring import Provide, inject
 from fastapi import APIRouter, Depends, HTTPException, Request, status
@@ -38,13 +37,14 @@ from ai_gateway.code_suggestions import (
 from ai_gateway.container import ContainerApplication
 from ai_gateway.models import KindModelProvider
 from ai_gateway.prompts import BasePromptRegistry
+from ai_gateway.structured_logging import get_request_logger
 from ai_gateway.tracking import SnowplowEventContext
 
 __all__ = [
     "router",
 ]
 
-log = structlog.stdlib.get_logger("codesuggestions")
+request_log = get_request_logger("codesuggestions")
 
 router = APIRouter()
 
@@ -161,7 +161,7 @@ def _completion_suggestion_choices(suggestions: list) -> list:
 
     choices = []
     for suggestion in suggestions:
-        log.debug(
+        request_log.debug(
             "code completion suggestion:",
             suggestion=suggestion,
             score=suggestion.score,
@@ -197,7 +197,7 @@ async def code_generation(
         prompt = prompt_registry.get_on_behalf(current_user, payload.prompt_id)
         engine = agent_factory(model__prompt=prompt)
 
-        log.info(
+        request_log.info(
             "Executing code generation with prompt registry",
             prompt_name=prompt.name,
             prompt_model_class=prompt.model.__class__.__name__,
