@@ -33,7 +33,7 @@ prompt_template:
 
     {%- if trimmed_content_above_cursor or trimmed_content_below_cursor %}
     <existing_code>
-    {{trimmed_content_above_cursor}}{% raw %}{{cursor}}{% endraw %}{{trimmed_content_above_cursor}}
+    {{trimmed_content_above_cursor}}{% raw %}{{cursor}}{% endraw %}{{trimmed_content_below_cursor}}
     </existing_code>
 
     The existing code is provided in <existing_code></existing_code> tags.
