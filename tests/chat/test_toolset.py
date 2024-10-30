@@ -28,11 +28,11 @@ class TestDuoChatToolRegistry:
         [
             (
                 [
-                    CiEditorAssistant,
                     GitlabDocumentation,
                     EpicReader,
                     IssueReader,
                     MergeRequestReader,
+                    CiEditorAssistant,
                 ]
             )
         ],
@@ -58,10 +58,10 @@ class TestDuoChatToolRegistry:
                     GitLabUnitPrimitive.ASK_ISSUE,
                 ],
                 [
-                    CiEditorAssistant,
                     GitlabDocumentation,
                     EpicReader,
                     IssueReader,
+                    CiEditorAssistant,
                 ],
             ),
             (
