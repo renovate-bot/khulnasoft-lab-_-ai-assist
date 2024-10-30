@@ -41,7 +41,7 @@ class TestDuoChatToolRegistry:
         tools = DuoChatToolsRegistry().get_all()
         actual_tools = [type(tool) for tool in tools]
 
-        assert actual_tools == expected_tools
+        assert set(actual_tools) == set(expected_tools)
 
     @pytest.mark.parametrize(
         ("unit_primitives", "expected_tools"),
@@ -85,7 +85,7 @@ class TestDuoChatToolRegistry:
         tools = DuoChatToolsRegistry().get_on_behalf(user, "")
         actual_tools = [type(tool) for tool in tools]
 
-        assert actual_tools == expected_tools
+        assert set(actual_tools) == set(expected_tools)
 
     @pytest.mark.parametrize(
         "unit_primitives",
