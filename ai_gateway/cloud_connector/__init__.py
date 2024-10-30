@@ -18,7 +18,7 @@ from ai_gateway.cloud_connector.providers import (
     LocalAuthProvider,
 )
 from ai_gateway.cloud_connector.token_authority import TokenAuthority
-from ai_gateway.cloud_connector.user import CloudConnectorUser, User, UserClaims
+from ai_gateway.cloud_connector.user import CloudConnectorUser, UserClaims
 from ai_gateway.cloud_connector.validators import (
     X_GITLAB_DUO_SEAT_COUNT_HEADER,
     validate_duo_seat_count_header,

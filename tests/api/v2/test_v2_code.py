@@ -14,7 +14,7 @@ from structlog.testing import capture_logs
 
 from ai_gateway.api.error_utils import capture_validation_errors
 from ai_gateway.api.v2 import api_router
-from ai_gateway.cloud_connector import User, UserClaims
+from ai_gateway.cloud_connector import CloudConnectorUser, UserClaims
 from ai_gateway.config import Config
 from ai_gateway.models.base_chat import Message, Role
 from ai_gateway.tracking.container import ContainerTracking
@@ -29,7 +29,7 @@ def fast_api_router():
 
 @pytest.fixture
 def auth_user():
-    return User(
+    return CloudConnectorUser(
         authenticated=True,
         claims=UserClaims(
             scopes=["code_suggestions"],
@@ -840,7 +840,7 @@ class TestCodeCompletions:
         ),
         [
             (
-                User(
+                CloudConnectorUser(
                     authenticated=True,
                     claims=UserClaims(
                         scopes=["code_suggestions"],
@@ -881,7 +881,7 @@ class TestCodeCompletions:
         mock_client: TestClient,
         mock_container: containers.Container,
         mock_completions_legacy: Mock,
-        auth_user: User,
+        auth_user: CloudConnectorUser,
         telemetry: List[Dict[str, Union[str, int, None]]],
         current_file: Dict[str, str],
         expected_language: str,
@@ -949,7 +949,7 @@ class TestCodeCompletions:
         ("auth_user", "extra_headers", "expected_status_code"),
         [
             (
-                User(
+                CloudConnectorUser(
                     authenticated=True,
                     claims=UserClaims(
                         scopes=["code_suggestions"],
@@ -961,7 +961,7 @@ class TestCodeCompletions:
                 200,
             ),
             (
-                User(
+                CloudConnectorUser(
                     authenticated=True,
                     claims=UserClaims(
                         scopes=["code_suggestions"],
@@ -979,7 +979,7 @@ class TestCodeCompletions:
         self,
         mock_client: TestClient,
         mock_completions: Mock,
-        auth_user: User,
+        auth_user: CloudConnectorUser,
         extra_headers: Dict[str, str],
         expected_status_code: int,
     ):
@@ -1729,7 +1729,7 @@ class TestCodeGenerations:
 class TestUnauthorizedScopes:
     @pytest.fixture
     def auth_user(self):
-        return User(
+        return CloudConnectorUser(
             authenticated=True,
             claims=UserClaims(
                 scopes=["unauthorized_scope"],
@@ -1773,7 +1773,7 @@ class TestUnauthorizedScopes:
 class TestUnauthorizedIssuer:
     @pytest.fixture
     def auth_user(self):
-        return User(
+        return CloudConnectorUser(
             authenticated=True,
             claims=UserClaims(
                 scopes=["code_suggestions"],

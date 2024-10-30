@@ -2,7 +2,7 @@ from typing import NamedTuple, Optional
 
 from ai_gateway.cloud_connector.gitlab_features import GitLabUnitPrimitive
 
-__all__ = ["User", "UserClaims", "CloudConnectorUser"]
+__all__ = ["UserClaims", "CloudConnectorUser"]
 
 
 class UserClaims(NamedTuple):
@@ -12,11 +12,6 @@ class UserClaims(NamedTuple):
     issuer: str = ""
     duo_seat_count: str = ""
     gitlab_instance_id: str = ""
-
-
-class User(NamedTuple):
-    authenticated: bool
-    claims: UserClaims
 
 
 class CloudConnectorUser:
@@ -47,6 +42,10 @@ class CloudConnectorUser:
     @property
     def is_authenticated(self) -> bool:
         return self._authenticated
+
+    @property
+    def authenticated(self) -> bool:
+        return self.is_authenticated
 
     @property
     def unit_primitives(self) -> list[GitLabUnitPrimitive]:
