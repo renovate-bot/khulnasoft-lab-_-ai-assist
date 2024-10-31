@@ -1,0 +1,27 @@
+---
+name: Claude 3 ReAct Chat agent
+model:
+  name: claude-3-5-sonnet@20241022
+  params:
+    model_class_provider: litellm
+    custom_llm_provider: vertex_ai
+    temperature: 0.1
+    max_tokens: 4_096
+    max_retries: 1
+unit_primitives:
+  - duo_chat
+prompt_template:
+  system: |
+    {% include 'chat/react/system.jinja' %}
+  user: |
+    {% include 'chat/react/user.jinja' %}
+  assistant: |
+    {% include 'chat/react/assistant.jinja' %}
+params:
+  # Overriding the `AIGW_GOOGLE_CLOUD_PLATFORM__PROJECT` config, since Sonnet 3.5
+  # is only available in a handful of regions. See
+  # https://cloud.google.com/vertex-ai/generative-ai/docs/partner-models/use-claude#regions
+  vertex_location: us-east5
+  timeout: 30
+  stop:
+    - "Observation:"
