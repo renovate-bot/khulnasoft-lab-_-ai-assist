@@ -425,8 +425,8 @@ def test_config_model_concurrency(values: dict, expected: ConfigModelConcurrency
     [
         ({}, ConfigDefaultPrompts()),
         (
-            {"AIGW_DEFAULT_PROMPTS": '{"chat/react": "vertex"}'},
-            ConfigDefaultPrompts({"chat/react": "vertex"}),
+            {"AIGW_DEFAULT_PROMPTS": '{"chat/react": "vertex_v2"}'},
+            ConfigDefaultPrompts({"chat/react": "vertex_v2"}),
         ),
     ],
 )
