@@ -59,12 +59,15 @@ def test_ready(
     ]
     assert mock_generations.mock_calls == [
         call.execute(
-            prefix="\n\nHuman: Complete this code: def hello_world():\n\nAssistant:",
+            prefix="",
             file_name="monitoring.py",
             editor_lang="python",
             model_provider="anthropic",
         )
     ]
+
+    # Assert the attributes of the mock code generations object
+    assert mock_generations.return_value.model.name == "claude-3-haiku-20240307"
 
 
 def model_failure(*args, **kwargs):
@@ -108,14 +111,18 @@ def test_ready_anthropic_failure(
             editor_lang="python",
         )
     ]
-    # Don't try antrhopic if vertex is not available, no need to spend
+    # Don't try anthropic if vertex is not available, no need to spend
     # the money if the service is not going to be ready
     assert mock_generations.mock_calls == [
         call.execute(
-            prefix="\n\nHuman: Complete this code: def hello_world():\n\nAssistant:",
+            prefix="",
             file_name="monitoring.py",
             editor_lang="python",
             model_provider="anthropic",
         )
     ]
+
+    # Assert the attributes of the mock code generations object
+    assert mock_generations.return_value.model.name == "claude-3-haiku-20240307"
+
     assert response.status_code == 503

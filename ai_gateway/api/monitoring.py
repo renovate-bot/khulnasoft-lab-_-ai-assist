@@ -7,10 +7,12 @@ from fastapi_health import health
 
 from ai_gateway.async_dependency_resolver import (
     get_code_suggestions_completions_vertex_legacy_provider,
-    get_code_suggestions_generations_anthropic_factory_provider,
+    get_code_suggestions_generations_anthropic_chat_factory_provider,
 )
 from ai_gateway.code_suggestions import CodeCompletionsLegacy, CodeGenerations
-from ai_gateway.models import KindAnthropicModel, KindModelProvider
+from ai_gateway.code_suggestions.processing import MetadataPromptBuilder, Prompt
+from ai_gateway.code_suggestions.processing.typing import MetadataCodeContent
+from ai_gateway.models import KindAnthropicModel, KindModelProvider, Message
 
 __all__ = [
     "router",
@@ -68,19 +70,35 @@ async def validate_vertex_available(
 
 @single_validation(KindModelProvider.ANTHROPIC)
 async def validate_anthropic_available(
-    generations_anthropic_factory: Factory[CodeGenerations] = Depends(
-        get_code_suggestions_generations_anthropic_factory_provider
+    generations_anthropic_chat_factory: Factory[CodeGenerations] = Depends(
+        get_code_suggestions_generations_anthropic_chat_factory_provider
     ),
 ) -> bool:
-    code_generations = generations_anthropic_factory(
-        model__name=KindAnthropicModel.CLAUDE_INSTANT_1_2.value,
+    prompt = Prompt(
+        prefix=[
+            Message(content="Complete this code: def hello_world()", role="user"),
+            Message(content="<new_code>", role="assistant"),
+        ],
+        metadata=MetadataPromptBuilder(
+            components={
+                "prefix": MetadataCodeContent(length=10, length_tokens=2),
+            },
+        ),
+        suffix="# End of function",
+    )
+
+    code_generations = generations_anthropic_chat_factory(
+        model__name=KindAnthropicModel.CLAUDE_3_HAIKU.value,
         model__stop_sequences=["</new_code>"],
     )
+
+    # Assign the prompt to the code generations object
+    code_generations.prompt = prompt
 
     # The generation prompt is currently built in rails, so include a minimal one
     # here to replace that
     await code_generations.execute(
-        prefix="\n\nHuman: Complete this code: def hello_world():\n\nAssistant:",
+        prefix="",
         file_name="monitoring.py",
         editor_lang="python",
         model_provider=KindModelProvider.ANTHROPIC.value,
