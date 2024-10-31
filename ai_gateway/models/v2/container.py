@@ -1,22 +1,26 @@
 from dependency_injector import containers, providers
 from langchain_community.chat_models import ChatLiteLLM
-from langchain_core.runnables import RunnableBinding
 from litellm.llms.custom_httpx.http_handler import AsyncHTTPHandler
 
 from ai_gateway.models import mock
 from ai_gateway.models.base import init_anthropic_client, log_request
 from ai_gateway.models.v2.anthropic_claude import ChatAnthropic
+from ai_gateway.prompts.typing import Model
 
 __all__ = [
     "ContainerModels",
 ]
 
 
-def _litellm_factory(*args, **kwargs) -> RunnableBinding:
+def _litellm_factory(*args, **kwargs) -> Model:
     model = ChatLiteLLM(*args, **kwargs)
-    client = AsyncHTTPHandler(event_hooks={"request": [log_request]})
 
-    return model.bind(client=client)
+    if kwargs.get("custom_llm_provider", "") == "vertex_ai":
+        client = AsyncHTTPHandler(event_hooks={"request": [log_request]})
+
+        return model.bind(client=client)
+
+    return model
 
 
 class ContainerModels(containers.DeclarativeContainer):
