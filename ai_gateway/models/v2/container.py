@@ -1,13 +1,22 @@
 from dependency_injector import containers, providers
 from langchain_community.chat_models import ChatLiteLLM
+from langchain_core.runnables import RunnableBinding
+from litellm.llms.custom_httpx.http_handler import AsyncHTTPHandler
 
 from ai_gateway.models import mock
-from ai_gateway.models.base import init_anthropic_client
+from ai_gateway.models.base import init_anthropic_client, log_request
 from ai_gateway.models.v2.anthropic_claude import ChatAnthropic
 
 __all__ = [
     "ContainerModels",
 ]
+
+
+def _litellm_factory(*args, **kwargs) -> RunnableBinding:
+    model = ChatLiteLLM(*args, **kwargs)
+    client = AsyncHTTPHandler(event_hooks={"request": [log_request]})
+
+    return model.bind(client=client)
 
 
 class ContainerModels(containers.DeclarativeContainer):
@@ -35,4 +44,4 @@ class ContainerModels(containers.DeclarativeContainer):
         mocked=providers.Factory(mock.FakeModel),
     )
 
-    lite_llm_chat_fn = providers.Factory(ChatLiteLLM)
+    lite_llm_chat_fn = providers.Factory(_litellm_factory)

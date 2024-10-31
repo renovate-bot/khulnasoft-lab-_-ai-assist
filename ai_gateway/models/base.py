@@ -126,7 +126,7 @@ def grpc_connect_vertex(client_options: dict) -> PredictionServiceAsyncClient:
     return PredictionServiceAsyncClient(client_options=client_options)
 
 
-async def log_anthropic_request(request: httpx.Request):
+async def log_request(request: httpx.Request):
     if is_feature_enabled(FeatureFlag.EXPANDED_AI_LOGGING):
         try:
             request_content_json = json.loads(request.content.decode("utf8"))
@@ -134,7 +134,7 @@ async def log_anthropic_request(request: httpx.Request):
             request_content_json = {}
 
         request_log.info(
-            "Request to Anthropic",
+            "Request to LLM",
             source=__name__,
             request_method=request.method,
             request_url=request.url,
@@ -150,7 +150,7 @@ def connect_anthropic(**kwargs: Any) -> AsyncAnthropic:
     )
 
     http_client: httpx.AsyncClient = _DefaultAsyncHttpxClient(
-        limits=limits, event_hooks={"request": [log_anthropic_request]}
+        limits=limits, event_hooks={"request": [log_request]}
     )
 
     return AsyncAnthropic(http_client=http_client, **kwargs)
