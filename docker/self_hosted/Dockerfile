@@ -2,6 +2,9 @@ ARG SRC_IMAGE="registry.gitlab.com/gitlab-org/modelops/applied-ml/code-suggestio
 
 FROM ${SRC_IMAGE}
 ARG TAG
+
+WORKDIR /app
+
 RUN mkdir "tmp"
 
 # Specific configurations for self-hosted models
