@@ -12,6 +12,7 @@ publish:
     # Only protected branches on the official project
     - if: $CI_COMMIT_BRANCH && $CI_COMMIT_REF_PROTECTED == 'true' && $CI_PROJECT_PATH == 'gitlab-org/modelops/applied-ml/code-suggestions/ai-assist' && $CI_API_V4_URL == "https://gitlab.com/api/v4"
       when: manual
+      allow_failure: true
 
 publish-dryrun:
   extends: .semantic-release
