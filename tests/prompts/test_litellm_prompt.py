@@ -16,9 +16,9 @@ def model():
 
 
 @pytest.fixture
-def mock_http_new(mock_http_handler: Mock):
+def mock_http(mock_http_handler: Mock):
     with patch(
-        "litellm.llms.custom_httpx.http_handler.AsyncHTTPHandler.__new__",
+        "litellm.llms.custom_httpx.http_handler.AsyncHTTPHandler",
         return_value=mock_http_handler,
     ) as mock:
         yield mock
@@ -41,7 +41,7 @@ def mock_sleep():  # So we don't have to wait
 @pytest.mark.parametrize(("response_text"), [('{"error": "something went wrong"}')])
 async def test_ainvoke(
     mock_sleep: Mock,
-    mock_http_new: Mock,
+    mock_http: Mock,
     mock_http_handler: AsyncMock,
     prompt: Prompt,
     response_text: str,
@@ -51,7 +51,7 @@ async def test_ainvoke(
     ):
         await prompt.ainvoke({"name": "Duo", "content": "What's up?"})
 
-    mock_http_new.assert_called_once()
+    mock_http.assert_called_once()
     assert mock_http_handler.post.call_count == 3
 
 
@@ -66,7 +66,7 @@ async def test_ainvoke(
 )
 async def test_astream(
     mock_sleep: Mock,
-    mock_http_new: Mock,
+    mock_http: Mock,
     mock_http_handler: AsyncMock,
     prompt: Prompt,
     response_text: str,
