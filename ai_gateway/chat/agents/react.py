@@ -41,9 +41,7 @@ class ReActAgentInputs(BaseModel):
     messages: list[Message]
     agent_scratchpad: Optional[list[AgentStep]] = None
     model_metadata: Optional[ModelMetadata] = None
-    unavailable_resources: Optional[list[str]] = [
-        "Merge Requests, Pipelines, Vulnerabilities"
-    ]
+    unavailable_resources: Optional[list[str]] = ["Pipelines, Vulnerabilities"]
     tools: Optional[list[BaseTool]] = None
 
 
