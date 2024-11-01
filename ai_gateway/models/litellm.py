@@ -141,10 +141,7 @@ class LiteLlmChatModel(ChatModelBase):
         provider: Optional[KindModelProvider] = KindModelProvider.LITELLM,
         metadata: Optional[ModelMetadata] = None,
     ):
-        self._metadata = metadata or ModelMetadata(
-            name=model_name.chat_model(provider),
-            engine=provider.value(),
-        )
+        self._metadata = _init_litellm_model_metadata(metadata, model_name, provider)
         self.stop_tokens = MODEL_STOP_TOKENS.get(model_name, [])
 
     @property
@@ -267,10 +264,7 @@ class LiteLlmTextGenModel(TextGenModelBase):
     ):
         self.provider = provider
         self.model_name = model_name
-        self._metadata = metadata or ModelMetadata(
-            name=model_name.text_model(provider),
-            engine=provider.value(),
-        )
+        self._metadata = _init_litellm_model_metadata(metadata, model_name, provider)
 
         self.stop_tokens = MODEL_STOP_TOKENS.get(model_name, [])
 
@@ -471,3 +465,20 @@ class LiteLlmTextGenModel(TextGenModelBase):
         )
 
         return cls(model_name=kind_model, provider=provider, metadata=metadata)
+
+
+def _init_litellm_model_metadata(
+    metadata: Optional[ModelMetadata] = None,
+    model_name: KindLiteLlmModel = KindLiteLlmModel.MISTRAL,
+    provider: Optional[KindModelProvider] = KindModelProvider.LITELLM,
+) -> ModelMetadata:
+    if metadata:
+        return ModelMetadata(
+            **(metadata._asdict() | {"api_key": metadata.api_key or STUBBED_API_KEY})
+        )
+
+    return ModelMetadata(
+        name=model_name.chat_model(provider),
+        api_key=STUBBED_API_KEY,
+        engine=provider.value(),
+    )
