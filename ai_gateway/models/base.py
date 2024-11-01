@@ -42,6 +42,7 @@ class KindModelProvider(StrEnum):
     VERTEX_AI = "vertex-ai"
     LITELLM = "litellm"
     MISTRALAI = "codestral"
+    FIREWORKS = "fireworks_ai"
 
 
 class ModelAPIError(Exception):

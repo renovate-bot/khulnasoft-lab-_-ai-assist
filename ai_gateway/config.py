@@ -19,6 +19,7 @@ __all__ = [
     "ConfigModelConcurrency",
     "ConfigCustomModels",
     "ConfigModelKeys",
+    "ConfigModelEndpoints",
 ]
 
 ENV_PREFIX = "AIGW"
@@ -103,6 +104,12 @@ class ConfigAbuseDetection(BaseModel):
 
 class ConfigModelKeys(BaseModel):
     mistral_api_key: Optional[str] = None
+    fireworks_api_key: Optional[str] = None
+
+
+class ConfigModelEndpoints(BaseModel):
+    fireworks_completion_endpoint: Optional[str] = None
+    fireworks_completion_identifier: Optional[str] = None
 
 
 def _build_location(default: str = "us-central1") -> str:
@@ -202,6 +209,9 @@ class Config(BaseSettings):
     model_keys: Annotated[ConfigModelKeys, Field(default_factory=ConfigModelKeys)] = (
         ConfigModelKeys()
     )
+    model_endpoints: Annotated[
+        ConfigModelEndpoints, Field(default_factory=ConfigModelEndpoints)
+    ] = ConfigModelEndpoints()
     vertex_text_model: Annotated[
         ConfigVertexTextModel, Field(default_factory=ConfigVertexTextModel)
     ] = ConfigVertexTextModel()
