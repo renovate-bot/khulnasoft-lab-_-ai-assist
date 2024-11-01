@@ -44,6 +44,7 @@ PROVIDERS_MODELS_MAP = {
     KindModelProvider.VERTEX_AI: set(KindVertexTextModel),
     KindModelProvider.LITELLM: set(KindLiteLlmModel),
     KindModelProvider.MISTRALAI: set(KindLiteLlmModel),
+    KindModelProvider.FIREWORKS: set(KindLiteLlmModel),
 }
 
 USE_CASES_MODELS_MAP = {
@@ -59,6 +60,7 @@ USE_CASES_MODELS_MAP = {
         KindLiteLlmModel.MISTRAL,
         KindLiteLlmModel.CLAUDE_3,
         KindLiteLlmModel.GPT,
+        KindLiteLlmModel.QWEN_2_5,
     },
     KindUseCase.CODE_GENERATIONS: {
         KindAnthropicModel.CLAUDE_2_0,

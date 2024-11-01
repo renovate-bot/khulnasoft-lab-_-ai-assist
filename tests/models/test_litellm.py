@@ -100,9 +100,12 @@ class TestLiteLlmChatMode:
             "provider",
             "custom_models_enabled",
             "provider_keys",
+            "provider_endpoints",
             "expected_name",
             "expected_api_key",
             "expected_engine",
+            "expected_endpoint",
+            "expected_identifier",
         ),
         [
             (
@@ -112,9 +115,12 @@ class TestLiteLlmChatMode:
                 KindModelProvider.LITELLM,
                 True,
                 {},
+                {},
                 "custom_openai/mistral",
                 "",
                 "litellm",
+                "http://127.0.0.1:1111/v1",
+                "provider/some-cool-model",
             ),
             (
                 "codestral",
@@ -123,9 +129,12 @@ class TestLiteLlmChatMode:
                 KindModelProvider.MISTRALAI,
                 True,
                 {},
+                {},
                 "codestral/codestral",
                 None,
                 "codestral",
+                "http://127.0.0.1:1111/v1",
+                "",
             ),
             (
                 "codestral",
@@ -134,9 +143,29 @@ class TestLiteLlmChatMode:
                 KindModelProvider.MISTRALAI,
                 True,
                 {"mistral_api_key": "stubbed-api-key"},
+                {},
                 "codestral/codestral",
                 "stubbed-api-key",
                 "codestral",
+                "http://127.0.0.1:1111/v1",
+                "",
+            ),
+            (
+                "qwen2p5-coder-7b",
+                "",
+                None,
+                KindModelProvider.FIREWORKS,
+                True,
+                {"fireworks_api_key": "stubbed-api-key"},
+                {
+                    "fireworks_completion_endpoint": "https://fireworks.endpoint",
+                    "fireworks_completion_identifier": "provider/some-cool-model#deployment_id",
+                },
+                "fireworks_ai/qwen2p5-coder-7b",
+                "stubbed-api-key",
+                "fireworks_ai",
+                "https://fireworks.endpoint",
+                "fireworks_ai/provider/some-cool-model#deployment_id",
             ),
         ],
     )
@@ -148,9 +177,12 @@ class TestLiteLlmChatMode:
         provider: KindModelProvider,
         custom_models_enabled: bool,
         provider_keys: dict,
+        provider_endpoints: dict,
         expected_name: str,
         expected_api_key: str,
         expected_engine: str,
+        expected_endpoint: str,
+        expected_identifier: str,
         endpoint,
     ):
         model = LiteLlmChatModel.from_model_name(
@@ -161,13 +193,14 @@ class TestLiteLlmChatMode:
             provider=provider,
             identifier=identifier,
             provider_keys=provider_keys,
+            provider_endpoints=provider_endpoints,
         )
 
         assert model.metadata.name == expected_name
-        assert model.metadata.endpoint == endpoint
+        assert model.metadata.endpoint == expected_endpoint
         assert model.metadata.api_key == expected_api_key
         assert model.metadata.engine == expected_engine
-        assert model.metadata.identifier == identifier
+        assert model.metadata.identifier == expected_identifier
 
         model = LiteLlmChatModel.from_model_name(name=model_name, api_key=None)
 
@@ -328,9 +361,12 @@ class TestLiteLlmTextGenModel:
             "provider",
             "custom_models_enabled",
             "provider_keys",
+            "provider_endpoints",
             "expected_name",
             "expected_api_key",
             "expected_engine",
+            "expected_endpoint",
+            "expected_identifier",
         ),
         [
             (
@@ -340,9 +376,12 @@ class TestLiteLlmTextGenModel:
                 KindModelProvider.LITELLM,
                 True,
                 {},
+                {},
                 "text-completion-custom_openai/codegemma",
                 "",
                 "litellm",
+                "http://127.0.0.1:4000",
+                "provider/some-cool-model",
             ),
             (
                 "codegemma",
@@ -351,9 +390,12 @@ class TestLiteLlmTextGenModel:
                 KindModelProvider.LITELLM,
                 True,
                 {},
+                {},
                 "text-completion-custom_openai/codegemma",
                 None,
                 "litellm",
+                "http://127.0.0.1:4000",
+                None,
             ),
             (
                 "codestral",
@@ -362,9 +404,12 @@ class TestLiteLlmTextGenModel:
                 KindModelProvider.MISTRALAI,
                 True,
                 {},
+                {},
                 "text-completion-codestral/codestral",
                 None,
                 "codestral",
+                "http://127.0.0.1:4000",
+                None,
             ),
             (
                 "codestral",
@@ -373,9 +418,29 @@ class TestLiteLlmTextGenModel:
                 KindModelProvider.MISTRALAI,
                 True,
                 {"mistral_api_key": "stubbed-api-key"},
+                {},
                 "text-completion-codestral/codestral",
                 "stubbed-api-key",
                 "codestral",
+                "http://127.0.0.1:4000",
+                None,
+            ),
+            (
+                "qwen2p5-coder-7b",
+                "",
+                None,
+                KindModelProvider.FIREWORKS,
+                True,
+                {"fireworks_api_key": "stubbed-api-key"},
+                {
+                    "fireworks_completion_endpoint": "https://fireworks.endpoint",
+                    "fireworks_completion_identifier": "provider/some-cool-model#deployment_id",
+                },
+                "text-completion-fireworks_ai/qwen2p5-coder-7b",
+                "stubbed-api-key",
+                "fireworks_ai",
+                "https://fireworks.endpoint",
+                "text-completion-openai/provider/some-cool-model#deployment_id",
             ),
         ],
     )
@@ -387,9 +452,12 @@ class TestLiteLlmTextGenModel:
         provider: KindModelProvider,
         custom_models_enabled: bool,
         provider_keys: dict,
+        provider_endpoints: dict,
         expected_name: str,
         expected_api_key: str,
         expected_engine: str,
+        expected_endpoint: str,
+        expected_identifier: str,
         endpoint,
     ):
         model = LiteLlmTextGenModel.from_model_name(
@@ -398,15 +466,16 @@ class TestLiteLlmTextGenModel:
             endpoint=endpoint,
             custom_models_enabled=custom_models_enabled,
             provider=provider,
-            identifer=identifier,
+            identifier=identifier,
             provider_keys=provider_keys,
+            provider_endpoints=provider_endpoints,
         )
 
         assert model.metadata.name == expected_name
-        assert model.metadata.endpoint == endpoint
+        assert model.metadata.endpoint == expected_endpoint
         assert model.metadata.api_key == expected_api_key
         assert model.metadata.engine == expected_engine
-        assert model.metadata.identifier == identifier
+        assert model.metadata.identifier == expected_identifier
 
         model = LiteLlmTextGenModel.from_model_name(name=model_name, api_key=None)
 
@@ -434,6 +503,27 @@ class TestLiteLlmTextGenModel:
             assert (
                 str(exc.value)
                 == "specifying api endpoint or key for vertex-ai provider is disabled"
+            )
+
+        if provider == KindModelProvider.FIREWORKS:
+            with pytest.raises(ValueError) as exc:
+                LiteLlmTextGenModel.from_model_name(
+                    provider=provider,
+                    name=model_name,
+                    provider_keys={},
+                )
+            assert str(exc.value) == "Fireworks API key is missing from configuration."
+
+            with pytest.raises(ValueError) as exc:
+                LiteLlmTextGenModel.from_model_name(
+                    provider=provider,
+                    name=model_name,
+                    provider_keys={"fireworks_api_key": "stubbed-api-key"},
+                    provider_endpoints={},
+                )
+            assert (
+                str(exc.value)
+                == "Fireworks endpoint or identifier is missing from configuration."
             )
 
     @pytest.mark.asyncio

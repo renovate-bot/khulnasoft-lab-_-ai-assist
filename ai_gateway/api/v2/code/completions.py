@@ -119,6 +119,7 @@ async def completions(
     ),
     internal_event_client: InternalEventsClient = Depends(get_internal_event_client),
 ):
+    # pylint: disable=too-many-branches
     if not current_user.can(GitLabUnitPrimitive.CODE_SUGGESTIONS):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
@@ -204,6 +205,19 @@ async def completions(
         )
         if payload.context:
             kwargs.update({"code_context": [ctx.content for ctx in payload.context]})
+    elif payload.model_provider == KindModelProvider.FIREWORKS:
+        kwargs.update({"max_output_tokens": 64, "context_max_percent": 0.3})
+
+        if payload.context:
+            kwargs.update({"code_context": [ctx.content for ctx in payload.context]})
+
+        code_completions = _resolve_code_completions_litellm(
+            payload=payload,
+            current_user=current_user,
+            prompt_registry=prompt_registry,
+            completions_agent_factory=completions_agent_factory,
+            completions_litellm_factory=completions_litellm_factory,
+        )
     else:
         code_completions = completions_legacy_factory()
         if payload.choices_count > 0:

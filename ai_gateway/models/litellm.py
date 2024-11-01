@@ -55,6 +55,7 @@ class KindLiteLlmModel(StrEnum):
     DEEPSEEKCODER = "deepseekcoder"
     CLAUDE_3 = "claude_3"
     GPT = "gpt"
+    QWEN_2_5 = "qwen2p5-coder-7b"
 
     def _chat_provider_prefix(self, provider):
         # Chat models hosted behind openai proxies should be prefixed with "openai/":
@@ -99,6 +100,12 @@ MODEL_STOP_TOKENS = {
     # Ref: https://docs.litellm.ai/docs/providers/vertex#mistral-api
     # This model is served by Vertex AI but accessed through LiteLLM abstraction
     KindVertexTextModel.CODESTRAL_2405: ["\n\n", "\n+++++"],
+    KindLiteLlmModel.QWEN_2_5: [
+        "<|fim_prefix|>",
+        "<|fim_suffix|>",
+        "<|fim_middle|>",
+        "\n\n",
+    ],
 }
 
 MODEL_SPECIFICATIONS = {
@@ -211,6 +218,7 @@ class LiteLlmChatModel(ChatModelBase):
         identifier: Optional[str] = None,
         provider: Optional[KindModelProvider] = KindModelProvider.LITELLM,
         provider_keys: Optional[dict] = None,
+        provider_endpoints: Optional[dict] = None,
     ):
         if not custom_models_enabled and provider == KindModelProvider.LITELLM:
             if endpoint is not None or api_key is not None:
@@ -218,6 +226,11 @@ class LiteLlmChatModel(ChatModelBase):
 
         if provider == KindModelProvider.MISTRALAI:
             api_key = provider_keys.get("mistral_api_key")
+
+        if provider == KindModelProvider.FIREWORKS:
+            api_key = provider_keys.get("fireworks_api_key")
+            endpoint = provider_endpoints.get("fireworks_completion_endpoint")
+            identifier = f"fireworks_ai/{provider_endpoints.get('fireworks_completion_identifier')}"
 
         try:
             kind_model = KindLiteLlmModel(name)
@@ -411,9 +424,10 @@ class LiteLlmTextGenModel(TextGenModelBase):
         custom_models_enabled: bool = False,
         endpoint: Optional[str] = None,
         api_key: Optional[str] = None,
-        identifer: Optional[str] = None,
+        identifier: Optional[str] = None,
         provider: Optional[KindModelProvider] = KindModelProvider.LITELLM,
         provider_keys: Optional[dict] = None,
+        provider_endpoints: Optional[dict] = None,
     ):
         if endpoint is not None or api_key is not None:
             if not custom_models_enabled and provider == KindModelProvider.LITELLM:
@@ -425,6 +439,20 @@ class LiteLlmTextGenModel(TextGenModelBase):
 
         if provider == KindModelProvider.MISTRALAI:
             api_key = provider_keys.get("mistral_api_key")
+
+        if provider == KindModelProvider.FIREWORKS:
+            api_key = provider_keys.get("fireworks_api_key")
+
+            if not api_key:
+                raise ValueError("Fireworks API key is missing from configuration.")
+
+            endpoint = provider_endpoints.get("fireworks_completion_endpoint")
+            identifier = f"text-completion-openai/{provider_endpoints.get('fireworks_completion_identifier')}"
+
+            if not endpoint or not identifier:
+                raise ValueError(
+                    "Fireworks endpoint or identifier is missing from configuration."
+                )
 
         try:
             if provider == KindModelProvider.VERTEX_AI:
@@ -439,7 +467,7 @@ class LiteLlmTextGenModel(TextGenModelBase):
             engine=provider.value,
             endpoint=endpoint,
             api_key=api_key,
-            identifier=identifer,
+            identifier=identifier,
         )
 
         return cls(model_name=kind_model, provider=provider, metadata=metadata)
