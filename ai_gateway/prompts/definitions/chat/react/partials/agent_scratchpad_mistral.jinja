@@ -1,0 +1,8 @@
+{%- if agent_scratchpad %}
+{%- for pad in agent_scratchpad -%}
+Thought: {{ pad.action.thought }}
+Action: {{ pad.action.tool }}
+Action Input: {{ pad.action.tool_input }}
+Observation: {{ pad.observation }}
+{%- endfor %}
+{%- endif %}
