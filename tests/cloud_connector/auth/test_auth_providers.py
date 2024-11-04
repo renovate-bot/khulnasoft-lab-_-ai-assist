@@ -367,37 +367,49 @@ UGw3kIW+604fnnXLDm4TaLA=
 
     @responses.activate
     @pytest.mark.parametrize(
-        "private_key_used_to_sign,claims,gitlab_realm,authenticated",
+        "private_key_used_to_sign,claims,gitlab_realm,authenticated,bypass_auth_jwt_signature",
         [
             (
                 private_key_test,
                 claims | ai_gateway_audience,
                 "self-managed",
                 True,
+                False,
             ),
             (
                 private_key_ai_gateway_signing_key_test,
                 claims | ai_gateway_audience,
                 "self-managed",
                 True,
+                False,
             ),
             (
                 private_key_ai_gateway_validation_key_test,
                 claims | ai_gateway_audience,
                 "self-managed",
                 True,
+                False,
             ),
             (
                 private_key_customers,
                 claims | ai_gateway_audience,
                 "self-managed",
                 True,
+                False,
             ),
             (
                 forged_private_key,
                 claims | ai_gateway_audience,
                 "",
                 False,
+                False,
+            ),
+            (
+                forged_private_key,
+                claims | ai_gateway_audience,
+                "self-managed",
+                True,
+                True,
             ),
             (
                 private_key_test,
@@ -409,11 +421,17 @@ UGw3kIW+604fnnXLDm4TaLA=
                 | ai_gateway_audience,
                 "saas",
                 True,
+                False,
             ),
         ],
     )
     def test_composite_provider(
-        self, private_key_used_to_sign, claims, gitlab_realm, authenticated
+        self,
+        private_key_used_to_sign,
+        claims,
+        gitlab_realm,
+        authenticated,
+        bypass_auth_jwt_signature,
     ):
         well_known_test_response = responses.get(
             "http://test.com/.well-known/openid-configuration",
@@ -455,6 +473,7 @@ UGw3kIW+604fnnXLDm4TaLA=
                 ),
             ],
             log_provider,
+            bypass_auth_jwt_signature=bypass_auth_jwt_signature,
         )
 
         token = jwt.encode(

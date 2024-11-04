@@ -76,7 +76,23 @@ AIGW_GITLAB_URL=http://<your-gdk-address>/    # e.g. http://gdk.test:3000/
 AIGW_CUSTOMER_PORTAL_URL=http://<your-customer-dot-address> # e.g. http://127.0.0.1:5000
 ```
 
-See [Test AI features with AI Gateway locally](https://docs.gitlab.com/ee/development/ai_features/index.html) for more information.
+#### Bypass JWT verification for testing
+
+`CompositeProvider` verifies the JWT signature sent to the AI Gateway
+has been signed by a JWKS from either `AIGW_GITLAB_URL` or
+`AIGW_CUSTOMER_PORTAL_URL`.
+
+During development and testing, GitLab instances may be configured to
+generate self-signed JWT tokens (`CLOUD_CONNECTOR_SELF_SIGN_TOKENS=1` in
+GitLab Rails) instead of requesting tokens signed by `customers.gitlab.com`.
+
+If you are testing multiple GitLab instances that use self-signed
+tokens, then you may want to bypass JWT signature verification by
+setting the following in `.env`:
+
+```shell
+AIGW_AUTH__BYPASS_JWT_SIGNATURE=1
+```
 
 ### Bypass authentication and authorization for testing features
 

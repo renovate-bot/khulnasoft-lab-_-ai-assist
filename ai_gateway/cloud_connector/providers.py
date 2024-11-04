@@ -68,12 +68,17 @@ class CompositeProvider(JwksProvider, AuthProvider):
         pass
 
     def __init__(
-        self, providers: list[JwksProvider], log_provider, expiry_seconds: int = 86400
+        self,
+        providers: list[JwksProvider],
+        log_provider,
+        expiry_seconds: int = 86400,
+        bypass_auth_jwt_signature: bool = False,
     ):
         super().__init__(log_provider)
         self.providers = providers
         self.expiry_seconds = expiry_seconds
         self.cache = LocalAuthCache()
+        self.bypass_auth_jwt_signature = bypass_auth_jwt_signature
 
     def authenticate(self, token: str) -> CloudConnectorUser:
         jwks = self.jwks()
@@ -96,6 +101,10 @@ class CompositeProvider(JwksProvider, AuthProvider):
                 jwks,
                 audience=self.cloud_connector_service_name,
                 algorithms=self.SUPPORTED_ALGORITHMS,
+                options={
+                    # This should only be set and used for test & dev
+                    "verify_signature": not self.bypass_auth_jwt_signature,
+                },
             )
             gitlab_realm = jwt_claims.get("gitlab_realm", "")
             subject = jwt_claims.get("sub", "")
