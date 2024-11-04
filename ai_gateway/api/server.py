@@ -108,6 +108,7 @@ def create_fast_api_server(config: Config):
                         ),
                     ],
                     structlog,
+                    bypass_auth_jwt_signature=config.auth.bypass_jwt_signature,
                 ),
                 bypass_auth=config.auth.bypass_external,
                 bypass_auth_with_header=config.auth.bypass_external_with_header,
