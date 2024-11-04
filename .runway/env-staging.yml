@@ -18,3 +18,4 @@ AIGW_INSTRUMENTATOR__THREAD_MONITORING_INTERVAL: 60
 AIGW_DEFAULT_PROMPTS: '{"chat/react": "vertex"}'
 CLOUD_CONNECTOR_SERVICE_NAME: "gitlab-ai-gateway"
 AIGW_MODEL_ENDPOINTS__FIREWORKS_COMPLETION_ENDPOINT: 'https://gitlab-2fb7764c.direct.fireworks.ai/v1'
+AIGW_MODEL_ENDPOINTS__FIREWORKS_COMPLETION_IDENTIFIER: 'accounts/fireworks/models/qwen2p5-coder-7b#accounts/gitlab/deployments/2fb7764c'
