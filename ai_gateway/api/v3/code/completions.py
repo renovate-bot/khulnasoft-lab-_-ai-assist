@@ -116,12 +116,15 @@ async def code_completion(
     code_context: list[CodeContextPayload] = None,
     snowplow_event_context: Optional[SnowplowEventContext] = None,
 ):
+    kwargs = {}
+
     if payload.model_provider == ModelProvider.ANTHROPIC:
-        engine = completions_anthropic_factory()
+        # TODO: As we migrate to v3 we can rewrite this to use prompt registry
+        engine = completions_anthropic_factory(model__name=payload.model_name)
+        kwargs.update({"raw_prompt": payload.prompt})
     else:
         engine = completions_legacy_factory()
 
-    kwargs = {}
     if payload.choices_count > 0:
         kwargs.update({"candidate_count": payload.choices_count})
 

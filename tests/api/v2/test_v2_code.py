@@ -295,17 +295,17 @@ class TestCodeCompletions:
                 },
                 False,
             ),
-            # prompt version 2
+            # prompt version 3
             (
-                2,
+                3,
                 "anthropic",
-                "claude-instant-1.2",
+                "claude-3-5-sonnet-20240620",
                 "def search",
                 {
                     "id": "id",
                     "model": {
                         "engine": "anthropic",
-                        "name": "claude-instant-1.2",
+                        "name": "claude-3-5-sonnet-20240620",
                         "lang": "python",
                         "tokens_consumption_metadata": None,
                     },
@@ -406,10 +406,23 @@ class TestCodeCompletions:
                 }
             )
 
-            if mock_suggestions_engine == "anthropic":
-                code_completions_kwargs.update(
-                    {"raw_prompt": current_file["content_above_cursor"]}
-                )
+        if prompt_version == 3 and mock_suggestions_engine == "anthropic":
+            raw_prompt = [
+                {
+                    "role": "system",
+                    "content": "You are a code completion tool that performs Fill-in-the-middle. ",
+                },
+                {
+                    "role": "user",
+                    "content": "<SUFFIX>\n// write a function to find the max\n</SUFFIX>\n<PREFIX>\n\n\treturn min\n}\n</PREFIX>')]",
+                },
+            ]
+            data.update({"prompt": raw_prompt})
+            raw_prompt = [
+                Message(role=prompt["role"], content=prompt["content"])
+                for prompt in raw_prompt
+            ]
+            code_completions_kwargs.update({"raw_prompt": raw_prompt})
 
         response = mock_client.post(
             "/completions",
@@ -457,6 +470,7 @@ class TestCodeCompletions:
             "project_id": 278964,
             "model_provider": "anthropic",
             "current_file": current_file,
+            "model_name": "claude-3-5-sonnet-20240620",
         }
 
         code_completions_kwargs = {}
@@ -795,6 +809,7 @@ class TestCodeCompletions:
             "current_file": current_file,
             "stream": True,
             "context": context,
+            "model_name": "claude-3-5-sonnet-20240620",
         }
         if model:
             data["model_name"] = model
@@ -994,6 +1009,7 @@ class TestCodeCompletions:
             "project_id": 278964,
             "model_provider": "anthropic",
             "current_file": current_file,
+            "model_name": "claude-3-5-sonnet-20240620",
         }
 
         response = mock_client.post(

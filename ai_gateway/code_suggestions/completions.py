@@ -24,7 +24,7 @@ from ai_gateway.instrumentators import (
     TextGenModelInstrumentator,
     benchmark,
 )
-from ai_gateway.models import ModelAPICallError, ModelAPIError
+from ai_gateway.models import ChatModelBase, Message, ModelAPICallError, ModelAPIError
 from ai_gateway.models.agent_model import AgentModel
 from ai_gateway.models.base import TokensConsumptionMetadata
 from ai_gateway.models.base_text import (
@@ -143,7 +143,7 @@ class CodeCompletions:
         self,
         prefix: str,
         suffix: str,
-        raw_prompt: Optional[str] = None,
+        raw_prompt: Optional[str | list[Message]] = None,
         code_context: Optional[list] = None,
         context_max_percent: Optional[float] = None,
     ) -> Prompt:
@@ -168,7 +168,7 @@ class CodeCompletions:
         suffix: str,
         file_name: str,
         editor_lang: Optional[str] = None,
-        raw_prompt: Optional[str] = None,
+        raw_prompt: Optional[str | list[Message]] = None,
         code_context: Optional[list] = None,
         stream: bool = False,
         snowplow_event_context: Optional[SnowplowEventContext] = None,
@@ -196,6 +196,10 @@ class CodeCompletions:
                     params = {"prefix": prompt.prefix, "suffix": prompt.suffix}
 
                     res = await self.model.generate(params, stream)
+                elif isinstance(self.model, ChatModelBase):
+                    res = await self.model.generate(
+                        prompt.prefix, stream=stream, **kwargs
+                    )
                 else:
                     res = await self.model.generate(
                         prompt.prefix, prompt.suffix, stream, **kwargs
