@@ -10,6 +10,7 @@ __all__ = [
     "MergeRequestReader",
     "IssueReader",
     "GitlabDocumentation",
+    "SelfHostedGitlabDocumentation",
     "EpicReader",
     "BuildReader",
 ]
@@ -94,6 +95,32 @@ class GitlabDocumentation(BaseRemoteTool):
         Thought: Question is about inner working of GitLab. "gitlab_documentation" tool is the right one for the job.
         Action: gitlab_documentation
         Action Input: How do I set up a new project?"""
+    )
+
+
+class SelfHostedGitlabDocumentation(BaseRemoteTool):
+    name: str = "gitlab_documentation"
+    resource: str = "documentation answers"
+    unit_primitive: GitLabUnitPrimitive = GitLabUnitPrimitive.DOCUMENTATION_SEARCH
+    min_required_gl_version: Optional[str] = None
+
+    description: str = dedent(
+        """\
+        This tool is beneficial when you need to answer questions concerning GitLab and its features.
+        Questions can be about GitLab's projects, groups, issues, merge requests,
+        epics, work items, milestones, labels, CI/CD pipelines, git repositories, and more."""
+    )
+
+    example: str = dedent(
+        """
+        Question: How do I set up a new project?
+        Thought: Question is about inner working of GitLab. "gitlab_documentation" tool is the right one for the job. I
+          should keep the action input concise to it's intention and do not add punctuation, for example when question
+          is 'How do I set up a project?' then Action Input is 'set up project' nad when question is 'Can you please
+          help me open a merge request?' then Action Input is 'create merge request'.
+        Action: gitlab_documentation
+        Action Input: set up project
+        """
     )
 
 
