@@ -40,6 +40,7 @@ class GitLabUnitPrimitive(StrEnum):
     INCLUDE_ISSUE_CONTEXT = "include_issue_context"
     INCLUDE_MERGE_REQUEST_CONTEXT = "include_merge_request_context"
     INCLUDE_SNIPPET_CONTEXT = "include_snippet_context"
+    INCLUDE_DEPENDENCY_CONTEXT = "include_dependency_context"
     REFACTOR_CODE = "refactor_code"
     RESOLVE_VULNERABILITY = "resolve_vulnerability"
     REVIEW_MERGE_REQUEST = "review_merge_request"
