@@ -9,6 +9,7 @@ from ai_gateway.chat.tools.gitlab import (
     GitlabDocumentation,
     IssueReader,
     MergeRequestReader,
+    SelfHostedGitlabDocumentation,
 )
 from ai_gateway.feature_flags import FeatureFlag, is_feature_enabled
 
@@ -16,12 +17,15 @@ __all__ = ["DuoChatToolsRegistry"]
 
 
 class DuoChatToolsRegistry(BaseToolsRegistry):
+
+    def __init__(self, self_hosted_documentation_enabled: bool = False):
+        self.self_hosted_documentation_enabled = self_hosted_documentation_enabled
+
     @property
     def tools(self) -> list[BaseTool]:
         # We can also read the list of tools and associated unit primitives from the file
         # similar to what we implemented for the Prompt Registry
         tools = [
-            GitlabDocumentation(),
             EpicReader(),
             IssueReader(),
             MergeRequestReader(),
@@ -31,6 +35,10 @@ class DuoChatToolsRegistry(BaseToolsRegistry):
         # removal is turned on
         if not is_feature_enabled(FeatureFlag.CI_EDITOR_TOOL_REMOVED):
             tools.append(CiEditorAssistant())
+        if self.self_hosted_documentation_enabled:
+            tools.append(SelfHostedGitlabDocumentation())
+        else:
+            tools.append(GitlabDocumentation())
 
         if is_feature_enabled(FeatureFlag.AI_COMMIT_READER_FOR_CHAT):
             tools.append(CommitReader())

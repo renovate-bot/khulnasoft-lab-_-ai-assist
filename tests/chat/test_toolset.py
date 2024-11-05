@@ -12,6 +12,7 @@ from ai_gateway.chat.tools.gitlab import (
     GitlabDocumentation,
     IssueReader,
     MergeRequestReader,
+    SelfHostedGitlabDocumentation,
 )
 from ai_gateway.chat.toolset import DuoChatToolsRegistry
 from ai_gateway.cloud_connector import (
@@ -27,29 +28,43 @@ class TestDuoChatToolRegistry:
         "expected_tools",
         [
             (
-                [
-                    GitlabDocumentation,
+                {
+                    CiEditorAssistant,
                     EpicReader,
                     IssueReader,
                     MergeRequestReader,
-                    CiEditorAssistant,
-                ]
+                    GitlabDocumentation,
+                }
             )
         ],
     )
-    def test_get_all_success(self, expected_tools: list[Type[BaseTool]]):
+    def test_get_all_success(self, expected_tools: set[Type[BaseTool]]):
         tools = DuoChatToolsRegistry().get_all()
-        actual_tools = [type(tool) for tool in tools]
+        actual_tools = {type(tool) for tool in tools}
 
         assert set(actual_tools) == set(expected_tools)
+
+    def test_get_all_with_self_hosted_documentation(
+        self,
+    ):
+        tools = DuoChatToolsRegistry(self_hosted_documentation_enabled=True).get_all()
+        actual_tools = {type(tool) for tool in tools}
+
+        assert actual_tools == {
+            CiEditorAssistant,
+            SelfHostedGitlabDocumentation,
+            EpicReader,
+            IssueReader,
+            MergeRequestReader,
+        }
 
     @pytest.mark.parametrize(
         ("unit_primitives", "expected_tools"),
         [
-            ([GitLabUnitPrimitive.DUO_CHAT], [CiEditorAssistant]),
-            ([GitLabUnitPrimitive.DOCUMENTATION_SEARCH], [GitlabDocumentation]),
-            ([GitLabUnitPrimitive.ASK_EPIC], [EpicReader]),
-            ([GitLabUnitPrimitive.ASK_ISSUE], [IssueReader]),
+            ([GitLabUnitPrimitive.DUO_CHAT], {CiEditorAssistant}),
+            ([GitLabUnitPrimitive.DOCUMENTATION_SEARCH], {GitlabDocumentation}),
+            ([GitLabUnitPrimitive.ASK_EPIC], {EpicReader}),
+            ([GitLabUnitPrimitive.ASK_ISSUE], {IssueReader}),
             (
                 [
                     GitLabUnitPrimitive.DUO_CHAT,
@@ -57,23 +72,23 @@ class TestDuoChatToolRegistry:
                     GitLabUnitPrimitive.ASK_EPIC,
                     GitLabUnitPrimitive.ASK_ISSUE,
                 ],
-                [
+                {
+                    CiEditorAssistant,
                     GitlabDocumentation,
                     EpicReader,
                     IssueReader,
-                    CiEditorAssistant,
-                ],
+                },
             ),
             (
                 [GitLabUnitPrimitive.CODE_SUGGESTIONS],
-                [],
+                set(),
             ),
         ],
     )
     def test_get_on_behalf_success(
         self,
         unit_primitives: list[GitLabUnitPrimitive],
-        expected_tools: list[Type[BaseTool]],
+        expected_tools: set[Type[BaseTool]],
     ):
         user = StarletteUser(
             CloudConnectorUser(
@@ -83,7 +98,7 @@ class TestDuoChatToolRegistry:
         )
 
         tools = DuoChatToolsRegistry().get_on_behalf(user, "")
-        actual_tools = [type(tool) for tool in tools]
+        actual_tools = {type(tool) for tool in tools}
 
         assert set(actual_tools) == set(expected_tools)
 
@@ -134,13 +149,13 @@ class TestDuoChatToolRegistry:
         )
 
         tools = DuoChatToolsRegistry().get_on_behalf(user, "17.5.0-pre")
-        actual_tools = [type(tool) for tool in tools]
+        actual_tools = {type(tool) for tool in tools}
 
-        assert actual_tools == [CiEditorAssistant, reader_tool_type]
+        assert actual_tools == {CiEditorAssistant, reader_tool_type}
 
         current_feature_flag_context.set(set())
 
         tools = DuoChatToolsRegistry().get_on_behalf(user, "17.5.0-pre")
-        actual_tools = [type(tool) for tool in tools]
+        actual_tools = {type(tool) for tool in tools}
 
-        assert actual_tools == [CiEditorAssistant]
+        assert actual_tools == {CiEditorAssistant}

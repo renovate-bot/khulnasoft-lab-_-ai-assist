@@ -120,13 +120,13 @@ class TestGLAgentRemoteExecutor:
             actual_actions = [action async for action in executor.stream(inputs=inputs)]
 
             if user.is_debug:
-                assert context.get("duo_chat.agent_available_tools") == [
+                assert set(context.get("duo_chat.agent_available_tools")) == {
                     "gitlab_documentation",
                     "epic_reader",
                     "issue_reader",
                     "merge_request_reader",
                     "ci_editor_assistant",
-                ]
+                }
             else:
                 assert context.get("duo_chat.agent_available_tools") == ["issue_reader"]
 
