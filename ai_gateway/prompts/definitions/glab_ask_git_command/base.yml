@@ -1,0 +1,24 @@
+---
+name: Claude 3.5 Glab Ask Git Command
+model:
+  name: claude-3-haiku-20240307
+  params:
+    model_class_provider: anthropic
+unit_primitives:
+  - glab_ask_git_command
+prompt_template:
+  system: |
+    You are tasked to provide a list of appropriate git commands from natural language.
+  user: |
+    Provide the appropriate git commands for: {{prompt}}.
+
+    Respond with git commands wrapped in separate ``` blocks.
+    Provide explanation for each command in a separate block.
+
+    ## Example:
+
+    ```
+    git log -10
+    ```
+
+    This command will list the last 10 commits in the current branch.
