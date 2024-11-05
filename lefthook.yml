@@ -5,7 +5,7 @@ pre-commit:
   commands:
     lint-code:
       glob: "*.py"
-      run: make lint-code LINT_WORKING_DIR={staged_files}
+      run: make lint-code
     lint-doc:
       glob: "*.md"
-      run: make lint-doc LINT_DOC_WORKING_DIR={staged_files}
+      run: make lint-doc
