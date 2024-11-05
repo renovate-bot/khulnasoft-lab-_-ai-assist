@@ -101,6 +101,7 @@ class ContainerCodeCompletions(containers.DeclarativeContainer):
     tokenizer = providers.Dependency(instance_of=PreTrainedTokenizerFast)
     vertex_code_gecko = providers.Dependency(instance_of=TextGenModelBase)
     anthropic_claude = providers.Dependency(instance_of=TextGenModelBase)
+    anthropic_claude_chat = providers.Dependency(instance_of=ChatModelBase)
     litellm = providers.Dependency(instance_of=TextGenModelBase)
     agent_model = providers.Dependency(instance_of=TextGenModelBase)
     snowplow_instrumentator = providers.Dependency(instance_of=SnowplowInstrumentator)
@@ -128,12 +129,7 @@ class ContainerCodeCompletions(containers.DeclarativeContainer):
 
     anthropic = providers.Factory(
         CodeCompletions,
-        model=providers.Factory(
-            anthropic_claude,
-            name=KindAnthropicModel.CLAUDE_INSTANT_1_2,
-            stop_sequences=["</new_code>", anthropic.HUMAN_PROMPT],
-            max_tokens_to_sample=128,
-        ),
+        model=providers.Factory(anthropic_claude_chat),
         tokenization_strategy=providers.Factory(
             TokenizerTokenStrategy, tokenizer=tokenizer
         ),
@@ -201,6 +197,7 @@ class ContainerCodeSuggestions(containers.DeclarativeContainer):
         tokenizer=tokenizer,
         vertex_code_gecko=models.vertex_code_gecko,
         anthropic_claude=models.anthropic_claude,
+        anthropic_claude_chat=models.anthropic_claude_chat,
         litellm=models.litellm,
         agent_model=models.agent_model,
         config=config,

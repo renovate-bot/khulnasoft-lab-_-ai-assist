@@ -173,7 +173,7 @@ class TestEditorContentCompletion:
                 },
                 {
                     "engine": "anthropic",
-                    "name": "claude-instant-1.2",
+                    "name": "claude-3-5-sonnet-20240620",
                     "lang": "python",
                 },
             ),
@@ -208,7 +208,7 @@ class TestEditorContentCompletion:
     def test_model_provider(
         self,
         mock_client: TestClient,
-        mock_anthropic: Mock,
+        mock_anthropic_chat: Mock,
         mock_code_gecko: Mock,
         model_provider: str,
         expected_code: int,
@@ -221,6 +221,17 @@ class TestEditorContentCompletion:
             "content_below_cursor": "\n",
             "language_identifier": "python",
             "model_provider": model_provider or None,
+            "model_name": "claude-3-5-sonnet-20240620",
+            "prompt": [
+                {
+                    "role": "system",
+                    "content": "You are a code completion tool that performs Fill-in-the-middle",
+                },
+                {
+                    "role": "user",
+                    "content": "<SUFFIX>\n// a function to find the max\n for \n</SUFFIX>\n<PREFIX>\n\n\treturn min\n}\n</PREFIX>",
+                },
+            ],
         }
 
         prompt_component = {
@@ -255,7 +266,7 @@ class TestEditorContentCompletion:
 
         assert body["metadata"]["model"] == expected_model
 
-        mock = mock_anthropic if model_provider == "anthropic" else mock_code_gecko
+        mock = mock_anthropic_chat if model_provider == "anthropic" else mock_code_gecko
 
         mock.assert_called
 
@@ -272,6 +283,7 @@ class TestEditorContentCompletion:
             "language_identifier": "python",
             "model_provider": "anthropic",
             "stream": True,
+            "model_name": "claude-3-5-sonnet-20240620",
         }
 
         prompt_component = {
@@ -319,6 +331,7 @@ class TestEditorContentCompletion:
             stream=True,
             code_context=None,
             snowplow_event_context=expected_snowplow_event,
+            raw_prompt=None,
         )
 
 
@@ -857,6 +870,7 @@ class TestIncomingRequest:
                                 "content_below_cursor": "",
                                 # FIXME: Forcing anthropic as vertex-ai is not working
                                 "model_provider": "anthropic",
+                                "model_name": "claude-3-5-sonnet-20240620",
                             },
                         },
                     ],
@@ -873,6 +887,7 @@ class TestIncomingRequest:
                                 "file_name": "test",
                                 "content_above_cursor": "def hello_world():",
                                 "content_below_cursor": "",
+                                "model_name": "claude-3-5-sonnet-20240620",
                             },
                         },
                     ],
@@ -889,6 +904,7 @@ class TestIncomingRequest:
                                 "file_name": "test",
                                 "content_above_cursor": "def hello_world():",
                                 "content_below_cursor": "",
+                                "model_name": "claude-3-5-sonnet-20240620",
                             },
                         },
                     ]
@@ -905,6 +921,7 @@ class TestIncomingRequest:
                             "payload": {
                                 "content_above_cursor": "def hello_world():",
                                 "content_below_cursor": "",
+                                "model_name": "claude-3-5-sonnet-20240620",
                             },
                         },
                     ],

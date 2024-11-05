@@ -13,6 +13,7 @@ from ai_gateway.api.snowplow_context import get_snowplow_code_suggestion_context
 from ai_gateway.api.v2.code.typing import (
     CompletionsRequestV1,
     CompletionsRequestV2,
+    CompletionsRequestV3,
     GenerationsRequestV1,
     GenerationsRequestV2,
     GenerationsRequestV3,
@@ -73,7 +74,7 @@ request_log = get_request_logger("codesuggestions")
 router = APIRouter()
 
 CompletionsRequestWithVersion = Annotated[
-    Union[CompletionsRequestV1, CompletionsRequestV2],
+    Union[CompletionsRequestV1, CompletionsRequestV2, CompletionsRequestV3],
     Body(discriminator="prompt_version"),
 ]
 
@@ -146,7 +147,7 @@ async def completions(
     except Exception as e:
         log_exception(e)
 
-    request_log.debug(
+    request_log.info(
         "code completion input:",
         model_name=payload.model_name,
         model_provider=payload.model_provider,
@@ -158,11 +159,14 @@ async def completions(
     )
 
     kwargs = {}
-    if payload.model_provider == KindModelProvider.ANTHROPIC:
-        code_completions = completions_anthropic_factory()
 
-        # We support the prompt version 2 only with the Anthropic models
-        if payload.prompt_version == 2:
+    if payload.model_provider == KindModelProvider.ANTHROPIC:
+        code_completions = completions_anthropic_factory(
+            model__name=payload.model_name,
+        )
+
+        # We support the prompt version 3 only with the Anthropic models
+        if payload.prompt_version == 3:
             kwargs.update({"raw_prompt": payload.prompt})
     elif payload.model_provider in (
         KindModelProvider.LITELLM,

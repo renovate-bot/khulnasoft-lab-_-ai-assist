@@ -15,7 +15,10 @@ def test_container(mock_container: containers.DeclarativeContainer):
     generations = code_suggestions.generations
 
     assert isinstance(completions.vertex_legacy(), CodeCompletionsLegacy)
-    assert isinstance(completions.anthropic(), CodeCompletions)
+    assert isinstance(
+        completions.anthropic(model__name=KindAnthropicModel.CLAUDE_3_5_SONNET),
+        CodeCompletions,
+    )
     assert isinstance(
         completions.litellm_factory(model__name=KindLiteLlmModel.CODEGEMMA),
         CodeCompletions,

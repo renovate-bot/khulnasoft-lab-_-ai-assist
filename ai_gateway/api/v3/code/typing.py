@@ -6,6 +6,7 @@ from pydantic import BaseModel, ConfigDict, Field, StringConstraints
 from starlette.responses import StreamingResponse
 
 from ai_gateway.code_suggestions import ModelProvider
+from ai_gateway.models import Message
 
 __all__ = [
     "CodeEditorComponents",
@@ -46,6 +47,8 @@ class EditorContentPayload(BaseModel):
 
 class EditorContentCompletionPayload(EditorContentPayload):
     choices_count: Optional[int] = 0
+    model_name: Optional[str] = None
+    prompt: Optional[str | list[Message]] = None
 
 
 class EditorContentGenerationPayload(EditorContentPayload):

@@ -24,6 +24,7 @@ __all__ = [
     "CompletionsRequestV1",
     "GenerationsRequestV1",
     "CompletionsRequestV2",
+    "CompletionsRequestV3",
     "GenerationsRequestV2",
     "SuggestionsResponse",
     "StreamSuggestionsResponse",
@@ -102,6 +103,11 @@ class GenerationsRequestV1(GenerationsRequest):
 class CompletionsRequestV2(CompletionsRequest):
     prompt_version: Literal[2]
     prompt: Optional[str] = None
+
+
+class CompletionsRequestV3(CompletionsRequest):
+    prompt_version: Literal[3]
+    prompt: Optional[list[Message]] = None
 
 
 class GenerationsRequestV2(GenerationsRequest):
