@@ -2,7 +2,7 @@
 
 from ai_gateway.cloud_connector.auth import CloudConnectorAuthError, authenticate
 from ai_gateway.cloud_connector.cache import LocalAuthCache
-from ai_gateway.cloud_connector.config import CloudConnectorConfig
+from ai_gateway.cloud_connector.config import CloudConnectorConfig, NoServiceNameError
 from ai_gateway.cloud_connector.gitlab_features import (
     FEATURE_CATEGORIES_FOR_PROXY_ENDPOINTS,
     UNIT_PRIMITIVE_AND_DESCRIPTION_MAPPING,
