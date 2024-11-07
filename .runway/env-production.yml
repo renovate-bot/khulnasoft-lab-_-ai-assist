@@ -4,7 +4,6 @@ AIGW_GITLAB_URL: "https://gitlab.com"
 AIGW_GITLAB_API_URL: "https://gitlab.com/api/v4/"
 AIGW_CUSTOMER_PORTAL_URL: "https://customers.gitlab.com"
 AIGW_GOOGLE_CLOUD_PLATFORM__PROJECT: "gitlab-ai-framework-prod"
-AIGW_VERTEX_SEARCH__PROJECT: "unreview-poc-390200e5"
 AIGW_VERTEX_SEARCH__FALLBACK_DATASTORE_VERSION: "17.0"
 AIGW_SNOWPLOW__ENABLED: "true"
 AIGW_SNOWPLOW__ENDPOINT: "https://snowplow.trx.gitlab.net"
@@ -26,4 +25,3 @@ AIGW_FEATURE_FLAGS__DISALLOWED_FLAGS: '{"self-managed": ["expanded_ai_logging"]}
 CLOUD_CONNECTOR_SERVICE_NAME: "gitlab-ai-gateway"
 AIGW_MODEL_ENDPOINTS__FIREWORKS_COMPLETION_ENDPOINT: 'https://gitlab-2fb7764c.direct.fireworks.ai/v1'
 AIGW_MODEL_ENDPOINTS__FIREWORKS_COMPLETION_IDENTIFIER: 'accounts/fireworks/models/qwen2p5-coder-7b#accounts/gitlab/deployments/2fb7764c'
-
