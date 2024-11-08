@@ -116,10 +116,29 @@ class ModelBase(ABC):
     def metadata(self) -> ModelMetadata:
         pass
 
-    def name_with_provider(self):
-        return (
-            self.metadata.identifier if self.metadata.identifier else self.metadata.name
-        )
+    def model_metadata_to_params(self) -> dict[str, str]:
+        params = {
+            "api_base": str(self.metadata.endpoint),
+            "api_key": str(self.metadata.api_key),
+            "model": self.metadata.name,
+        }
+
+        if not self.metadata.identifier:
+            return params
+
+        provider, _, model_name = self.metadata.identifier.partition("/")
+
+        if model_name:
+            params["custom_llm_provider"] = provider
+            params["model"] = model_name
+
+            if provider == "bedrock":
+                del params["api_base"]
+        else:
+            params["custom_llm_provider"] = "custom_openai"
+            params["model"] = self.metadata.identifier
+
+        return params
 
 
 def grpc_connect_vertex(client_options: dict) -> PredictionServiceAsyncClient:

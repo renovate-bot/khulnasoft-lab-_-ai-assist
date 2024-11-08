@@ -216,7 +216,7 @@ class TestLiteLlmChatMode:
             assert str(exc.value) == "specifying custom models endpoint is disabled"
 
     @pytest.mark.asyncio
-    async def test_generate(self, lite_llm_chat_model, endpoint, api_key):
+    async def test_generate(self, lite_llm_chat_model):
         expected_messages = [{"role": "user", "content": "Test message"}]
 
         with patch("ai_gateway.models.litellm.acompletion") as mock_acompletion:
@@ -229,22 +229,21 @@ class TestLiteLlmChatMode:
             assert output.text == "Test response"
 
             mock_acompletion.assert_called_with(
-                lite_llm_chat_model.name_with_provider(),
                 messages=expected_messages,
                 stream=False,
                 temperature=0.2,
                 top_p=0.95,
                 max_tokens=2048,
-                api_key=api_key,
-                api_base=endpoint,
                 timeout=30.0,
                 stop=["</new_code>"],
+                api_base="http://127.0.0.1:1111/v1",
+                api_key="specified-api-key",
+                model="some-cool-model",
+                custom_llm_provider="provider",
             )
 
     @pytest.mark.asyncio
-    async def test_generate_stream(
-        self, lite_llm_chat_model, endpoint, api_key, identifier
-    ):
+    async def test_generate_stream(self, lite_llm_chat_model):
         expected_messages = [{"role": "user", "content": "Test message"}]
 
         streamed_response = AsyncMock()
@@ -279,16 +278,17 @@ class TestLiteLlmChatMode:
             assert content == ["Streamed content"]
 
             mock_acompletion.assert_called_with(
-                identifier,
                 messages=expected_messages,
                 stream=True,
                 temperature=0.3,
                 top_p=0.9,
                 max_tokens=1024,
-                api_key=api_key,
-                api_base=endpoint,
                 timeout=30.0,
                 stop=["</new_code>"],
+                api_base="http://127.0.0.1:1111/v1",
+                api_key="specified-api-key",
+                model="some-cool-model",
+                custom_llm_provider="provider",
             )
 
             mock_watch.assert_called_once_with(stream=True)
