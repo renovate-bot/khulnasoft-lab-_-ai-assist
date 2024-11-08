@@ -342,7 +342,17 @@ class TestLiteLlmTextGenModel:
 
     @pytest.fixture
     def provider_keys(self):
-        return {"mistral_api_key": "codestral-api-key"}
+        return {
+            "mistral_api_key": "codestral-api-key",
+            "fireworks_api_key": "fireworks-api-key",
+        }
+
+    @pytest.fixture
+    def provider_endpoints(self):
+        return {
+            "fireworks_completion_endpoint": "https://fireworks.endpoint",
+            "fireworks_completion_identifier": "provider/some-cool-model#deployment_id",
+        }
 
     @pytest.fixture
     def lite_llm_text_model(self, endpoint, api_key):
@@ -559,6 +569,30 @@ class TestLiteLlmTextGenModel:
                     "api_key": "codestral-api-key",
                 },
             ),
+            (
+                "qwen2p5-coder-7b",
+                KindModelProvider.FIREWORKS,
+                True,
+                {
+                    "model": "provider/some-cool-model#deployment_id",
+                    "stop": [
+                        "<|fim_prefix|>",
+                        "<|fim_suffix|>",
+                        "<|fim_middle|>",
+                        "\n\n",
+                    ],
+                    "api_key": "fireworks-api-key",
+                    "messages": [
+                        {
+                            "content": "<|fim_prefix|>def hello_world():<|fim_suffix|>def goodbye_world():<|fim_middle|>",
+                            "role": Role.USER,
+                        }
+                    ],
+                    "timeout": 60,
+                    "api_base": "https://fireworks.endpoint",
+                    "custom_llm_provider": "text-completion-openai",
+                },
+            ),
         ],
     )
     async def test_generate(
@@ -570,6 +604,7 @@ class TestLiteLlmTextGenModel:
         endpoint,
         api_key,
         provider_keys,
+        provider_endpoints,
         mock_litellm_acompletion: Mock,
     ):
         litellm_model = LiteLlmTextGenModel.from_model_name(
@@ -579,10 +614,12 @@ class TestLiteLlmTextGenModel:
             api_key=api_key,
             custom_models_enabled=custom_models_enabled,
             provider_keys=provider_keys,
+            provider_endpoints=provider_endpoints,
         )
 
         output = await litellm_model.generate(
             prefix="def hello_world():",
+            suffix="def goodbye_world():",
         )
 
         expected_completion_args = {
