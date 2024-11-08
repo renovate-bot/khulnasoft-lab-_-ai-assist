@@ -164,16 +164,14 @@ class LiteLlmChatModel(ChatModelBase):
 
         with self.instrumentator.watch(stream=stream) as watcher:
             suggestion = await acompletion(
-                self.name_with_provider(),
                 messages=litellm_messages,
                 stream=stream,
                 temperature=temperature,
                 top_p=top_p,
                 max_tokens=max_output_tokens,
-                api_key=self.metadata.api_key,
-                api_base=self.metadata.endpoint,
                 timeout=30.0,
                 stop=self.stop_tokens,
+                **self.model_metadata_to_params(),
             )
 
             if stream:
@@ -341,7 +339,6 @@ class LiteLlmTextGenModel(TextGenModelBase):
         suffix: Optional[str] = "",
     ) -> Union[ModelResponse, CustomStreamWrapper]:
         completion_args = {
-            "model": self.name_with_provider(),
             "messages": [{"content": prefix, "role": Role.USER}],
             "max_tokens": max_output_tokens,
             "temperature": temperature,
@@ -353,9 +350,9 @@ class LiteLlmTextGenModel(TextGenModelBase):
 
         if self._is_vertex():
             completion_args["vertex_ai_location"] = self._get_vertex_model_location()
+            completion_args["model"] = self.metadata.name
         else:
-            completion_args["api_key"] = self.metadata.api_key
-            completion_args["api_base"] = self.metadata.endpoint
+            completion_args = completion_args | self.model_metadata_to_params()
 
         if self._use_text_completion():
             completion_args["suffix"] = suffix
