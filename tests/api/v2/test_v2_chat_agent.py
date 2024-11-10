@@ -97,6 +97,23 @@ class TestReActAgentStream:
             (
                 AgentRequest(
                     messages=[
+                        Message(
+                            role=Role.USER,
+                            content="How can I write hello world in python?",
+                        ),
+                    ],
+                    model_metadata=ModelMetadata(
+                        name="vertex",
+                        provider="claude-3-5-haiku-20241022",
+                        endpoint="http://localhost:4000",
+                    ),
+                ),
+                "thought\nFinal Answer: answer\n",
+                [AgentFinalAnswer(text=c) for c in "answer"],
+            ),
+            (
+                AgentRequest(
+                    messages=[
                         Message(role=Role.USER, content="chat history"),
                         Message(role=Role.ASSISTANT, content="chat history"),
                         Message(

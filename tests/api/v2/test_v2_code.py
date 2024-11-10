@@ -1441,6 +1441,37 @@ class TestCodeGenerations:
             ),  # v3 with prompt - anthropic
             (
                 3,
+                None,
+                "foo",
+                [
+                    {"role": "system", "content": "foo"},
+                    {"role": "user", "content": "bar"},
+                ],
+                "anthropic",
+                "claude-3-5-haiku-20241022",
+                None,
+                None,
+                "foo",
+                False,
+                False,
+                True,
+                True,
+                False,
+                200,
+                [
+                    Message(role=Role.SYSTEM, content="foo"),
+                    Message(role=Role.USER, content="bar"),
+                ],
+                [
+                    {
+                        "text": "foo",
+                        "index": 0,
+                        "finish_reason": "length",
+                    }
+                ],
+            ),
+            (
+                3,
                 "",
                 "foo",
                 [
