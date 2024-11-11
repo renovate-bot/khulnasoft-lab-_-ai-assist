@@ -84,6 +84,7 @@ class KindLiteLlmModel(StrEnum):
 class ModelCompletionType(StrEnum):
     TEXT = "text"
     CHAT = "chat"
+    FIM = "fim"
 
 
 MODEL_STOP_TOKENS = {
@@ -112,7 +113,16 @@ MODEL_SPECIFICATIONS = {
     KindVertexTextModel.CODESTRAL_2405: {
         "timeout": 60,
         "completion_type": ModelCompletionType.TEXT,
-    }
+    },
+    KindLiteLlmModel.QWEN_2_5: {
+        "timeout": 60,
+        "completion_type": ModelCompletionType.FIM,
+        "fim_tokens": {
+            "prefix": "<|fim_prefix|>",
+            "suffix": "<|fim_suffix|>",
+            "middle": "<|fim_middle|>",
+        },
+    },
 }
 
 
@@ -338,8 +348,20 @@ class LiteLlmTextGenModel(TextGenModelBase):
         top_p: float,
         suffix: Optional[str] = "",
     ) -> Union[ModelResponse, CustomStreamWrapper]:
+        content = prefix
+
+        if self._completion_type() == ModelCompletionType.FIM:
+            fim_tokens = MODEL_SPECIFICATIONS.get(self.model_name).get("fim_tokens")
+            content = (
+                fim_tokens.get("prefix", "")
+                + prefix
+                + fim_tokens.get("suffix", "")
+                + suffix
+                + fim_tokens.get("middle", "")
+            )
+
         completion_args = {
-            "messages": [{"content": prefix, "role": Role.USER}],
+            "messages": [{"content": content, "role": Role.USER}],
             "max_tokens": max_output_tokens,
             "temperature": temperature,
             "top_p": top_p,
@@ -354,20 +376,17 @@ class LiteLlmTextGenModel(TextGenModelBase):
         else:
             completion_args = completion_args | self.model_metadata_to_params()
 
-        if self._use_text_completion():
+        if self._completion_type() == ModelCompletionType.TEXT:
             completion_args["suffix"] = suffix
             completion_args["text_completion"] = True
 
         return await acompletion(**completion_args)
 
-    def _use_text_completion(self):
-        return (
-            self.specifications.get("completion_type", ModelCompletionType.CHAT)
-            == ModelCompletionType.TEXT
-        )
+    def _completion_type(self):
+        return self.specifications.get("completion_type", ModelCompletionType.CHAT)
 
     def _extract_suggestion_text(self, suggestion):
-        if self._use_text_completion():
+        if self._completion_type() == ModelCompletionType.TEXT:
             return suggestion.choices[0].text
 
         return suggestion.choices[0].message.content
