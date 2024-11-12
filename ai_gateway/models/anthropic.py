@@ -18,7 +18,6 @@ from ai_gateway.models.base import (
     ModelAPICallError,
     ModelAPIError,
     ModelMetadata,
-    SafetyAttributes,
 )
 from ai_gateway.models.base_chat import ChatModelBase, Message, Role
 from ai_gateway.models.base_text import (
@@ -26,6 +25,7 @@ from ai_gateway.models.base_text import (
     TextGenModelChunk,
     TextGenModelOutput,
 )
+from ai_gateway.typing import SafetyAttributes
 
 __all__ = [
     "AnthropicAPIConnectionError",

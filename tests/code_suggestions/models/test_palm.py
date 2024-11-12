@@ -6,7 +6,6 @@ from google.api_core.exceptions import InvalidArgument, RetryError
 from google.cloud.aiplatform.gapic import PredictionServiceAsyncClient, PredictResponse
 from google.protobuf import json_format
 
-from ai_gateway.models.base import SafetyAttributes
 from ai_gateway.models.base_text import TextGenModelOutput
 from ai_gateway.models.vertex_text import (
     CodeBisonModelInput,
@@ -19,6 +18,7 @@ from ai_gateway.models.vertex_text import (
     VertexAPIConnectionError,
     VertexAPIStatusError,
 )
+from ai_gateway.typing import SafetyAttributes
 
 TEST_PREFIX = "random prompt"
 TEST_SUFFIX = "some suffix"

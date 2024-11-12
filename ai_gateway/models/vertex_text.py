@@ -12,11 +12,11 @@ from ai_gateway.models.base import (
     ModelAPICallError,
     ModelAPIError,
     ModelMetadata,
-    SafetyAttributes,
     TokensConsumptionMetadata,
 )
 from ai_gateway.models.base_text import TextGenModelBase, TextGenModelOutput
 from ai_gateway.tracking import SnowplowEventContext
+from ai_gateway.typing import SafetyAttributes
 
 __all__ = [
     "PalmCodeBisonModel",

@@ -18,7 +18,6 @@ from ai_gateway.code_suggestions.processing.typing import (
     Prompt,
 )
 from ai_gateway.instrumentators import TextGenModelInstrumentator
-from ai_gateway.models import SafetyAttributes
 from ai_gateway.models.base_text import (
     TextGenModelBase,
     TextGenModelChunk,
@@ -26,6 +25,7 @@ from ai_gateway.models.base_text import (
 )
 from ai_gateway.tracking.instrumentator import SnowplowInstrumentator
 from ai_gateway.tracking.snowplow import SnowplowEvent, SnowplowEventContext
+from ai_gateway.typing import SafetyAttributes
 
 
 class InstrumentorMock(Mock):
