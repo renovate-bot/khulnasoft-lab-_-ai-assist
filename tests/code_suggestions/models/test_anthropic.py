@@ -43,7 +43,7 @@ from ai_gateway.models.base_text import TextGenModelOutput
 class TestAnthropicModel:
     @pytest.mark.parametrize(
         "model_name_version",
-        ["claude-instant-1.2", "claude-2.0"],
+        ["claude-2.1", "claude-2.0"],
     )
     def test_anthropic_model_from_name(self, model_name_version: str):
         model = AnthropicModel.from_model_name(model_name_version, Mock())
@@ -55,19 +55,19 @@ class TestAnthropicModel:
         ("model_name_version", "opts", "opts_client", "opts_model"),
         [
             (
-                "claude-instant-1.2",
+                "claude-2.1",
                 {},
                 AnthropicModel.OPTS_CLIENT,
                 AnthropicModel.OPTS_MODEL,
             ),
             (
-                "claude-instant-1.2",
+                "claude-2.1",
                 {"version": "2020-10-10"},
                 AnthropicModel.OPTS_CLIENT,
                 AnthropicModel.OPTS_MODEL,
             ),
             (
-                "claude-instant-1.2",
+                "claude-2.1",
                 {
                     "timeout": 6,
                     "max_tokens_to_sample": 5,
@@ -123,10 +123,10 @@ class TestAnthropicModel:
     @pytest.mark.parametrize(
         ("model_name_version", "exception", "expected_exception"),
         [
-            ("claude-instant-1.2", BadRequestError, AnthropicAPIStatusError),
-            ("claude-instant-1.2", UnprocessableEntityError, AnthropicAPIStatusError),
-            ("claude-instant-1.2", APIConnectionError, AnthropicAPIConnectionError),
-            ("claude-instant-1.2", APITimeoutError, AnthropicAPITimeoutError),
+            ("claude-2.1", BadRequestError, AnthropicAPIStatusError),
+            ("claude-2.1", UnprocessableEntityError, AnthropicAPIStatusError),
+            ("claude-2.1", APIConnectionError, AnthropicAPIConnectionError),
+            ("claude-2.1", APITimeoutError, AnthropicAPITimeoutError),
         ],
     )
     async def test_anthropic_model_error(
@@ -162,7 +162,7 @@ class TestAnthropicModel:
         ),
         [
             (
-                "claude-instant-1.2",
+                "claude-2.1",
                 "random_prompt",
                 "random_text",
                 {},
@@ -175,7 +175,7 @@ class TestAnthropicModel:
                 ),
             ),
             (
-                "claude-instant-1.2",
+                "claude-2.1",
                 "random_prompt",
                 "random_text",
                 {"top_k": 10},
@@ -188,7 +188,7 @@ class TestAnthropicModel:
                 ),
             ),
             (
-                "claude-instant-1.2",
+                "claude-2.1",
                 "random_prompt",
                 "random_text",
                 {"temperature": 1},
@@ -204,7 +204,7 @@ class TestAnthropicModel:
                 ),
             ),
             (
-                "claude-instant-1.2",
+                "claude-2.1",
                 "random_prompt",
                 "random_text",
                 {"temperature": 1},
@@ -220,7 +220,7 @@ class TestAnthropicModel:
                 ),
             ),
             (
-                "claude-instant-1.2",
+                "claude-2.1",
                 "random_prompt",
                 "random_text",
                 {},
@@ -353,21 +353,21 @@ class TestAnthropicModel:
         ),
         [
             (
-                "claude-instant-1.2",
+                "claude-2.1",
                 "random_prompt",
                 [
                     Completion(
                         id="compl_01CtvorJWMstkmATFkR7qVYM",
                         completion="def hello_",
                         stop_reason="stop_sequence",
-                        model="claude-instant-1.2",
+                        model="claude-2.1",
                         type="completion",
                     ),
                     Completion(
                         id="compl_02CtvorJWMstkmATFkR7qVYM",
                         completion="world():",
                         stop_reason="stop_sequence",
-                        model="claude-instant-1.2",
+                        model="claude-2.1",
                         type="completion",
                     ),
                 ],
