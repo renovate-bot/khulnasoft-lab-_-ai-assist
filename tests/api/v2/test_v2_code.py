@@ -273,13 +273,13 @@ class TestCodeCompletions:
             (
                 1,
                 "anthropic",
-                "claude-instant-1.2",
+                "claude-2.1",
                 "def search",
                 {
                     "id": "id",
                     "model": {
                         "engine": "anthropic",
-                        "name": "claude-instant-1.2",
+                        "name": "claude-2.1",
                         "lang": "python",
                         "tokens_consumption_metadata": None,
                     },
@@ -351,13 +351,13 @@ class TestCodeCompletions:
             (
                 1,
                 "anthropic",
-                "claude-instant-1.2",
+                "claude-2.1",
                 "",
                 {
                     "id": "id",
                     "model": {
                         "engine": "anthropic",
-                        "name": "claude-instant-1.2",
+                        "name": "claude-2.1",
                         "lang": "python",
                         "tokens_consumption_metadata": None,
                     },
