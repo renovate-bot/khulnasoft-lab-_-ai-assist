@@ -1,12 +1,13 @@
 from typing import Any, AsyncIterator
 
-from ai_gateway.models.base import ModelMetadata, SafetyAttributes
+from ai_gateway.models.base import ModelMetadata
 from ai_gateway.models.base_text import (
     TextGenModelBase,
     TextGenModelChunk,
     TextGenModelOutput,
 )
 from ai_gateway.prompts.base import Prompt
+from ai_gateway.typing import SafetyAttributes
 
 __all__ = [
     "AgentModel",

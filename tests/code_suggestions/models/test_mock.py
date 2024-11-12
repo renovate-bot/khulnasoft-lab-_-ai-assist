@@ -2,14 +2,8 @@ import json
 
 import pytest
 
-from ai_gateway.models import (
-    Message,
-    ModelMetadata,
-    Role,
-    SafetyAttributes,
-    TextGenModelOutput,
-    mock,
-)
+from ai_gateway.models import Message, ModelMetadata, Role, TextGenModelOutput, mock
+from ai_gateway.typing import SafetyAttributes
 
 
 @pytest.mark.asyncio

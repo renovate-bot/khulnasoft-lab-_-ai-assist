@@ -5,12 +5,7 @@ from litellm import CustomStreamWrapper, ModelResponse, acompletion
 from litellm.exceptions import APIConnectionError, InternalServerError
 
 from ai_gateway.config import Config
-from ai_gateway.models.base import (
-    KindModelProvider,
-    ModelAPIError,
-    ModelMetadata,
-    SafetyAttributes,
-)
+from ai_gateway.models.base import KindModelProvider, ModelAPIError, ModelMetadata
 from ai_gateway.models.base_chat import ChatModelBase, Message, Role
 from ai_gateway.models.base_text import (
     TextGenModelBase,
@@ -19,6 +14,7 @@ from ai_gateway.models.base_text import (
 )
 from ai_gateway.models.vertex_text import KindVertexTextModel
 from ai_gateway.tracking import SnowplowEventContext
+from ai_gateway.typing import SafetyAttributes
 
 __all__ = [
     "LiteLlmChatModel",
@@ -66,7 +62,6 @@ class KindLiteLlmModel(StrEnum):
         return provider.value
 
     def _text_provider_prefix(self, provider):
-
         # Text completion models hosted behind openai proxies should be prefixed with "text-completion-openai/":
         # https://docs.litellm.ai/docs/providers/openai_compatible
         if provider == KindModelProvider.LITELLM:

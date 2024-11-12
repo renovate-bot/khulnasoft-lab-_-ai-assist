@@ -27,7 +27,6 @@ __all__ = [
     "ModelAPICallError",
     "ModelMetadata",
     "TokensConsumptionMetadata",
-    "SafetyAttributes",
     "ModelBase",
     "grpc_connect_vertex",
     "init_anthropic_client",
@@ -82,12 +81,6 @@ class TokensConsumptionMetadata(BaseModel):
     context_tokens_sent: Optional[int] = None
     # number of tokens from context used in the prompt
     context_tokens_used: Optional[int] = None
-
-
-class SafetyAttributes(BaseModel):
-    blocked: bool = False
-    categories: list[str] = []
-    errors: list[int] = []
 
 
 class ModelMetadata(NamedTuple):

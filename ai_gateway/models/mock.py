@@ -10,13 +10,14 @@ from langchain_core.callbacks import CallbackManagerForLLMRun
 from langchain_core.language_models.chat_models import SimpleChatModel
 from langchain_core.messages import BaseMessage
 
-from ai_gateway.models.base import ModelMetadata, SafetyAttributes
+from ai_gateway.models.base import ModelMetadata
 from ai_gateway.models.base_chat import ChatModelBase
 from ai_gateway.models.base_text import (
     TextGenModelBase,
     TextGenModelChunk,
     TextGenModelOutput,
 )
+from ai_gateway.typing import SafetyAttributes
 
 __all__ = [
     "AsyncStream",
