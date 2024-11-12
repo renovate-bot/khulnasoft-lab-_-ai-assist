@@ -1,3 +1,4 @@
+# pylint: disable=too-many-lines
 from typing import Optional
 from unittest.mock import AsyncMock, Mock, patch
 
@@ -543,6 +544,8 @@ class TestLiteLlmTextGenModel:
             "provider",
             "custom_models_enabled",
             "model_completion_args",
+            "prefix",
+            "suffix",
         ),
         [
             (
@@ -558,6 +561,8 @@ class TestLiteLlmTextGenModel:
                         "<|file_separator|>",
                     ],
                 },
+                "def hello_world():",
+                "def goodbye_world():",
             ),
             (
                 "codestral",
@@ -568,6 +573,8 @@ class TestLiteLlmTextGenModel:
                     "stop": [],
                     "api_key": "codestral-api-key",
                 },
+                "def hello_world():",
+                "def goodbye_world():",
             ),
             (
                 "qwen2p5-coder-7b",
@@ -579,6 +586,11 @@ class TestLiteLlmTextGenModel:
                         "<|fim_prefix|>",
                         "<|fim_suffix|>",
                         "<|fim_middle|>",
+                        "<|fim_pad|>",
+                        "<|repo_name|>",
+                        "<|file_sep|>",
+                        "<|im_start|>",
+                        "<|im_end|>",
                         "\n\n",
                     ],
                     "api_key": "fireworks-api-key",
@@ -592,6 +604,39 @@ class TestLiteLlmTextGenModel:
                     "api_base": "https://fireworks.endpoint",
                     "custom_llm_provider": "text-completion-openai",
                 },
+                "def hello_world():",
+                "def goodbye_world():",
+            ),
+            (
+                "qwen2p5-coder-7b",
+                KindModelProvider.FIREWORKS,
+                True,
+                {
+                    "model": "provider/some-cool-model#deployment_id",
+                    "stop": [
+                        "<|fim_prefix|>",
+                        "<|fim_suffix|>",
+                        "<|fim_middle|>",
+                        "<|fim_pad|>",
+                        "<|repo_name|>",
+                        "<|file_sep|>",
+                        "<|im_start|>",
+                        "<|im_end|>",
+                        "\n\n",
+                    ],
+                    "api_key": "fireworks-api-key",
+                    "messages": [
+                        {
+                            "content": "<|fim_prefix|>def hello_world():<|fim_suffix|><|fim_middle|>",
+                            "role": Role.USER,
+                        }
+                    ],
+                    "timeout": 60,
+                    "api_base": "https://fireworks.endpoint",
+                    "custom_llm_provider": "text-completion-openai",
+                },
+                "def hello_world():",
+                None,
             ),
         ],
     )
@@ -606,6 +651,8 @@ class TestLiteLlmTextGenModel:
         provider_keys,
         provider_endpoints,
         mock_litellm_acompletion: Mock,
+        prefix,
+        suffix,
     ):
         litellm_model = LiteLlmTextGenModel.from_model_name(
             name=model_name,
@@ -618,8 +665,8 @@ class TestLiteLlmTextGenModel:
         )
 
         output = await litellm_model.generate(
-            prefix="def hello_world():",
-            suffix="def goodbye_world():",
+            prefix=prefix,
+            suffix=suffix,
         )
 
         expected_completion_args = {
@@ -630,7 +677,7 @@ class TestLiteLlmTextGenModel:
             "timeout": 30.0,
             "api_key": api_key,
             "api_base": endpoint,
-            "messages": [{"content": "def hello_world():", "role": Role.USER}],
+            "messages": [{"content": prefix, "role": Role.USER}],
         }
         expected_completion_args.update(model_completion_args)
 
