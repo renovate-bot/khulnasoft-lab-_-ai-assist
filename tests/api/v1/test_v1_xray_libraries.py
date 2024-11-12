@@ -83,7 +83,7 @@ class TestXRayLibraries:
         assert response.json() == {"response": mock_output_text}
 
         mock_track_internal_event.assert_called_once_with(
-            "request_code_suggestions",
+            "request_generate_code",
             category="ai_gateway.api.v1.x_ray.libraries",
         )
 
