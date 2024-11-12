@@ -105,6 +105,11 @@ MODEL_STOP_TOKENS = {
         "<|fim_prefix|>",
         "<|fim_suffix|>",
         "<|fim_middle|>",
+        "<|fim_pad|>",
+        "<|repo_name|>",
+        "<|file_sep|>",
+        "<|im_start|>",
+        "<|im_end|>",
         "\n\n",
     ],
 }
@@ -356,7 +361,7 @@ class LiteLlmTextGenModel(TextGenModelBase):
                 fim_tokens.get("prefix", "")
                 + prefix
                 + fim_tokens.get("suffix", "")
-                + suffix
+                + (suffix or "")
                 + fim_tokens.get("middle", "")
             )
 
