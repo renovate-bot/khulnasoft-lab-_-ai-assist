@@ -61,10 +61,18 @@ async def completions(
     current_user: Annotated[StarletteUser, Depends(get_current_user)],
     prompt_registry: Annotated[BasePromptRegistry, Depends(get_prompt_registry)],
 ):
-    if not current_user.can(
+    # We need to check both COMPLETE_CODE and CODE_SUGGESTIONS permissions temporarily
+    # since existing JWTs were issued with only CODE_SUGGESTIONS permission.
+    # TODO: Remove CODE_SUGGESTIONS permission check once all JWTs have been reissued
+    # https://gitlab.com/gitlab-org/modelops/applied-ml/code-suggestions/ai-assist/-/issues/710
+    code_suggestions_allowed = current_user.can(
+        GitLabUnitPrimitive.COMPLETE_CODE,
+        disallowed_issuers=[CloudConnectorConfig().service_name],
+    ) or current_user.can(
         GitLabUnitPrimitive.CODE_SUGGESTIONS,
         disallowed_issuers=[CloudConnectorConfig().service_name],
-    ):
+    )
+    if not code_suggestions_allowed:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Unauthorized to access code suggestions",

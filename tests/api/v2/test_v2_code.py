@@ -32,7 +32,7 @@ def auth_user():
     return CloudConnectorUser(
         authenticated=True,
         claims=UserClaims(
-            scopes=["code_suggestions"],
+            scopes=["code_suggestions", "complete_code", "generate_code"],
             subject="1234",
             gitlab_realm="self-managed",
             issuer="issuer",
@@ -189,7 +189,7 @@ class TestCodeCompletions:
         assert body["model"] == expected_response["model"]
 
         mock_track_internal_event.assert_called_once_with(
-            "request_code_suggestions",
+            "request_complete_code",
             category="ai_gateway.api.v2.code.completions",
         )
 
@@ -858,7 +858,7 @@ class TestCodeCompletions:
                 CloudConnectorUser(
                     authenticated=True,
                     claims=UserClaims(
-                        scopes=["code_suggestions"],
+                        scopes=["code_suggestions", "complete_code"],
                         subject="1234",
                         gitlab_realm="self-managed",
                         issuer="gitlab-ai-gateway",
@@ -967,7 +967,7 @@ class TestCodeCompletions:
                 CloudConnectorUser(
                     authenticated=True,
                     claims=UserClaims(
-                        scopes=["code_suggestions"],
+                        scopes=["code_suggestions", "complete_code"],
                         subject="1234",
                         gitlab_realm="self-managed",
                     ),
@@ -979,7 +979,7 @@ class TestCodeCompletions:
                 CloudConnectorUser(
                     authenticated=True,
                     claims=UserClaims(
-                        scopes=["code_suggestions"],
+                        scopes=["code_suggestions", "complete_code"],
                         subject="1234",
                         gitlab_realm="self-managed",
                         issuer="gitlab-ai-gateway",

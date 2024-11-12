@@ -139,7 +139,10 @@ def test_user_access_token_success(
     assert decoded_token["iat"] <= current_time_posix
     assert decoded_token["jti"]
     assert decoded_token["gitlab_realm"] == gitlab_realm
-    assert decoded_token["scopes"] == ["code_suggestions"]
+    assert decoded_token["scopes"] == [
+        "code_suggestions",
+        "complete_code",
+    ]
     assert decoded_token["gitlab_instance_id"] == "1234"
     assert parsed_response["expires_at"] == decoded_token["exp"]
 
@@ -147,7 +150,7 @@ def test_user_access_token_success(
         assert decoded_token["duo_seat_count"] == DUO_SEAT_COUNT_CLAIM_TEST_VALUE
 
     mock_track_internal_event.assert_called_once_with(
-        "request_code_suggestions",
+        "request_complete_code",
         category="ai_gateway.api.v1.code.user_access_token",
     )
 

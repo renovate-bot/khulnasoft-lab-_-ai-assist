@@ -16,7 +16,9 @@ def auth_user():
     return CloudConnectorUser(
         authenticated=True,
         claims=UserClaims(
-            scopes=["code_suggestions"], subject="1234", gitlab_realm="self-managed"
+            scopes=["code_suggestions", "complete_code", "generate_code"],
+            subject="1234",
+            gitlab_realm="self-managed",
         ),
     )
 
