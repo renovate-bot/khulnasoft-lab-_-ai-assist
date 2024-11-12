@@ -31,6 +31,7 @@ variables:
 
   TARGET_IMAGE: "$DOCKER_MODEL_GATEWAY:$CI_COMMIT_SHORT_SHA"
   INGEST_IMAGE: "$DOCKER_INGEST:$CI_COMMIT_SHORT_SHA"
+  SELF_HOSTED_LATEST_IMAGE: "$DOCKER_MODEL_GATEWAY:self-hosted-latest"
   DOCKERHUB_MODEL_GATEWAY_IMAGE: "gitlab/model-gateway:$CI_COMMIT_TAG"
 
   SAST_EXCLUDED_PATHS: "tests, tmp, api"
@@ -63,7 +64,7 @@ include:
     file: "ci-tasks/service-project/runway.yml"
     inputs:
       runway_service_id: ai-gateway-custom
-      image: "$CI_REGISTRY_IMAGE/model-gateway:${CI_COMMIT_SHORT_SHA}"
+      image: "$SELF_HOSTED_LATEST_IMAGE"
       runway_version: v3.43.3
   - component: ${CI_SERVER_FQDN}/gitlab-org/components/danger-review/danger-review@1.4.1
     rules:
