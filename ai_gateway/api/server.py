@@ -196,7 +196,7 @@ def setup_gcp_service_account(config: Config):
     """
     if config.google_cloud_platform.service_account_json_key:
         with open("/tmp/gcp-service-account.json", "w") as f:
-            f.write(config.google_cloud_platform.service_account_json_key)
+            f.write(config.google_cloud_platform.service_account_json_key.strip("'"))
             # pylint: disable=direct-environment-variable-reference
             os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = (
                 "/tmp/gcp-service-account.json"
