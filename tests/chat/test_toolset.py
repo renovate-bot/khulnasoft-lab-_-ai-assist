@@ -6,7 +6,6 @@ from ai_gateway.api.auth_utils import StarletteUser
 from ai_gateway.chat.tools import BaseTool
 from ai_gateway.chat.tools.gitlab import (
     BuildReader,
-    CiEditorAssistant,
     CommitReader,
     EpicReader,
     GitlabDocumentation,
@@ -29,7 +28,6 @@ class TestDuoChatToolRegistry:
         [
             (
                 {
-                    CiEditorAssistant,
                     EpicReader,
                     IssueReader,
                     MergeRequestReader,
@@ -51,7 +49,6 @@ class TestDuoChatToolRegistry:
         actual_tools = {type(tool) for tool in tools}
 
         assert actual_tools == {
-            CiEditorAssistant,
             SelfHostedGitlabDocumentation,
             EpicReader,
             IssueReader,
@@ -61,7 +58,6 @@ class TestDuoChatToolRegistry:
     @pytest.mark.parametrize(
         ("unit_primitives", "expected_tools"),
         [
-            ([GitLabUnitPrimitive.DUO_CHAT], {CiEditorAssistant}),
             ([GitLabUnitPrimitive.DOCUMENTATION_SEARCH], {GitlabDocumentation}),
             ([GitLabUnitPrimitive.ASK_EPIC], {EpicReader}),
             ([GitLabUnitPrimitive.ASK_ISSUE], {IssueReader}),
@@ -73,7 +69,6 @@ class TestDuoChatToolRegistry:
                     GitLabUnitPrimitive.ASK_ISSUE,
                 ],
                 {
-                    CiEditorAssistant,
                     GitlabDocumentation,
                     EpicReader,
                     IssueReader,
@@ -142,7 +137,7 @@ class TestDuoChatToolRegistry:
                 claims=UserClaims(
                     scopes=[
                         unit_primitive.value,
-                        GitLabUnitPrimitive.DUO_CHAT.value,
+                        GitLabUnitPrimitive.DOCUMENTATION_SEARCH.value,
                     ]
                 ),
             )
@@ -151,11 +146,11 @@ class TestDuoChatToolRegistry:
         tools = DuoChatToolsRegistry().get_on_behalf(user, "17.5.0-pre")
         actual_tools = {type(tool) for tool in tools}
 
-        assert actual_tools == {CiEditorAssistant, reader_tool_type}
+        assert actual_tools == {GitlabDocumentation, reader_tool_type}
 
         current_feature_flag_context.set(set())
 
         tools = DuoChatToolsRegistry().get_on_behalf(user, "17.5.0-pre")
         actual_tools = {type(tool) for tool in tools}
 
-        assert actual_tools == {CiEditorAssistant}
+        assert actual_tools == {GitlabDocumentation}

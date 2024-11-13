@@ -3,7 +3,6 @@ from ai_gateway.chat.base import BaseToolsRegistry
 from ai_gateway.chat.tools import BaseTool
 from ai_gateway.chat.tools.gitlab import (
     BuildReader,
-    CiEditorAssistant,
     CommitReader,
     EpicReader,
     GitlabDocumentation,
@@ -31,10 +30,6 @@ class DuoChatToolsRegistry(BaseToolsRegistry):
             MergeRequestReader(),
         ]
 
-        # We continue to use CIEditor tool unless the feature flag for its
-        # removal is turned on
-        if not is_feature_enabled(FeatureFlag.CI_EDITOR_TOOL_REMOVED):
-            tools.append(CiEditorAssistant())
         if self.self_hosted_documentation_enabled:
             tools.append(SelfHostedGitlabDocumentation())
         else:

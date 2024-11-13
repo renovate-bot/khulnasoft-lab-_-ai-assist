@@ -5,7 +5,6 @@ from ai_gateway.chat.tools.base import BaseRemoteTool
 from ai_gateway.cloud_connector import GitLabUnitPrimitive
 
 __all__ = [
-    "CiEditorAssistant",
     "CommitReader",
     "MergeRequestReader",
     "IssueReader",
@@ -14,30 +13,6 @@ __all__ = [
     "EpicReader",
     "BuildReader",
 ]
-
-
-class CiEditorAssistant(BaseRemoteTool):
-    name: str = "ci_editor_assistant"
-    resource: str = "ci editor answers"
-    unit_primitive: GitLabUnitPrimitive = GitLabUnitPrimitive.DUO_CHAT
-    min_required_gl_version: Optional[str] = None
-
-    description: str = dedent(
-        """\
-        Useful tool when you need to provide suggestions regarding anything related
-        to ".gitlab-ci.yml" file. It helps with questions related to deploying code, configuring CI/CD pipelines,
-        defining CI jobs, or environments.
-        It can not help with writing code in general or questions about software development."""
-    )
-
-    example: str = dedent(
-        """\
-        Question: Please create a deployment configuration for a node.js application.
-        Thought: You have asked a question related to deployment of an application or CI/CD pipelines.
-            "ci_editor_assistant" tool can assist with this kind of questions.
-        Action: ci_editor_assistant
-        Action Input: Please create a deployment configuration for a node.js application."""
-    )
 
 
 class IssueReader(BaseRemoteTool):
