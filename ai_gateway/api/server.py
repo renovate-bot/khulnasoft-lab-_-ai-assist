@@ -20,7 +20,6 @@ from ai_gateway.api.middleware import (
     FeatureFlagMiddleware,
     InternalEventMiddleware,
     MiddlewareAuthentication,
-    MiddlewareModelTelemetry,
 )
 from ai_gateway.api.monitoring import router as http_monitoring_router
 from ai_gateway.api.v1 import api_router as http_api_router_v1
@@ -65,7 +64,6 @@ async def lifespan(app: FastAPI):
 
 
 def create_fast_api_server(config: Config):
-
     fastapi_app = FastAPI(
         title="GitLab AI Gateway",
         description="GitLab AI Gateway API to execute AI actions",
@@ -124,7 +122,6 @@ def create_fast_api_server(config: Config):
                 enabled=config.internal_event.enabled,
                 environment=config.environment,
             ),
-            MiddlewareModelTelemetry(skip_endpoints=_SKIP_ENDPOINTS),
         ],
         extra={"config": config},
     )

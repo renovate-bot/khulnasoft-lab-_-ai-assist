@@ -8,19 +8,18 @@ import structlog
 from asgi_correlation_id.context import correlation_id
 from fastapi.encoders import jsonable_encoder
 from langsmith.run_helpers import tracing_context
-from pydantic import ValidationError
 from starlette.authentication import (
     AuthCredentials,
     AuthenticationError,
     HTTPConnection,
 )
-from starlette.datastructures import CommaSeparatedStrings, Headers, MutableHeaders
+from starlette.datastructures import CommaSeparatedStrings, MutableHeaders
 from starlette.middleware import Middleware
 from starlette.middleware.authentication import (
     AuthenticationBackend,
     AuthenticationMiddleware,
 )
-from starlette.middleware.base import BaseHTTPMiddleware, Request
+from starlette.middleware.base import Request
 from starlette.responses import JSONResponse
 from starlette_context import context as starlette_context
 from uvicorn.protocols.utils import get_path_with_query_string
@@ -35,7 +34,6 @@ from ai_gateway.cloud_connector import (
 )
 from ai_gateway.cloud_connector import authenticate as cloud_connector_authenticate
 from ai_gateway.feature_flags import current_feature_flag_context
-from ai_gateway.instrumentators.base import Telemetry, TelemetryInstrumentator
 from ai_gateway.internal_events import (
     EventContext,
     current_event_context,
@@ -45,7 +43,6 @@ from ai_gateway.tracking.errors import log_exception
 
 __all__ = [
     "MiddlewareAuthentication",
-    "MiddlewareModelTelemetry",
 ]
 
 log = logging.getLogger("codesuggestions")
@@ -202,7 +199,6 @@ class AccessLogMiddleware:
 
 class MiddlewareAuthentication(Middleware):
     class AuthBackend(AuthenticationBackend):
-
         def __init__(
             self,
             oidc_auth_provider: AuthProvider,
@@ -227,10 +223,11 @@ class MiddlewareAuthentication(Middleware):
 
             if self.bypass_auth:
                 log.critical("Auth is disabled, all users allowed")
-                cloud_connector_user, _cloud_connector_error = (
-                    cloud_connector_authenticate(
-                        dict(conn.headers), None, bypass_auth=True
-                    )
+                (
+                    cloud_connector_user,
+                    _cloud_connector_error,
+                ) = cloud_connector_authenticate(
+                    dict(conn.headers), None, bypass_auth=True
                 )
 
                 return AuthCredentials(), StarletteUser(cloud_connector_user)
@@ -242,10 +239,11 @@ class MiddlewareAuthentication(Middleware):
                 log.critical(
                     "Auth is disabled, all requests with `Bypass-Auth` header set allowed"
                 )
-                cloud_connector_user, _cloud_connector_error = (
-                    cloud_connector_authenticate(
-                        dict(conn.headers), None, bypass_auth=True
-                    )
+                (
+                    cloud_connector_user,
+                    _cloud_connector_error,
+                ) = cloud_connector_authenticate(
+                    dict(conn.headers), None, bypass_auth=True
                 )
 
                 return AuthCredentials(), StarletteUser(cloud_connector_user)
@@ -435,50 +433,3 @@ class FeatureFlagMiddleware:
         starlette_context["enabled_feature_flags"] = ",".join(enabled_feature_flags)
 
         await self.app(scope, receive, send)
-
-
-class MiddlewareModelTelemetry(Middleware):
-    class TelemetryHeadersMiddleware(BaseHTTPMiddleware):
-        def __init__(self, path_resolver: _PathResolver, *args, **kwargs):
-            self.path_resolver = path_resolver
-            self.instrumentator = TelemetryInstrumentator()
-            super().__init__(*args, **kwargs)
-
-        async def dispatch(self, request, call_next):
-            if self.path_resolver.skip_path(request.url.path):
-                return await call_next(request)
-
-            headers = request.headers
-            if self._missing_header(headers):
-                return await call_next(request)
-
-            try:
-                telemetry = Telemetry(
-                    accepts=headers.get("X-GitLab-CS-Accepts"),
-                    requests=headers.get("X-GitLab-CS-Requests"),
-                    errors=headers.get("X-GitLab-CS-Errors"),
-                )
-
-                with self.instrumentator.watch([telemetry]):
-                    return await call_next(request)
-            except ValidationError as e:
-                log_exception(e)
-                return await call_next(request)
-
-        def _missing_header(self, headers: Headers) -> bool:
-            return any(
-                value is None
-                for value in [
-                    headers.get("X-GitLab-CS-Accepts"),
-                    headers.get("X-GitLab-CS-Requests"),
-                    headers.get("X-GitLab-CS-Errors"),
-                ]
-            )
-
-    def __init__(self, skip_endpoints: Optional[list] = None):
-        path_resolver = _PathResolver.from_optional_list(skip_endpoints)
-
-        super().__init__(
-            MiddlewareModelTelemetry.TelemetryHeadersMiddleware,
-            path_resolver=path_resolver,
-        )
