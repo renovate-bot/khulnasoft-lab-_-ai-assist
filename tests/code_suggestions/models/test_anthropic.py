@@ -418,6 +418,7 @@ class TestAnthropicChatModel:
             "claude-3-opus-20240229",
             "claude-3-sonnet-20240229",
             "claude-3-haiku-20240307",
+            "claude-3-5-sonnet-20240620",
         ],
     )
     def test_anthropic_model_from_name(self, model_name_version: str):
@@ -472,6 +473,12 @@ class TestAnthropicChatModel:
                     "top_k": 40,
                     "top_p": 0.95,
                 },
+            ),
+            (
+                "claude-3-5-sonnet-20240620",
+                {},
+                AnthropicChatModel.OPTS_CLIENT,
+                {**AnthropicChatModel.OPTS_MODEL, "max_tokens": 8_192},
             ),
         ],
     )
