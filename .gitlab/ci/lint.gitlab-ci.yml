@@ -3,7 +3,7 @@ lint:
   stage: lint
   script:
     - make lint-code
-    - poetry lock --no-update
+    - poetry lock --no-update --no-cache
     - git diff --exit-code
   after_script:
     - |
