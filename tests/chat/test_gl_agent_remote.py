@@ -125,7 +125,6 @@ class TestGLAgentRemoteExecutor:
                     "epic_reader",
                     "issue_reader",
                     "merge_request_reader",
-                    "ci_editor_assistant",
                 }
             else:
                 assert context.get("duo_chat.agent_available_tools") == ["issue_reader"]
@@ -150,23 +149,6 @@ class TestGLAgentRemoteExecutorToolAction:
             "expected_internal_events",
         ),
         [
-            (
-                StarletteUser(
-                    CloudConnectorUser(
-                        authenticated=True,
-                        claims=UserClaims(scopes=["duo_chat"]),
-                    )
-                ),
-                "17.2.0",
-                ReActAgentInputs(messages=[Message(role=Role.USER, content="Hi")]),
-                [
-                    AgentToolAction(
-                        thought="", tool="ci_editor_assistant", tool_input=""
-                    )
-                ],
-                ["ci_editor_assistant"],
-                [call("request_duo_chat", category="ai_gateway.chat.executor")],
-            ),
             (
                 StarletteUser(
                     CloudConnectorUser(
