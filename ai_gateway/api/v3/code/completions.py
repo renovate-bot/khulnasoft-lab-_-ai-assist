@@ -4,6 +4,11 @@ from typing import Annotated, AsyncIterator, Optional
 from dependency_injector.providers import Factory
 from dependency_injector.wiring import Provide, inject
 from fastapi import APIRouter, Depends, HTTPException, Request, status
+from gitlab_cloud_connector import (
+    CloudConnectorConfig,
+    GitLabFeatureCategory,
+    GitLabUnitPrimitive,
+)
 
 from ai_gateway.api.auth_utils import StarletteUser, get_current_user
 from ai_gateway.api.feature_category import feature_category
@@ -21,11 +26,6 @@ from ai_gateway.api.v3.code.typing import (
     StreamSuggestionsResponse,
 )
 from ai_gateway.async_dependency_resolver import get_container_application
-from ai_gateway.cloud_connector import (
-    CloudConnectorConfig,
-    GitLabFeatureCategory,
-    GitLabUnitPrimitive,
-)
 from ai_gateway.code_suggestions import (
     CodeCompletions,
     CodeCompletionsLegacy,

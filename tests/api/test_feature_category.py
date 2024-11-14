@@ -5,6 +5,7 @@ from unittest.mock import Mock, patch
 
 import pytest
 from fastapi import HTTPException, Request
+from gitlab_cloud_connector import GitLabFeatureCategory, GitLabUnitPrimitive
 from starlette_context import context, request_cycle_context
 
 from ai_gateway.api.feature_category import (
@@ -13,7 +14,6 @@ from ai_gateway.api.feature_category import (
     feature_category,
     track_metadata,
 )
-from ai_gateway.cloud_connector import GitLabFeatureCategory, GitLabUnitPrimitive
 
 
 class DummyGitLabFeatureCategory(StrEnum):

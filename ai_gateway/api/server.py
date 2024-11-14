@@ -7,6 +7,11 @@ import structlog
 from fastapi import APIRouter, FastAPI
 from fastapi.exception_handlers import http_exception_handler
 from fastapi.middleware.cors import CORSMiddleware
+from gitlab_cloud_connector import (
+    CompositeProvider,
+    GitLabOidcProvider,
+    LocalAuthProvider,
+)
 from prometheus_fastapi_instrumentator import Instrumentator, metrics
 from starlette.exceptions import HTTPException as StarletteHTTPException
 from starlette.middleware import Middleware
@@ -26,11 +31,6 @@ from ai_gateway.api.monitoring import router as http_monitoring_router
 from ai_gateway.api.v1 import api_router as http_api_router_v1
 from ai_gateway.api.v2 import api_router as http_api_router_v2
 from ai_gateway.api.v3 import api_router as http_api_router_v3
-from ai_gateway.cloud_connector import (
-    CompositeProvider,
-    GitLabOidcProvider,
-    LocalAuthProvider,
-)
 from ai_gateway.config import Config
 from ai_gateway.container import ContainerApplication
 from ai_gateway.instrumentators.threads import monitor_threads

@@ -3,6 +3,7 @@ from typing import Annotated, AsyncIterator, Union
 
 from dependency_injector.providers import Factory, FactoryAggregate
 from fastapi import APIRouter, Depends, HTTPException, Request, status
+from gitlab_cloud_connector import GitLabUnitPrimitive
 
 from ai_gateway.api.auth_utils import StarletteUser, get_current_user
 from ai_gateway.api.feature_category import track_metadata
@@ -19,7 +20,6 @@ from ai_gateway.async_dependency_resolver import (
     get_chat_litellm_factory_provider,
     get_internal_event_client,
 )
-from ai_gateway.cloud_connector import GitLabUnitPrimitive
 from ai_gateway.internal_events import InternalEventsClient
 from ai_gateway.models import (
     AnthropicAPIConnectionError,

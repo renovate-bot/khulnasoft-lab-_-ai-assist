@@ -4,13 +4,12 @@ from unittest.mock import Mock, call, patch
 import pytest
 import requests
 import responses
-from jose import jwt
-
-from ai_gateway.cloud_connector import (
+from gitlab_cloud_connector import (
     CompositeProvider,
     GitLabOidcProvider,
     LocalAuthProvider,
 )
+from jose import jwt
 
 
 class TestCompositeProvider:
@@ -292,7 +291,7 @@ UGw3kIW+604fnnXLDm4TaLA=
         )
 
         with patch(
-            "ai_gateway.cloud_connector.providers.log_exception"
+            "gitlab_cloud_connector.providers.log_exception"
         ) as mock_log_exception:
             user = auth_provider.authenticate(token)
 

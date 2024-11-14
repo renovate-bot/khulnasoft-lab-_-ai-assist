@@ -1,6 +1,7 @@
 from typing import Type
 
 import pytest
+from gitlab_cloud_connector import CloudConnectorUser, GitLabUnitPrimitive, UserClaims
 
 from ai_gateway.api.auth_utils import StarletteUser
 from ai_gateway.chat.tools import BaseTool
@@ -15,11 +16,6 @@ from ai_gateway.chat.tools.gitlab import (
     SelfHostedGitlabDocumentation,
 )
 from ai_gateway.chat.toolset import DuoChatToolsRegistry
-from ai_gateway.cloud_connector import (
-    CloudConnectorUser,
-    GitLabUnitPrimitive,
-    UserClaims,
-)
 from ai_gateway.feature_flags.context import current_feature_flag_context
 
 

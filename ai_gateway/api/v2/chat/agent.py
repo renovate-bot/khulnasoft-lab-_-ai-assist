@@ -1,6 +1,7 @@
 from typing import Annotated, AsyncIterator
 
 from fastapi import APIRouter, Depends, HTTPException, Request, status
+from gitlab_cloud_connector import GitLabFeatureCategory, GitLabUnitPrimitive
 from starlette.responses import StreamingResponse
 
 from ai_gateway.api.auth_utils import StarletteUser, get_current_user
@@ -19,7 +20,6 @@ from ai_gateway.chat.agents import (
     TypeAgentEvent,
 )
 from ai_gateway.chat.executor import GLAgentRemoteExecutor
-from ai_gateway.cloud_connector import GitLabFeatureCategory, GitLabUnitPrimitive
 from ai_gateway.internal_events import InternalEventsClient
 
 __all__ = [

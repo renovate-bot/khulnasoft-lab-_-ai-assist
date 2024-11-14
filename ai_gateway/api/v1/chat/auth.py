@@ -2,9 +2,8 @@ import functools
 import typing
 
 from fastapi import HTTPException, Request, status
+from gitlab_cloud_connector import GitLabUnitPrimitive
 from pydantic import BaseModel
-
-from ai_gateway.cloud_connector import GitLabUnitPrimitive
 
 __all__ = ["ChatInvokable", "authorize_with_unit_primitive"]
 

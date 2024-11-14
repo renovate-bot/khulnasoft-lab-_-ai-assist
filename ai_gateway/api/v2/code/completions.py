@@ -4,6 +4,11 @@ from typing import Annotated, AsyncIterator, Optional, Tuple, Union
 import anthropic
 from dependency_injector.providers import Factory
 from fastapi import APIRouter, Body, Depends, HTTPException, Request, status
+from gitlab_cloud_connector import (
+    CloudConnectorConfig,
+    GitLabFeatureCategory,
+    GitLabUnitPrimitive,
+)
 
 from ai_gateway.api.auth_utils import StarletteUser, get_current_user
 from ai_gateway.api.error_utils import capture_validation_errors
@@ -35,11 +40,6 @@ from ai_gateway.async_dependency_resolver import (
     get_container_application,
     get_internal_event_client,
     get_snowplow_instrumentator,
-)
-from ai_gateway.cloud_connector import (
-    CloudConnectorConfig,
-    GitLabFeatureCategory,
-    GitLabUnitPrimitive,
 )
 from ai_gateway.code_suggestions import (
     CodeCompletions,

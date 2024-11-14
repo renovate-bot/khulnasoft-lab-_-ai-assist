@@ -3,6 +3,7 @@ from unittest.mock import patch
 
 import pytest
 from fastapi.testclient import TestClient
+from gitlab_cloud_connector import CloudConnectorUser, UserClaims
 
 from ai_gateway.api.v1 import api_router
 from ai_gateway.api.v1.search.typing import (
@@ -12,7 +13,6 @@ from ai_gateway.api.v1.search.typing import (
     SearchResponseMetadata,
     SearchResult,
 )
-from ai_gateway.cloud_connector import CloudConnectorUser, UserClaims
 from ai_gateway.config import Config
 from ai_gateway.internal_events import InternalEventAdditionalProperties
 

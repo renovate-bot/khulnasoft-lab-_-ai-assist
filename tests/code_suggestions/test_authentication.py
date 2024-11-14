@@ -3,12 +3,12 @@ from typing import Annotated
 import pytest
 from fastapi import APIRouter, Depends, FastAPI, HTTPException, Request, status
 from fastapi.testclient import TestClient
+from gitlab_cloud_connector import CloudConnectorUser, UserClaims
 from starlette.responses import JSONResponse
 from structlog.testing import capture_logs
 
 from ai_gateway.api.auth_utils import StarletteUser, get_current_user
 from ai_gateway.api.middleware import MiddlewareAuthentication
-from ai_gateway.cloud_connector import CloudConnectorUser, UserClaims
 
 router = APIRouter(
     prefix="",

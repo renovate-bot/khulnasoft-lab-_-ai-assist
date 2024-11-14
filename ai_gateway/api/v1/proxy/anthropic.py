@@ -1,5 +1,6 @@
 import structlog
 from fastapi import APIRouter, BackgroundTasks, Depends, Request
+from gitlab_cloud_connector import FEATURE_CATEGORIES_FOR_PROXY_ENDPOINTS
 
 from ai_gateway.abuse_detection import AbuseDetector
 from ai_gateway.api.feature_category import X_GITLAB_UNIT_PRIMITIVE, feature_categories
@@ -9,7 +10,6 @@ from ai_gateway.async_dependency_resolver import (
     get_anthropic_proxy_client,
     get_internal_event_client,
 )
-from ai_gateway.cloud_connector import FEATURE_CATEGORIES_FOR_PROXY_ENDPOINTS
 from ai_gateway.internal_events import InternalEventsClient
 from ai_gateway.models.base import KindModelProvider
 from ai_gateway.proxy.clients import AnthropicProxyClient

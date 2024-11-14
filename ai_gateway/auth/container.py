@@ -1,6 +1,5 @@
 from dependency_injector import containers, providers
-
-from ai_gateway.cloud_connector import TokenAuthority
+from gitlab_cloud_connector import TokenAuthority
 
 __all__ = ["ContainerSelfSignedJwt"]
 

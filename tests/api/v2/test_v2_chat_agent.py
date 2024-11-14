@@ -3,6 +3,7 @@ from typing import AsyncIterator
 from unittest.mock import Mock, PropertyMock, call, patch
 
 import pytest
+from gitlab_cloud_connector import CloudConnectorUser, UserClaims
 from starlette.testclient import TestClient
 
 from ai_gateway.api.v2 import api_router
@@ -22,7 +23,6 @@ from ai_gateway.chat.agents import (
     ReActAgentInputs,
 )
 from ai_gateway.chat.agents.typing import AgentFinalAnswer, TypeAgentEvent
-from ai_gateway.cloud_connector import CloudConnectorUser, UserClaims
 from ai_gateway.config import Config
 from ai_gateway.models.base_chat import Role
 from ai_gateway.prompts.typing import Model, ModelMetadata

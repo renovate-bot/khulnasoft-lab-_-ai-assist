@@ -3,9 +3,9 @@ from unittest.mock import Mock
 import pytest
 from dependency_injector import containers
 from fastapi.testclient import TestClient
+from gitlab_cloud_connector import CloudConnectorUser, UserClaims
 
 from ai_gateway.api.v3 import api_router
-from ai_gateway.cloud_connector import CloudConnectorUser, UserClaims
 from ai_gateway.tracking import SnowplowEventContext
 
 

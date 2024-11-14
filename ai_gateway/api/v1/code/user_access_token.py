@@ -2,6 +2,12 @@ from typing import Annotated
 
 import structlog
 from fastapi import APIRouter, Depends, Header, HTTPException, Request, status
+from gitlab_cloud_connector import (
+    CloudConnectorConfig,
+    GitLabFeatureCategory,
+    GitLabUnitPrimitive,
+    TokenAuthority,
+)
 
 from ai_gateway.api.auth_utils import StarletteUser, get_current_user
 from ai_gateway.api.feature_category import feature_category
@@ -9,12 +15,6 @@ from ai_gateway.api.v1.code.typing import Token
 from ai_gateway.async_dependency_resolver import (
     get_internal_event_client,
     get_token_authority,
-)
-from ai_gateway.cloud_connector import (
-    CloudConnectorConfig,
-    GitLabFeatureCategory,
-    GitLabUnitPrimitive,
-    TokenAuthority,
 )
 from ai_gateway.internal_events import InternalEventsClient
 

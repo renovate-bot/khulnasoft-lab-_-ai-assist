@@ -1,6 +1,7 @@
 from abc import ABC, abstractmethod
 from typing import Any, AsyncIterator, Mapping, Optional, Sequence, Tuple, TypeVar, cast
 
+from gitlab_cloud_connector import GitLabUnitPrimitive, WrongUnitPrimitives
 from jinja2 import PackageLoader
 from jinja2.sandbox import SandboxedEnvironment
 from langchain_core.prompts import ChatPromptTemplate
@@ -9,7 +10,6 @@ from langchain_core.prompts.string import DEFAULT_FORMATTER_MAPPING
 from langchain_core.runnables import Runnable, RunnableBinding, RunnableConfig
 
 from ai_gateway.api.auth_utils import StarletteUser
-from ai_gateway.cloud_connector import GitLabUnitPrimitive, WrongUnitPrimitives
 from ai_gateway.instrumentators.model_requests import ModelRequestInstrumentator
 from ai_gateway.prompts.config.base import ModelConfig, PromptConfig, PromptParams
 from ai_gateway.prompts.typing import Model, ModelMetadata, TypeModelFactory

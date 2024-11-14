@@ -1,6 +1,7 @@
 from unittest.mock import AsyncMock, Mock, call
 
 import pytest
+from gitlab_cloud_connector import CloudConnectorUser, UserClaims
 from langchain_core.runnables import Runnable
 from starlette_context import context, request_cycle_context
 
@@ -13,7 +14,6 @@ from ai_gateway.chat.agents import (
     ReActAgentInputs,
 )
 from ai_gateway.chat.toolset import DuoChatToolsRegistry
-from ai_gateway.cloud_connector import CloudConnectorUser, UserClaims
 from ai_gateway.internal_events import InternalEventsClient
 from ai_gateway.models.base_chat import Role
 
