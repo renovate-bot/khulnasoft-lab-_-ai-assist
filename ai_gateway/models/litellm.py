@@ -137,10 +137,10 @@ class LiteLlmChatModel(ChatModelBase):
             KindLiteLlmModel.CODELLAMA,
         }
 
-        if self._metadata.name in codegemma_models:
+        if self.model_name in codegemma_models:
             return 8_192
 
-        if self._metadata.name in codelama_models:
+        if self.model_name in codelama_models:
             return 16_384
 
         return 32_768
@@ -152,6 +152,7 @@ class LiteLlmChatModel(ChatModelBase):
         metadata: Optional[ModelMetadata] = None,
     ):
         self._metadata = _init_litellm_model_metadata(metadata, model_name, provider)
+        self.model_name = model_name
         self.stop_tokens = MODEL_STOP_TOKENS.get(model_name, [])
 
     @property
@@ -256,10 +257,10 @@ class LiteLlmChatModel(ChatModelBase):
 class LiteLlmTextGenModel(TextGenModelBase):
     @property
     def MAX_MODEL_LEN(self):  # pylint: disable=invalid-name
-        if self._metadata.name in KindLiteLlmModel.CODEGEMMA:
+        if self.model_name == KindLiteLlmModel.CODEGEMMA:
             return 8_192
 
-        if self._metadata.name == KindLiteLlmModel.CODELLAMA:
+        if self.model_name == KindLiteLlmModel.CODELLAMA:
             return 16_384
 
         return 32_768
