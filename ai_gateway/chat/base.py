@@ -1,12 +1,12 @@
 from abc import ABC, abstractmethod
 from typing import Optional
 
+from gitlab_cloud_connector import GitLabUnitPrimitive
 from packaging.version import InvalidVersion, Version
 from pydantic import BaseModel
 
 from ai_gateway.api.auth_utils import StarletteUser
 from ai_gateway.chat.tools import BaseTool
-from ai_gateway.cloud_connector import GitLabUnitPrimitive
 
 __all__ = [
     "UnitPrimitiveToolset",

@@ -1,7 +1,7 @@
 # flake8: noqa
+from gitlab_cloud_connector import CloudConnectorConfig
 
-from ai_gateway import api, cloud_connector, container, experimentation, main, models
-from ai_gateway.cloud_connector import CloudConnectorConfig
+from ai_gateway import api, container, experimentation, main, models
 from ai_gateway.config import *
 
 # Set a default service name

@@ -1,8 +1,8 @@
 import pytest
+from gitlab_cloud_connector import GitLabUnitPrimitive
 
 from ai_gateway.chat.base import UnitPrimitiveToolset
 from ai_gateway.chat.tools.base import BaseTool
-from ai_gateway.cloud_connector import GitLabUnitPrimitive
 
 
 @pytest.mark.parametrize(

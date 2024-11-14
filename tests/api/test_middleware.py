@@ -1,6 +1,7 @@
 from unittest.mock import AsyncMock, patch
 
 import pytest
+from gitlab_cloud_connector import X_GITLAB_DUO_SEAT_COUNT_HEADER
 from starlette.requests import Request
 from starlette_context import context, request_cycle_context
 
@@ -16,7 +17,6 @@ from ai_gateway.api.middleware import (
     FeatureFlagMiddleware,
     InternalEventMiddleware,
 )
-from ai_gateway.cloud_connector import X_GITLAB_DUO_SEAT_COUNT_HEADER
 from ai_gateway.internal_events import EventContext
 
 

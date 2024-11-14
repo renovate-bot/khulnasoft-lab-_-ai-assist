@@ -1,7 +1,6 @@
 import pytest
-
-from ai_gateway.cloud_connector import AuthProvider, CloudConnectorUser, UserClaims
-from ai_gateway.cloud_connector import authenticate as cloud_connector_authenticate
+from gitlab_cloud_connector import AuthProvider, CloudConnectorUser, UserClaims
+from gitlab_cloud_connector import authenticate as cloud_connector_authenticate
 
 
 class StubAuthProviderBypassAuth(AuthProvider):

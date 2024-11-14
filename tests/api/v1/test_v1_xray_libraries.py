@@ -2,10 +2,10 @@ from unittest import mock
 
 import pytest
 from fastapi import status
+from gitlab_cloud_connector import CloudConnectorUser, UserClaims
 
 from ai_gateway.api.v1 import api_router
 from ai_gateway.api.v1.x_ray.typing import AnyPromptComponent
-from ai_gateway.cloud_connector import CloudConnectorUser, UserClaims
 from ai_gateway.internal_events import InternalEventAdditionalProperties
 
 

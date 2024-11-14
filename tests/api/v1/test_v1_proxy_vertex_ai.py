@@ -1,13 +1,9 @@
 from unittest.mock import patch
 
 import pytest
+from gitlab_cloud_connector import CloudConnectorUser, GitLabUnitPrimitive, UserClaims
 
 from ai_gateway.api.v1 import api_router
-from ai_gateway.cloud_connector import (
-    CloudConnectorUser,
-    GitLabUnitPrimitive,
-    UserClaims,
-)
 
 
 @pytest.fixture(scope="class")

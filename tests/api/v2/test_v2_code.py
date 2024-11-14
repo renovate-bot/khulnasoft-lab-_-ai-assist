@@ -8,13 +8,13 @@ import pytest
 from dependency_injector import containers
 from fastapi import status
 from fastapi.testclient import TestClient
+from gitlab_cloud_connector import CloudConnectorUser, UserClaims
 from snowplow_tracker import Snowplow
 from starlette.datastructures import CommaSeparatedStrings
 from structlog.testing import capture_logs
 
 from ai_gateway.api.error_utils import capture_validation_errors
 from ai_gateway.api.v2 import api_router
-from ai_gateway.cloud_connector import CloudConnectorUser, UserClaims
 from ai_gateway.config import Config
 from ai_gateway.models.base_chat import Message, Role
 from ai_gateway.tracking.container import ContainerTracking

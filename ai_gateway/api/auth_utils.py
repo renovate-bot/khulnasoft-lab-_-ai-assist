@@ -1,13 +1,8 @@
 from typing import Optional
 
 from fastapi import Request
+from gitlab_cloud_connector import CloudConnectorUser, GitLabUnitPrimitive, UserClaims
 from starlette.authentication import BaseUser
-
-from ai_gateway.cloud_connector import (
-    CloudConnectorUser,
-    GitLabUnitPrimitive,
-    UserClaims,
-)
 
 
 class StarletteUser(BaseUser):

@@ -2,17 +2,13 @@ from typing import Any, List, Optional, Type
 from unittest.mock import patch
 
 import pytest
+from gitlab_cloud_connector import CloudConnectorUser, GitLabUnitPrimitive, UserClaims
 from langchain_core.callbacks import CallbackManagerForLLMRun
 from langchain_core.language_models.chat_models import SimpleChatModel
 from langchain_core.messages import BaseMessage
 from pydantic_core import Url
 
 from ai_gateway.api.v1 import api_router
-from ai_gateway.cloud_connector import (
-    CloudConnectorUser,
-    GitLabUnitPrimitive,
-    UserClaims,
-)
 from ai_gateway.config import Config
 from ai_gateway.prompts import Prompt
 from ai_gateway.prompts.config.base import PromptConfig

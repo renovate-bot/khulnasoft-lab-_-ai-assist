@@ -2,12 +2,12 @@ from unittest.mock import Mock
 
 import pytest
 from fastapi import BackgroundTasks, HTTPException, Request
+from gitlab_cloud_connector import GitLabUnitPrimitive
 
 from ai_gateway.abuse_detection import AbuseDetector
 from ai_gateway.api.auth_utils import StarletteUser
 from ai_gateway.api.feature_category import X_GITLAB_UNIT_PRIMITIVE
 from ai_gateway.api.v1.proxy.request import authorize_with_unit_primitive_header
-from ai_gateway.cloud_connector import GitLabUnitPrimitive
 
 
 @pytest.fixture

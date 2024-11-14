@@ -5,16 +5,12 @@ from unittest.mock import Mock, patch
 import pytest
 from fastapi import HTTPException, Request
 from fastapi.testclient import TestClient
+from gitlab_cloud_connector import CloudConnectorUser, GitLabUnitPrimitive, UserClaims
 from structlog.testing import capture_logs
 
 from ai_gateway.api.auth_utils import StarletteUser
 from ai_gateway.api.v1 import api_router
 from ai_gateway.api.v1.chat.auth import ChatInvokable, authorize_with_unit_primitive
-from ai_gateway.cloud_connector import (
-    CloudConnectorUser,
-    GitLabUnitPrimitive,
-    UserClaims,
-)
 from ai_gateway.models import (
     AnthropicAPIConnectionError,
     AnthropicAPIStatusError,

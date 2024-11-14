@@ -3,10 +3,10 @@ from datetime import datetime, timedelta, timezone
 import pytest
 from fastapi import status
 from fastapi.testclient import TestClient
+from gitlab_cloud_connector import CloudConnectorUser, CompositeProvider, UserClaims
 from jose import jwt
 
 from ai_gateway.api.v1 import api_router
-from ai_gateway.cloud_connector import CloudConnectorUser, CompositeProvider, UserClaims
 from ai_gateway.config import Config, ConfigAuth, ConfigSelfSignedJwt
 
 # JSON Web Key can be generated via https://mkjwk.org/

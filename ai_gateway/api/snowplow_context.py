@@ -1,6 +1,7 @@
 from typing import Optional
 
 from fastapi import Request
+from gitlab_cloud_connector import CloudConnectorConfig
 from starlette.datastructures import CommaSeparatedStrings
 
 from ai_gateway.api.middleware import (
@@ -9,7 +10,6 @@ from ai_gateway.api.middleware import (
     X_GITLAB_REALM_HEADER,
     X_GITLAB_SAAS_DUO_PRO_NAMESPACE_IDS_HEADER,
 )
-from ai_gateway.cloud_connector import CloudConnectorConfig
 from ai_gateway.tracking import SnowplowEventContext
 
 

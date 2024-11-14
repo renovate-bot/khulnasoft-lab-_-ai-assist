@@ -2,6 +2,11 @@ from typing import Annotated
 
 import structlog
 from fastapi import APIRouter, Depends, HTTPException, Request, status
+from gitlab_cloud_connector import (
+    CloudConnectorConfig,
+    GitLabFeatureCategory,
+    GitLabUnitPrimitive,
+)
 
 from ai_gateway.api.auth_utils import StarletteUser, get_current_user
 from ai_gateway.api.feature_category import feature_category
@@ -9,11 +14,6 @@ from ai_gateway.api.v1.x_ray.typing import XRayRequest, XRayResponse
 from ai_gateway.async_dependency_resolver import (
     get_internal_event_client,
     get_x_ray_anthropic_claude,
-)
-from ai_gateway.cloud_connector import (
-    CloudConnectorConfig,
-    GitLabFeatureCategory,
-    GitLabUnitPrimitive,
 )
 from ai_gateway.internal_events import InternalEventsClient
 from ai_gateway.models import AnthropicModel

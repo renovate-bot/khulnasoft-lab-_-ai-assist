@@ -22,7 +22,7 @@ from ai_gateway.code_suggestions.processing.typing import (
 from ai_gateway.config import Config
 from ai_gateway.container import ContainerApplication
 from ai_gateway.experimentation.base import ExperimentTelemetry
-from ai_gateway.cloud_connector import GitLabUnitPrimitive
+from gitlab_cloud_connector import GitLabUnitPrimitive
 from ai_gateway.models.base import (
     ModelMetadata,
     TokensConsumptionMetadata,

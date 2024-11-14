@@ -1,6 +1,6 @@
+from gitlab_cloud_connector import GitLabUnitPrimitive
 from pydantic import BaseModel, ConfigDict
 
-from ai_gateway.cloud_connector import GitLabUnitPrimitive
 from ai_gateway.prompts.config.models import TypeModelParams
 
 __all__ = ["PromptConfig", "ModelConfig"]
