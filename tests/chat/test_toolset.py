@@ -28,6 +28,7 @@ class TestDuoChatToolRegistry:
         [
             (
                 {
+                    BuildReader,
                     EpicReader,
                     IssueReader,
                     MergeRequestReader,
@@ -49,6 +50,7 @@ class TestDuoChatToolRegistry:
         actual_tools = {type(tool) for tool in tools}
 
         assert actual_tools == {
+            BuildReader,
             SelfHostedGitlabDocumentation,
             EpicReader,
             IssueReader,
@@ -118,10 +120,7 @@ class TestDuoChatToolRegistry:
 
     @pytest.mark.parametrize(
         "feature_flag, unit_primitive, reader_tool_type",
-        [
-            ("ai_commit_reader_for_chat", GitLabUnitPrimitive.ASK_COMMIT, CommitReader),
-            ("ai_build_reader_for_chat", GitLabUnitPrimitive.ASK_BUILD, BuildReader),
-        ],
+        [("ai_commit_reader_for_chat", GitLabUnitPrimitive.ASK_COMMIT, CommitReader)],
     )
     def test_feature_flag(
         self,
