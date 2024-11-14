@@ -25,6 +25,7 @@ class DuoChatToolsRegistry(BaseToolsRegistry):
         # We can also read the list of tools and associated unit primitives from the file
         # similar to what we implemented for the Prompt Registry
         tools = [
+            BuildReader(),
             EpicReader(),
             IssueReader(),
             MergeRequestReader(),
@@ -37,9 +38,6 @@ class DuoChatToolsRegistry(BaseToolsRegistry):
 
         if is_feature_enabled(FeatureFlag.AI_COMMIT_READER_FOR_CHAT):
             tools.append(CommitReader())
-
-        if is_feature_enabled(FeatureFlag.AI_BUILD_READER_FOR_CHAT):
-            tools.append(BuildReader())
 
         return tools
 
