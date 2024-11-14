@@ -70,7 +70,7 @@ class TestKindLiteLlmModel:
         )
 
 
-class TestLiteLlmChatMode:
+class TestLiteLlmChatModel:
     @pytest.fixture
     def endpoint(self):
         return "http://127.0.0.1:1111/v1"
@@ -92,6 +92,18 @@ class TestLiteLlmChatMode:
             identifier=identifier,
             custom_models_enabled=True,
         )
+
+    @pytest.mark.parametrize(
+        ("model_name", "expected_limit"),
+        [
+            (KindLiteLlmModel.CODEGEMMA, 8_192),
+            (KindLiteLlmModel.CODELLAMA, 16_384),
+            (KindLiteLlmModel.CODESTRAL, 32_768),
+        ],
+    )
+    def test_max_model_len(self, model_name: str, expected_limit: int):
+        model = LiteLlmChatModel.from_model_name(name=model_name)
+        assert model.MAX_MODEL_LEN == expected_limit
 
     @pytest.mark.parametrize(
         (
@@ -363,6 +375,18 @@ class TestLiteLlmTextGenModel:
             api_key=api_key,
             custom_models_enabled=True,
         )
+
+    @pytest.mark.parametrize(
+        ("model_name", "expected_limit"),
+        [
+            (KindLiteLlmModel.CODEGEMMA, 8_192),
+            (KindLiteLlmModel.CODELLAMA, 16_384),
+            (KindLiteLlmModel.CODESTRAL, 32_768),
+        ],
+    )
+    def test_max_model_len(self, model_name: str, expected_limit: int):
+        model = LiteLlmTextGenModel.from_model_name(name=model_name)
+        assert model.MAX_MODEL_LEN == expected_limit
 
     @pytest.mark.parametrize(
         (
