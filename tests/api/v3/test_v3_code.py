@@ -19,7 +19,7 @@ def auth_user():
     return CloudConnectorUser(
         authenticated=True,
         claims=UserClaims(
-            scopes=["code_suggestions", "complete_code"],
+            scopes=["complete_code", "generate_code"],
             subject="1234",
             gitlab_realm="self-managed",
         ),
@@ -963,7 +963,7 @@ class TestUnauthorizedIssuer:
         return CloudConnectorUser(
             authenticated=True,
             claims=UserClaims(
-                scopes=["code_suggestions"],
+                scopes=["complete_code"],
                 subject="1234",
                 gitlab_realm="self-managed",
                 issuer="gitlab-ai-gateway",

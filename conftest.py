@@ -473,7 +473,7 @@ def prompt_template():
 
 @pytest.fixture
 def unit_primitives():
-    yield ["code_suggestions"]
+    yield ["complete_code", "generate_code"]
 
 
 @pytest.fixture

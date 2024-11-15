@@ -7,7 +7,7 @@ def user():
     return CloudConnectorUser(
         authenticated=True,
         claims=UserClaims(
-            scopes=["code_suggestions"],
+            scopes=["complete_code"],
             subject="1234",
             gitlab_realm="self-managed",
             issuer="https://customers.gitlab.com",
@@ -18,13 +18,13 @@ def user():
 
 def test_issuer_not_in_disallowed_issuers(user: CloudConnectorUser):
     assert user.can(
-        GitLabUnitPrimitive.CODE_SUGGESTIONS, disallowed_issuers=["gitlab-ai-gateway"]
+        GitLabUnitPrimitive.COMPLETE_CODE, disallowed_issuers=["gitlab-ai-gateway"]
     )
 
 
 def test_issuer_in_disallowed_issuers(user: CloudConnectorUser):
     assert not user.can(
-        GitLabUnitPrimitive.CODE_SUGGESTIONS,
+        GitLabUnitPrimitive.COMPLETE_CODE,
         disallowed_issuers=["https://customers.gitlab.com"],
     )
 
@@ -34,16 +34,16 @@ def test_issuer_in_disallowed_issuers(user: CloudConnectorUser):
     [
         (
             CloudConnectorUser(
-                authenticated=True, claims=UserClaims(scopes=["code_suggestions"])
+                authenticated=True, claims=UserClaims(scopes=["complete_code"])
             ),
-            [GitLabUnitPrimitive.CODE_SUGGESTIONS],
+            [GitLabUnitPrimitive.COMPLETE_CODE],
         ),
         (
             CloudConnectorUser(
                 authenticated=True,
-                claims=UserClaims(scopes=["code_suggestions", "unknown"]),
+                claims=UserClaims(scopes=["complete_code", "unknown"]),
             ),
-            [GitLabUnitPrimitive.CODE_SUGGESTIONS],
+            [GitLabUnitPrimitive.COMPLETE_CODE],
         ),
         (CloudConnectorUser(authenticated=True, claims=None), []),
     ],

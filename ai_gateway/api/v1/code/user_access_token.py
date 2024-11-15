@@ -45,18 +45,10 @@ async def user_access_token(
     ] = None,  # This is the value of X_GITLAB_INSTANCE_ID_HEADER
     internal_event_client: InternalEventsClient = Depends(get_internal_event_client),
 ):
-    # We need to check both COMPLETE_CODE and CODE_SUGGESTIONS permissions temporarily
-    # since existing JWTs were issued with only CODE_SUGGESTIONS permission.
-    # TODO: Remove CODE_SUGGESTIONS permission check once all JWTs have been reissued
-    # https://gitlab.com/gitlab-org/modelops/applied-ml/code-suggestions/ai-assist/-/issues/710
-    code_suggestions_allowed = current_user.can(
+    if not current_user.can(
         GitLabUnitPrimitive.COMPLETE_CODE,
         disallowed_issuers=[CloudConnectorConfig().service_name],
-    ) or current_user.can(
-        GitLabUnitPrimitive.CODE_SUGGESTIONS,
-        disallowed_issuers=[CloudConnectorConfig().service_name],
-    )
-    if not code_suggestions_allowed:
+    ):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Unauthorized to create user access token for code suggestions",
@@ -91,10 +83,7 @@ async def user_access_token(
             x_gitlab_realm,
             current_user,
             x_gitlab_instance_id,
-            scopes=[
-                GitLabUnitPrimitive.CODE_SUGGESTIONS,
-                GitLabUnitPrimitive.COMPLETE_CODE,
-            ],
+            scopes=[GitLabUnitPrimitive.COMPLETE_CODE],
         )
     except Exception:
         raise HTTPException(status_code=500, detail="Failed to generate JWT")

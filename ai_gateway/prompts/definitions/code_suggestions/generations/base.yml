@@ -8,7 +8,7 @@ model:
     max_tokens: 2048
     max_retries: 1
 unit_primitives:
-  - code_suggestions
+  - generate_code
 prompt_template:
   system: |
     You are a tremendously accurate and skilled coding autocomplete agent. We want to generate new {{language}} code inside the
