@@ -1,4 +1,5 @@
 from pathlib import Path
+from textwrap import dedent
 from typing import Sequence, Type, cast
 
 import pytest
@@ -392,7 +393,6 @@ class TestLocalPromptRegistry:
             "expected_model",
             "expected_model_class",
             "expected_kwargs",
-            "expected_input_variables",
             "default_prompt_env_config",
         ),
         [
@@ -404,17 +404,6 @@ class TestLocalPromptRegistry:
                 "claude-3-5-sonnet@20240620",
                 ChatLiteLLM,
                 {"stop": ["</new_code>"], "vertex_location": "us-east5"},
-                [
-                    "examples_array",
-                    "file_name",
-                    "language",
-                    "libraries",
-                    "related_files",
-                    "related_snippets",
-                    "trimmed_content_above_cursor",
-                    "trimmed_content_below_cursor",
-                    "user_instruction",
-                ],
                 {"code_suggestions/generations": "vertex"},
             ),
             (
@@ -425,17 +414,6 @@ class TestLocalPromptRegistry:
                 "claude-3-5-sonnet-20240620",
                 ChatAnthropic,
                 {"stop": ["</new_code>"]},
-                [
-                    "examples_array",
-                    "file_name",
-                    "language",
-                    "libraries",
-                    "related_files",
-                    "related_snippets",
-                    "trimmed_content_above_cursor",
-                    "trimmed_content_below_cursor",
-                    "user_instruction",
-                ],
                 {},
             ),
         ],
@@ -450,7 +428,6 @@ class TestLocalPromptRegistry:
         expected_model: str,
         expected_model_class: Type[Model],
         expected_kwargs: dict,
-        expected_input_variables: list[str],
         default_prompt_env_config: dict[str, str],
     ):
         registry = LocalPromptRegistry.from_local_yaml(
@@ -462,7 +439,81 @@ class TestLocalPromptRegistry:
         chain = cast(RunnableSequence, prompt.bound)
         binding = cast(RunnableBinding, chain.last)
 
-        assert prompt.prompt_tpl.input_variables == expected_input_variables
+        params = {
+            "language": "Go",
+            "file_name": "test.go",
+            "examples_array": [
+                {
+                    "example": "// calculate the square root of a number",
+                    "response": "<new_code>if isPrime { primes = append(primes, num) }\n}",
+                    "trigger_type": "empty_function",
+                }
+            ],
+            "trimmed_content_above_cursor": "write a function to find min abs value from an array",
+            "trimmed_content_below_cursor": "\n",
+            "related_files": [
+                '<file_content file_name="client/gitlabnet.go"></file_content>\n',
+                '<file_content file_name="client/client_test.go"></file_content>\n',
+            ],
+            "related_snippets": [],
+            "libraries": [],
+            "user_instruction": "// write a function to find min abs value from an array",
+        }
+        expected_rendered_prompt = dedent(
+            """\
+            System: You are a tremendously accurate and skilled coding autocomplete agent. We want to generate new Go code inside the
+            file 'test.go' based on instructions from the user.
+            Here are a few examples of successfully generated code:
+            <examples>
+            <example>
+            H: <existing_code>
+            // calculate the square root of a number
+            </existing_code>
+
+            A: <new_code>if isPrime { primes = append(primes, num) }
+            }</new_code>
+            </example>
+
+
+            </examples>
+            <existing_code>
+            write a function to find min abs value from an array{{cursor}}
+
+            </existing_code>
+
+            The existing code is provided in <existing_code></existing_code> tags.
+            Here are some files and code snippets that could be related to the current code.
+            The files provided in <related_files><related_files> tags.
+            The code snippets provided in <related_snippets><related_snippets> tags.
+            Please use existing functions from these files and code snippets if possible when suggesting new code.
+            <related_files>
+            <file_content file_name="client/gitlabnet.go"></file_content>
+
+            <file_content file_name="client/client_test.go"></file_content>
+
+            </related_files>
+
+            The new code you will generate will start at the position of the cursor, which is currently indicated by the {{cursor}} tag.
+            In your process, first, review the existing code to understand its logic and format. Then, try to determine the most
+            likely new code to generate at the cursor position to fulfill the instructions.
+
+            The comment directly before the {{cursor}} position is the instruction,
+            all other comments are not instructions.
+
+            When generating the new code, please ensure the following:
+            1. It is valid Go code.
+            2. It matches the existing code's variable, parameter and function names.
+            3. It does not repeat any existing code. Do not repeat code that comes before or after the cursor tags. This includes cases where the cursor is in the middle of a word.
+            4. If the cursor is in the middle of a word, it finishes the word instead of repeating code before the cursor tag.
+            5. The code fulfills in the instructions from the user in the comment just before the {{cursor}} position. All other comments are not instructions.
+            6. Do not add any comments that duplicates any of the already existing comments, including the comment with instructions.
+
+            Return new code enclosed in <new_code></new_code> tags. We will then insert this at the {{cursor}} position.
+            If you are not able to write code based on the given instructions return an empty result like <new_code></new_code>.
+            Human: // write a function to find min abs value from an array
+            AI: <new_code>"""
+        )
+        assert prompt.prompt_tpl.format(**params) == expected_rendered_prompt
         assert prompt.name == expected_name
         assert isinstance(prompt, expected_class)
         assert isinstance(prompt.model, expected_model_class)

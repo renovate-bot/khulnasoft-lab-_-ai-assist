@@ -12,10 +12,9 @@ unit_primitives:
 prompt_template:
   system: |
     You are an AI programming assistant, utilizing the DeepSeek Coder model, developed by DeepSeek Company, and you only answer questions related to computer science. For politically sensitive questions, security and privacy issues, and other non-computer science questions, you will refuse to answer.
-    {% include 'code_suggestions/generations/system.jinja' %}
+    {% include 'code_suggestions/generations/jinja_template/self_hosted/system.jinja' %}
   user: |
-    {% include 'code_suggestions/generations/user.jinja' %}
-
+    {% include 'code_suggestions/generations/jinja_template/self_hosted/user.jinja' %}
     ### Response:
 params:
   timeout: 60
