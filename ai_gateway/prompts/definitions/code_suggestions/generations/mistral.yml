@@ -11,8 +11,8 @@ unit_primitives:
   - code_suggestions
 prompt_template:
   system: |
-    {% include 'code_suggestions/generations/system.jinja' %}
+    {% include 'code_suggestions/generations/jinja_template/self_hosted/system.jinja' %}
   user: |
-    {% include 'code_suggestions/generations/user.jinja' %}
+    {% include 'code_suggestions/generations/jinja_template/self_hosted/user.jinja' %}
 params:
   timeout: 60
