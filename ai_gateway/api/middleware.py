@@ -137,6 +137,8 @@ class AccessLogMiddleware:
         try:
             await self.app(scope, receive, send_wrapper)
         except Exception as e:
+            if isinstance(e, BaseExceptionGroup):
+                e = e.exceptions[0]
             starlette_context.data["exception_message"] = str(e)
             starlette_context.data["exception_class"] = type(e).__name__
             starlette_context.data["exception_backtrace"] = traceback.format_exc()
