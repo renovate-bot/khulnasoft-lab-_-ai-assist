@@ -910,6 +910,7 @@ class TestCodeCompletions:
                 gitlab_realm=request_headers.get("X-Gitlab-Realm", ""),
                 is_direct_connection=True,
                 suggestion_source="network",
+                region="us-central1",
                 gitlab_instance_id=request_headers.get("X-Gitlab-Instance-Id", ""),
                 gitlab_global_user_id=request_headers.get(
                     "X-Gitlab-Global-User-Id", ""
@@ -1721,6 +1722,7 @@ class TestCodeGenerations:
                 gitlab_realm=request_headers.get("X-Gitlab-Realm", ""),
                 is_direct_connection=False,
                 suggestion_source="network",
+                region="us-central1",
                 gitlab_instance_id=request_headers.get("X-Gitlab-Instance-Id", ""),
                 gitlab_global_user_id=request_headers.get(
                     "X-Gitlab-Global-User-Id", ""

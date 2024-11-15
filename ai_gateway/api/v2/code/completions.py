@@ -151,6 +151,7 @@ async def completions(
             suffix=payload.current_file.content_below_cursor,
             language=language_name,
             global_user_id=current_user.global_user_id,
+            region=_get_gcp_location(),
         )
         snowplow_instrumentator.watch(SnowplowEvent(context=snowplow_event_context))
     except Exception as e:
@@ -326,6 +327,7 @@ async def generations(
             suffix=payload.current_file.content_below_cursor,
             language=language_name,
             global_user_id=current_user.global_user_id,
+            region=_get_gcp_location(),
         )
         snowplow_instrumentator.watch(SnowplowEvent(context=snowplow_event_context))
     except Exception as e:
