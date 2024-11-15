@@ -128,6 +128,7 @@ class TestEditorContentCompletion:
             gitlab_host_name="",
             gitlab_saas_duo_pro_namespace_ids=[],
             suggestion_source="network",
+            region="us-central1",
         )
         mock_completions_legacy.assert_called_with(
             prefix=payload["content_above_cursor"],
@@ -324,6 +325,7 @@ class TestEditorContentCompletion:
             gitlab_host_name="",
             gitlab_saas_duo_pro_namespace_ids=[],
             suggestion_source="network",
+            region="us-central1",
         )
         mock_completions_stream.assert_called_with(
             prefix=payload["content_above_cursor"],
@@ -442,6 +444,7 @@ class TestEditorContentGeneration:
             gitlab_host_name="",
             gitlab_saas_duo_pro_namespace_ids=[],
             suggestion_source="network",
+            region="us-central1",
         )
         mock_generations.assert_called_with(
             prefix=payload["content_above_cursor"],
@@ -582,6 +585,7 @@ class TestEditorContentGeneration:
             gitlab_host_name="",
             gitlab_saas_duo_pro_namespace_ids=[],
             suggestion_source="network",
+            region="us-central1",
         )
         mock_generations.assert_called_with(
             prefix="# Create a fast binary search\n",

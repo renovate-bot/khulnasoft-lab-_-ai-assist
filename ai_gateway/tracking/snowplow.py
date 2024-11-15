@@ -57,6 +57,7 @@ class SnowplowEventContext:
     output_tokens: Optional[int] = None
     context_tokens_sent: Optional[int] = None
     context_tokens_used: Optional[int] = None
+    region: Optional[str] = None
 
 
 @dataclass
@@ -83,7 +84,7 @@ class SnowplowClient(Client):
         configuration: A SnowplowClientConfiguration using to initialize the Snowplow tracker.
     """
 
-    SCHEMA = "iglu:com.gitlab/code_suggestions_context/jsonschema/3-5-0"
+    SCHEMA = "iglu:com.gitlab/code_suggestions_context/jsonschema/3-6-0"
 
     def __init__(self, configuration: SnowplowClientConfiguration) -> None:
         emitter = AsyncEmitter(

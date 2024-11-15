@@ -76,6 +76,7 @@ class TestSnowplowClient:
                         gitlab_global_user_id="123XYZ",
                         gitlab_host_name="gitlab.com",
                         gitlab_saas_duo_pro_namespace_ids=[54321],
+                        region="us-central1",
                     ),
                 )
             ),

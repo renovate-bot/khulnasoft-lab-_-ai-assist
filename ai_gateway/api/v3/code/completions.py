@@ -34,6 +34,7 @@ from ai_gateway.code_suggestions import (
     LanguageServerVersion,
     ModelProvider,
 )
+from ai_gateway.config import Config
 from ai_gateway.container import ContainerApplication
 from ai_gateway.models import KindModelProvider
 from ai_gateway.prompts import BasePromptRegistry
@@ -95,6 +96,7 @@ async def completions(
         suffix=component.payload.content_below_cursor,
         language=component.payload.language_identifier,
         global_user_id=current_user.global_user_id,
+        region=_get_gcp_location(),
     )
     if component.type == CodeEditorComponents.COMPLETION:
         return await code_completion(
@@ -263,3 +265,7 @@ async def _handle_stream(
     return StreamSuggestionsResponse(
         _stream_generator(), media_type="text/event-stream"
     )
+
+
+def _get_gcp_location():
+    return Config().google_cloud_platform.location
