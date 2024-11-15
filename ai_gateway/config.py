@@ -111,6 +111,7 @@ class ConfigModelKeys(BaseModel):
 class ConfigModelEndpoints(BaseModel):
     fireworks_completion_endpoint: Optional[str] = None
     fireworks_completion_identifier: Optional[str] = None
+    fireworks_regional_endpoints: Optional[dict[str, dict[str, str]]] = {}
 
 
 def _build_location(default: str = "us-central1") -> str:
