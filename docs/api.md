@@ -86,7 +86,7 @@ Example response:
 #### Generation
 
 | Attribute                                        | Type    | Required | Description                                                                                        | Example                              |
-| ------------------------------------------------ | ------- | -------- | -------------------------------------------------------------------------------------------------- | ------------------------------------ |
+| ------------------------------------------------ |---------| -------- | -------------------------------------------------------------------------------------------------- | ------------------------------------ |
 | `prompt_components.type`                         | string  | yes      | Identifies the prompt_payload type (for generation use `code_editor_generation`)                   | `code_editor_generation`             |
 | `prompt_components.payload.file_name`            | string  | yes      | The name of the current file (max_len: **255**)                                                    | `README.md`                          |
 | `prompt_components.payload.content_above_cursor` | string  | yes      | The content above cursor (max_len: **100,000**)                                                    | `import numpy as np`                 |
@@ -95,6 +95,7 @@ Example response:
 | `prompt_components.payload.model_provider`       | string  | no       | The model engine that should be used for the completion                                            | `anthropic`                          |
 | `prompt_components.payload.stream`               | boolean | no       | Enables streaming response, if applicable (default: false)                                         | `true`                               |
 | `prompt_components.payload.prompt`               | string  | no       | An optional pre-built prompt to be passed directly to the model (max_len: **400,000**)             | `Human: You are a code assistant...` |
+| `prompt_components.payload.prompt_enhancer`      | JSON    | no       | Parameters to enhance the prompt, eg, examples, contexts, libraries, instructions                                                |`{"examples_array": [], "trimmed_content_above_cursor": "", "trimmed_content_below_cursor": "", "related_files": [],  "related_snippets": [], "libraries": []}`                          |
 | `prompt_components.metadata.source`              | string  | no       | Source of the completionrequest (max_len: **255**)                                                 | `GitLab EE`                          |
 | `prompt_components.metadata.version`             | string  | no       | Version of the source (max_len: **255**)                                                           | `16.3`                               |
 
@@ -114,7 +115,29 @@ curl --request POST \
             "content_below_cursor": "\n}",
             "model_provider": "anthropic",
             "language_identifier": "go",
-            "prompt": "Human: Write a golang function that prints hello world."
+            "prompt": "Human: Write a golang function that prints hello world.",
+            "prompt_enhancer": {
+              "examples_array":[
+                  {
+                    "example":"// calculate the square root of a number",
+                    "response":"<new_code>var primes []int\n  for _, num := range list {\n    isPrime := true\n    for i := 2; i <= num/2; i++ {\n      if num%i == 0 {\n        isPrime = false\n        break\n      }\n    }\n    if isPrime { primes = append(primes, num) }\n  }",
+                    "trigger_type":"comment"
+                  }
+              ],
+              "trimmed_content_above_cursor":"package client\n\n// write a function to find min abs value from an array\n",
+              "trimmed_content_below_cursor":"",
+              "related_files":[
+                  "<file_content file_name=\"client/tgao.go\">\n// write </file_content>",
+              ],
+              "related_snippets":[
+                  "<snippet_content name=\"code snippet1\">\n//def test</snippet_content>",
+              ],
+              "libraries":[
+                  "bytes",
+                  "context"
+              ],
+              "user_instruction":"// write a function to find min abs value from an array"
+            }
           },
           "metadata": {
             "source": "Gitlab EE",
