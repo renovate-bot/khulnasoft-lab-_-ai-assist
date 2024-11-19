@@ -103,8 +103,8 @@ async def chat(
         scratchpad = [
             AgentStep(
                 action=AgentToolAction(
-                    thought=step.thought,
-                    tool=step.tool,
+                    thought=step.thought.replace("\\_", "_"),
+                    tool=step.tool.replace("\\_", "_", 1),
                     tool_input=step.tool_input,
                 ),
                 observation=step.observation,
