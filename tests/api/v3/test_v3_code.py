@@ -8,6 +8,20 @@ from gitlab_cloud_connector import CloudConnectorUser, UserClaims
 from ai_gateway.api.v3 import api_router
 from ai_gateway.tracking import SnowplowEventContext
 
+__all__ = [
+    "auth_user",
+    "TestEditorContentCompletion",
+    "TestEditorContentGeneration",
+    "TestUnauthorizedScopes",
+    "TestIncomingRequest",
+    "TestUnauthorizedIssuer",
+]
+
+
+@pytest.fixture
+def route():
+    return "/code/completions"
+
 
 @pytest.fixture(scope="class")
 def fast_api_router():
@@ -77,6 +91,7 @@ class TestEditorContentCompletion:
         mock_completions_legacy: Mock,
         mock_completions_legacy_output_texts: str,
         expected_response: dict,
+        route: str,
     ):
         payload = {
             "file_name": "main.py",
@@ -96,7 +111,7 @@ class TestEditorContentCompletion:
         }
 
         response = mock_client.post(
-            "/code/completions",
+            route,
             headers={
                 "Authorization": "Bearer 12345",
                 "X-Gitlab-Authentication-Type": "oidc",
@@ -217,6 +232,7 @@ class TestEditorContentCompletion:
         expected_code: int,
         expected_response: str,
         expected_model: dict,
+        route: str,
     ):
         payload = {
             "file_name": "main.py",
@@ -247,7 +263,7 @@ class TestEditorContentCompletion:
         }
 
         response = mock_client.post(
-            "/code/completions",
+            route,
             headers={
                 "Authorization": "Bearer 12345",
                 "X-Gitlab-Authentication-Type": "oidc",
@@ -273,11 +289,14 @@ class TestEditorContentCompletion:
 
         mock.assert_called
 
+
+class TestEditorContentCompletionStream:
     def test_successful_stream_response(
         self,
         mock_client: TestClient,
         mock_completions_stream: Mock,
         mock_suggestions_output_text: str,
+        route: str,
     ):
         payload = {
             "file_name": "main.py",
@@ -299,7 +318,7 @@ class TestEditorContentCompletion:
         }
 
         response = mock_client.post(
-            "/code/completions",
+            route,
             headers={
                 "Authorization": "Bearer 12345",
                 "X-Gitlab-Authentication-Type": "oidc",
@@ -394,6 +413,7 @@ class TestEditorContentGeneration:
         mock_generations: Mock,
         mock_suggestions_output_text: str,
         expected_response: dict,
+        route: str,
     ):
         payload = {
             "file_name": "main.py",
@@ -412,7 +432,7 @@ class TestEditorContentGeneration:
         }
 
         response = mock_client.post(
-            "/code/completions",
+            route,
             headers={
                 "Authorization": "Bearer 12345",
                 "X-Gitlab-Authentication-Type": "oidc",
@@ -510,6 +530,7 @@ class TestEditorContentGeneration:
         mock_generations: Mock,
         mock_suggestions_output_text: str,
         expected_response: dict,
+        route: str,
     ):
         prompt_enhancer = {
             "examples_array": [
@@ -553,7 +574,7 @@ class TestEditorContentGeneration:
         }
 
         response = mock_client.post(
-            "/code/completions",
+            route,
             headers={
                 "Authorization": "Bearer 12345",
                 "X-Gitlab-Authentication-Type": "oidc",
@@ -624,6 +645,7 @@ class TestEditorContentGeneration:
         mock_with_prompt_prepared: Mock,
         prompt: str,
         want_called: bool,
+        route: str,
     ):
         payload = {
             "file_name": "main.py",
@@ -643,7 +665,7 @@ class TestEditorContentGeneration:
         }
 
         response = mock_client.post(
-            "/code/completions",
+            route,
             headers={
                 "Authorization": "Bearer 12345",
                 "X-Gitlab-Authentication-Type": "oidc",
@@ -740,6 +762,7 @@ class TestEditorContentGeneration:
         expected_code: int,
         expected_response: str,
         expected_model: dict,
+        route: str,
     ):
         payload = {
             "file_name": "main.py",
@@ -759,7 +782,7 @@ class TestEditorContentGeneration:
         }
 
         response = mock_client.post(
-            "/code/completions",
+            route,
             headers={
                 "Authorization": "Bearer 12345",
                 "X-Gitlab-Authentication-Type": "oidc",
@@ -780,11 +803,14 @@ class TestEditorContentGeneration:
         assert body["choices"] == expected_response["choices"]
         assert body["metadata"]["model"] == expected_model
 
+
+class TestEditorContentGenerationStream:
     def test_successful_stream_response(
         self,
         mock_client: TestClient,
         mock_generations_stream: Mock,
         mock_suggestions_output_text: str,
+        route: str,
     ):
         payload = {
             "file_name": "main.py",
@@ -805,7 +831,7 @@ class TestEditorContentGeneration:
         }
 
         response = mock_client.post(
-            "/code/completions",
+            route,
             headers={
                 "Authorization": "Bearer 12345",
                 "X-Gitlab-Authentication-Type": "oidc",
@@ -832,9 +858,9 @@ class TestUnauthorizedScopes:
             ),
         )
 
-    def test_failed_authorization_scope(self, mock_client):
+    def test_failed_authorization_scope(self, mock_client, route: str):
         response = mock_client.post(
-            "/code/completions",
+            route,
             headers={
                 "Authorization": "Bearer 12345",
                 "X-Gitlab-Authentication-Type": "oidc",
@@ -942,9 +968,10 @@ class TestIncomingRequest:
         mock_completions: Mock,
         request_body: dict,
         expected_code: int,
+        route: str,
     ):
         response = mock_client.post(
-            "/code/completions",
+            route,
             headers={
                 "Authorization": "Bearer 12345",
                 "X-Gitlab-Authentication-Type": "oidc",
@@ -970,9 +997,9 @@ class TestUnauthorizedIssuer:
             ),
         )
 
-    def test_failed_authorization_scope(self, mock_client):
+    def test_failed_authorization_scope(self, mock_client, route: str):
         response = mock_client.post(
-            "/code/completions",
+            route,
             headers={
                 "Authorization": "Bearer 12345",
                 "X-Gitlab-Authentication-Type": "oidc",

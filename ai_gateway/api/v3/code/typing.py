@@ -1,11 +1,26 @@
 from enum import StrEnum
-from typing import Annotated, Any, List, Literal, Optional, Union
+from typing import (
+    Annotated,
+    Any,
+    AsyncIterator,
+    List,
+    Literal,
+    Optional,
+    Protocol,
+    Union,
+)
 
 from fastapi import Body
 from pydantic import BaseModel, ConfigDict, Field, StringConstraints
 from starlette.responses import StreamingResponse
 
-from ai_gateway.code_suggestions import ModelProvider
+from ai_gateway.code_suggestions import (
+    CodeCompletions,
+    CodeCompletionsLegacy,
+    CodeGenerations,
+    CodeSuggestionsChunk,
+    ModelProvider,
+)
 from ai_gateway.models import Message
 
 __all__ = [
@@ -116,3 +131,15 @@ class CompletionResponse(BaseModel):
 
 class StreamSuggestionsResponse(StreamingResponse):
     pass
+
+
+ModelEngine = Union[CodeCompletions, CodeCompletionsLegacy, CodeGenerations]
+
+
+class StreamHandler(Protocol):
+    async def __call__(
+        self,
+        stream: AsyncIterator[CodeSuggestionsChunk],
+        engine: ModelEngine,
+    ) -> StreamSuggestionsResponse:
+        pass
