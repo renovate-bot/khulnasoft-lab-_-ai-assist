@@ -13,6 +13,6 @@ prompt_template:
   system: |
     {% include 'chat/refactor_code/system.jinja' %}
   user: |
-    {% include 'chat/refactor_code/user.jinja' %}
+    {% include 'chat/refactor_code/user_mistral.jinja' %}
 params:
   timeout: 60

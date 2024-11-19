@@ -13,6 +13,6 @@ prompt_template:
   system: |
     {% include 'chat/fix_code/system.jinja' %}
   user: |
-    {% include 'chat/fix_code/user.jinja' %}
+    {% include 'chat/fix_code/user_mistral.jinja' %}
 params:
   timeout: 60
