@@ -91,6 +91,30 @@ def check_general_env_variables():
     print(">> Env variables are set correctly ✔\n")
 
 
+def check_gitlab_connectivity():
+    # pylint: disable=direct-environment-variable-reference
+    gitlab_url = os.getenv("AIGW_GITLAB_URL", None)
+
+    if not gitlab_url:
+        return
+
+    gitlab_url = gitlab_url.rstrip("/")
+    api_url = f"{gitlab_url}/api/v4/projects"
+
+    print(f"Testing if GitLab API is accessible at {api_url} ...")
+
+    try:
+        response = requests.get(api_url, timeout=10)
+        if response.status_code == 200:
+            print(">> GitLab API is accessible ✔\n")
+        else:
+            raise ValueError(
+                f">> Failed to connect to GitLab API: {response.status_code}\n"
+            )
+    except requests.RequestException as e:
+        raise ValueError(f">> Failed to connect to GitLab: {e}\n")
+
+
 def check_provider_specific_env_variables(provider):
     # pylint: disable=direct-environment-variable-reference
     provider_name = provider.capitalize()
@@ -231,6 +255,7 @@ def troubleshoot():
 
     check_general_env_variables()
     check_aigw_endpoint(endpoint)
+    check_gitlab_connectivity()
 
     if model_name:
         if provider:
