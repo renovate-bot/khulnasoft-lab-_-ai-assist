@@ -196,7 +196,7 @@ UGw3kIW+604fnnXLDm4TaLA=
 
     claims = {
         "gitlab_realm": "self-managed",
-        "scopes": ["code_suggestions"],
+        "scopes": ["complete_code"],
         "issuer": "https://customers.gitlab.com",
     }
 
@@ -414,7 +414,7 @@ UGw3kIW+604fnnXLDm4TaLA=
                 private_key_test,
                 {
                     "is_life_beautiful": True,
-                    "scopes": ["code_suggestions"],
+                    "scopes": ["complete_code"],
                     "gitlab_realm": "saas",
                 }
                 | ai_gateway_audience,
@@ -487,7 +487,7 @@ UGw3kIW+604fnnXLDm4TaLA=
         assert user.claims.gitlab_realm == gitlab_realm
 
         if authenticated:
-            assert user.claims.scopes == ["code_suggestions"]
+            assert user.claims.scopes == ["complete_code"]
 
         assert well_known_test_response.call_count == 1
         assert well_known_customers_response.call_count == 1

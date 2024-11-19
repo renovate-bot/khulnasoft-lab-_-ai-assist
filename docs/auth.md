@@ -138,12 +138,12 @@ Since we have to update values in the Vault, and the keys are sensitive data, ce
 
 AI Gateway uses `scopes` custom claim in JWT to check user permissions, which was decoded in [the previous authentication process](#authentication-in-ai-gateway).
 
-For example, if a decoded token contains the following `scopes`, the user can access to `code_suggestions` and `duo_chat` features:
+For example, if a decoded token contains the following `scopes`, the user can access to `complete_code` and `duo_chat` features:
 
 ```json
 {
     scopes: [
-        'code_suggestions',
+        'generate_code',
         'duo_chat'
     ],
     // ... and the other claims, such as `aud`, `sub`, etc.

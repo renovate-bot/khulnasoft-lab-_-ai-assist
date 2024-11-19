@@ -32,7 +32,7 @@ def auth_user():
     return CloudConnectorUser(
         authenticated=True,
         claims=UserClaims(
-            scopes=["code_suggestions", "complete_code", "generate_code"],
+            scopes=["complete_code", "generate_code"],
             subject="1234",
             gitlab_realm="self-managed",
             issuer="issuer",
@@ -50,7 +50,7 @@ def mock_config():
 
 @pytest.fixture
 def unit_primitives():
-    return ["code_suggestions"]
+    return ["complete_code", "generate_code"]
 
 
 @pytest.fixture
@@ -858,7 +858,7 @@ class TestCodeCompletions:
                 CloudConnectorUser(
                     authenticated=True,
                     claims=UserClaims(
-                        scopes=["code_suggestions", "complete_code"],
+                        scopes=["complete_code"],
                         subject="1234",
                         gitlab_realm="self-managed",
                         issuer="gitlab-ai-gateway",
@@ -968,7 +968,7 @@ class TestCodeCompletions:
                 CloudConnectorUser(
                     authenticated=True,
                     claims=UserClaims(
-                        scopes=["code_suggestions", "complete_code"],
+                        scopes=["complete_code"],
                         subject="1234",
                         gitlab_realm="self-managed",
                     ),
@@ -980,7 +980,7 @@ class TestCodeCompletions:
                 CloudConnectorUser(
                     authenticated=True,
                     claims=UserClaims(
-                        scopes=["code_suggestions", "complete_code"],
+                        scopes=["complete_code"],
                         subject="1234",
                         gitlab_realm="self-managed",
                         issuer="gitlab-ai-gateway",
@@ -1825,7 +1825,7 @@ class TestUnauthorizedIssuer:
         return CloudConnectorUser(
             authenticated=True,
             claims=UserClaims(
-                scopes=["code_suggestions"],
+                scopes=["complete_code", "generate_code"],
                 subject="1234",
                 gitlab_realm="self-managed",
                 issuer="gitlab-ai-gateway",

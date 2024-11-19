@@ -36,18 +36,10 @@ async def libraries(
     model: AnthropicModel = Depends(get_x_ray_anthropic_claude),
     internal_event_client: InternalEventsClient = Depends(get_internal_event_client),
 ):
-    # We need to check both GENERATE_CODE and CODE_SUGGESTIONS permissions temporarily
-    # since existing JWTs were issued with only CODE_SUGGESTIONS permission.
-    # TODO: Remove CODE_SUGGESTIONS permission check once all JWTs have been reissued
-    # https://gitlab.com/gitlab-org/modelops/applied-ml/code-suggestions/ai-assist/-/issues/710
-    code_suggestions_allowed = current_user.can(
+    if not current_user.can(
         GitLabUnitPrimitive.GENERATE_CODE,
         disallowed_issuers=[CloudConnectorConfig().service_name],
-    ) or current_user.can(
-        GitLabUnitPrimitive.CODE_SUGGESTIONS,
-        disallowed_issuers=[CloudConnectorConfig().service_name],
-    )
-    if not code_suggestions_allowed:
+    ):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Unauthorized to access X Ray",

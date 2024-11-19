@@ -30,19 +30,19 @@ class TestBaseRegistry:
     @pytest.mark.parametrize(
         ("unit_primitives", "scopes", "success"),
         [
-            ([GitLabUnitPrimitive.CODE_SUGGESTIONS], ["code_suggestions"], True),
+            ([GitLabUnitPrimitive.COMPLETE_CODE], ["complete_code"], True),
             (
-                [GitLabUnitPrimitive.CODE_SUGGESTIONS, GitLabUnitPrimitive.ASK_BUILD],
-                ["code_suggestions", "ask_build"],
+                [GitLabUnitPrimitive.COMPLETE_CODE, GitLabUnitPrimitive.ASK_BUILD],
+                ["complete_code", "ask_build"],
                 True,
             ),
-            ([GitLabUnitPrimitive.CODE_SUGGESTIONS], [], False),
+            ([GitLabUnitPrimitive.COMPLETE_CODE], [], False),
             (
                 [
-                    GitLabUnitPrimitive.CODE_SUGGESTIONS,
+                    GitLabUnitPrimitive.COMPLETE_CODE,
                     GitLabUnitPrimitive.ASK_BUILD,
                 ],
-                ["code_suggestions"],
+                ["complete_code"],
                 False,
             ),
         ],

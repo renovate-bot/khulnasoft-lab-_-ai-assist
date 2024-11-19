@@ -8,7 +8,7 @@ model:
     max_tokens: 128
     max_retries: 1
 unit_primitives:
-  - code_suggestions
+  - complete_code
 prompt_template:
   user: <｜fim▁begin｜>{{prefix}}<｜fim▁hole｜>{{suffix}}<｜fim▁end｜>
 params:

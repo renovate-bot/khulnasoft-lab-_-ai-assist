@@ -73,7 +73,10 @@ class TestDuoChatToolRegistry:
                 },
             ),
             (
-                [GitLabUnitPrimitive.CODE_SUGGESTIONS],
+                [
+                    GitLabUnitPrimitive.COMPLETE_CODE,
+                    GitLabUnitPrimitive.GENERATE_CODE,
+                ],
                 set(),
             ),
         ],
@@ -97,7 +100,15 @@ class TestDuoChatToolRegistry:
 
     @pytest.mark.parametrize(
         "unit_primitives",
-        [([GitLabUnitPrimitive.CODE_SUGGESTIONS, GitLabUnitPrimitive.EXPLAIN_CODE])],
+        [
+            (
+                [
+                    GitLabUnitPrimitive.COMPLETE_CODE,
+                    GitLabUnitPrimitive.GENERATE_CODE,
+                    GitLabUnitPrimitive.EXPLAIN_CODE,
+                ]
+            )
+        ],
     )
     def test_get_on_behalf_empty(
         self,

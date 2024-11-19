@@ -7,7 +7,7 @@ model:
     max_tokens: 128
     max_retries: 1
 unit_primitives:
-  - code_suggestions
+  - complete_code
 prompt_template:
   system: |
     {% include 'code_suggestions/completions/system.jinja' %}

@@ -9,7 +9,7 @@ model:
     max_tokens: 2_048
     max_retries: 1
 unit_primitives:
-  - code_suggestions
+  - generate_code
 prompt_template:
   system: |
     {% include 'code_suggestions/generations/jinja_template/dotcom/system.jinja' %}
