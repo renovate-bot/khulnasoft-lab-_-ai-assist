@@ -368,7 +368,8 @@ def mock_litellm_acompletion():
                     message=AsyncMock(content="Test response"),
                     text="Test text completion response",
                 ),
-            ]
+            ],
+            usage=AsyncMock(completion_tokens=999),
         )
 
         yield mock_acompletion
