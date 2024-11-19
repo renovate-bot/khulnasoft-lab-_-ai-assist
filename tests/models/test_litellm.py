@@ -238,12 +238,14 @@ class TestLiteLlmChatModel:
 
         with patch("ai_gateway.models.litellm.acompletion") as mock_acompletion:
             mock_acompletion.return_value = AsyncMock(
-                choices=[AsyncMock(message=AsyncMock(content="Test response"))]
+                choices=[AsyncMock(message=AsyncMock(content="Test response"))],
+                usage=AsyncMock(completion_tokens=999),
             )
             messages = [Message(content="Test message", role="user")]
             output = await lite_llm_chat_model.generate(messages)
             assert isinstance(output, TextGenModelOutput)
             assert output.text == "Test response"
+            assert output.metadata.output_tokens == 999
 
             mock_acompletion.assert_called_with(
                 messages=expected_messages,
@@ -733,6 +735,8 @@ class TestLiteLlmTextGenModel:
 
         assert isinstance(output, TextGenModelOutput)
         assert output.text == "Test response"
+        if output.metadata:
+            assert output.metadata.output_tokens == 999
 
     @pytest.mark.asyncio
     @pytest.mark.parametrize(

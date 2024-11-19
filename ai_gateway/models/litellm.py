@@ -5,7 +5,12 @@ from litellm import CustomStreamWrapper, ModelResponse, acompletion
 from litellm.exceptions import APIConnectionError, InternalServerError
 
 from ai_gateway.config import Config
-from ai_gateway.models.base import KindModelProvider, ModelAPIError, ModelMetadata
+from ai_gateway.models.base import (
+    KindModelProvider,
+    ModelAPIError,
+    ModelMetadata,
+    TokensConsumptionMetadata,
+)
 from ai_gateway.models.base_chat import ChatModelBase, Message, Role
 from ai_gateway.models.base_text import (
     TextGenModelBase,
@@ -197,6 +202,7 @@ class LiteLlmChatModel(ChatModelBase):
             # Give a high value, the model doesn't return scores.
             score=10**5,
             safety_attributes=SafetyAttributes(),
+            metadata=self._extract_suggestion_metadata(suggestion),
         )
 
     async def _handle_stream(
@@ -213,6 +219,15 @@ class LiteLlmChatModel(ChatModelBase):
             raise
         finally:
             after_callback()
+
+    def _extract_suggestion_metadata(self, suggestion):
+        return TokensConsumptionMetadata(
+            output_tokens=(
+                suggestion.usage.completion_tokens
+                if hasattr(suggestion, "usage")
+                else 0
+            ),
+        )
 
     @classmethod
     def from_model_name(
@@ -324,6 +339,7 @@ class LiteLlmTextGenModel(TextGenModelBase):
             # Give a high value, the model doesn't return scores.
             score=10**5,
             safety_attributes=SafetyAttributes(),
+            metadata=self._extract_suggestion_metadata(suggestion),
         )
 
     async def _handle_stream(
@@ -392,6 +408,15 @@ class LiteLlmTextGenModel(TextGenModelBase):
             return suggestion.choices[0].text
 
         return suggestion.choices[0].message.content
+
+    def _extract_suggestion_metadata(self, suggestion):
+        return TokensConsumptionMetadata(
+            output_tokens=(
+                suggestion.usage.completion_tokens
+                if hasattr(suggestion, "usage")
+                else 0
+            ),
+        )
 
     def _get_stop_tokens(self, suffix):
         if self._is_vertex_codestral():
