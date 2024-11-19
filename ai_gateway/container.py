@@ -27,6 +27,7 @@ class ContainerApplication(containers.DeclarativeContainer):
             "ai_gateway.api.v1.search.docs",
             "ai_gateway.api.v2.code.completions",
             "ai_gateway.api.v3.code.completions",
+            "ai_gateway.api.v4.code.suggestions",
             "ai_gateway.api.server",
             "ai_gateway.api.monitoring",
             "ai_gateway.async_dependency_resolver",

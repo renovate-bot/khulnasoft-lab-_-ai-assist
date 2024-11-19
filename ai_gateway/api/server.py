@@ -30,6 +30,7 @@ from ai_gateway.api.monitoring import router as http_monitoring_router
 from ai_gateway.api.v1 import api_router as http_api_router_v1
 from ai_gateway.api.v2 import api_router as http_api_router_v2
 from ai_gateway.api.v3 import api_router as http_api_router_v3
+from ai_gateway.api.v4 import api_router as http_api_router_v4
 from ai_gateway.config import Config
 from ai_gateway.container import ContainerApplication
 from ai_gateway.instrumentators.threads import monitor_threads
@@ -163,6 +164,7 @@ def setup_router(app: FastAPI):
     sub_router.include_router(http_api_router_v1, prefix="/v1")
     sub_router.include_router(http_api_router_v2, prefix="/v2")
     sub_router.include_router(http_api_router_v3, prefix="/v3")
+    sub_router.include_router(http_api_router_v4, prefix="/v4")
     sub_router.include_router(http_monitoring_router)
 
     app.include_router(sub_router)

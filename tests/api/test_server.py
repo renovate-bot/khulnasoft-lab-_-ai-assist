@@ -44,6 +44,10 @@ _ROUTES_V3 = [
     ("/v3/code/completions", ["POST"]),
 ]
 
+_ROUTES_V4 = [
+    ("/v4/code/suggestions", ["POST"]),
+]
+
 
 @pytest.fixture(scope="module")
 def unused_port():
@@ -86,7 +90,9 @@ def fastapi_server_app(auth_enabled) -> Iterator[FastAPI]:
     yield create_fast_api_server(config)
 
 
-@pytest.mark.parametrize("routes_expected", [_ROUTES_V1, _ROUTES_V2, _ROUTES_V3])
+@pytest.mark.parametrize(
+    "routes_expected", [_ROUTES_V1, _ROUTES_V2, _ROUTES_V3, _ROUTES_V4]
+)
 class TestServerRoutes:
     def test_routes_available(
         self,
@@ -136,6 +142,7 @@ def test_setup_router():
     assert any(route.path == "/v1/chat/{chat_invokable}" for route in app.routes)
     assert any(route.path == "/v2/code/completions" for route in app.routes)
     assert any(route.path == "/v3/code/completions" for route in app.routes)
+    assert any(route.path == "/v4/code/suggestions" for route in app.routes)
     assert any(route.path == "/monitoring/healthz" for route in app.routes)
 
 

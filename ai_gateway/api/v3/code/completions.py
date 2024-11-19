@@ -21,8 +21,10 @@ from ai_gateway.api.v3.code.typing import (
     CompletionResponse,
     EditorContentCompletionPayload,
     EditorContentGenerationPayload,
+    ModelEngine,
     ModelMetadata,
     ResponseMetadataBase,
+    StreamHandler,
     StreamSuggestionsResponse,
 )
 from ai_gateway.async_dependency_resolver import get_container_application
@@ -43,6 +45,7 @@ from ai_gateway.tracking import SnowplowEventContext
 
 __all__ = [
     "router",
+    "code_suggestions",
 ]
 
 request_log = get_request_logger("codesuggestions")
@@ -54,6 +57,19 @@ async def get_prompt_registry():
     yield get_container_application().pkg_prompts.prompt_registry()
 
 
+async def handle_stream(
+    stream: AsyncIterator[CodeSuggestionsChunk],
+    engine: ModelEngine,
+) -> StreamSuggestionsResponse:
+    async def _stream_response_generator():
+        async for chunk in stream:
+            yield chunk.text
+
+    return StreamSuggestionsResponse(
+        _stream_response_generator(), media_type="text/event-stream"
+    )
+
+
 @router.post("/completions")
 @feature_category(GitLabFeatureCategory.CODE_SUGGESTIONS)
 async def completions(
@@ -61,6 +77,23 @@ async def completions(
     payload: CompletionRequest,
     current_user: Annotated[StarletteUser, Depends(get_current_user)],
     prompt_registry: Annotated[BasePromptRegistry, Depends(get_prompt_registry)],
+):
+    return await code_suggestions(
+        request=request,
+        payload=payload,
+        current_user=current_user,
+        prompt_registry=prompt_registry,
+    )
+
+
+# This function is also used by `v4/code/suggestions`. When making
+# changes, ensure you consider its effects on both v3 and v4.
+async def code_suggestions(
+    request: Request,
+    payload: CompletionRequest,
+    current_user: StarletteUser,
+    prompt_registry: BasePromptRegistry,
+    stream_handler: StreamHandler = handle_stream,
 ):
     if not current_user.can(
         GitLabUnitPrimitive.COMPLETE_CODE,
@@ -94,6 +127,7 @@ async def completions(
         return await code_completion(
             payload=component.payload,
             code_context=code_context,
+            stream_handler=stream_handler,
             snowplow_event_context=snowplow_code_suggestion_context,
         )
     if component.type == CodeEditorComponents.GENERATION:
@@ -102,6 +136,7 @@ async def completions(
             payload=component.payload,
             code_context=code_context,
             prompt_registry=prompt_registry,
+            stream_handler=stream_handler,
             snowplow_event_context=snowplow_code_suggestion_context,
         )
 
@@ -109,6 +144,7 @@ async def completions(
 @inject
 async def code_completion(
     payload: EditorContentCompletionPayload,
+    stream_handler: StreamHandler,
     completions_legacy_factory: Factory[CodeCompletionsLegacy] = Provide[
         ContainerApplication.code_suggestions.completions.vertex_legacy.provider
     ],
@@ -145,7 +181,7 @@ async def code_completion(
         suggestions = [suggestions]
 
     if isinstance(suggestions[0], AsyncIterator):
-        return await _handle_stream(suggestions[0])
+        return await stream_handler(suggestions[0], engine)
 
     return CompletionResponse(
         choices=_completion_suggestion_choices(suggestions),
@@ -186,6 +222,7 @@ async def code_generation(
     payload: EditorContentGenerationPayload,
     current_user: StarletteUser,
     prompt_registry: BasePromptRegistry,
+    stream_handler: StreamHandler,
     generations_vertex_factory: Factory[CodeGenerations] = Provide[
         ContainerApplication.code_suggestions.generations.vertex.provider
     ],
@@ -228,7 +265,7 @@ async def code_generation(
     )
 
     if isinstance(suggestion, AsyncIterator):
-        return await _handle_stream(suggestion)
+        return await stream_handler(suggestion, engine)
 
     choices = (
         [CompletionResponse.Choice(text=suggestion.text)] if suggestion.text else []
@@ -244,18 +281,6 @@ async def code_generation(
                 lang=suggestion.lang,
             ),
         ),
-    )
-
-
-async def _handle_stream(
-    response: AsyncIterator[CodeSuggestionsChunk],
-) -> StreamSuggestionsResponse:
-    async def _stream_generator():
-        async for result in response:
-            yield result.text
-
-    return StreamSuggestionsResponse(
-        _stream_generator(), media_type="text/event-stream"
     )
 
 

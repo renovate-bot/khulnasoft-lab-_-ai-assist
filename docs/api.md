@@ -17,6 +17,14 @@ curl --header "Authorization: Bearer <access_token>" --header "X-Gitlab-Authenti
 
 ## Code Suggestions
 
+### V4
+
+We have updated the endpoint name from `completions` to `suggestions` to avoid confusion with `code completions`. Currently, the v4 endpoint is functionally equivalent to the [v3](#v3) endpoint. We plan to modify it later in the issue [Convert stream to Server-Side Events format](https://gitlab.com/gitlab-org/modelops/applied-ml/code-suggestions/ai-assist/-/issues/372).
+
+```plaintext
+POST /v4/code/suggestions
+```
+
 ### V3
 
 The v3 endpoint is aligned to the [architectural blueprint](https://docs.gitlab.com/ee/architecture/blueprints/ai_gateway/index.html#example-feature-code-suggestions).
@@ -71,7 +79,13 @@ Example response:
 
 ```json
 {
-  "response": "fmt.Println(\"Hello World\")\n",
+  "choices": [
+    {
+      "text": "fmt.Println(\"Hello World\")\n",
+      "index": 0,
+      "finish_reason": "length"
+    }
+  ],
   "metadata": {
     "model": {
       "engine": "vertex-ai",
@@ -129,7 +143,13 @@ Example response:
 
 ```json
 {
-  "response": "\n\nHere is a golang function that prints \"Hello World\":\n\n [...] printing \"Hello World\" to the console.",
+  "choices": [
+    {
+      "text": "\n\nHere is a golang function that prints \"Hello World\":\n\n [...] printing \"Hello World\" to the console.",
+      "index": 0,
+      "finish_reason": "length"
+    }
+  ],
   "metadata": {
     "model": {
       "engine": "anthropic",
@@ -139,6 +159,27 @@ Example response:
     "timestamp": 1702389469
   }
 }
+```
+
+Example streaming response:
+
+```plaintext
+
+
+Here is a golang function that prints "Hello World":
+
+```go
+package main
+
+import "fmt"
+
+func main() {
+  fmt.Println("Hello World") 
+}
+
+[...]
+
+This will compile and execute the program, printing "Hello World" to the console.
 ```
 
 #### Responses
