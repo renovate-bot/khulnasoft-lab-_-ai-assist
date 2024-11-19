@@ -71,9 +71,11 @@ class ReActPlainTextParser(BaseCumulativeTransformOutputParser):
 
         if match_action and match_action_input:
             return AgentToolAction(
-                tool=match_action.group(1),
+                tool=match_action.group(1).replace("\\_", "_", 1),
                 tool_input=match_action_input.group(1),
-                thought=match_thought.group(1) if match_thought else "",
+                thought=(
+                    match_thought.group(1).replace("\\_", "_") if match_thought else ""
+                ),
             )
 
         return None
