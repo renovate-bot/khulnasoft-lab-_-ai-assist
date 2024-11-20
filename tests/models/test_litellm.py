@@ -990,6 +990,13 @@ class TestLiteLlmTextGenModel:
                 None,
                 None,
             ),
+            (
+                "claude_3.5",
+                KindModelProvider.LITELLM,
+                True,
+                None,
+                None,
+            ),
         ],
     )
     async def test_generate_stream(

@@ -98,6 +98,12 @@ class TestPromptTimeout:
                 ),
                 Timeout,
             ),
+            (
+                ChatLiteLLM(
+                    model="claude-3-5-sonnet-v2@20241022", custom_llm_provider="vertex_ai"  # type: ignore[call-arg]
+                ),
+                Timeout,
+            ),
         ],
     )
     async def test_timeout(
