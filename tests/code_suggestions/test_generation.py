@@ -23,9 +23,9 @@ from ai_gateway.models.base_text import (
     TextGenModelChunk,
     TextGenModelOutput,
 )
+from ai_gateway.safety_attributes import SafetyAttributes
 from ai_gateway.tracking.instrumentator import SnowplowInstrumentator
 from ai_gateway.tracking.snowplow import SnowplowEvent, SnowplowEventContext
-from ai_gateway.typing import SafetyAttributes
 
 
 class InstrumentorMock(Mock):

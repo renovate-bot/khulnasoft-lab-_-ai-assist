@@ -2,7 +2,7 @@ from abc import ABC, abstractmethod
 from typing import AsyncIterator, NamedTuple, Optional
 
 from ai_gateway.models.base import ModelBase, TokensConsumptionMetadata
-from ai_gateway.typing import SafetyAttributes
+from ai_gateway.safety_attributes import SafetyAttributes
 
 __all__ = ["TextGenModelOutput", "TextGenModelChunk", "TextGenModelBase"]
 

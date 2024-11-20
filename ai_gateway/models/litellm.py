@@ -18,8 +18,8 @@ from ai_gateway.models.base_text import (
     TextGenModelOutput,
 )
 from ai_gateway.models.vertex_text import KindVertexTextModel
+from ai_gateway.safety_attributes import SafetyAttributes
 from ai_gateway.tracking import SnowplowEventContext
-from ai_gateway.typing import SafetyAttributes
 
 __all__ = [
     "LiteLlmChatModel",

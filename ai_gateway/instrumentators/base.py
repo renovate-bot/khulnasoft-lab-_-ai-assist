@@ -9,7 +9,7 @@ from pydantic import BaseModel, ConfigDict, StringConstraints
 from starlette_context import context
 
 from ai_gateway.experimentation import ExperimentTelemetry
-from ai_gateway.typing import SafetyAttributes
+from ai_gateway.safety_attributes import SafetyAttributes
 
 EXPERIMENT_LABELS = ["exp_names", "exp_variants"]
 METRIC_LABELS = ["model_engine", "model_name"]

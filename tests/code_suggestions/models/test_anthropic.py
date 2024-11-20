@@ -37,7 +37,7 @@ from ai_gateway.models import (
     Role,
 )
 from ai_gateway.models.base_text import TextGenModelOutput
-from ai_gateway.typing import SafetyAttributes
+from ai_gateway.safety_attributes import SafetyAttributes
 
 
 class TestAnthropicModel:

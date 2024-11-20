@@ -7,7 +7,7 @@ from ai_gateway.models.base_text import (
     TextGenModelOutput,
 )
 from ai_gateway.prompts.base import Prompt
-from ai_gateway.typing import SafetyAttributes
+from ai_gateway.safety_attributes import SafetyAttributes
 
 __all__ = [
     "AgentModel",
