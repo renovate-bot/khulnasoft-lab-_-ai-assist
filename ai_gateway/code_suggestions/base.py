@@ -71,6 +71,7 @@ USE_CASES_MODELS_MAP = {
         KindAnthropicModel.CLAUDE_3_5_SONNET,
         KindAnthropicModel.CLAUDE_3_HAIKU,
         KindAnthropicModel.CLAUDE_3_5_HAIKU,
+        KindAnthropicModel.CLAUDE_3_5_SONNET_V2,
         KindLiteLlmModel.CODEGEMMA,
         KindLiteLlmModel.CODELLAMA,
         KindLiteLlmModel.CODESTRAL,
@@ -78,6 +79,7 @@ USE_CASES_MODELS_MAP = {
         KindLiteLlmModel.MISTRAL,
         KindLiteLlmModel.CLAUDE_3,
         KindLiteLlmModel.GPT,
+        KindLiteLlmModel.CLAUDE_3_5,
     },
 }
 
