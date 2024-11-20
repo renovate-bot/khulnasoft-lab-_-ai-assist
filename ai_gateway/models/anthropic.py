@@ -25,7 +25,7 @@ from ai_gateway.models.base_text import (
     TextGenModelChunk,
     TextGenModelOutput,
 )
-from ai_gateway.typing import SafetyAttributes
+from ai_gateway.safety_attributes import SafetyAttributes
 
 __all__ = [
     "AnthropicAPIConnectionError",

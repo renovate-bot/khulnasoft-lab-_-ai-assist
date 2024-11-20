@@ -10,7 +10,7 @@ from ai_gateway.code_suggestions.processing import (
 )
 from ai_gateway.code_suggestions.processing.completions import Prompt
 from ai_gateway.instrumentators.base import TextGenModelInstrumentator
-from ai_gateway.typing import SafetyAttributes
+from ai_gateway.safety_attributes import SafetyAttributes
 
 
 class TestTextGenModelInstrumentator:

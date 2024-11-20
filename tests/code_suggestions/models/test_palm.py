@@ -18,7 +18,7 @@ from ai_gateway.models.vertex_text import (
     VertexAPIConnectionError,
     VertexAPIStatusError,
 )
-from ai_gateway.typing import SafetyAttributes
+from ai_gateway.safety_attributes import SafetyAttributes
 
 TEST_PREFIX = "random prompt"
 TEST_SUFFIX = "some suffix"

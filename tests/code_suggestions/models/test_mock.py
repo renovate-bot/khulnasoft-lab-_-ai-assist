@@ -3,7 +3,7 @@ import json
 import pytest
 
 from ai_gateway.models import Message, ModelMetadata, Role, TextGenModelOutput, mock
-from ai_gateway.typing import SafetyAttributes
+from ai_gateway.safety_attributes import SafetyAttributes
 
 
 @pytest.mark.asyncio

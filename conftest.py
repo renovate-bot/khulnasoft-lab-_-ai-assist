@@ -6,6 +6,7 @@ from unittest.mock import AsyncMock, Mock, patch
 import pytest
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
+from gitlab_cloud_connector import GitLabUnitPrimitive
 from langchain.chat_models.fake import FakeListChatModel
 from langchain_core.outputs import ChatGenerationChunk
 from starlette.middleware import Middleware
@@ -22,7 +23,6 @@ from ai_gateway.code_suggestions.processing.typing import (
 from ai_gateway.config import Config
 from ai_gateway.container import ContainerApplication
 from ai_gateway.experimentation.base import ExperimentTelemetry
-from gitlab_cloud_connector import GitLabUnitPrimitive
 from ai_gateway.models.base import (
     ModelMetadata,
     TokensConsumptionMetadata,
@@ -36,7 +36,7 @@ from ai_gateway.prompts import Prompt
 from ai_gateway.prompts.config.base import ModelConfig, PromptConfig, PromptParams
 from ai_gateway.prompts.config.models import ChatLiteLLMParams, TypeModelParams
 from ai_gateway.prompts.typing import Model, TypeModelFactory
-from ai_gateway.typing import SafetyAttributes
+from ai_gateway.safety_attributes import SafetyAttributes
 
 pytest_plugins = ("pytest_asyncio",)
 

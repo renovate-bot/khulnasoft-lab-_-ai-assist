@@ -23,7 +23,7 @@ from ai_gateway.models import (
 )
 from ai_gateway.models.base import TokensConsumptionMetadata
 from ai_gateway.models.base_text import TextGenModelOutput
-from ai_gateway.typing import SafetyAttributes
+from ai_gateway.safety_attributes import SafetyAttributes
 
 tokenization_strategy = TokenizerTokenStrategy(
     tokenizer=AutoTokenizer.from_pretrained("Salesforce/codegen2-16B")
