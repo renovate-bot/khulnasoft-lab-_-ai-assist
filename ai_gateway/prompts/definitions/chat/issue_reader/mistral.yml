@@ -11,10 +11,10 @@ unit_primitives:
   - ask_issue
 prompt_template:
   system: |
-    {% include 'chat/issue_reader/system.jinja' %}
+    {% include 'chat/issue_reader/system_mistral.jinja' %}
   user: |
-    {% include 'chat/issue_reader/user.jinja' %}
+    {% include 'chat/issue_reader/user_mistral.jinja' %}
   assistant: |
-    {% include 'chat/issue_reader/assistant.jinja' %}
+    {% include 'chat/issue_reader/assistant_mistral.jinja' %}
 params:
   timeout: 60
