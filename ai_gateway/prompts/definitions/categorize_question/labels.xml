@@ -1,0 +1,20 @@
+<label_list>
+<label><type>contains_rejection</type><desc>User indicates that the answer they received is incorrect, incomplete, or unsatisfactory</desc></label>
+<label><type>contains_rejection_previous_answer_incorrect</type><desc>User indicates that the answer they received is incorrect</desc></label>
+<label><type>contains_rejection_previous_answer_incomplete</type><desc>User indicates that the answer they received is incomplete</desc></label>
+<label><type>contains_rejection_previous_answer_unsatisfactory</type><desc>User indicates that the answer they received is unsatisfactory</desc></label>
+<label><type>is_follow_up_question</type><desc>The user asks a follow-up question to seek additional information or clarification in response to a previous answer</desc></label>
+<label><type>contains_clarification</type><desc>The user seems to not have understood the previous answer and asks a follow-up question to clarify this</desc></label>
+<label><type>contains_intellectual_property</type><desc>User has input intellectual property such as copyrighted material, trademarks or company secrets</desc></label>
+<label><type>contains_credentials</type><desc>User has input credentials such as usernames, passwords, tokens, and other things that can be used to authenticate to digital systems</desc></label>
+<label><type>contains_code</type><desc>Question contains code written in a programming language</desc></label>
+<label><type>contains_personal_information</type><desc>User has input personally identifiable information (PII) such as names, email addresses, phone numbers, or credit card numbers</desc></label>
+<label><type>compares_two_things</type><desc>User has requested chat to compare two things against each other</desc></label>
+<label><type>compares_more_than_two_things</type><desc>User has requested chat to compare two or more things against each other</desc></label>
+<label><type>requests_answer_in_certain_form</type><desc>User requests the chat to return the answer in a certain form, for example: short, long, bulleted list, containing a code snippet, formal, informal</desc></label>
+<label><type>contains_request_to_format_the_answer</type><desc>User requests the chat to return the answer in a certain format, for example: XML, JSON, HTML, markdown</desc></label>
+<label><type>is_related_to_gitlab</type><desc>User's question is related to GitLab, GitLab features, or how to use GitLab</desc></label>
+<label><type>is_related_to_gitlab_data</type><desc>User's question is related to data in GitLab, such as the content of an issue, epic, code file, MR, or pipeline</desc></label>
+<label><type>is_related_to_devsecops</type><desc>User's question relates to DevOps or DevSecOps, for example continuous integration and continuous deployment (CI/CD) pipelines, security testing tools, code scanning and review, threat modeling, security training for development teams, and automated compliance checks</desc></label>
+<label><type>is_poorly_formulated</type><desc>The user has composed a question that is poorly formulated and/or ambiguous</desc></label>
+</label_list>

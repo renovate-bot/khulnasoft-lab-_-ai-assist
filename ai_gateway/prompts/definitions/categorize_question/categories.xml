@@ -1,0 +1,289 @@
+<category_list><row>
+<category>Documentation about GitLab</category>
+<detailed_category>Question about GitLab Duo such as "what can you do?", "how can you help me?"</detailed_category>
+</row><row>
+<category>Documentation about GitLab</category>
+<detailed_category>Documentation question about GitLab merge requests (MRs)</detailed_category>
+</row><row>
+<category>Documentation about GitLab</category>
+<detailed_category>Documentation question about GitLab CI/CD and other GitLab verify features</detailed_category>
+</row><row>
+<category>Documentation about GitLab</category>
+<detailed_category>Documentation question about other GitLab plan features</detailed_category>
+</row><row>
+<category>Documentation about GitLab</category>
+<detailed_category>Documentation question about issues</detailed_category>
+</row><row>
+<category>Documentation about GitLab</category>
+<detailed_category>Documentation question about GitLab settings</detailed_category>
+</row><row>
+<category>Documentation about GitLab</category>
+<detailed_category>Documentation question about GitLab govern features</detailed_category>
+</row><row>
+<category>Documentation about GitLab</category>
+<detailed_category>Documentation question about GitLab monitor features</detailed_category>
+</row><row>
+<category>Documentation about GitLab</category>
+<detailed_category>Documentation question about GitLab deploy features</detailed_category>
+</row><row>
+<category>Documentation about GitLab</category>
+<detailed_category>Documentation question about GitLab secure features</detailed_category>
+</row><row>
+<category>Documentation about GitLab</category>
+<detailed_category>Documentation question about GitLab package features</detailed_category>
+</row><row>
+<category>Documentation about GitLab</category>
+<detailed_category>Documentation question about projects or groups</detailed_category>
+</row><row>
+<category>Documentation about GitLab</category>
+<detailed_category>Documentation question about epics</detailed_category>
+</row><row>
+<category>Documentation about GitLab</category>
+<detailed_category>Other documentation question about GitLab</detailed_category>
+</row><row>
+<category>Explain something besides code</category>
+<detailed_category>Explain this incident</detailed_category>
+</row><row>
+<category>Explain something besides code</category>
+<detailed_category>Explain this MR</detailed_category>
+</row><row>
+<category>Explain something besides code</category>
+<detailed_category>Explain this group</detailed_category>
+</row><row>
+<category>Explain something besides code</category>
+<detailed_category>Explain this project</detailed_category>
+</row><row>
+<category>Explain something besides code</category>
+<detailed_category>Explain this epic</detailed_category>
+</row><row>
+<category>Explain something besides code</category>
+<detailed_category>Explain this issue</detailed_category>
+</row><row>
+<category>Explain something besides code</category>
+<detailed_category>Explain this pipeline</detailed_category>
+</row><row>
+<category>Explain something besides code</category>
+<detailed_category>Explain this vulnerability</detailed_category>
+</row><row>
+<category>Explain something besides code</category>
+<detailed_category>Explain something else that the user is seeing in GitLab</detailed_category>
+</row><row>
+<category>Explain something besides code</category>
+<detailed_category>How can I fix a failed pipeline job?</detailed_category>
+</row><row>
+<category>General documentation</category>
+<detailed_category>General question about code</detailed_category>
+</row><row>
+<category>General documentation</category>
+<detailed_category>General question about DevOps</detailed_category>
+</row><row>
+<category>General documentation</category>
+<detailed_category>General question about git</detailed_category>
+</row><row>
+<category>List something</category>
+<detailed_category>List issues</detailed_category>
+</row><row>
+<category>List something</category>
+<detailed_category>List closed Issues</detailed_category>
+</row><row>
+<category>List something</category>
+<detailed_category>List open issues</detailed_category>
+</row><row>
+<category>List something</category>
+<detailed_category>List issues by date or age</detailed_category>
+</row><row>
+<category>List something</category>
+<detailed_category>List issues by user</detailed_category>
+</row><row>
+<category>List something</category>
+<detailed_category>List issues by due date or milestone</detailed_category>
+</row><row>
+<category>List something</category>
+<detailed_category>List issues label</detailed_category>
+</row><row>
+<category>List something</category>
+<detailed_category>List issues that are about a cetain topic</detailed_category>
+</row><row>
+<category>List something</category>
+<detailed_category>List issues by project or group</detailed_category>
+</row><row>
+<category>List something</category>
+<detailed_category>List issues that need my attention</detailed_category>
+</row><row>
+<category>List something</category>
+<detailed_category>List issues by another attribute</detailed_category>
+</row><row>
+<category>List something</category>
+<detailed_category>List Pipelines</detailed_category>
+</row><row>
+<category>List something</category>
+<detailed_category>List Project Members</detailed_category>
+</row><row>
+<category>List something</category>
+<detailed_category>List epics</detailed_category>
+</row><row>
+<category>List something</category>
+<detailed_category>List Merge Requests (MRs)</detailed_category>
+</row><row>
+<category>List something</category>
+<detailed_category>List Merge Requests (MRs) by user</detailed_category>
+</row><row>
+<category>List something</category>
+<detailed_category>List Merge Requests (MRs) by label</detailed_category>
+</row><row>
+<category>List something</category>
+<detailed_category>List Merge Requests (MRs) by date or age</detailed_category>
+</row><row>
+<category>List something</category>
+<detailed_category>List Merge Requests (MRs) by project or group</detailed_category>
+</row><row>
+<category>List something</category>
+<detailed_category>List Merge Requests (MRs) by milestone or due date</detailed_category>
+</row><row>
+<category>List something</category>
+<detailed_category>List merge requests (MRs) that are about a certain topic</detailed_category>
+</row><row>
+<category>List something</category>
+<detailed_category>List merge requests (MRs) that need my attention</detailed_category>
+</row><row>
+<category>List something</category>
+<detailed_category>List merge requests (MRs) by another attribute</detailed_category>
+</row><row>
+<category>Other</category>
+<detailed_category>User asks a question that does not fit in any of the other categories.</detailed_category>
+</row><row>
+<category>Status</category>
+<detailed_category>What is the status of this issue?</detailed_category>
+</row><row>
+<category>Status</category>
+<detailed_category>What is the status of this epic?</detailed_category>
+</row><row>
+<category>Status</category>
+<detailed_category>What is the status of this merge request (MR)?</detailed_category>
+</row><row>
+<category>Status</category>
+<detailed_category>Pipeline Status</detailed_category>
+</row><row>
+<category>Status</category>
+<detailed_category>Question about attributes on a merge request (MR) such as who worked on this code, when was the latest commit, does this MR address a certain topic etc.</detailed_category>
+</row><row>
+<category>Status</category>
+<detailed_category>Question about the attributes of an issue such as does this issue address a certain topic, etc.</detailed_category>
+</row><row>
+<category>Summarize something</category>
+<detailed_category>Summarize Activity</detailed_category>
+</row><row>
+<category>Summarize something</category>
+<detailed_category>Summarize Branch</detailed_category>
+</row><row>
+<category>Summarize something</category>
+<detailed_category>Summarize something related CI/CD like jobs, artifacts, or security reports</detailed_category>
+</row><row>
+<category>Summarize something</category>
+<detailed_category>Summarize Comments</detailed_category>
+</row><row>
+<category>Summarize something</category>
+<detailed_category>Summarize Group</detailed_category>
+</row><row>
+<category>Summarize something</category>
+<detailed_category>Summarize Issue</detailed_category>
+</row><row>
+<category>Summarize something</category>
+<detailed_category>Summarize Merge Request</detailed_category>
+</row><row>
+<category>Summarize something</category>
+<detailed_category>Summarize Milestone</detailed_category>
+</row><row>
+<category>Summarize something</category>
+<detailed_category>Summarize Pipeline</detailed_category>
+</row><row>
+<category>Summarize something</category>
+<detailed_category>Summarize Project</detailed_category>
+</row><row>
+<category>Summarize something</category>
+<detailed_category>Summarize Snippet</detailed_category>
+</row><row>
+<category>Summarize something</category>
+<detailed_category>Summarize Wiki Page</detailed_category>
+</row><row>
+<category>Summarize something</category>
+<detailed_category>Summarize Epic</detailed_category>
+</row><row>
+<category>Summarize something</category>
+<detailed_category>Summarize something else</detailed_category>
+</row><row>
+<category>Take an action in GitLab</category>
+<detailed_category>Trigger or retry pipeline or pipeline job</detailed_category>
+</row><row>
+<category>Take an action in GitLab</category>
+<detailed_category>Approve MR</detailed_category>
+</row><row>
+<category>Take an action in GitLab</category>
+<detailed_category>Merge or close merge request (MR)</detailed_category>
+</row><row>
+<category>Take an action in GitLab</category>
+<detailed_category>Assign someone to something like an epic, merge request (MR), or issue</detailed_category>
+</row><row>
+<category>Take an action in GitLab</category>
+<detailed_category>Close something, such as an issue, merge request (MR), epic, or issue</detailed_category>
+</row><row>
+<category>Take an action in GitLab</category>
+<detailed_category>Create something, such as an issue, merge request (MR), project, group, milestone, pipeline, snippet, wiki</detailed_category>
+</row><row>
+<category>Take an action in GitLab</category>
+<detailed_category>Delete something, such as a pipeline, project, group, snippet, comment, epic or issue</detailed_category>
+</row><row>
+<category>Take an action in GitLab</category>
+<detailed_category>Edit something, such as an epic, issue, merge request (MR), milestone, snippet, wiki, or comment</detailed_category>
+</row><row>
+<category>Take an action in GitLab</category>
+<detailed_category>Add something, like a comment, label, or milestone</detailed_category>
+</row><row>
+<category>Take an action in GitLab</category>
+<detailed_category>Reopen something, such as an issue, epic, or merge request (MR)</detailed_category>
+</row><row>
+<category>Take an action in GitLab</category>
+<detailed_category>Request changes on a merge request (MR)</detailed_category>
+</row><row>
+<category>Take an action in GitLab</category>
+<detailed_category>Request reviewers on a merge request (MR)</detailed_category>
+</row><row>
+<category>Write or rewrite something (not code)</category>
+<detailed_category>Write or rewrite comment</detailed_category>
+</row><row>
+<category>Write or rewrite something (not code)</category>
+<detailed_category>Write or rewrite issue description</detailed_category>
+</row><row>
+<category>Write or rewrite something (not code)</category>
+<detailed_category>Write or rewrite merge request (MR) description</detailed_category>
+</row><row>
+<category>Write or rewrite something (not code)</category>
+<detailed_category>Write or rewrite documentation</detailed_category>
+</row><row>
+<category>Write or rewrite something (not code)</category>
+<detailed_category>Write or rewrite wiki page content</detailed_category>
+</row><row>
+<category>Write or rewrite something (not code)</category>
+<detailed_category>Write or rewrite something else</detailed_category>
+</row><row>
+<category>Write, improve, or explain code</category>
+<detailed_category>Refactor code</detailed_category>
+</row><row>
+<category>Write, improve, or explain code</category>
+<detailed_category>Add tests to code</detailed_category>
+</row><row>
+<category>Write, improve, or explain code</category>
+<detailed_category>Debug or find errors in code</detailed_category>
+</row><row>
+<category>Write, improve, or explain code</category>
+<detailed_category>Explain this code</detailed_category>
+</row><row>
+<category>Write, improve, or explain code</category>
+<detailed_category>What are the potential code smells, anti-patterns, code style problems, or formatting issues in this code?</detailed_category>
+</row><row>
+<category>Write, improve, or explain code</category>
+<detailed_category>What are the potential security risks in this code?</detailed_category>
+</row><row>
+<category>Write, improve, or explain code</category>
+<detailed_category>Why is this code not producing the expected output?</detailed_category>
+</row></category_list>
