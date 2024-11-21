@@ -14,13 +14,7 @@ log = structlog.stdlib.get_logger("chat")
 class SqliteSearch(Searcher):
 
     def __init__(self, *args, **kwargs):
-        db_path = os.path.join("tmp", "docs.db")
-        if os.path.isfile(db_path):
-            self.conn = sqlite3.connect(db_path)
-            self.indexer = self.conn.cursor()
-        else:
-            self.conn = None
-            self.indexer = None
+        self.db_path = os.path.join("tmp", "docs.db")
 
     async def search(
         self,
@@ -29,20 +23,33 @@ class SqliteSearch(Searcher):
         page_size: int = 20,
         **kwargs: Any,
     ) -> List[Dict[Any, Any]]:
-        if self.indexer:
-            # We need to remove punctuation because table was created with FTS5
-            # see https://stackoverflow.com/questions/46525854/sqlite3-fts5-error-when-using-punctuation
-            sanitized_query = re.sub(r"[^\w\s]", "", query, flags=re.UNICODE)
+        if os.path.isfile(self.db_path):
+            conn = sqlite3.connect(self.db_path)
+            indexer = conn.cursor()
+        else:
+            conn = None
+            indexer = None
 
-            data = self.indexer.execute(
-                "SELECT metadata, content FROM doc_index WHERE processed MATCH ? ORDER BY bm25(doc_index) LIMIT ?",
-                (sanitized_query, page_size),
-            )
+        if not indexer:
+            log.warning("SqliteSearch: No database found for documentation searches.")
 
-            return self._parse_response(data)
+            return []
 
-        log.warning("SqliteSearch: No database found for documentation searches.")
-        return []
+        # We need to remove punctuation because table was created with FTS5
+        # see https://stackoverflow.com/questions/46525854/sqlite3-fts5-error-when-using-punctuation
+        sanitized_query = re.sub(r"[^\w\s]", "", query, flags=re.UNICODE)
+
+        data = indexer.execute(
+            "SELECT metadata, content FROM doc_index WHERE processed MATCH ? ORDER BY bm25(doc_index) LIMIT ?",
+            (sanitized_query, page_size),
+        )
+
+        results = self._parse_response(data)
+
+        if conn:
+            conn.close()
+
+        return results
 
     def provider(self):
         return "sqlite"
@@ -58,6 +65,4 @@ class SqliteSearch(Searcher):
                 "metadata": metadata,
             }
             results.append(search_result)
-
-        self.conn.close()
         return results
