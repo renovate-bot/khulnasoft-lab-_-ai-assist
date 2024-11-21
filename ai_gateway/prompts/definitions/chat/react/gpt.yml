@@ -1,0 +1,22 @@
+---
+name: GPT ReAct Chat agent
+model:
+  name: gpt
+  params:
+    model_class_provider: litellm
+    temperature: 0.1
+    max_tokens: 4_096
+    max_retries: 1
+unit_primitives:
+  - duo_chat
+prompt_template:
+  system: |
+    {% include 'chat/react/system_mistral.jinja' %}
+  user: |
+    {% include 'chat/react/user_mistral.jinja' %}
+  assistant: |
+    {% include 'chat/react/assistant_mistral.jinja' %}
+params:
+  timeout: 30
+  stop:
+    - "Observation:"
