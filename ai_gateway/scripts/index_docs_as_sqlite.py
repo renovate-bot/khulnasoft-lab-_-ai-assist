@@ -12,11 +12,11 @@ import tempfile
 from contextlib import closing
 from pathlib import Path
 from shutil import rmtree
+from typing import Any
 from zipfile import ZipFile
 
 import requests
 from langchain.docstore.document import Document
-from langchain_text_splitters import MarkdownHeaderTextSplitter
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -81,12 +81,7 @@ def build_row_corpus(row: dict):
         corpus = corpus[preamble_end + 2 : -1]
     if not corpus:
         return ""
-    # Attach the titles to the corpus, these can still be useful
-    corpus = (
-        "".join(row["metadata"].get(f"Header{i}", "") for i in range(1, 6))
-        + " "
-        + corpus
-    )
+
     # Stemming could be helpful, but it is already applied by the sqlite
     # Remove punctuation and set to lowercase, this should reduce the size of the corpus and allow
     # the query to be a bit more robust
@@ -95,57 +90,22 @@ def build_row_corpus(row: dict):
     return corpus
 
 
-def extract_rows(document: Document) -> list:
-    # Split content into chunks by its header
-    headers_to_split_on = [
-        ("#", "Header1"),
-        ("##", "Header2"),
-        ("###", "Header3"),
-        ("####", "Header4"),
-        ("#####", "Header5"),
-    ]
-    markdown_splitter = MarkdownHeaderTextSplitter(
-        headers_to_split_on=headers_to_split_on
-    )
-    rows_to_insert = []
+def process_file_to_db_entry(path: Path, file: Any) -> tuple:
+    with file.open("r") as f:
+        file_name = f.name.removeprefix(f"{path}/doc")
+        doc = Document(page_content=f.read(), metadata={"filename": file_name})
+        row = {"content": doc.page_content, "metadata": doc.metadata}
 
-    md_header_splits = markdown_splitter.split_text(document.page_content)
-    for chunk in md_header_splits:
-        metadata = {**chunk.metadata, **document.metadata}
-        rows_to_insert.append({"content": chunk.page_content, "metadata": metadata})
-
-    return rows_to_insert
-
-
-def process_rows(rows: list):
-    for row in rows:
-        row["processed"] = build_row_corpus(row)
-
-    return [
-        (row["processed"], row["content"], json.dumps(row["metadata"]))
-        for row in rows
-        if row["processed"]
-    ]
+        return build_row_corpus(row), row["content"], json.dumps(row["metadata"])
 
 
 def read_documents(path: Path):
     logger.info("Processing documents")
-    files = path.glob("doc/**/*.md")
-    if not files:
+    doc_files = path.glob("doc/**/*.md")
+    if not doc_files:
         execution_error("No markdown files found")
 
-    tuples = []
-    # Read all the files
-    for file in files:
-        with file.open("r") as f:
-            doc = Document(page_content=f.read(), metadata={"filename": file.name})
-            doc_rows = extract_rows(doc)
-            processed_rows = process_rows(doc_rows)
-            tuples.extend(processed_rows)
-
-    logger.info("Done")
-
-    return tuples
+    return doc_files
 
 
 def create_database(output_path: str, sql_tuples: list):
@@ -175,7 +135,8 @@ def build_indexed_docs():
     if not docs_path:
         execution_error("Fetching documents failed")
     output_path = args.output_path
-    sql_tuples = read_documents(docs_path)
+    files = read_documents(docs_path)
+    sql_tuples = [process_file_to_db_entry(docs_path, file) for file in files]
     create_database(output_path, sql_tuples)
     rmtree(docs_path)
     logger.info("Database created at %s", output_path)
