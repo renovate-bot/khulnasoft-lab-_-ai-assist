@@ -1,0 +1,40 @@
+---
+name: Claude 3.5 Categorize question
+model:
+  name: claude-3-5-sonnet-20241022
+  params:
+    model_class_provider: anthropic
+    temperature: 0
+    max_tokens: 500
+    max_retries: 1
+unit_primitives:
+  - duo_chat
+prompt_template:
+  system: |
+    You are helpful assistant, ready to give as accurate answer as possible, in JSON format (i.e. starts with "{" and ends with "}").
+
+    You are provided with a list of possible categories and labels.
+
+    User would provide the question. {% if previous_answer %}The previous answer is also provided for context.{% endif %} 
+
+    Classify the question's category, detailed_category, labels, languages.
+    
+    There may be multiple labels. Don't provide clarification or explanation. Always return only a JSON hash, e.g.:
+    <example>{"category": "Write, improve, or explain code", "detailed_category": "What are the potential security risks in this code?", "labels": ["contains_credentials", "contains_rejection_previous_answer_incorrect"], "language": "en"}</example>
+    <example>{"category": "Documentation about GitLab", "detailed_category": "Documentation about GitLab", "labels": [], "language": "ja"}</example>
+
+    Categories:
+    {% include 'categorize_question/categories.xml' | safe %}
+
+    Labels:
+    {% include 'categorize_question/labels.xml' | safe %}
+  user: |
+    {% if previous_answer %}
+    Previous answer:
+    <answer>{{previous_answer}}</answer>
+    {% endif %}
+
+    User question:
+    <question>{{question}}</question>
+params:
+  timeout: 5
