@@ -25,7 +25,11 @@ __all__ = [
     "router",
 ]
 
+from ai_gateway.structured_logging import get_request_logger
+
 router = APIRouter()
+
+request_log = get_request_logger("search")
 
 
 @router.post(
@@ -68,6 +72,12 @@ async def docs(
         )
         for result in response
     ]
+
+    request_log.info(
+        "Search completed",
+        search_params=search_params,
+        results_metadata=[result.metadata for result in results],
+    )
 
     return SearchResponse(
         response=SearchResponseDetails(
