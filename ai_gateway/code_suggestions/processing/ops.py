@@ -3,7 +3,6 @@ from pathlib import Path
 from typing import Callable, NamedTuple, Optional, Union
 
 import numpy as np
-from Levenshtein import ratio as levenshtein_ratio
 from tree_sitter import Node
 
 from ai_gateway.code_suggestions.processing.typing import LanguageId
@@ -18,7 +17,6 @@ __all__ = [
     "find_cursor_position",
     "find_newline_position",
     "compare_exact",
-    "compare_levenshtein",
     "find_common_lines",
     "strip_whitespaces",
 ]
@@ -109,8 +107,6 @@ _END_OF_CODE_BLOCK_REGEX = re.compile(r"\n([a-zA-Z]|(\/\*)|(#)|(\/\/))")
 
 # The maximum percentage of the text that can be trimmed to remove an incomplete code block
 _MAX_CODE_BLOCK_TRIM_PERCENT = 0.1
-
-_MIN_LEVENSHTEIN_SIMILARITY = 0.9
 
 
 class ProgramLanguage:
@@ -219,32 +215,6 @@ def find_newline_position(value: str, start_index: int = 0) -> int:
 
 def compare_exact(a: str, b: str) -> bool:
     return a == b
-
-
-def compare_levenshtein(
-    a: str, b: str, min_similarity: float = _MIN_LEVENSHTEIN_SIMILARITY
-) -> bool:
-    """
-    Calculates the similarity between two strings and returns whether
-    the value is greater than or equal to `min_similarity`.
-    The ratio is a normalized levenshtein similarity in the range [1, 0]
-    calculated as 1 - normalized_distance.
-
-    Example:
-    ----------
-    >>> a = "The name of this file is test.js"
-    >>> b = "The name of this file is test-1.js"
-    >>> compare_levenshtein(a, b, min_similarity=0.95)
-        True
-    >>> compare_levenshtein(a, b, min_similarity=0.85)
-        False
-
-    :param a: A string
-    :param b: A string
-    :param min_similarity: The value to be compared to the similarity ratio
-    :return: Whether the similarity ratio between the two strings is greater than `min_similarity`
-    """
-    return levenshtein_ratio(a, b) >= min_similarity
 
 
 def find_common_lines(
