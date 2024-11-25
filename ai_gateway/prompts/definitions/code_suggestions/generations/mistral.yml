@@ -11,7 +11,7 @@ unit_primitives:
   - generate_code
 prompt_template:
   system: |
-    {% include 'code_suggestions/generations/jinja_template/self_hosted/system.jinja' %}
+    {% include 'code_suggestions/generations/jinja_template/self_hosted/system_mistral.jinja' %}
   user: |
     {% include 'code_suggestions/generations/jinja_template/self_hosted/user.jinja' %}
 params:
