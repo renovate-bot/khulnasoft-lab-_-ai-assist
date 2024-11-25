@@ -2139,13 +2139,13 @@ rapidfuzz = ">=3.9.0,<4.0.0"
 
 [[package]]
 name = "litellm"
-version = "1.52.3"
+version = "1.52.15"
 description = "Library to easily interface with LLM API providers"
 optional = false
 python-versions = "!=2.7.*,!=3.0.*,!=3.1.*,!=3.2.*,!=3.3.*,!=3.4.*,!=3.5.*,!=3.6.*,!=3.7.*,>=3.8"
 files = [
-    {file = "litellm-1.52.3-py3-none-any.whl", hash = "sha256:fc8d5d53ba184cd570ae50d9acefa53c521225b62244adedea129794e98828b6"},
-    {file = "litellm-1.52.3.tar.gz", hash = "sha256:4718235cbd6dea8db99b08e884a07f7ac7fad4a4b12597e20d8ff622295e1e05"},
+    {file = "litellm-1.52.15-py3-none-any.whl", hash = "sha256:8a2d8e2526c5e7afb3006b0214d3c348778462fefafd582fd76bb7f5c35d28d0"},
+    {file = "litellm-1.52.15.tar.gz", hash = "sha256:11a61b1b033ddff9d480da66c00acc9d3e4fbfeed166d1b0de8eda16c684116e"},
 ]
 
 [package.dependencies]
