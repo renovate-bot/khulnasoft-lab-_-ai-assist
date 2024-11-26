@@ -1,6 +1,6 @@
 # pylint: disable=too-many-lines
 from typing import Optional
-from unittest.mock import AsyncMock, Mock, patch
+from unittest.mock import AsyncMock, MagicMock, Mock, patch
 
 import pytest
 from litellm.exceptions import APIConnectionError, InternalServerError
@@ -15,6 +15,7 @@ from ai_gateway.models.litellm import (
     LiteLlmTextGenModel,
 )
 from ai_gateway.models.vertex_text import KindVertexTextModel
+from ai_gateway.tracking import SnowplowEventContext
 
 
 @pytest.fixture
@@ -653,6 +654,7 @@ class TestLiteLlmTextGenModel:
                     "timeout": 60,
                     "api_base": "https://fireworks.endpoint",
                     "custom_llm_provider": "text-completion-openai",
+                    "extra_headers": {"x-session-affinity": "test"},
                 },
                 "def hello_world():",
                 "def goodbye_world():",
@@ -684,6 +686,7 @@ class TestLiteLlmTextGenModel:
                     "timeout": 60,
                     "api_base": "https://fireworks.endpoint",
                     "custom_llm_provider": "text-completion-openai",
+                    "extra_headers": {"x-session-affinity": "test"},
                 },
                 "def hello_world():",
                 None,
@@ -717,6 +720,9 @@ class TestLiteLlmTextGenModel:
         output = await litellm_model.generate(
             prefix=prefix,
             suffix=suffix,
+            snowplow_event_context=MagicMock(
+                spec=SnowplowEventContext, gitlab_global_user_id="test"
+            ),
         )
 
         expected_completion_args = {
