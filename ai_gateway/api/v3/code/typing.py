@@ -12,11 +12,11 @@ from typing import (
 
 from fastapi import Body
 from pydantic import BaseModel, ConfigDict, Field, StringConstraints
+from sse_starlette.sse import EventSourceResponse
 from starlette.responses import StreamingResponse
 
 from ai_gateway.code_suggestions import (
     CodeCompletions,
-    CodeCompletionsLegacy,
     CodeGenerations,
     CodeSuggestionsChunk,
     ModelProvider,
@@ -133,13 +133,14 @@ class StreamSuggestionsResponse(StreamingResponse):
     pass
 
 
-ModelEngine = Union[CodeCompletions, CodeCompletionsLegacy, CodeGenerations]
+# Only includes engines that support streaming
+StreamModelEngine = Union[CodeCompletions, CodeGenerations]
 
 
 class StreamHandler(Protocol):
     async def __call__(
         self,
         stream: AsyncIterator[CodeSuggestionsChunk],
-        engine: ModelEngine,
-    ) -> StreamSuggestionsResponse:
+        engine: StreamModelEngine,
+    ) -> Union[StreamSuggestionsResponse, EventSourceResponse]:
         pass
