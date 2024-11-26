@@ -171,7 +171,6 @@ class CodeCompletions:
         raw_prompt: Optional[str | list[Message]] = None,
         code_context: Optional[list] = None,
         stream: bool = False,
-        snowplow_event_context: Optional[SnowplowEventContext] = None,
         **kwargs: Any,
     ) -> Union[CodeSuggestionsOutput, AsyncIterator[CodeSuggestionsChunk]]:
         lang_id = resolve_lang_id(file_name, editor_lang)

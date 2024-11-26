@@ -128,6 +128,7 @@ MODEL_SPECIFICATIONS = {
             "suffix": "<|fim_suffix|>",
             "middle": "<|fim_middle|>",
         },
+        "session_header": True,
     },
 }
 
@@ -322,6 +323,7 @@ class LiteLlmTextGenModel(TextGenModelBase):
                     temperature=temperature,
                     max_output_tokens=max_output_tokens,
                     top_p=top_p,
+                    snowplow_event_context=snowplow_event_context,
                 )
             except APIConnectionError as ex:
                 raise LiteLlmAPIConnectionError.from_exception(ex)
@@ -366,6 +368,7 @@ class LiteLlmTextGenModel(TextGenModelBase):
         max_output_tokens: int,
         top_p: float,
         suffix: Optional[str] = "",
+        snowplow_event_context: Optional[SnowplowEventContext] = None,
     ) -> Union[ModelResponse, CustomStreamWrapper]:
         content = prefix
 
@@ -399,10 +402,22 @@ class LiteLlmTextGenModel(TextGenModelBase):
             completion_args["suffix"] = suffix
             completion_args["text_completion"] = True
 
+        if (
+            self._session_header()
+            and snowplow_event_context
+            and snowplow_event_context.gitlab_global_user_id
+        ):
+            completion_args["extra_headers"] = {
+                "x-session-affinity": snowplow_event_context.gitlab_global_user_id
+            }
+
         return await acompletion(**completion_args)
 
     def _completion_type(self):
         return self.specifications.get("completion_type", ModelCompletionType.CHAT)
+
+    def _session_header(self):
+        return self.specifications.get("session_header", False)
 
     def _extract_suggestion_text(self, suggestion):
         if self._completion_type() == ModelCompletionType.TEXT:
