@@ -13,11 +13,6 @@ prompt_template:
   system: |
     {% include 'code_suggestions/completions/system.jinja' %}
   user: |
-    <SUFFIX>
-    {{suffix}}
-    </SUFFIX>
-    <PREFIX>
-    {{prefix}}
-    </PREFIX>
+    {% include 'code_suggestions/completions/claude_3_user.jinja' %}
 params:
   timeout: 60
