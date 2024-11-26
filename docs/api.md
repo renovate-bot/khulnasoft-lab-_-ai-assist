@@ -19,10 +19,49 @@ curl --header "Authorization: Bearer <access_token>" --header "X-Gitlab-Authenti
 
 ### V4
 
-We have updated the endpoint name from `completions` to `suggestions` to avoid confusion with `code completions`. Currently, the v4 endpoint is functionally equivalent to the [v3](#v3) endpoint. We plan to modify it later in the issue [Convert stream to Server-Side Events format](https://gitlab.com/gitlab-org/modelops/applied-ml/code-suggestions/ai-assist/-/issues/372).
+We have updated the endpoint name from `completions` to `suggestions` to avoid confusion with `code completions`. The v4 endpoint is functionally equivalent to the [v3](#v3) endpoint except for one difference: for streaming responses, v4 returns chunks in SSE format instead of plain text.
 
 ```plaintext
 POST /v4/code/suggestions
+```
+
+#### Streaming responses in SSE format
+
+Format details:
+
+- A streaming response consists of one or more SSE messages.
+- An indvidual, **complete SSE message** consists of the keys `event` and `data` (outputted in this order), and is delimited by double newlines.
+- The streaming response always begins with event `stream_start` and ends with `stream_end`.
+- The value of `data` is either `null` or a JSON string.
+- Metadata is only provided in the starting message.
+
+| Stream Event    | Description                                                                                     |
+| --------------- | ----------------------------------------------------------------------------------------------- |
+| `stream_start`  | Start of the streaming response. This is currently the only message that contains metadata.     |
+| `stream_end`    | End of the streaming response.                                                                  |
+| `content_chunk` | Code suggestions text chunk.                                                                    |
+
+Example response:
+
+```shell
+event: stream_start
+data: {"metadata": {"model": {"engine": "agent", "name": "Claude 3 Code Generations Agent"}, "timestamp": 1732121183}}
+
+event: content_chunk
+data: {"choices": [{"delta": {"content": "\ndef hello_"}, "index": 0}]}
+
+event: content_chunk
+data: {"choices": [{"delta": {"content": "world\n  puts \"Hello, Worl"}, "index": 0}]}
+
+event: content_chunk
+data: {"choices": [{"delta": {"content": "d!\"\nend\n"}, "index": 0}]}
+
+event: content_chunk
+data: {"choices": [{"delta": {"content": ""}, "index": 0}]}
+
+event: stream_end
+data: null
+
 ```
 
 ### V3
@@ -186,7 +225,7 @@ Example response:
 
 Example streaming response:
 
-```plaintext
+```shell
 
 
 Here is a golang function that prints "Hello World":

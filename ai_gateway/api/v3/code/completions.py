@@ -21,10 +21,10 @@ from ai_gateway.api.v3.code.typing import (
     CompletionResponse,
     EditorContentCompletionPayload,
     EditorContentGenerationPayload,
-    ModelEngine,
     ModelMetadata,
     ResponseMetadataBase,
     StreamHandler,
+    StreamModelEngine,
     StreamSuggestionsResponse,
 )
 from ai_gateway.async_dependency_resolver import get_container_application
@@ -59,7 +59,7 @@ async def get_prompt_registry():
 
 async def handle_stream(
     stream: AsyncIterator[CodeSuggestionsChunk],
-    engine: ModelEngine,
+    engine: StreamModelEngine,
 ) -> StreamSuggestionsResponse:
     async def _stream_response_generator():
         async for chunk in stream:
