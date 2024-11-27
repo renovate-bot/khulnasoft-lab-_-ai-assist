@@ -4,7 +4,7 @@ from typing import cast
 
 import pytest
 from dependency_injector import containers, providers
-from pydantic_core import Url
+from pydantic import AnyUrl
 
 from ai_gateway.chat.agents.react import ReActAgent, ReActAgentInputs
 from ai_gateway.chat.agents.typing import Message
@@ -41,7 +41,9 @@ def test_container(mock_container: containers.DeclarativeContainer):
             model_metadata = None
         else:
             model_metadata = ModelMetadata(
-                name=str(model_name), endpoint=Url("http://localhost:4000"), provider=""
+                name=str(model_name),
+                endpoint=AnyUrl("http://localhost:4000"),
+                provider="",
             )
 
         prompt = registry.get(
