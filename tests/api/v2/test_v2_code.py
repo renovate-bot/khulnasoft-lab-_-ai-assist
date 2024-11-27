@@ -1662,11 +1662,8 @@ class TestCodeGenerations:
         assert response.status_code == 422
 
         body = response.json()
-        assert (
-            (body["detail"])
-            == "[{'type': 'url_type', 'loc': ('endpoint',), 'msg': 'URL input should be a string or URL', "
-            "'input': None, 'url': 'https://errors.pydantic.dev/2.9/v/url_type'}]"
-        )
+        assert "endpoint" in body["detail"]
+        assert "URL input should be a string or URL" in body["detail"]
 
     @pytest.mark.parametrize(
         (

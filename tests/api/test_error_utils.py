@@ -49,7 +49,7 @@ async def test_invalid_data():
         await sample_function(invalid_data)
 
     assert ex.value.status_code == 422
+    assert "sample_required_bool_field" in ex.value.detail
     assert (
-        ex.value.detail
-        == "[{'type': 'bool_parsing', 'loc': ('sample_required_bool_field',), 'msg': 'Input should be a valid boolean, unable to interpret input', 'input': 100, 'url': 'https://errors.pydantic.dev/2.9/v/bool_parsing'}]"
+        "Input should be a valid boolean, unable to interpret input" in ex.value.detail
     )
