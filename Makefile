@@ -15,7 +15,6 @@ MYPY_LINT_TODO_DIR ?= --exclude "ai_gateway/api/*" \
 	--exclude "ai_gateway/auth/*" \
 	--exclude "ai_gateway/chat/*" \
 	--exclude "ai_gateway/code_suggestions/*" \
-	--exclude "ai_gateway/experimentation/*" \
 	--exclude "ai_gateway/models/*" \
 	--exclude "tests/api/*" \
 	--exclude "tests/chat/*" \

@@ -19,7 +19,11 @@ class ExperimentOutput(NamedTuple):
 
 class Experiment:
     def __init__(
-        self, name: str, description: str, variants: list = None, weights: list = None
+        self,
+        name: str,
+        description: str,
+        variants: Optional[list] = None,
+        weights: Optional[list] = None,
     ):
         self.name = name
         self.description = description

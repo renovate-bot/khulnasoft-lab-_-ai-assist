@@ -126,7 +126,7 @@ class CodeParser(BaseCodeParser):
     async def from_language_id(
         cls,
         content: str,
-        lang_id: LanguageId,
+        lang_id: Optional[LanguageId] = None,
     ):
         return await asyncio.to_thread(cls._from_language_id, content, lang_id)
 
@@ -134,7 +134,7 @@ class CodeParser(BaseCodeParser):
     def _from_language_id(
         cls,
         content: str,
-        lang_id: LanguageId,
+        lang_id: Optional[LanguageId] = None,
     ):
         if lang_id is None:
             raise ValueError(f"Unsupported language: {lang_id}")
