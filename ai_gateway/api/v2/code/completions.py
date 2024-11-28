@@ -324,7 +324,7 @@ async def generations(
         current_file_name=payload.current_file.file_name,
         stream=payload.stream,
         endpoint=payload.model_endpoint,
-        api_key="*" * len(payload.model_api_key) if payload.model_api_key else None,
+        api_key="*" * 10 if payload.model_api_key else None,
     )
 
     if payload.prompt_id:

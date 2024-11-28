@@ -1,3 +1,4 @@
+import copy
 import logging
 import sys
 from pathlib import Path
@@ -160,7 +161,26 @@ def prevent_logging_if_disabled(_, __, event_dict: EventDict) -> EventDict:
     raise structlog.DropEvent
 
 
+def sanitize_logs(_, __, event_dict: EventDict) -> EventDict:
+    sanitized_value = "*" * 10
+
+    event_dict["api_key"] = sanitized_value if "api_key" in event_dict else None
+
+    if "inputs" in event_dict and hasattr(event_dict["inputs"], "model_metadata"):
+        sanitized_inputs = copy.copy(event_dict["inputs"])
+
+        if sanitized_inputs.model_metadata:
+            model_metadata = copy.copy(sanitized_inputs.model_metadata)
+            model_metadata.api_key = sanitized_value if model_metadata.api_key else None
+            sanitized_inputs.model_metadata = model_metadata
+
+        event_dict["inputs"] = sanitized_inputs
+
+    return event_dict
+
+
 def get_request_logger(name: str):
     return structlog.wrap_logger(
-        structlog.get_logger(name), processors=[prevent_logging_if_disabled]
+        structlog.get_logger(name),
+        processors=[prevent_logging_if_disabled, sanitize_logs],
     )
