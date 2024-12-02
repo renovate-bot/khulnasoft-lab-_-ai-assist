@@ -24,7 +24,7 @@ def get_snowplow_code_suggestion_context(
 ) -> SnowplowEventContext:
     language = language.lower() if language else ""
     # gitlab-rails 16.3+ sends an X-Gitlab-Realm header
-    gitlab_realm = req.headers.get(X_GITLAB_REALM_HEADER).lower()
+    gitlab_realm = req.headers.get(X_GITLAB_REALM_HEADER, "").lower()
     # older versions don't serve code suggestions, so we read this from the IDE token claim
     if not gitlab_realm and req.user and req.user.claims:
         gitlab_realm = req.user.claims.gitlab_realm.lower()
