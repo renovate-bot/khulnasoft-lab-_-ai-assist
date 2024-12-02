@@ -92,6 +92,7 @@ class TestLiteLlmChatModel:
             api_key=api_key,
             identifier=identifier,
             custom_models_enabled=True,
+            disable_streaming=False,
         )
 
     @pytest.mark.parametrize(
@@ -261,6 +262,48 @@ class TestLiteLlmChatModel:
                 model="some-cool-model",
                 custom_llm_provider="provider",
             )
+
+    @pytest.mark.asyncio
+    async def test_override_stream(self, endpoint, api_key, identifier):
+        chat_model = LiteLlmChatModel.from_model_name(
+            name="mistral",
+            endpoint=endpoint,
+            api_key=api_key,
+            identifier=identifier,
+            custom_models_enabled=True,
+            disable_streaming=True,
+        )
+
+        expected_messages = [{"role": "user", "content": "Test message"}]
+
+        with patch("ai_gateway.models.litellm.acompletion") as mock_acompletion:
+            mock_acompletion.return_value = AsyncMock(
+                choices=[AsyncMock(message=AsyncMock(content="Test response"))],
+                usage=AsyncMock(completion_tokens=999),
+            )
+
+            messages = [Message(content="Test message", role=Role.USER)]
+            output = await chat_model.generate(
+                messages=messages,
+                stream=True,
+            )
+
+            mock_acompletion.assert_called_with(
+                messages=expected_messages,
+                stream=False,
+                temperature=0.2,
+                top_p=0.95,
+                max_tokens=2048,
+                timeout=30.0,
+                stop=["</new_code>"],
+                api_base="http://127.0.0.1:1111/v1",
+                api_key="specified-api-key",
+                model="some-cool-model",
+                custom_llm_provider="provider",
+            )
+
+            assert isinstance(output, TextGenModelOutput)
+            assert output.text == "Test response"
 
     @pytest.mark.asyncio
     async def test_generate_stream(self, lite_llm_chat_model):
@@ -743,6 +786,44 @@ class TestLiteLlmTextGenModel:
         assert output.text == "Test response"
         if output.metadata:
             assert output.metadata.output_tokens == 999
+
+    @pytest.mark.asyncio
+    async def test_override_stream(self, endpoint, api_key):
+        generation_model = LiteLlmTextGenModel.from_model_name(
+            name="mistral",
+            endpoint=endpoint,
+            api_key=api_key,
+            custom_models_enabled=True,
+            disable_streaming=True,
+        )
+
+        with patch("ai_gateway.models.litellm.acompletion") as mock_acompletion:
+            mock_acompletion.return_value = AsyncMock(
+                choices=[AsyncMock(message=AsyncMock(content="Test response"))],
+                usage=AsyncMock(completion_tokens=999),
+            )
+
+            output = await generation_model.generate(
+                prefix="def hello_world():",
+                suffix=None,
+                stream=True,
+            )
+
+            mock_acompletion.assert_called_with(
+                messages=[{"content": "def hello_world():", "role": Role.USER}],
+                max_tokens=16,
+                temperature=0.95,
+                top_p=0.95,
+                stream=False,
+                timeout=30.0,
+                stop=["</new_code>"],
+                api_base="http://127.0.0.1:4000",
+                api_key="specified-api-key",
+                model="text-completion-custom_openai/mistral",
+            )
+
+            assert isinstance(output, TextGenModelOutput)
+            assert output.text == "Test response"
 
     @pytest.mark.asyncio
     @pytest.mark.parametrize(

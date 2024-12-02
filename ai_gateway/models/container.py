@@ -144,6 +144,7 @@ class ContainerModels(containers.DeclarativeContainer):
         original=providers.Factory(
             LiteLlmTextGenModel.from_model_name,
             custom_models_enabled=config.custom_models.enabled,
+            disable_streaming=config.custom_models.disable_streaming,
             provider_keys=config.model_keys,
             provider_endpoints=config.model_endpoints,
         ),
@@ -155,6 +156,7 @@ class ContainerModels(containers.DeclarativeContainer):
         original=providers.Factory(
             LiteLlmChatModel.from_model_name,
             custom_models_enabled=config.custom_models.enabled,
+            disable_streaming=config.custom_models.disable_streaming,
             provider_keys=config.model_keys,
             provider_endpoints=config.model_endpoints,
         ),
