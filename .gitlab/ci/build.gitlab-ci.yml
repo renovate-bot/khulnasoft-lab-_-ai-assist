@@ -27,7 +27,7 @@ build:self-hosted-ai-gateway-latest-image:
     - .kaniko_base
   variables:
     KANIKO_BUILD_FILE: docker/self_hosted/Dockerfile
-    KANIKO_DESTINATION: "${SELF_HOSTED_LATEST_IMAGE}"
+    KANIKO_DESTINATION: "${SELF_HOSTED_TARGET_IMAGE}"
     KANIKO_EXTRA_ARGS: |
       --build-arg TAG=master
       --build-arg SRC_IMAGE="${TARGET_IMAGE}"
