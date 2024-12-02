@@ -96,6 +96,7 @@ class ConfigSnowplow(ConfigInternalEvent):
 
 class ConfigCustomModels(BaseModel):
     enabled: bool = False
+    disable_streaming: bool = False
 
 
 class ConfigAbuseDetection(BaseModel):

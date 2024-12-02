@@ -157,10 +157,12 @@ class LiteLlmChatModel(ChatModelBase):
         model_name: KindLiteLlmModel = KindLiteLlmModel.MISTRAL,
         provider: Optional[KindModelProvider] = KindModelProvider.LITELLM,
         metadata: Optional[ModelMetadata] = None,
+        disable_streaming: bool = False,
     ):
         self._metadata = _init_litellm_model_metadata(metadata, model_name, provider)
         self.model_name = model_name
         self.stop_tokens = MODEL_STOP_TOKENS.get(model_name, [])
+        self.disable_streaming = disable_streaming
 
     @property
     def metadata(self) -> ModelMetadata:
@@ -175,6 +177,8 @@ class LiteLlmChatModel(ChatModelBase):
         top_p: float = 0.95,
         code_context: Optional[Sequence[str]] = None,
     ) -> Union[TextGenModelOutput, AsyncIterator[TextGenModelChunk]]:
+        should_stream = not self.disable_streaming and stream
+
         if isinstance(messages, str):
             messages = [Message(content=messages, role=Role.USER)]
 
@@ -183,7 +187,7 @@ class LiteLlmChatModel(ChatModelBase):
         with self.instrumentator.watch(stream=stream) as watcher:
             suggestion = await acompletion(
                 messages=litellm_messages,
-                stream=stream,
+                stream=should_stream,
                 temperature=temperature,
                 top_p=top_p,
                 max_tokens=max_output_tokens,
@@ -192,7 +196,7 @@ class LiteLlmChatModel(ChatModelBase):
                 **self.model_metadata_to_params(),
             )
 
-            if stream:
+            if should_stream:
                 return self._handle_stream(
                     suggestion,
                     watcher.finish,
@@ -236,6 +240,7 @@ class LiteLlmChatModel(ChatModelBase):
         cls,
         name: Union[str, KindLiteLlmModel],
         custom_models_enabled: bool = False,
+        disable_streaming: bool = False,
         endpoint: Optional[str] = None,
         api_key: Optional[str] = None,
         identifier: Optional[str] = None,
@@ -269,7 +274,7 @@ class LiteLlmChatModel(ChatModelBase):
             identifier=identifier,
         )
 
-        return cls(kind_model, provider, model_metadata)
+        return cls(kind_model, provider, model_metadata, disable_streaming)
 
 
 class LiteLlmTextGenModel(TextGenModelBase):
@@ -288,10 +293,12 @@ class LiteLlmTextGenModel(TextGenModelBase):
         model_name: KindLiteLlmModel = KindLiteLlmModel.CODEGEMMA,
         provider: Optional[KindModelProvider] = KindModelProvider.LITELLM,
         metadata: Optional[ModelMetadata] = None,
+        disable_streaming: bool = False,
     ):
         self.provider = provider
         self.model_name = model_name
         self._metadata = _init_litellm_model_metadata(metadata, model_name, provider)
+        self.disable_streaming = disable_streaming
 
         self.stop_tokens = MODEL_STOP_TOKENS.get(model_name, [])
 
@@ -314,12 +321,14 @@ class LiteLlmTextGenModel(TextGenModelBase):
         code_context: Optional[Sequence[str]] = None,
         snowplow_event_context: Optional[SnowplowEventContext] = None,
     ) -> Union[TextGenModelOutput, AsyncIterator[TextGenModelChunk]]:
-        with self.instrumentator.watch(stream=stream) as watcher:
+        should_stream = not self.disable_streaming and stream
+
+        with self.instrumentator.watch(stream=should_stream) as watcher:
             try:
                 suggestion = await self._get_suggestion(
                     prefix=prefix,
                     suffix=suffix,
-                    stream=stream,
+                    stream=should_stream,
                     temperature=temperature,
                     max_output_tokens=max_output_tokens,
                     top_p=top_p,
@@ -330,7 +339,7 @@ class LiteLlmTextGenModel(TextGenModelBase):
             except InternalServerError as ex:
                 raise LiteLlmInternalServerError.from_exception(ex)
 
-            if stream:
+            if should_stream:
                 return self._handle_stream(
                     suggestion,
                     watcher.finish,
@@ -475,6 +484,7 @@ class LiteLlmTextGenModel(TextGenModelBase):
         cls,
         name: Union[str, KindLiteLlmModel],
         custom_models_enabled: bool = False,
+        disable_streaming: bool = False,
         endpoint: Optional[str] = None,
         api_key: Optional[str] = None,
         identifier: Optional[str] = None,
@@ -518,7 +528,12 @@ class LiteLlmTextGenModel(TextGenModelBase):
             identifier=identifier,
         )
 
-        return cls(model_name=kind_model, provider=provider, metadata=metadata)
+        return cls(
+            model_name=kind_model,
+            provider=provider,
+            metadata=metadata,
+            disable_streaming=disable_streaming,
+        )
 
 
 def _get_fireworks_config(provider_endpoints: dict) -> tuple[str, str]:
