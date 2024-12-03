@@ -21,7 +21,7 @@ from ai_gateway.code_suggestions import (
     CodeSuggestionsChunk,
     ModelProvider,
 )
-from ai_gateway.models import Message
+from ai_gateway.models import KindVertexTextModel, Message
 
 __all__ = [
     "CodeEditorComponents",
@@ -48,11 +48,17 @@ class EditorContentPayload(BaseModel):
     # Opt out protected namespace "model_" (https://github.com/pydantic/pydantic/issues/6322).
     model_config = ConfigDict(protected_namespaces=())
 
-    file_name: Annotated[str, StringConstraints(strip_whitespace=True, max_length=255)]
-    content_above_cursor: Annotated[str, StringConstraints(max_length=100000)]
-    content_below_cursor: Annotated[str, StringConstraints(max_length=100000)]
+    file_name: Annotated[
+        str, StringConstraints(strip_whitespace=True, max_length=255)
+    ] = Field(examples=["example.py"])
+    content_above_cursor: Annotated[str, StringConstraints(max_length=100000)] = Field(
+        examples=["def hello_world():\n    print("]
+    )
+    content_below_cursor: Annotated[str, StringConstraints(max_length=100000)] = Field(
+        examples=[""]
+    )
     language_identifier: Optional[Annotated[str, StringConstraints(max_length=255)]] = (
-        None
+        Field(None, examples=["python"])
     )
     model_provider: Optional[
         Literal[ModelProvider.VERTEX_AI, ModelProvider.ANTHROPIC]
@@ -62,8 +68,12 @@ class EditorContentPayload(BaseModel):
 
 class EditorContentCompletionPayload(EditorContentPayload):
     choices_count: Optional[int] = 0
-    model_name: Optional[str] = None
-    prompt: Optional[str | list[Message]] = None
+    model_name: Optional[str] = Field(
+        None, examples=[KindVertexTextModel.CODE_GECKO_002]
+    )
+    prompt: Optional[str | list[Message]] = Field(
+        None, examples=["Complete the function"]
+    )
 
 
 class EditorContentGenerationPayload(EditorContentPayload):
