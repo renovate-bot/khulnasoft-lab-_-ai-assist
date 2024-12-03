@@ -27,11 +27,13 @@ class LocalPromptRegistry(BasePromptRegistry):
         model_factories: dict[ModelClassProvider, TypeModelFactory],
         default_prompts: dict[str, str],
         custom_models_enabled: bool,
+        disable_streaming: bool = False,
     ):
         self.prompts_registered = prompts_registered
         self.model_factories = model_factories
         self.default_prompts = default_prompts
         self.custom_models_enabled = custom_models_enabled
+        self.disable_streaming = disable_streaming
 
     def _resolve_id(
         self,
@@ -69,7 +71,13 @@ class LocalPromptRegistry(BasePromptRegistry):
                 f"unrecognized model class provider `{model_class_provider}`."
             )
 
-        return klass(model_factory, config, model_metadata, **kwargs)
+        return klass(
+            model_factory,
+            config,
+            model_metadata,
+            disable_streaming=self.disable_streaming,
+            **kwargs,
+        )
 
     @classmethod
     def from_local_yaml(
@@ -78,6 +86,7 @@ class LocalPromptRegistry(BasePromptRegistry):
         model_factories: dict[ModelClassProvider, TypeModelFactory],
         default_prompts: dict[str, str],
         custom_models_enabled: bool = False,
+        disable_streaming: bool = False,
     ) -> "LocalPromptRegistry":
         """Iterate over all prompt definition files matching [usecase]/[type].yml,
         and create a corresponding prompt for each one. The base Prompt class is
@@ -109,5 +118,9 @@ class LocalPromptRegistry(BasePromptRegistry):
         )
 
         return cls(
-            prompts_registered, model_factories, default_prompts, custom_models_enabled
+            prompts_registered,
+            model_factories,
+            default_prompts,
+            custom_models_enabled,
+            disable_streaming,
         )

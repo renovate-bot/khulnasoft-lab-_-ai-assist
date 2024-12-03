@@ -204,17 +204,24 @@ def custom_models_enabled():
 
 
 @pytest.fixture
+def disable_streaming():
+    yield True
+
+
+@pytest.fixture
 def registry(
     prompts_registered: dict[str, PromptRegistered],
     model_factories: dict[ModelClassProvider, TypeModelFactory],
     default_prompts: dict[str, str],
     custom_models_enabled: bool,
+    disable_streaming: bool,
 ):
     yield LocalPromptRegistry(
         model_factories=model_factories,
         prompts_registered=prompts_registered,
         default_prompts=default_prompts,
         custom_models_enabled=custom_models_enabled,
+        disable_streaming=disable_streaming,
     )
 
 
@@ -232,6 +239,7 @@ class TestLocalPromptRegistry:
             model_factories=model_factories,
             default_prompts={},
             custom_models_enabled=False,
+            disable_streaming=False,
         )
 
         assert registry.prompts_registered == prompts_registered
@@ -240,6 +248,7 @@ class TestLocalPromptRegistry:
         (
             "prompt_id",
             "model_metadata",
+            "disable_streaming",
             "expected_name",
             "expected_class",
             "expected_messages",
@@ -251,6 +260,7 @@ class TestLocalPromptRegistry:
             (
                 "test",
                 None,
+                True,
                 "Test prompt",
                 Prompt,
                 [("system", "Template1")],
@@ -267,6 +277,7 @@ class TestLocalPromptRegistry:
             (
                 "chat/react",
                 None,
+                False,
                 "Chat react prompt",
                 MockPromptClass,
                 [("system", "Template1"), ("user", "Template2")],
@@ -293,6 +304,7 @@ class TestLocalPromptRegistry:
                     provider="custom_openai",
                     identifier="anthropic/claude-3-haiku-20240307",
                 ),
+                True,
                 "Chat react custom prompt",
                 MockPromptClass,
                 [("system", "Template1"), ("user", "Template2")],
@@ -323,6 +335,7 @@ class TestLocalPromptRegistry:
                     provider="custom_openai",
                     identifier="custom_openai/mistralai/Mistral-7B-Instruct-v0.3",
                 ),
+                False,
                 "Chat react custom prompt",
                 MockPromptClass,
                 [("system", "Template1"), ("user", "Template2")],
@@ -351,6 +364,7 @@ class TestLocalPromptRegistry:
         registry: LocalPromptRegistry,
         prompt_id: str,
         model_metadata: ModelMetadata | None,
+        disable_streaming: bool,
         expected_name: str,
         expected_class: Type[Prompt],
         expected_messages: Sequence[MessageLikeRepresentation],
@@ -375,6 +389,7 @@ class TestLocalPromptRegistry:
             ).messages
         )
         assert prompt.model_name == expected_model
+        assert prompt.model.disable_streaming == disable_streaming
         assert binding.kwargs == expected_kwargs
 
         actual_model_params = {

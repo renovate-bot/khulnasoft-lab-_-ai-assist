@@ -17,7 +17,7 @@ from ai_gateway.prompts.typing import ModelMetadata
 
 @pytest.fixture
 def mock_config():
-    yield Config(custom_models={"enabled": True})
+    yield Config(custom_models={"enabled": True, "disable_streaming": True})
 
 
 def test_container(mock_container: containers.DeclarativeContainer):
@@ -54,6 +54,7 @@ def test_container(mock_container: containers.DeclarativeContainer):
             ),
         )
         assert isinstance(prompt, Prompt)
+        assert prompt.model.disable_streaming
 
         if isinstance(prompt, ReActAgent):
             prompt_template = prompt.bound.middle[0]  # type: ignore[attr-defined]

@@ -47,10 +47,11 @@ class Prompt(RunnableBinding[Input, Output]):
         model_factory: TypeModelFactory,
         config: PromptConfig,
         model_metadata: Optional[ModelMetadata] = None,
+        disable_streaming: bool = False,
         **kwargs,
     ):
         model_kwargs = self._build_model_kwargs(config.params, model_metadata)
-        model = self._build_model(model_factory, config.model)
+        model = self._build_model(model_factory, config.model, disable_streaming)
         messages = self.build_messages(config.prompt_template, **kwargs)
         prompt = ChatPromptTemplate.from_messages(messages, template_format="jinja2")
         chain = self._build_chain(
@@ -79,9 +80,11 @@ class Prompt(RunnableBinding[Input, Output]):
         self,
         model_factory: TypeModelFactory,
         config: ModelConfig,
+        disable_streaming: bool,
     ) -> Model:
         return model_factory(
             model=config.name,
+            disable_streaming=disable_streaming,
             **config.params.model_dump(
                 exclude={"model_class_provider"}, exclude_none=True, by_alias=True
             ),
