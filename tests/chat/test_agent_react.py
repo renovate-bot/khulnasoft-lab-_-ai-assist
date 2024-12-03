@@ -18,7 +18,7 @@ from ai_gateway.chat.agents.typing import (
     CurrentFile,
     Message,
 )
-from ai_gateway.chat.tools.gitlab import IssueReader
+from ai_gateway.chat.tools.gitlab import IssueReader, MergeRequestReader
 from ai_gateway.feature_flags.context import current_feature_flag_context
 from ai_gateway.models.base_chat import Role
 
@@ -164,6 +164,28 @@ class TestReActAgent:
                     AgentToolAction(
                         thought="I'm thinking...",
                         tool="issue_reader",
+                        tool_input="random input",
+                    ),
+                ],
+            ),
+            (
+                {
+                    "agent_inputs": ReActAgentInputs(
+                        messages=[
+                            Message(
+                                role=Role.USER,
+                                content="Summarize this Merge request",
+                            ),
+                        ],
+                        agent_scratchpad=[],
+                        tools=[MergeRequestReader()],
+                    )
+                },
+                "Thought: I'm thinking...\nAction: MergeRequestReader\nAction Input: random input",
+                [
+                    AgentToolAction(
+                        thought="I'm thinking...",
+                        tool="merge_request_reader",
                         tool_input="random input",
                     ),
                 ],

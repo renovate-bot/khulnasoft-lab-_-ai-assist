@@ -8,6 +8,7 @@ from starlette_context import context, request_cycle_context
 from ai_gateway.api.auth_utils import StarletteUser
 from ai_gateway.chat import GLAgentRemoteExecutor, TypeAgentFactory
 from ai_gateway.chat.agents import (
+    AgentError,
     AgentFinalAnswer,
     AgentToolAction,
     Message,
@@ -20,7 +21,9 @@ from ai_gateway.models.base_chat import Role
 
 @pytest.fixture()
 def agent_events():
-    return [AgentToolAction(thought="thought", tool="tool", tool_input="tool_input")]
+    return [
+        AgentToolAction(thought="thought", tool="issue_reader", tool_input="tool_input")
+    ]
 
 
 @pytest.fixture()
@@ -237,6 +240,19 @@ class TestGLAgentRemoteExecutorToolAction:
                 ),
                 "17.2.0",
                 ReActAgentInputs(messages=[Message(role=Role.USER, content="Hi")]),
+                [AgentToolAction(thought="", tool="issue_reader", tool_input="")],
+                ["gitlab_documentation"],
+                [],
+            ),
+            (
+                StarletteUser(
+                    CloudConnectorUser(
+                        authenticated=True,
+                        claims=UserClaims(scopes=["documentation_search"]),
+                    )
+                ),
+                "17.2.0",
+                ReActAgentInputs(messages=[Message(role=Role.USER, content="Hi")]),
                 [AgentFinalAnswer(text="I'm good")],
                 ["gitlab_documentation"],
                 [],
@@ -286,3 +302,64 @@ class TestGLAgentRemoteExecutorToolAction:
             )
 
         internal_event_client.track_event.assert_has_calls(expected_internal_events)
+
+
+class TestGLAgentRemoteExecutorToolValidation:
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize(
+        ("user", "agent_events", "expected_event"),
+        [
+            (
+                StarletteUser(
+                    CloudConnectorUser(
+                        authenticated=True,
+                        claims=UserClaims(scopes=["ask_issue"]),
+                    )
+                ),
+                [AgentToolAction(thought="", tool="issue_reader", tool_input="")],
+                AgentToolAction(thought="", tool="issue_reader", tool_input=""),
+            ),
+            (
+                StarletteUser(
+                    CloudConnectorUser(
+                        authenticated=True,
+                        claims=UserClaims(scopes=["ask_epic"]),
+                    )
+                ),
+                [AgentToolAction(thought="", tool="issue_reader", tool_input="")],
+                AgentError(message="tool not available", retryable=False),
+            ),
+            (
+                StarletteUser(
+                    CloudConnectorUser(
+                        authenticated=True,
+                        claims=UserClaims(scopes=["ask_issue"]),
+                    )
+                ),
+                [AgentToolAction(thought="", tool="IssueReader", tool_input="")],
+                AgentError(message="tool not available", retryable=False),
+            ),
+        ],
+    )
+    async def test_stream_tool_validation(
+        self,
+        agent: Mock,
+        agent_factory: Mock,
+        tools_registry: DuoChatToolsRegistry,
+        internal_event_client: Mock,
+        user: StarletteUser,
+        expected_event,
+    ):
+        executor = GLAgentRemoteExecutor(
+            agent_factory=agent_factory,
+            tools_registry=tools_registry,
+            internal_event_client=internal_event_client,
+        )
+
+        gl_version = "17.2.0"
+        inputs = ReActAgentInputs(messages=[Message(role=Role.USER, content="Hi")])
+        executor.on_behalf(user, gl_version)
+
+        with request_cycle_context({}):
+            async for event in executor.stream(inputs=inputs):
+                assert event == expected_event

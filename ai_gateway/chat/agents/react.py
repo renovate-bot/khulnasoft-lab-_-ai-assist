@@ -41,7 +41,7 @@ class ReActAgentInputs(BaseModel):
     messages: list[Message]
     agent_scratchpad: Optional[list[AgentStep]] = None
     model_metadata: Optional[ModelMetadata] = None
-    unavailable_resources: Optional[list[str]] = ["Pipelines, Vulnerabilities"]
+    unavailable_resources: Optional[list[str]] = None
     tools: Optional[list[BaseTool]] = None
 
 
@@ -70,8 +70,9 @@ class ReActPlainTextParser(BaseCumulativeTransformOutputParser):
         match_thought = self.re_thought.search(message)
 
         if match_action and match_action_input:
+            tool_name = match_action.group(1).replace("\\_", "_", 1)
             return AgentToolAction(
-                tool=match_action.group(1).replace("\\_", "_", 1),
+                tool=self._modify_tool_name(tool_name),
                 tool_input=match_action_input.group(1),
                 thought=(
                     match_thought.group(1).replace("\\_", "_") if match_thought else ""
@@ -79,6 +80,21 @@ class ReActPlainTextParser(BaseCumulativeTransformOutputParser):
             )
 
         return None
+
+    def _modify_tool_name(self, name: str) -> str:
+        """Process special case when LLM returns wrong name
+
+        In some cases LLM could return the name of the Merge Request tool
+        in CamelCase, not in underscore_case.
+        This bug was fixed in upstream version of GitLab 17.7
+        However older GitLab instances could still have this bug.
+        Would be cleaned up with
+        https://gitlab.com/gitlab-org/modelops/applied-ml/code-suggestions/ai-assist/-/issues/757
+        """
+        if name == "MergeRequestReader":
+            return "merge_request_reader"
+
+        return name
 
     def _parse(self, text: str) -> TypeAgentEvent:
         wrapped_text = f"<message>Thought: {text}</message>"
