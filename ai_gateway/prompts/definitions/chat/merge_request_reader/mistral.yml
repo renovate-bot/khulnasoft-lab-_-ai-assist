@@ -11,10 +11,10 @@ unit_primitives:
   - ask_merge_request
 prompt_template:
   system: |
-    {% include 'chat/merge_request_reader/system.jinja' %}
+    {% include 'chat/merge_request_reader/system_mistral.jinja' %}
   user: |
-    {% include 'chat/merge_request_reader/user.jinja' %}
+    {% include 'chat/merge_request_reader/user_mistral.jinja' %}
   assistant: |
-    {% include 'chat/merge_request_reader/assistant.jinja' %}
+    {% include 'chat/merge_request_reader/assistant_mistral.jinja' %}
 params:
   timeout: 60
