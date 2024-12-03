@@ -31,12 +31,14 @@ from ai_gateway.config import (
                 "AIGW_GITLAB_URL": "http://gitlab.test",
                 "AIGW_GITLAB_API_URL": "http://api.gitlab.test",
                 "AIGW_CUSTOMER_PORTAL_URL": "http://customer.gitlab.test",
+                "AIGW_GLGO_BASE_URL": "http://auth.token.gitlab.com",
                 "AIGW_MOCK_MODEL_RESPONSES": "true",
             },
             Config(
                 gitlab_url="http://gitlab.test",
                 gitlab_api_url="http://api.gitlab.test",
                 customer_portal_url="http://customer.gitlab.test",
+                glgo_base_url="http://auth.token.gitlab.com",
                 mock_model_responses=True,
             ),
         ),
@@ -50,6 +52,7 @@ def test_config_base(values: dict, expected: Config):
             "gitlab_url",
             "gitlab_api_url",
             "customer_portal_url",
+            "glgo_base_url",
             "mock_model_responses",
         }
 

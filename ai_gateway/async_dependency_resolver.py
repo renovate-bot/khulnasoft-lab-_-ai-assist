@@ -122,3 +122,10 @@ async def get_token_authority(
     token_authority=Provide[ContainerApplication.self_signed_jwt.token_authority],
 ):
     return token_authority
+
+
+@inject
+async def get_glgo_authority(
+    glgo_authority=Provide[ContainerApplication.self_signed_jwt.glgo_authority],
+):
+    return glgo_authority
