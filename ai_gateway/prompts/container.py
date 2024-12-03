@@ -27,4 +27,5 @@ class ContainerPrompts(containers.DeclarativeContainer):
         },
         default_prompts=config.default_prompts,
         custom_models_enabled=config.custom_models.enabled,
+        disable_streaming=config.custom_models.disable_streaming,
     )
