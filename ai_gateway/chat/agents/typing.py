@@ -76,7 +76,9 @@ class CurrentFile(BaseModel):
 
 # Note: additionaL_context is an alias for injected_context
 class AdditionalContext(BaseModel):
-    category: Literal["file", "snippet", "merge_request", "issue", "dependency"]
+    category: Literal[
+        "file", "snippet", "merge_request", "issue", "dependency", "local_git"
+    ]
     id: Optional[str] = None
     content: Optional[str] = None
     metadata: Optional[dict] = None
