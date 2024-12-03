@@ -70,7 +70,7 @@ class ReActPlainTextParser(BaseCumulativeTransformOutputParser):
         match_thought = self.re_thought.search(message)
 
         if match_action and match_action_input:
-            tool_name = match_action.group(1).replace("\\_", "_", 1)
+            tool_name = match_action.group(1)
             return AgentToolAction(
                 tool=self._modify_tool_name(tool_name),
                 tool_input=match_action_input.group(1),
@@ -94,7 +94,7 @@ class ReActPlainTextParser(BaseCumulativeTransformOutputParser):
         if name == "MergeRequestReader":
             return "merge_request_reader"
 
-        return name
+        return name.replace("\\_", "_")
 
     def _parse(self, text: str) -> TypeAgentEvent:
         wrapped_text = f"<message>Thought: {text}</message>"

@@ -104,7 +104,7 @@ async def chat(
             AgentStep(
                 action=AgentToolAction(
                     thought=step.thought.replace("\\_", "_"),
-                    tool=step.tool.replace("\\_", "_", 1),
+                    tool=step.tool.replace("\\_", "_"),
                     tool_input=step.tool_input,
                 ),
                 observation=step.observation,
