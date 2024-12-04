@@ -1,0 +1,24 @@
+---
+name: Mixtral 7B Instruct Code Completions
+model:
+  name: mixtral
+  params:
+    model_class_provider: litellm
+    temperature: 0.0
+    max_tokens: 128
+    max_retries: 1
+unit_primitives:
+  - complete_code
+prompt_template:
+  system: |
+    {% include 'code_suggestions/completions/system.jinja' %}
+  user: |
+    <s>[SUFFIX]{{suffix}}[PREFIX]{{prefix}}
+params:
+  timeout: 60
+  stop:
+    - "[INST]"
+    - "[/INST]"
+    - "[PREFIX]"
+    - "[MIDDLE]"
+    - "[SUFFIX]"
