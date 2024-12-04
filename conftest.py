@@ -42,8 +42,12 @@ pytest_plugins = ("pytest_asyncio",)
 
 
 @pytest.fixture
-def tpl_assets_codegen_dir() -> Path:
-    assets_dir = Path(__file__).parent / "tests" / "_assets"
+def assets_dir() -> Path:
+    return Path(__file__).parent / "tests" / "_assets"
+
+
+@pytest.fixture
+def tpl_assets_codegen_dir(assets_dir) -> Path:
     tpl_dir = assets_dir / "tpl"
     return tpl_dir / "codegen"
 

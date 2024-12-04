@@ -178,6 +178,7 @@ class Config(BaseSettings):
     gitlab_url: str = "https://gitlab.com"
     gitlab_api_url: str = "https://gitlab.com/api/v4/"
     customer_portal_url: str = "https://customers.gitlab.com"
+    glgo_base_url: str = "http://auth.token.gitlab.com"
     mock_model_responses: bool = False
 
     logging: Annotated[ConfigLogging, Field(default_factory=ConfigLogging)] = (
