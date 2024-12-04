@@ -11,10 +11,10 @@ unit_primitives:
   - ask_build
 prompt_template:
   system: |
-    {% include 'chat/build_reader/system.jinja' %}
+    {% include 'chat/build_reader/system_mistral.jinja' %}
   user: |
-    {% include 'chat/build_reader/user.jinja' %}
+    {% include 'chat/build_reader/user_mistral.jinja' %}
   assistant: |
-    {% include 'chat/build_reader/assistant.jinja' %}
+    {% include 'chat/build_reader/assistant_mistral.jinja' %}
 params:
   timeout: 60

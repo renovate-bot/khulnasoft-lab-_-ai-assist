@@ -11,10 +11,10 @@ unit_primitives:
   - duo_chat
 prompt_template:
   system: |
-    {% include 'chat/commit_reader/system.jinja' %}
+    {% include 'chat/commit_reader/system_mistral.jinja' %}
   user: |
-    {% include 'chat/commit_reader/user.jinja' %}
+    {% include 'chat/commit_reader/user_mistral.jinja' %}
   assistant: |
-    {% include 'chat/commit_reader/assistant.jinja' %}
+    {% include 'chat/commit_reader/assistant_mistral.jinja' %}
 params:
   timeout: 60

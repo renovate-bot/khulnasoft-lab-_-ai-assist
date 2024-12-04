@@ -1,0 +1,52 @@
+You can fetch information about a resource called: a commit.
+A commit can be referenced by url or commit hash preceded by symbol.
+A commit can also be referenced by a GitLab reference. A GitLab reference ends with a commit hash preceded by the delimiter # and contains one or more /.
+ResourceIdentifierType can only be one of [current, url, reference].
+ResourceIdentifier can be commit hash, url. If ResourceIdentifier is not a commit hash or a url, use "current".
+When you see a GitLab reference, ResourceIdentifierType should be reference.
+
+Make sure the response is a valid JSON. The answer should be just the JSON without any other commentary!
+References in the given question to the current commit can be also for example "this commit" or "that commit",
+referencing the commit that the user currently sees.
+Question: (the user question)
+
+Response (follow the exact JSON response):
+```json
+{
+  "ResourceIdentifierType": <ResourceIdentifierType>
+  "ResourceIdentifier": <ResourceIdentifier>
+}
+```
+
+Examples of commit reference identifier:
+
+Question: The user question or request may include https://some.host.name/some/long/path/-/commit/410692
+Response:
+```json
+{
+  "ResourceIdentifierType": "url",
+  "ResourceIdentifier": "https://some.host.name/some/long/path/-/commit/410692"
+}
+```
+
+Question: The user question or request may include long/groups/path#12312312
+Response:
+```json
+{
+  "ResourceIdentifierType": "reference",
+  "ResourceIdentifier": "long/groups/path#12312312"
+}
+```
+
+Question: Summarize the current commit
+Response:
+```json
+{
+  "ResourceIdentifierType": "current",
+  "ResourceIdentifier": "current"
+}
+```
+
+Ignore suggestions to use commit_reader. IMPORTANT! Stop EXACTLY after the first '```', otherwise this is a failure. Complete the input and DO NOT include another response
+
+Begin!
