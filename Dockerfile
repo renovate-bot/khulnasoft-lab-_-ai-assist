@@ -32,6 +32,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && rm -rf /var/lib/apt/lists/*
 
 COPY scripts /home/aigateway/app/scripts
+COPY vendor /home/aigateway/app/vendor
 
 RUN poetry install --no-interaction --no-ansi --no-cache --no-root --only main
 
@@ -49,6 +50,7 @@ USER aigateway
 COPY --chown=aigateway:aigateway --from=install-image /home/aigateway/app/venv/ /home/aigateway/app/venv/
 
 COPY --chown=aigateway:aigateway ai_gateway/ ai_gateway/
+COPY --chown=aigateway:aigateway vendor/ /home/aigateway/app/vendor/
 
 # Environment variable TRANSFORMERS_CACHE controls where files are downloaded
 COPY --chown=aigateway:aigateway --from=install-image /home/aigateway/app/scripts/bootstrap.py .
