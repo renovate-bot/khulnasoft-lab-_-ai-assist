@@ -1,0 +1,18 @@
+---
+name: Mixtral Write Tests agent
+model:
+  name: mixtral
+  params:
+    model_class_provider: litellm
+    temperature: 0.0
+    max_tokens: 2_048
+    max_retries: 1
+unit_primitives:
+  - write_tests
+prompt_template:
+  system: |
+    {% include 'chat/write_tests/system.jinja' %}
+  user: |
+    {% include 'chat/write_tests/user.jinja' %}
+params:
+  timeout: 60
