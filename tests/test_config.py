@@ -14,6 +14,7 @@ from ai_gateway.config import (
     ConfigInstrumentator,
     ConfigLogging,
     ConfigModelConcurrency,
+    ConfigModelEndpoints,
     ConfigSnowplow,
     ConfigVertexSearch,
     ConfigVertexTextModel,
@@ -372,6 +373,41 @@ def test_config_vertex_text_model(values: dict, expected: ConfigVertexTextModel)
         config = Config(_env_file=None)  # type: ignore[call-arg]
 
         assert config.vertex_text_model == expected
+
+
+@pytest.mark.parametrize(
+    ("values", "expected"),
+    [
+        ({}, ConfigModelEndpoints()),
+        (
+            {
+                "AIGW_MODEL_ENDPOINTS__FIREWORKS_REGIONAL_ENDPOINTS": '{"location": {"endpoint": "endpoint"}}',
+                "AIGW_GOOGLE_CLOUD_PLATFORM__LOCATION": "location",
+                "RUNWAY_REGION": "test-case1",  # ignored
+            },
+            ConfigModelEndpoints(
+                fireworks_regional_endpoints={"location": {"endpoint": "endpoint"}},
+                fireworks_current_region_endpoint={"endpoint": "endpoint"},
+            ),
+        ),
+        (
+            {
+                "AIGW_MODEL_ENDPOINTS__FIREWORKS_REGIONAL_ENDPOINTS": '{"us": {"endpoint": "endpoint"}}',
+                "AIGW_GOOGLE_CLOUD_PLATFORM__LOCATION": "unknown",
+                "RUNWAY_REGION": "test-case1",  # ignored
+            },
+            ConfigModelEndpoints(
+                fireworks_regional_endpoints={"us": {"endpoint": "endpoint"}},
+                fireworks_current_region_endpoint={"endpoint": "endpoint"},
+            ),
+        ),
+    ],
+)
+def test_config_model_endpoints(values: dict, expected: ConfigVertexTextModel):
+    with mock.patch.dict(os.environ, values, clear=True):
+        config = Config(_env_file=None)  # type: ignore[call-arg]
+
+        assert config.model_endpoints == expected
 
 
 @pytest.mark.parametrize(

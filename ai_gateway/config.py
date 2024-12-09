@@ -109,12 +109,6 @@ class ConfigModelKeys(BaseModel):
     fireworks_api_key: Optional[str] = None
 
 
-class ConfigModelEndpoints(BaseModel):
-    fireworks_completion_endpoint: Optional[str] = None
-    fireworks_completion_identifier: Optional[str] = None
-    fireworks_regional_endpoints: Optional[dict[str, dict[str, str]]] = {}
-
-
 def _build_location(default: str = "us-central1") -> str:
     """
     Reads the GCP region from the environment.
@@ -133,6 +127,25 @@ def _build_endpoint() -> str:
     To support other Cloud Run regions, this code will need to be updated to map to a nearby Vertex AI region instead.
     """
     return f"{_build_location()}-aiplatform.googleapis.com"
+
+
+class ConfigModelEndpoints(BaseModel):
+    def update_fireworks_current_region_endpoint(self, location):
+        regional_endpoints = self.fireworks_regional_endpoints
+
+        matching_regions = [
+            region for region in regional_endpoints if location.startswith(region)
+        ]
+        # Default to us if configuration not found for this region
+        selected_region = matching_regions[0] if matching_regions else "us"
+        self.fireworks_current_region_endpoint = regional_endpoints.get(
+            selected_region, {}
+        )
+
+    fireworks_completion_endpoint: Optional[str] = None
+    fireworks_completion_identifier: Optional[str] = None
+    fireworks_regional_endpoints: Optional[dict[str, dict[str, str]]] = {}
+    fireworks_current_region_endpoint: Optional[dict[str, str]] = {}
 
 
 class ConfigGoogleCloudPlatform(BaseModel):
@@ -241,6 +254,10 @@ class Config(BaseSettings):
         self._apply_global_configs(
             parent=self.google_cloud_platform,
             children=[self.vertex_text_model, self.vertex_search],
+        )
+
+        self.model_endpoints.update_fireworks_current_region_endpoint(
+            self.google_cloud_platform.location
         )
 
     def _apply_global_configs(self, parent: BaseModel, children: list[BaseModel]):

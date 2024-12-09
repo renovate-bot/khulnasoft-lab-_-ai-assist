@@ -173,12 +173,10 @@ class TestLiteLlmChatModel:
                 True,
                 {"fireworks_api_key": "stubbed-api-key"},
                 {
-                    "fireworks_regional_endpoints": {
-                        "us": {
-                            "endpoint": "https://fireworks.endpoint",
-                            "identifier": "provider/some-cool-model#deployment_id",
-                        }
-                    },
+                    "fireworks_current_region_endpoint": {
+                        "endpoint": "https://fireworks.endpoint",
+                        "identifier": "provider/some-cool-model#deployment_id",
+                    }
                 },
                 "fireworks_ai/qwen2p5-coder-7b",
                 "stubbed-api-key",
@@ -413,11 +411,9 @@ class TestLiteLlmTextGenModel:
     @pytest.fixture
     def provider_endpoints(self):
         return {
-            "fireworks_regional_endpoints": {
-                "us": {
-                    "endpoint": "https://fireworks.endpoint",
-                    "identifier": "provider/some-cool-model#deployment_id",
-                }
+            "fireworks_current_region_endpoint": {
+                "endpoint": "https://fireworks.endpoint",
+                "identifier": "provider/some-cool-model#deployment_id",
             }
         }
 
@@ -522,11 +518,9 @@ class TestLiteLlmTextGenModel:
                 True,
                 {"fireworks_api_key": "stubbed-api-key"},
                 {
-                    "fireworks_regional_endpoints": {
-                        "us": {
-                            "endpoint": "https://fireworks.endpoint",
-                            "identifier": "provider/some-cool-model#deployment_id",
-                        }
+                    "fireworks_current_region_endpoint": {
+                        "endpoint": "https://fireworks.endpoint",
+                        "identifier": "provider/some-cool-model#deployment_id",
                     }
                 },
                 "text-completion-fireworks_ai/qwen2p5-coder-7b",
@@ -612,11 +606,13 @@ class TestLiteLlmTextGenModel:
                     provider=provider,
                     name=model_name,
                     provider_keys={"fireworks_api_key": "stubbed-api-key"},
-                    provider_endpoints={"fireworks_regional_endpoints": {"us": {}}},
+                    provider_endpoints={
+                        "fireworks_current_region_endpoint": {"invalid": "config"}
+                    },
                 )
             assert (
                 str(exc.value)
-                == "Fireworks endpoint or identifier missing in region config for us."
+                == "Fireworks endpoint or identifier missing in region config."
             )
 
             with pytest.raises(ValueError) as exc:
@@ -640,6 +636,7 @@ class TestLiteLlmTextGenModel:
             "model_completion_args",
             "prefix",
             "suffix",
+            "expect_async_client",
         ),
         [
             (
@@ -657,6 +654,7 @@ class TestLiteLlmTextGenModel:
                 },
                 "def hello_world():",
                 "def goodbye_world():",
+                False,
             ),
             (
                 "codestral",
@@ -669,6 +667,7 @@ class TestLiteLlmTextGenModel:
                 },
                 "def hello_world():",
                 "def goodbye_world():",
+                False,
             ),
             (
                 "qwen2p5-coder-7b",
@@ -701,6 +700,7 @@ class TestLiteLlmTextGenModel:
                 },
                 "def hello_world():",
                 "def goodbye_world():",
+                True,
             ),
             (
                 "qwen2p5-coder-7b",
@@ -733,6 +733,7 @@ class TestLiteLlmTextGenModel:
                 },
                 "def hello_world():",
                 None,
+                False,
             ),
         ],
     )
@@ -746,10 +747,13 @@ class TestLiteLlmTextGenModel:
         api_key,
         provider_keys,
         provider_endpoints,
+        expect_async_client,
         mock_litellm_acompletion: Mock,
         prefix,
         suffix,
     ):
+        async_fireworks_client = Mock() if expect_async_client else None
+
         litellm_model = LiteLlmTextGenModel.from_model_name(
             name=model_name,
             provider=provider,
@@ -758,6 +762,7 @@ class TestLiteLlmTextGenModel:
             custom_models_enabled=custom_models_enabled,
             provider_keys=provider_keys,
             provider_endpoints=provider_endpoints,
+            async_fireworks_client=async_fireworks_client,
         )
 
         output = await litellm_model.generate(
@@ -779,6 +784,11 @@ class TestLiteLlmTextGenModel:
             "messages": [{"content": prefix, "role": Role.USER}],
         }
         expected_completion_args.update(model_completion_args)
+
+        if provider == KindModelProvider.FIREWORKS:
+            expected_completion_args["client"] = (
+                async_fireworks_client if expect_async_client else None
+            )
 
         mock_litellm_acompletion.assert_called_with(**expected_completion_args)
 
