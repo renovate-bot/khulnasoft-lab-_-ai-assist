@@ -162,6 +162,11 @@ class ConfigVertexSearch(ConfigGoogleCloudPlatform):
     fallback_datastore_version: str = ""
 
 
+class ConfigAmazonQ(BaseModel):
+    region: str = ""
+    endpoint_url: str = ""
+
+
 class ConfigFeatureFlags(BaseModel):
     disallowed_flags: dict[str, Set[str]] = {}
 
@@ -220,6 +225,9 @@ class Config(BaseSettings):
     google_cloud_platform: Annotated[
         ConfigGoogleCloudPlatform, Field(default_factory=ConfigGoogleCloudPlatform)
     ] = ConfigGoogleCloudPlatform()
+    amazon_q: Annotated[ConfigAmazonQ, Field(default_factory=ConfigAmazonQ)] = (
+        ConfigAmazonQ()
+    )
     custom_models: Annotated[
         ConfigCustomModels, Field(default_factory=ConfigCustomModels)
     ] = ConfigCustomModels()

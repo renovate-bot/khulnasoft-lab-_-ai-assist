@@ -129,3 +129,12 @@ async def get_glgo_authority(
     glgo_authority=Provide[ContainerApplication.self_signed_jwt.glgo_authority],
 ):
     return glgo_authority
+
+
+@inject
+async def get_amazon_q_client_factory(
+    amazon_q_client_factory=Provide[
+        ContainerApplication.integrations.amazon_q_client_factory
+    ],
+):
+    return amazon_q_client_factory

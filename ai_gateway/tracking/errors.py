@@ -1,5 +1,5 @@
 import traceback
-from typing import Dict, Optional
+from typing import Any, Dict, Optional
 
 import structlog
 from asgi_correlation_id.context import correlation_id
@@ -11,7 +11,7 @@ __all__ = [
 log = structlog.stdlib.get_logger("exceptions")
 
 
-def log_exception(ex: Exception, extra: Optional[Dict] = None) -> None:
+def log_exception(ex: Exception, extra: Optional[Dict] = None, **kwargs: Any) -> None:
     """Log the exception with the correlation ID.
 
     Args:
@@ -33,4 +33,5 @@ def log_exception(ex: Exception, extra: Optional[Dict] = None) -> None:
         backtrace=traceback.format_exc(),
         correlation_id=correlation_id.get(),
         extra=extra,
+        **kwargs,
     )

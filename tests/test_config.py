@@ -5,6 +5,7 @@ import pytest
 
 from ai_gateway.config import (
     Config,
+    ConfigAmazonQ,
     ConfigAuth,
     ConfigCustomModels,
     ConfigDefaultPrompts,
@@ -440,6 +441,21 @@ def test_config_vertex_search(values: dict, expected: ConfigVertexSearch):
         config = Config(_env_file=None)  # type: ignore[call-arg]
 
         assert config.vertex_search == expected
+
+
+def test_amazon_q():
+    values = {
+        "AIGW_AMAZON_Q__REGION": "us-west-2",
+        "AIGW_AMAZON_Q__ENDPOINT_URL": "https://us-west-2.gamma.integration.qdev.ai.aws.dev",
+    }
+
+    with mock.patch.dict(os.environ, values, clear=True):
+        config = Config(_env_file=None)  # type: ignore[call-arg]
+
+        assert config.amazon_q == ConfigAmazonQ(
+            region="us-west-2",
+            endpoint_url="https://us-west-2.gamma.integration.qdev.ai.aws.dev",
+        )
 
 
 @pytest.mark.parametrize(
