@@ -1,3 +1,4 @@
+from enum import StrEnum
 from functools import wraps
 from typing import Optional
 
@@ -7,9 +8,16 @@ from fastapi import HTTPException
 from ai_gateway.tracking import log_exception
 
 __all__ = [
+    "AccessDeniedExceptionReason",
     "AWSException",
     "raise_aws_errors",
 ]
+
+
+class AccessDeniedExceptionReason(StrEnum):
+    GITLAB_EXPIRED_IDENTITY = "gitLabExpiredIdentity"
+    GITLAB_INVALID_IDENTITY = "gitLabInvalidIdentity"
+    OTHER = "other"
 
 
 class AWSException(Exception):

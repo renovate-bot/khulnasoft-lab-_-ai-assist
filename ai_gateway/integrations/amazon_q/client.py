@@ -1,10 +1,15 @@
 import boto3
+from botocore.exceptions import ClientError
 from fastapi import HTTPException, status
 from q_developer_boto3 import boto3 as q_boto3
 
 from ai_gateway.api.auth_utils import StarletteUser
 from ai_gateway.auth.glgo import GlgoAuthority
-from ai_gateway.integrations.amazon_q.errors import AWSException, raise_aws_errors
+from ai_gateway.integrations.amazon_q.errors import (
+    AccessDeniedExceptionReason,
+    AWSException,
+    raise_aws_errors,
+)
 from ai_gateway.structured_logging import get_request_logger
 from ai_gateway.tracking import log_exception
 
@@ -122,5 +127,39 @@ class AmazonQClient:
                 raise ex
 
     @raise_aws_errors
+    def send_event(self, event_request):
+        payload = event_request.payload.model_dump_json(exclude_none=True)
+
+        try:
+            self._send_event(payload)
+        except ClientError as ex:
+            if ex.__class__.__name__ == "AccessDeniedException":
+                return self._retry_send_event(ex, event_request.code, payload)
+
+            raise
+
+    @raise_aws_errors
     def _create_o_auth_app_connection(self, **params):
         self.client.create_o_auth_app_connection(**params)
+
+    def _send_event(self, payload):
+        self.client.send_event(
+            providerId="GITLAB",
+            eventId="Quick Action",
+            eventVersion="1.0",
+            event=payload,
+        )
+
+    def _retry_send_event(self, error, code, payload):
+        match str(error.response.get("reason")):
+            case AccessDeniedExceptionReason.GITLAB_EXPIRED_IDENTITY:
+                self.client.create_auth_grant(code)
+            case AccessDeniedExceptionReason.GITLAB_INVALID_IDENTITY:
+                self.client.update_auth_grant(code)
+            case _:
+                return HTTPException(
+                    status_code=status.HTTP_403_FORBIDDEN,
+                    detail=str(error),
+                )
+
+        return self._send_event(payload)
