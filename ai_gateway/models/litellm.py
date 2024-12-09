@@ -3,6 +3,7 @@ from typing import AsyncIterator, Callable, Optional, Sequence, Union
 
 from litellm import CustomStreamWrapper, ModelResponse, acompletion
 from litellm.exceptions import APIConnectionError, InternalServerError
+from openai import AsyncOpenAI
 
 from ai_gateway.config import Config
 from ai_gateway.models.base import (
@@ -158,11 +159,14 @@ class LiteLlmChatModel(ChatModelBase):
         provider: Optional[KindModelProvider] = KindModelProvider.LITELLM,
         metadata: Optional[ModelMetadata] = None,
         disable_streaming: bool = False,
+        async_fireworks_client: Optional[AsyncOpenAI] = None,
     ):
         self._metadata = _init_litellm_model_metadata(metadata, model_name, provider)
+        self.provider = provider
         self.model_name = model_name
         self.stop_tokens = MODEL_STOP_TOKENS.get(model_name, [])
         self.disable_streaming = disable_streaming
+        self.async_fireworks_client = async_fireworks_client
 
     @property
     def metadata(self) -> ModelMetadata:
@@ -184,17 +188,22 @@ class LiteLlmChatModel(ChatModelBase):
 
         litellm_messages = [message.model_dump(mode="json") for message in messages]
 
+        completion_args = {
+            "messages": litellm_messages,
+            "stream": should_stream,
+            "temperature": temperature,
+            "top_p": top_p,
+            "max_tokens": max_output_tokens,
+            "timeout": 30.0,
+            "stop": self.stop_tokens,
+            **self.model_metadata_to_params(),
+        }
+
+        if self.provider == KindModelProvider.FIREWORKS:
+            completion_args["client"] = self.async_fireworks_client
+
         with self.instrumentator.watch(stream=stream) as watcher:
-            suggestion = await acompletion(
-                messages=litellm_messages,
-                stream=should_stream,
-                temperature=temperature,
-                top_p=top_p,
-                max_tokens=max_output_tokens,
-                timeout=30.0,
-                stop=self.stop_tokens,
-                **self.model_metadata_to_params(),
-            )
+            suggestion = await acompletion(**completion_args)
 
             if should_stream:
                 return self._handle_stream(
@@ -247,6 +256,7 @@ class LiteLlmChatModel(ChatModelBase):
         provider: Optional[KindModelProvider] = KindModelProvider.LITELLM,
         provider_keys: Optional[dict] = None,
         provider_endpoints: Optional[dict] = None,
+        async_fireworks_client: Optional[AsyncOpenAI] = None,
     ):
         if not custom_models_enabled and provider == KindModelProvider.LITELLM:
             if endpoint is not None or api_key is not None:
@@ -274,7 +284,13 @@ class LiteLlmChatModel(ChatModelBase):
             identifier=identifier,
         )
 
-        return cls(kind_model, provider, model_metadata, disable_streaming)
+        return cls(
+            kind_model,
+            provider,
+            model_metadata,
+            disable_streaming,
+            async_fireworks_client=async_fireworks_client,
+        )
 
 
 class LiteLlmTextGenModel(TextGenModelBase):
@@ -294,6 +310,7 @@ class LiteLlmTextGenModel(TextGenModelBase):
         provider: Optional[KindModelProvider] = KindModelProvider.LITELLM,
         metadata: Optional[ModelMetadata] = None,
         disable_streaming: bool = False,
+        async_fireworks_client: Optional[AsyncOpenAI] = None,
     ):
         self.provider = provider
         self.model_name = model_name
@@ -301,6 +318,7 @@ class LiteLlmTextGenModel(TextGenModelBase):
         self.disable_streaming = disable_streaming
 
         self.stop_tokens = MODEL_STOP_TOKENS.get(model_name, [])
+        self.async_fireworks_client = async_fireworks_client
 
     @property
     def metadata(self) -> ModelMetadata:
@@ -420,6 +438,9 @@ class LiteLlmTextGenModel(TextGenModelBase):
                 "x-session-affinity": snowplow_event_context.gitlab_global_user_id
             }
 
+        if self.provider == KindModelProvider.FIREWORKS:
+            completion_args["client"] = self.async_fireworks_client
+
         return await acompletion(**completion_args)
 
     def _completion_type(self):
@@ -491,6 +512,7 @@ class LiteLlmTextGenModel(TextGenModelBase):
         provider: Optional[KindModelProvider] = KindModelProvider.LITELLM,
         provider_keys: Optional[dict] = None,
         provider_endpoints: Optional[dict] = None,
+        async_fireworks_client: Optional[AsyncOpenAI] = None,
     ):
         if endpoint is not None or api_key is not None:
             if not custom_models_enabled and provider == KindModelProvider.LITELLM:
@@ -533,6 +555,7 @@ class LiteLlmTextGenModel(TextGenModelBase):
             provider=provider,
             metadata=metadata,
             disable_streaming=disable_streaming,
+            async_fireworks_client=async_fireworks_client,
         )
 
 
@@ -548,27 +571,17 @@ def _get_fireworks_config(provider_endpoints: dict) -> tuple[str, str]:
     Raises:
         ValueError: If required configuration is missing
     """
-    regional_endpoints = provider_endpoints.get("fireworks_regional_endpoints", {})
-    if not regional_endpoints:
+    # Get endpoint configuration for selected region
+    region_config = provider_endpoints.get("fireworks_current_region_endpoint", {})
+
+    if not region_config:
         raise ValueError("Fireworks regional endpoints configuration is missing.")
 
-    # Get region based on GCP location
-    current_location = Config().google_cloud_platform.location
-    matching_regions = [
-        region for region in regional_endpoints if current_location.startswith(region)
-    ]
-    # Default to us if configuration not found for this region
-    selected_region = matching_regions[0] if matching_regions else "us"
-
-    # Get endpoint configuration for selected region
-    region_config = regional_endpoints.get(selected_region, {})
     endpoint = region_config.get("endpoint")
     identifier = region_config.get("identifier")
 
     if not endpoint or not identifier:
-        raise ValueError(
-            f"Fireworks endpoint or identifier missing in region config for {selected_region}."
-        )
+        raise ValueError("Fireworks endpoint or identifier missing in region config.")
 
     return endpoint, identifier
 

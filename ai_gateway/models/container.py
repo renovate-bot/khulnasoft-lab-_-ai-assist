@@ -1,6 +1,7 @@
 import httpx
 from dependency_injector import containers, providers
 from google.cloud.aiplatform.gapic import PredictionServiceAsyncClient
+from openai import AsyncOpenAI
 
 from ai_gateway.config import ConfigModelConcurrency
 from ai_gateway.models import mock
@@ -27,8 +28,22 @@ def _init_vertex_grpc_client(
 ) -> PredictionServiceAsyncClient | None:
     if mock_model_responses or custom_models_enabled:
         return None
-
     return grpc_connect_vertex({"api_endpoint": endpoint})
+
+
+def _init_async_fireworks_client(
+    model_keys: dict, model_endpoints: dict
+) -> AsyncOpenAI | None:
+    api_key = model_keys.get("fireworks_api_key")
+    base_url = model_endpoints.get("fireworks_current_region_endpoint", {}).get(
+        "endpoint", {}
+    )
+    if api_key and base_url:
+        return AsyncOpenAI(
+            api_key=api_key, base_url=base_url, http_client=httpx.AsyncClient()
+        )
+
+    return None
 
 
 def _init_anthropic_proxy_client(
@@ -71,6 +86,12 @@ class ContainerModels(containers.DeclarativeContainer):
         endpoint=config.vertex_text_model.endpoint,
         mock_model_responses=config.mock_model_responses,
         custom_models_enabled=config.custom_models.enabled,
+    )
+
+    async_fireworks_client = providers.Singleton(
+        _init_async_fireworks_client,
+        model_keys=config.model_keys,
+        model_endpoints=config.model_endpoints,
     )
 
     http_client_anthropic = providers.Singleton(
@@ -147,6 +168,7 @@ class ContainerModels(containers.DeclarativeContainer):
             disable_streaming=config.custom_models.disable_streaming,
             provider_keys=config.model_keys,
             provider_endpoints=config.model_endpoints,
+            async_fireworks_client=async_fireworks_client,
         ),
         mocked=providers.Factory(mock.ChatModel),
     )
@@ -159,6 +181,7 @@ class ContainerModels(containers.DeclarativeContainer):
             disable_streaming=config.custom_models.disable_streaming,
             provider_keys=config.model_keys,
             provider_endpoints=config.model_endpoints,
+            async_fireworks_client=async_fireworks_client,
         ),
         mocked=providers.Factory(mock.ChatModel),
     )

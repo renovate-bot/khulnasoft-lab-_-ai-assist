@@ -87,6 +87,35 @@ def test_anthropic_proxy_client(args, expected_init):
     [
         (
             {
+                "model_keys": {"fireworks_api_key": "test_fireworks_key"},
+                "model_endpoints": {
+                    "fireworks_current_region_endpoint": {
+                        "endpoint": "https://test.fireworks.ai/"
+                    }
+                },
+            },
+            True,
+        ),
+        ({}, False),
+    ],
+)
+def _init_async_fireworks_client(args, expected_init):
+    with patch("AsyncOpenAI") as mock_openai_client:
+        _init_async_fireworks_client(**args)
+
+        if expected_init:
+            mock_openai_client.assert_called_once_with(
+                api_key="test_fireworks_key", base_url="https://test.fireworks.ai/"
+            )
+        else:
+            mock_openai_client.assert_not_called()
+
+
+@pytest.mark.parametrize(
+    ("args", "expected_init"),
+    [
+        (
+            {
                 "mock_model_responses": False,
                 "endpoint": "us-central1-aiplatform.googleapis.com",
             },
