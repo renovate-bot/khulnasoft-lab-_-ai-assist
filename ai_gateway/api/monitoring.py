@@ -6,13 +6,23 @@ from fastapi import APIRouter, Depends
 from fastapi_health import health
 
 from ai_gateway.async_dependency_resolver import (
+    get_code_suggestions_completions_litellm_factory_provider,
     get_code_suggestions_completions_vertex_legacy_provider,
     get_code_suggestions_generations_anthropic_chat_factory_provider,
 )
-from ai_gateway.code_suggestions import CodeCompletionsLegacy, CodeGenerations
+from ai_gateway.code_suggestions import (
+    CodeCompletions,
+    CodeCompletionsLegacy,
+    CodeGenerations,
+)
 from ai_gateway.code_suggestions.processing import MetadataPromptBuilder, Prompt
 from ai_gateway.code_suggestions.processing.typing import MetadataCodeContent
-from ai_gateway.models import KindAnthropicModel, KindModelProvider, Message
+from ai_gateway.models import (
+    KindAnthropicModel,
+    KindLiteLlmModel,
+    KindModelProvider,
+    Message,
+)
 
 __all__ = [
     "router",
@@ -107,6 +117,25 @@ async def validate_anthropic_available(
     return True
 
 
+@single_validation(KindModelProvider.FIREWORKS)
+async def validate_fireworks_available(
+    completions_litellm_factory: Factory[CodeCompletions] = Depends(
+        get_code_suggestions_completions_litellm_factory_provider
+    ),
+) -> bool:
+    code_completions = completions_litellm_factory(
+        model__name=KindLiteLlmModel.QWEN_2_5,
+        model__provider=KindModelProvider.FIREWORKS,
+    )
+    await code_completions.execute(
+        prefix="def hello_world():",
+        suffix="",
+        file_name="monitoring.py",
+        editor_lang="python",
+    )
+    return True
+
+
 router.add_api_route("/healthz", health([]))
 router.add_api_route(
     "/ready",
@@ -114,6 +143,7 @@ router.add_api_route(
         [
             validate_vertex_available,
             validate_anthropic_available,
+            validate_fireworks_available,
         ]
     ),
 )
