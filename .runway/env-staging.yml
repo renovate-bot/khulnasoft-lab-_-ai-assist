@@ -16,4 +16,4 @@ AIGW_GOOGLE_CLOUD_PROFILER__PERIODS_MS: "10"
 AIGW_INSTRUMENTATOR__THREAD_MONITORING_ENABLED: "True"
 AIGW_INSTRUMENTATOR__THREAD_MONITORING_INTERVAL: 60
 CLOUD_CONNECTOR_SERVICE_NAME: "gitlab-ai-gateway"
-AIGW_MODEL_ENDPOINTS__FIREWORKS_REGIONAL_ENDPOINTS: '{ "us": { "endpoint": "https://gitlab-e1d92914.us-virginia-1.direct.fireworks.ai/v1", "identifier": "accounts/fireworks/models/qwen2p5-coder-7b#accounts/gitlab/deployments/e1d92914"}, "europe": { "endpoint": "https://gitlab-a67f9682.eu-frankfurt-1.direct.fireworks.ai/v1", "identifier": "accounts/fireworks/models/qwen2p5-coder-7b#accounts/gitlab/deployments/a67f9682"}, "asia": { "endpoint": "https://gitlab-84f6d9f4.tokyo.direct.fireworks.ai/v1", "identifier": "accounts/fireworks/models/qwen2p5-coder-7b#accounts/gitlab/deployments/84f6d9f4" }}'
+AIGW_MODEL_ENDPOINTS__FIREWORKS_REGIONAL_ENDPOINTS: '{ "us": { "endpoint": "https://gitlab-ac589058.us-virginia-1.direct.fireworks.ai/v1", "identifier": "accounts/fireworks/models/qwen2p5-coder-7b#accounts/gitlab/deployments/ac589058"} }'
