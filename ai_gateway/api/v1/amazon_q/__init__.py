@@ -1,6 +1,6 @@
 from fastapi import APIRouter
 
-from ai_gateway.api.v1.amazon_q import application
+from ai_gateway.api.v1.amazon_q import application, events
 
 __all__ = [
     "router",
@@ -8,3 +8,4 @@ __all__ = [
 
 router = APIRouter()
 router.include_router(application.router, prefix="/oauth")
+router.include_router(events.router)

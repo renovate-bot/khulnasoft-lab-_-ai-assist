@@ -1,8 +1,10 @@
+from typing import Any, Optional
 from unittest.mock import MagicMock, patch
 
 import pytest
 from botocore.exceptions import ClientError
 from fastapi import HTTPException, status
+from pydantic import BaseModel
 
 from ai_gateway.api.auth_utils import StarletteUser
 from ai_gateway.auth.glgo import GlgoAuthority
@@ -199,6 +201,18 @@ class TestAmazonQClient:
         return ApplicationRequest()
 
     @pytest.fixture
+    def mock_event_request(self) -> Any:
+        class Payload(BaseModel):
+            first_field: str = "test field"
+            second_field: int = 1
+            third_field: Optional[str] = None
+
+        class EventRequest:
+            payload = Payload()
+
+        return EventRequest()
+
+    @pytest.fixture
     def mock_q_client(self):
         with patch(
             "ai_gateway.integrations.amazon_q.client.q_boto3.client"
@@ -279,3 +293,23 @@ class TestAmazonQClient:
 
         mock_q_client.create_o_auth_app_connection.assert_called_once()
         assert not mock_q_client.update_o_auth_app_connection.called
+
+    def test_send_event_success(self, q_client, mock_q_client, mock_event_request):
+        q_client.send_event(mock_event_request)
+        mock_q_client.send_event.assert_called_once_with(
+            providerId="GITLAB",
+            eventId="Quick Action",
+            eventVersion="1.0",
+            event='{"first_field":"test field","second_field":1}',
+        )
+
+    def test_send_event_failed(self, q_client, mock_q_client, mock_event_request):
+        error_response = {
+            "Error": {"Code": "ValidationException", "Message": "invalid message"}
+        }
+        mock_q_client.send_event.side_effect = ClientError(error_response, "send_event")
+
+        with pytest.raises(AWSException):
+            q_client.send_event(mock_event_request)
+
+        mock_q_client.send_event.assert_called_once()
