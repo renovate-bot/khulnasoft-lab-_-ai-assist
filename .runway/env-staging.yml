@@ -3,6 +3,7 @@ AIGW_ENVIRONMENT: "staging"
 AIGW_GITLAB_URL: "https://staging.gitlab.com"
 AIGW_GITLAB_API_URL: "https://staging.gitlab.com/api/v4/"
 AIGW_CUSTOMER_PORTAL_URL: "https://customers.staging.gitlab.com"
+AIGW_GLGO_BASE_URL: "https://auth.token.gitlab.com"
 AIGW_GOOGLE_CLOUD_PLATFORM__PROJECT: "gitlab-ai-framework-stage"
 AIGW_VERTEX_SEARCH__FALLBACK_DATASTORE_VERSION: "17.0"
 AIGW_SNOWPLOW__ENABLED: "false"
@@ -18,3 +19,5 @@ AIGW_INSTRUMENTATOR__THREAD_MONITORING_INTERVAL: 60
 AIGW_DEFAULT_PROMPTS: '{"code_suggestions/generations": "vertex", "chat/react": "vertex"}'
 CLOUD_CONNECTOR_SERVICE_NAME: "gitlab-ai-gateway"
 AIGW_MODEL_ENDPOINTS__FIREWORKS_REGIONAL_ENDPOINTS: '{ "us": { "endpoint": "https://gitlab-ac589058.us-virginia-1.direct.fireworks.ai/v1", "identifier": "accounts/fireworks/models/qwen2p5-coder-7b#accounts/gitlab/deployments/ac589058"} }'
+AIGW_AMAZON_Q__REGION: "us-east-1"
+AIGW_AMAZON_Q__ENDPOINT_URL: "https://us-east-1.prod.integration.qdev.ai.aws.dev"

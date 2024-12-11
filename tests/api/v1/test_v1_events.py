@@ -153,7 +153,7 @@ def auth_user(self):
     return CloudConnectorUser(
         authenticated=True,
         global_user_id="1",
-        claims=UserClaims(scopes=[GitLabUnitPrimitive.AGENT_QUICK_ACTIONS]),
+        claims=UserClaims(scopes=[GitLabUnitPrimitive.AMAZON_Q_INTEGRATION]),
     )
 
 
@@ -191,7 +191,7 @@ class TestEvents:
         return CloudConnectorUser(
             authenticated=True,
             global_user_id="1",
-            claims=UserClaims(scopes=[GitLabUnitPrimitive.AGENT_QUICK_ACTIONS]),
+            claims=UserClaims(scopes=[GitLabUnitPrimitive.AMAZON_Q_INTEGRATION]),
         )
 
     def test_failed_aws_creds(

@@ -3,6 +3,7 @@ AIGW_ENVIRONMENT: "production"
 AIGW_GITLAB_URL: "https://gitlab.com"
 AIGW_GITLAB_API_URL: "https://gitlab.com/api/v4/"
 AIGW_CUSTOMER_PORTAL_URL: "https://customers.gitlab.com"
+AIGW_GLGO_BASE_URL: "https://glgo.staging.runway.gitlab.net"
 AIGW_GOOGLE_CLOUD_PLATFORM__PROJECT: "gitlab-ai-framework-prod"
 AIGW_VERTEX_SEARCH__FALLBACK_DATASTORE_VERSION: "17.0"
 AIGW_SNOWPLOW__ENABLED: "true"
@@ -24,3 +25,5 @@ AIGW_INSTRUMENTATOR__THREAD_MONITORING_INTERVAL: 60
 AIGW_FEATURE_FLAGS__DISALLOWED_FLAGS: '{"self-managed": ["expanded_ai_logging"]}'
 CLOUD_CONNECTOR_SERVICE_NAME: "gitlab-ai-gateway"
 AIGW_MODEL_ENDPOINTS__FIREWORKS_REGIONAL_ENDPOINTS: '{ "us": { "endpoint": "https://gitlab-e1d92914.us-virginia-1.direct.fireworks.ai/v1", "identifier": "accounts/fireworks/models/qwen2p5-coder-7b#accounts/gitlab/deployments/e1d92914"}, "europe": { "endpoint": "https://gitlab-a67f9682.eu-frankfurt-1.direct.fireworks.ai/v1", "identifier": "accounts/fireworks/models/qwen2p5-coder-7b#accounts/gitlab/deployments/a67f9682"}, "asia": { "endpoint": "https://gitlab-84f6d9f4.tokyo.direct.fireworks.ai/v1", "identifier": "accounts/fireworks/models/qwen2p5-coder-7b#accounts/gitlab/deployments/84f6d9f4" }}'
+AIGW_AMAZON_Q__REGION: "us-east-1"
+AIGW_AMAZON_Q__ENDPOINT_URL: "https://us-east-1.prod.integration.qdev.ai.aws.dev"
