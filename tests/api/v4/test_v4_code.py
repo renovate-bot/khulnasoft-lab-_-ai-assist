@@ -81,6 +81,8 @@ class TestEditorContentCompletionStream:
         }
 
         assert response.status_code == 200
+        assert response.headers["content-type"] == "text/event-stream; charset=utf-8"
+        assert response.headers["X-Streaming-Format"] == "sse"
 
         _assert_stream_sse_responses(
             response.text, mock_suggestions_output_text, expected_model_metadata
@@ -163,6 +165,8 @@ class TestEditorContentGenerationStream:
         )
 
         assert response.status_code == 200
+        assert response.headers["content-type"] == "text/event-stream; charset=utf-8"
+        assert response.headers["X-Streaming-Format"] == "sse"
 
         _assert_stream_sse_responses(
             response.text, mock_suggestions_output_text, expected_model_metadata

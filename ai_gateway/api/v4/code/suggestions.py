@@ -77,7 +77,9 @@ async def handle_stream_sse(
 
         yield _end_message()
 
-    return EventSourceResponse(_stream_response_generator())
+    return EventSourceResponse(
+        _stream_response_generator(), headers={"X-Streaming-Format": "sse"}
+    )
 
 
 @router.post("/suggestions")
