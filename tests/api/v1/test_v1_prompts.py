@@ -2,6 +2,7 @@ from typing import Any, List, Optional, Type
 from unittest.mock import patch
 
 import pytest
+from fastapi import HTTPException
 from gitlab_cloud_connector import CloudConnectorUser, GitLabUnitPrimitive, UserClaims
 from langchain_core.callbacks import CallbackManagerForLLMRun
 from langchain_core.language_models.chat_models import SimpleChatModel
@@ -227,3 +228,33 @@ class TestUnauthorizedScopes:
 
         assert response.status_code == 403
         assert response.json() == {"detail": "Unauthorized to access 'test'"}
+
+
+class TestMisdirectedRequest:
+    @pytest.fixture
+    def mock_model_misdirection(self):
+        with patch("ai_gateway.prompts.base.Prompt.ainvoke") as mock:
+            mock.side_effect = HTTPException(
+                status_code=401, detail="Invalid credentials"
+            )
+
+            yield mock
+
+    def test_misdirected_request(
+        self, mock_registry_get, mock_model_misdirection, mock_client, model_metadata
+    ):
+        response = mock_client.post(
+            "/prompts/test",
+            headers={
+                "Authorization": "Bearer 12345",
+                "X-Gitlab-Authentication-Type": "oidc",
+            },
+            json={
+                "inputs": {"name": "John", "age": 20},
+                "model_metadata": model_metadata
+                and model_metadata.model_dump(mode="json"),
+            },
+        )
+        mock_registry_get.assert_called_with("test", model_metadata)
+        assert response.status_code == 421
+        assert response.json() == {"detail": "401: Unauthorized"}

@@ -1,3 +1,4 @@
+from http.client import responses
 from typing import Annotated, Any, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Request, status
@@ -92,3 +93,15 @@ async def prompt(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
             detail=str(e),
         )
+    except Exception as e:
+        if hasattr(e, "status_code"):
+            status_code = e.status_code
+            err_status = f"{status_code}: {responses[status_code]}"
+            raise HTTPException(
+                status_code=status.HTTP_421_MISDIRECTED_REQUEST,
+                # Misdirected Request https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/421
+                # To signal to the client the model has produced and error
+                # and not the AI Gateway
+                detail=err_status,
+            )
+        raise e
