@@ -1,0 +1,18 @@
+---
+name: Mistral 7B
+model:
+  name: mistral
+  params:
+    model_class_provider: litellm
+    temperature: 0.0
+    max_tokens: 12
+    max_retries: 1
+unit_primitives:
+  - complete_code
+prompt_template:
+  system: |
+    {% include 'model_configuration/check/system.jinja' %}
+  user: |
+    {% include 'model_configuration/check/system.jinja' %}
+params:
+  timeout: 60
