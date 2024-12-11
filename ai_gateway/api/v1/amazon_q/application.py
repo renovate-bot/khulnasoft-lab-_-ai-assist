@@ -33,14 +33,14 @@ async def oauth_create_application(
         get_amazon_q_client_factory
     ),
 ):
-    if not current_user.can(GitLabUnitPrimitive.AGENT_QUICK_ACTIONS):
+    if not current_user.can(GitLabUnitPrimitive.AMAZON_Q_INTEGRATION):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Unauthorized to perform action",
         )
 
     internal_event_client.track_event(
-        f"request_{GitLabUnitPrimitive.AGENT_QUICK_ACTIONS}",
+        f"request_{GitLabUnitPrimitive.AMAZON_Q_INTEGRATION}",
         category=__name__,
     )
 
