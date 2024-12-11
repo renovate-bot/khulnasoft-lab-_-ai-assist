@@ -54,6 +54,7 @@ class KindLiteLlmModel(StrEnum):
     CODELLAMA = "codellama"
     CODESTRAL = "codestral"
     MISTRAL = "mistral"
+    MIXTRAL = "mixtral"
     DEEPSEEKCODER = "deepseekcoder"
     CLAUDE_3 = "claude_3"
     CLAUDE_3_5 = "claude_3.5"

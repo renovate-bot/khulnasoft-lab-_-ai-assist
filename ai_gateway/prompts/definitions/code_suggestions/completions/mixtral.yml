@@ -1,5 +1,5 @@
 ---
-name: Mixtral 7B Instruct Code Completions
+name: Mixtral Instruct Code Completions
 model:
   name: mixtral
   params:
