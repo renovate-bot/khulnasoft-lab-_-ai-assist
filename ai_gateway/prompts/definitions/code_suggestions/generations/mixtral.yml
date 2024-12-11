@@ -1,5 +1,5 @@
 ---
-name: Mixtral 7B Code Generations
+name: Mixtral Code Generations
 model:
   name: mixtral
   params:
