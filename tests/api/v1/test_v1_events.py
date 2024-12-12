@@ -288,7 +288,7 @@ class TestEvents:
         )
 
         mock_send_event.assert_has_calls([send_event_call, send_event_call])
-        mock_auth_grant.assert_called_once_with("code-123")
+        mock_auth_grant.assert_called_once_with(code="code-123")
 
     def test_failed_events_call_due_to_other_error(
         self,

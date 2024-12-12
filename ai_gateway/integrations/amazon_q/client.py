@@ -153,9 +153,9 @@ class AmazonQClient:
     def _retry_send_event(self, error, code, payload):
         match str(error.response.get("reason")):
             case AccessDeniedExceptionReason.GITLAB_EXPIRED_IDENTITY:
-                self.client.create_auth_grant(code)
+                self.client.create_auth_grant(code=code)
             case AccessDeniedExceptionReason.GITLAB_INVALID_IDENTITY:
-                self.client.update_auth_grant(code)
+                self.client.update_auth_grant(code=code)
             case _:
                 return HTTPException(
                     status_code=status.HTTP_403_FORBIDDEN,
