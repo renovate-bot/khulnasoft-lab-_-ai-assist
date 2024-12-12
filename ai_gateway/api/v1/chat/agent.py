@@ -155,6 +155,11 @@ async def _generate_completion(
         if max_tokens := opts.pop("max_tokens_to_sample", None):
             opts["max_tokens"] = max_tokens
 
+        # Temporary fix for mitigating https://gitlab.com/gitlab-com/gl-infra/production/-/issues/18996.
+        # v1/chat/agent endpoint uses Claude models that support up to 4096 output tokens.
+        if "max_tokens" in opts and opts["max_tokens"] > 4096:
+            opts["max_tokens"] = 4096
+
     completion = await anthropic_claude_factory(
         factory_type, name=prompt.model
     ).generate(**opts)
