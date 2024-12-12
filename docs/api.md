@@ -34,6 +34,7 @@ Format details:
 - The streaming response always begins with event `stream_start` and ends with `stream_end`.
 - The value of `data` is either `null` or a JSON string.
 - Metadata is only provided in the starting message.
+- The response headers include `X-Streaming-Format=sse`.
 
 | Stream Event    | Description                                                                                     |
 | --------------- | ----------------------------------------------------------------------------------------------- |
