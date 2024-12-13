@@ -7,7 +7,7 @@ from gitlab_cloud_connector import CloudConnectorUser, GitLabUnitPrimitive, User
 from langchain_core.callbacks import CallbackManagerForLLMRun
 from langchain_core.language_models.chat_models import SimpleChatModel
 from langchain_core.messages import BaseMessage
-from pydantic_core import Url
+from pydantic import AnyUrl
 
 from ai_gateway.api.v1 import api_router
 from ai_gateway.config import Config
@@ -94,20 +94,50 @@ class TestPrompt:
         (
             "prompt_class",
             "inputs",
+            "prompt_version",
             "model_metadata",
+            "expected_get_args",
             "expected_status",
             "expected_response",
         ),
         [
-            (Prompt, {"name": "John", "age": 20}, None, 200, "Hi John!"),
             (
                 Prompt,
                 {"name": "John", "age": 20},
+                None,
+                None,
+                ("test", "^1.0.0", None),
+                200,
+                "Hi John!",
+            ),
+            (
+                Prompt,
+                {"name": "John", "age": 20},
+                "^2.0.0",
+                None,
+                ("test", "^2.0.0", None),
+                200,
+                "Hi John!",
+            ),
+            (
+                Prompt,
+                {"name": "John", "age": 20},
+                None,
                 ModelMetadata(
                     name="mistral",
                     provider="litellm",
-                    endpoint=Url("http://localhost:4000"),
+                    endpoint=AnyUrl("http://localhost:4000"),
                     api_key="token",
+                ),
+                (
+                    "test",
+                    "^1.0.0",
+                    {
+                        "name": "mistral",
+                        "provider": "litellm",
+                        "endpoint": AnyUrl("http://localhost:4000"),
+                        "api_key": "token",
+                    },
                 ),
                 200,
                 "Hi John!",
@@ -116,6 +146,8 @@ class TestPrompt:
                 None,
                 {"name": "John", "age": 20},
                 None,
+                None,
+                ("test", "^1.0.0", None),
                 404,
                 {"detail": "Prompt 'test' not found"},
             ),
@@ -123,6 +155,8 @@ class TestPrompt:
                 Prompt,
                 {"name": "John"},
                 None,
+                None,
+                ("test", "^1.0.0", None),
                 422,
                 {
                     "detail": "\"Input to ChatPromptTemplate is missing variables {'age'}.  Expected: ['age', 'name'] Received: ['name']"
@@ -137,7 +171,9 @@ class TestPrompt:
         mock_client,
         mock_track_internal_event,
         inputs: dict[str, str],
+        prompt_version: Optional[str],
         model_metadata: Optional[ModelMetadata],
+        expected_get_args: dict,
         expected_status: int,
         expected_response: Any,
     ):
@@ -149,12 +185,13 @@ class TestPrompt:
             },
             json={
                 "inputs": inputs,
+                "prompt_version": prompt_version,
                 "model_metadata": model_metadata
                 and model_metadata.model_dump(mode="json"),
             },
         )
 
-        mock_registry_get.assert_called_with("test", model_metadata)
+        mock_registry_get.assert_called_with(*expected_get_args)
         assert response.status_code == expected_status
 
         actual_response = response.json()
@@ -185,11 +222,12 @@ class TestPrompt:
             },
             json={
                 "inputs": {"name": "John", "age": 20},
+                "prompt_version": "^2.0.0",
                 "stream": True,
             },
         )
 
-        mock_registry_get.assert_called_with("test", None)
+        mock_registry_get.assert_called_with("test", "^2.0.0", None)
         assert response.status_code == 200
         assert response.text == "Hi John!"
         assert response.headers["content-type"] == "text/event-stream; charset=utf-8"
@@ -244,6 +282,6 @@ class TestMisdirectedRequest:
                 and model_metadata.model_dump(mode="json"),
             },
         )
-        mock_registry_get.assert_called_with("test", model_metadata)
+        mock_registry_get.assert_called_with("test", "^1.0.0", model_metadata)
         assert response.status_code == 421
         assert response.json() == {"detail": "401: Unauthorized"}

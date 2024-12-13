@@ -28,10 +28,13 @@ def test_container(mock_container: containers.DeclarativeContainer):
     prompts_definitions_dir = prompts_dir / "definitions"
     # Iterate over every file in the prompts definitions directory. Make sure
     # they're loaded into the registry and that the resulting Prompts are valid.
-    for path in prompts_definitions_dir.glob("**/*.yml"):
-        prompt_id_with_model_name = path.relative_to(
-            prompts_definitions_dir
-        ).with_suffix("")
+    for path in prompts_definitions_dir.glob("**"):
+        versions = [version.stem for version in path.glob("*.yml")]
+
+        if not versions:
+            continue
+
+        prompt_id_with_model_name = path.relative_to(prompts_definitions_dir)
         prompt_id = prompt_id_with_model_name.parent
         model_name = prompt_id_with_model_name.name
 
@@ -44,17 +47,19 @@ def test_container(mock_container: containers.DeclarativeContainer):
                 provider="",
             )
 
-        prompt = registry.get(
-            str(prompt_id),
-            model_metadata=model_metadata,
-        )
-        assert isinstance(prompt, Prompt)
-        assert prompt.model.disable_streaming
+        for version in versions:
+            prompt = registry.get(
+                str(prompt_id),
+                f"={version}",  # Make a strict constraint so we can check every existing version
+                model_metadata=model_metadata,
+            )
+            assert isinstance(prompt, Prompt)
+            assert prompt.model.disable_streaming
 
-        if isinstance(prompt, ReActAgent):
-            prompt_template = prompt.bound.middle[0]  # type: ignore[attr-defined]
-        else:
-            prompt_template = prompt.bound.first  # type: ignore[attr-defined]
+            if isinstance(prompt, ReActAgent):
+                prompt_template = prompt.bound.middle[0]  # type: ignore[attr-defined]
+            else:
+                prompt_template = prompt.bound.first  # type: ignore[attr-defined]
 
-            # Check that the messages are populated correctly
-            assert len(prompt_template.format_messages()) > 0
+                # Check that the messages are populated correctly
+                assert len(prompt_template.format_messages()) > 0

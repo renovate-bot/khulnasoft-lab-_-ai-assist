@@ -33,10 +33,10 @@ def mock_fs(fs: FakeFilesystem):
         Path(__file__).parent.parent.parent / "ai_gateway" / "prompts" / "definitions"
     )
     fs.create_file(
-        prompts_definitions_dir / "test" / "base.yml",
+        prompts_definitions_dir / "test" / "base" / "1.0.0.yml",
         contents="""
 ---
-name: Test prompt
+name: Test prompt 1.0.0
 model:
   name: claude-2.1
   params:
@@ -53,7 +53,27 @@ prompt_template:
 """,
     )
     fs.create_file(
-        prompts_definitions_dir / "chat" / "react" / "base.yml",
+        prompts_definitions_dir / "test" / "base" / "1.0.1.yml",
+        contents="""
+---
+name: Test prompt 1.0.1
+model:
+  name: claude-2.1
+  params:
+    model_class_provider: litellm
+    top_p: 0.1
+    top_k: 50
+    max_tokens: 256
+    max_retries: 10
+    custom_llm_provider: vllm
+unit_primitives:
+  - explain_code
+prompt_template:
+  system: Template1
+""",
+    )
+    fs.create_file(
+        prompts_definitions_dir / "chat" / "react" / "base" / "1.0.0.yml",
         contents="""
 ---
 name: Chat react prompt
@@ -82,7 +102,7 @@ params:
 """,
     )
     fs.create_file(
-        prompts_definitions_dir / "chat" / "react" / "custom.yml",
+        prompts_definitions_dir / "chat" / "react" / "custom" / "1.0.0.yml",
         contents="""
 ---
 name: Chat react custom prompt
@@ -126,70 +146,92 @@ def prompts_registered():
     yield {
         "test/base": PromptRegistered(
             klass=Prompt,
-            config=PromptConfig(
-                name="Test prompt",
-                model=ModelConfig(
-                    name="claude-2.1",
-                    params=ChatLiteLLMParams(
-                        model_class_provider=ModelClassProvider.LITE_LLM,
-                        top_p=0.1,
-                        top_k=50,
-                        max_tokens=256,
-                        max_retries=10,
-                        custom_llm_provider="vllm",
+            versions={
+                "1.0.0": PromptConfig(
+                    name="Test prompt 1.0.0",
+                    model=ModelConfig(
+                        name="claude-2.1",
+                        params=ChatLiteLLMParams(
+                            model_class_provider=ModelClassProvider.LITE_LLM,
+                            top_p=0.1,
+                            top_k=50,
+                            max_tokens=256,
+                            max_retries=10,
+                            custom_llm_provider="vllm",
+                        ),
                     ),
+                    unit_primitives=["explain_code"],
+                    prompt_template={"system": "Template1"},
                 ),
-                unit_primitives=["explain_code"],
-                prompt_template={"system": "Template1"},
-            ),
+                "1.0.1": PromptConfig(
+                    name="Test prompt 1.0.1",
+                    model=ModelConfig(
+                        name="claude-2.1",
+                        params=ChatLiteLLMParams(
+                            model_class_provider=ModelClassProvider.LITE_LLM,
+                            top_p=0.1,
+                            top_k=50,
+                            max_tokens=256,
+                            max_retries=10,
+                            custom_llm_provider="vllm",
+                        ),
+                    ),
+                    unit_primitives=["explain_code"],
+                    prompt_template={"system": "Template1"},
+                ),
+            },
         ),
         "chat/react/base": PromptRegistered(
             klass=MockPromptClass,
-            config=PromptConfig(
-                name="Chat react prompt",
-                model=ModelConfig(
-                    name="claude-3-haiku-20240307",
-                    params=ChatAnthropicParams(
-                        model_class_provider=ModelClassProvider.ANTHROPIC,
-                        temperature=0.1,
-                        top_p=0.8,
-                        top_k=40,
-                        max_tokens=256,
-                        max_retries=6,
-                        default_headers={
-                            "header1": "Header1 value",
-                            "header2": "Header2 value",
-                        },
+            versions={
+                "1.0.0": PromptConfig(
+                    name="Chat react prompt",
+                    model=ModelConfig(
+                        name="claude-3-haiku-20240307",
+                        params=ChatAnthropicParams(
+                            model_class_provider=ModelClassProvider.ANTHROPIC,
+                            temperature=0.1,
+                            top_p=0.8,
+                            top_k=40,
+                            max_tokens=256,
+                            max_retries=6,
+                            default_headers={
+                                "header1": "Header1 value",
+                                "header2": "Header2 value",
+                            },
+                        ),
                     ),
+                    unit_primitives=["duo_chat"],
+                    prompt_template={"system": "Template1", "user": "Template2"},
+                    params={"timeout": 60, "stop": ["Foo", "Bar"]},
                 ),
-                unit_primitives=["duo_chat"],
-                prompt_template={"system": "Template1", "user": "Template2"},
-                params={"timeout": 60, "stop": ["Foo", "Bar"]},
-            ),
+            },
         ),
         "chat/react/custom": PromptRegistered(
             klass=MockPromptClass,
-            config=PromptConfig(
-                name="Chat react custom prompt",
-                model=ModelConfig(
-                    name="custom",
-                    params=ChatLiteLLMParams(
-                        model_class_provider=ModelClassProvider.LITE_LLM,
-                        temperature=0.1,
-                        top_p=0.8,
-                        top_k=40,
-                        max_tokens=256,
-                        max_retries=6,
+            versions={
+                "1.0.0": PromptConfig(
+                    name="Chat react custom prompt",
+                    model=ModelConfig(
+                        name="custom",
+                        params=ChatLiteLLMParams(
+                            model_class_provider=ModelClassProvider.LITE_LLM,
+                            temperature=0.1,
+                            top_p=0.8,
+                            top_k=40,
+                            max_tokens=256,
+                            max_retries=6,
+                        ),
                     ),
+                    unit_primitives=["duo_chat"],
+                    prompt_template={"system": "Template1", "user": "Template2"},
+                    params={
+                        "timeout": 60,
+                        "stop": ["Foo", "Bar"],
+                        "vertex_location": "us-east1",
+                    },
                 ),
-                unit_primitives=["duo_chat"],
-                prompt_template={"system": "Template1", "user": "Template2"},
-                params={
-                    "timeout": 60,
-                    "stop": ["Foo", "Bar"],
-                    "vertex_location": "us-east1",
-                },
-            ),
+            },
         ),
     }
 
@@ -248,6 +290,7 @@ class TestLocalPromptRegistry:
     @pytest.mark.parametrize(
         (
             "prompt_id",
+            "prompt_version",
             "model_metadata",
             "disable_streaming",
             "expected_name",
@@ -260,9 +303,28 @@ class TestLocalPromptRegistry:
         [
             (
                 "test",
+                "^1.0.0",
                 None,
                 True,
-                "Test prompt",
+                "Test prompt 1.0.1",
+                Prompt,
+                [("system", "Template1")],
+                "claude-2.1",
+                {},
+                {
+                    "top_p": 0.1,
+                    "top_k": 50,
+                    "max_tokens": 256,
+                    "max_retries": 10,
+                    "custom_llm_provider": "vllm",
+                },
+            ),
+            (
+                "test",
+                "=1.0.0",
+                None,
+                True,
+                "Test prompt 1.0.0",
                 Prompt,
                 [("system", "Template1")],
                 "claude-2.1",
@@ -277,6 +339,7 @@ class TestLocalPromptRegistry:
             ),
             (
                 "chat/react",
+                "^1.0.0",
                 None,
                 False,
                 "Chat react prompt",
@@ -298,6 +361,7 @@ class TestLocalPromptRegistry:
             ),
             (
                 "chat/react",
+                "^1.0.0",
                 ModelMetadata(
                     name="custom",
                     endpoint=HttpUrl("http://localhost:4000/"),
@@ -329,6 +393,7 @@ class TestLocalPromptRegistry:
             ),
             (
                 "chat/react",
+                "^1.0.0",
                 ModelMetadata(
                     name="custom",
                     endpoint=HttpUrl("http://localhost:4000/"),
@@ -364,6 +429,7 @@ class TestLocalPromptRegistry:
         self,
         registry: LocalPromptRegistry,
         prompt_id: str,
+        prompt_version: str,
         model_metadata: ModelMetadata | None,
         disable_streaming: bool,
         expected_name: str,
@@ -374,7 +440,11 @@ class TestLocalPromptRegistry:
         expected_model_params: dict,
     ):
 
-        prompt = registry.get(prompt_id, model_metadata)
+        prompt = registry.get(
+            prompt_id,
+            prompt_version=prompt_version,
+            model_metadata=model_metadata,
+        )
 
         chain = cast(RunnableSequence, prompt.bound)
         actual_messages = cast(ChatPromptTemplate, chain.first).messages
@@ -451,7 +521,9 @@ class TestLocalPromptRegistry:
             model_factories=model_factories,
             default_prompts=default_prompt_env_config,
         )
-        prompt = registry.get(prompt_id, model_metadata)
+        prompt = registry.get(
+            prompt_id, prompt_version="^1.0.0", model_metadata=model_metadata
+        )
         chain = cast(RunnableSequence, prompt.bound)
         binding = cast(RunnableBinding, chain.last)
 
@@ -557,7 +629,7 @@ class TestLocalPromptRegistry:
             custom_models_enabled=False,
         )
 
-        assert registry.get("chat/react").name == "Chat react custom prompt"
+        assert registry.get("chat/react", "^1.0.0").name == "Chat react custom prompt"
 
     @pytest.mark.parametrize("custom_models_enabled", [False])
     def test_invalid_get(
@@ -574,4 +646,4 @@ class TestLocalPromptRegistry:
             ValueError,
             match="Endpoint override not allowed when custom models are disabled.",
         ):
-            registry.get("chat/react", model_metadata)
+            registry.get("chat/react", "^1.0.0", model_metadata=model_metadata)

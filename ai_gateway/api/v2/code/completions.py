@@ -393,7 +393,7 @@ def _resolve_prompt_code_generations(
     )
 
     prompt = prompt_registry.get_on_behalf(
-        current_user, payload.prompt_id, model_metadata
+        current_user, payload.prompt_id, model_metadata=model_metadata
     )
 
     return generations_agent_factory(model__prompt=prompt)
@@ -437,7 +437,7 @@ def _resolve_agent_code_completions(
     completions_agent_factory: Factory[CodeCompletions],
 ) -> CodeCompletions:
     prompt = prompt_registry.get_on_behalf(
-        current_user, COMPLETIONS_AGENT_ID, model_metadata
+        current_user, COMPLETIONS_AGENT_ID, model_metadata=model_metadata
     )
 
     return completions_agent_factory(
