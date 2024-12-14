@@ -28,7 +28,7 @@ _REACT_AGENT_AVAILABLE_TOOL_NAMES_CONTEXT_KEY = "duo_chat.agent_available_tools"
 log = get_request_logger("gl_agent_remote_executor")
 
 
-class TypeAgentFactory(Protocol[TypeAgentInputs, TypeAgentEvent]):
+class TypeAgentFactory(Protocol[TypeAgentEvent]):
     def __call__(
         self,
         *,
@@ -69,10 +69,7 @@ class GLAgentRemoteExecutor(Generic[TypeAgentInputs, TypeAgentEvent]):
 
     async def stream(self, *, inputs: TypeAgentInputs) -> AsyncIterator[TypeAgentEvent]:
         inputs.tools = self.tools
-        agent: ReActAgent = self.agent_factory(
-            agent_inputs=inputs,
-            model_metadata=inputs.model_metadata,
-        )
+        agent: ReActAgent = self.agent_factory(model_metadata=inputs.model_metadata)
 
         tools_by_name = self.tools_by_name
 
@@ -82,7 +79,7 @@ class GLAgentRemoteExecutor(Generic[TypeAgentInputs, TypeAgentEvent]):
 
         log.info("Processed inputs", source=__name__, inputs=inputs)
 
-        async for event in agent.astream():
+        async for event in agent.astream(inputs):
             if isinstance(event, AgentToolAction):
                 if event.tool in tools_by_name:
                     tool = tools_by_name[event.tool]

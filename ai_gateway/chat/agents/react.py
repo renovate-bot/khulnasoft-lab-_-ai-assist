@@ -1,12 +1,12 @@
 import re
-from typing import Any, AsyncIterator, Optional, Sequence
+from typing import Any, AsyncIterator, Optional
 
 import starlette_context
 from langchain_core.exceptions import OutputParserException
 from langchain_core.messages import AIMessage, HumanMessage, SystemMessage
 from langchain_core.output_parsers import BaseCumulativeTransformOutputParser
 from langchain_core.outputs import Generation
-from langchain_core.prompts.chat import MessageLikeRepresentation
+from langchain_core.prompt_values import ChatPromptValue, PromptValue
 from langchain_core.runnables import Runnable, RunnableConfig
 from pydantic import BaseModel
 
@@ -128,39 +128,35 @@ class ReActPlainTextParser(BaseCumulativeTransformOutputParser):
         return self.parse_result([Generation(text=text)])
 
 
-class ReActAgent(Prompt[ReActAgentInputs, TypeAgentEvent]):
-    RETRYABLE_ERRORS: list[str] = ["overloaded_error"]
+class ReActPromptTemplate(Runnable[ReActAgentInputs, PromptValue]):
+    def __init__(self, prompt_template: dict[str, str]):
+        self.prompt_template = prompt_template
 
-    @staticmethod
-    def _build_chain(
-        chain: Runnable[ReActAgentInputs, TypeAgentEvent]
-    ) -> Runnable[ReActAgentInputs, TypeAgentEvent]:
-        return chain | ReActPlainTextParser()
-
-    @classmethod
-    def build_messages(
-        cls,
-        prompt_template: dict[str, str],
-        agent_inputs: ReActAgentInputs,
-        **kwargs,
-    ) -> Sequence[MessageLikeRepresentation]:
+    def invoke(
+        self,
+        input: ReActAgentInputs,
+        config: Optional[RunnableConfig] = None,
+        **kwargs: Any,
+    ) -> PromptValue:
         messages = []
 
-        if "system" in prompt_template:
+        if "system" in self.prompt_template:
             messages.append(
                 SystemMessage(
                     jinja2_formatter(
-                        prompt_template["system"],
-                        tools=agent_inputs.tools,
-                        unavailable_resources=agent_inputs.unavailable_resources,
+                        self.prompt_template["system"],
+                        tools=input.tools,
+                        unavailable_resources=input.unavailable_resources,
                     )
                 )
             )
 
-        for m in agent_inputs.messages:
+        for m in input.messages:
             if m.role is Role.USER:
                 messages.append(
-                    HumanMessage(jinja2_formatter(prompt_template["user"], message=m))
+                    HumanMessage(
+                        jinja2_formatter(self.prompt_template["user"], message=m)
+                    )
                 )
             elif m.role is Role.ASSISTANT:
                 messages.append(AIMessage(m.content))
@@ -173,20 +169,35 @@ class ReActAgent(Prompt[ReActAgentInputs, TypeAgentEvent]):
         messages.append(
             AIMessage(
                 jinja2_formatter(
-                    prompt_template["assistant"],
-                    agent_scratchpad=agent_inputs.agent_scratchpad,
+                    self.prompt_template["assistant"],
+                    agent_scratchpad=input.agent_scratchpad,
                 )
             )
         )
-        return messages
+        return ChatPromptValue(messages=messages)
+
+
+class ReActAgent(Prompt[ReActAgentInputs, TypeAgentEvent]):
+    RETRYABLE_ERRORS: list[str] = ["overloaded_error"]
+
+    @staticmethod
+    def _build_chain(
+        chain: Runnable[ReActAgentInputs, TypeAgentEvent]
+    ) -> Runnable[ReActAgentInputs, TypeAgentEvent]:
+        return chain | ReActPlainTextParser()
+
+    @classmethod
+    def _build_prompt_template(cls, prompt_template: dict[str, str]) -> Runnable:
+        return ReActPromptTemplate(prompt_template)
 
     async def astream(
         self,
+        input: ReActAgentInputs,
         config: Optional[RunnableConfig] = None,
         **kwargs: Optional[Any],
     ) -> AsyncIterator[TypeAgentEvent]:
         events = []
-        astream = super().astream(config=config, **kwargs)
+        astream = super().astream(input, config, **kwargs)
         len_final_answer = 0
 
         try:

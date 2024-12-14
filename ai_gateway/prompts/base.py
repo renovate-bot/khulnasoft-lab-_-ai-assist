@@ -1,11 +1,11 @@
 from abc import ABC, abstractmethod
-from typing import Any, AsyncIterator, Mapping, Optional, Sequence, Tuple, TypeVar, cast
+from typing import Any, AsyncIterator, Mapping, Optional, Tuple, TypeVar, cast
 
 from gitlab_cloud_connector import GitLabUnitPrimitive, WrongUnitPrimitives
 from jinja2 import PackageLoader
 from jinja2.sandbox import SandboxedEnvironment
+from langchain_core.prompt_values import PromptValue
 from langchain_core.prompts import ChatPromptTemplate
-from langchain_core.prompts.chat import MessageLikeRepresentation
 from langchain_core.prompts.string import DEFAULT_FORMATTER_MAPPING
 from langchain_core.runnables import Runnable, RunnableBinding, RunnableConfig
 
@@ -40,7 +40,7 @@ class Prompt(RunnableBinding[Input, Output]):
     name: str
     model: Model
     unit_primitives: list[GitLabUnitPrimitive]
-    prompt_tpl: ChatPromptTemplate
+    prompt_tpl: Runnable[Input, PromptValue]
 
     def __init__(
         self,
@@ -48,12 +48,10 @@ class Prompt(RunnableBinding[Input, Output]):
         config: PromptConfig,
         model_metadata: Optional[ModelMetadata] = None,
         disable_streaming: bool = False,
-        **kwargs,
     ):
         model_kwargs = self._build_model_kwargs(config.params, model_metadata)
         model = self._build_model(model_factory, config.model, disable_streaming)
-        messages = self.build_messages(config.prompt_template, **kwargs)
-        prompt = ChatPromptTemplate.from_messages(messages, template_format="jinja2")
+        prompt = self._build_prompt_template(config.prompt_template)
         chain = self._build_chain(
             cast(Runnable[Input, Output], prompt | model.bind(**model_kwargs))
         )
@@ -113,17 +111,12 @@ class Prompt(RunnableBinding[Input, Output]):
 
     async def astream(
         self,
-        input: Optional[Input] = None,
+        input: Input,
         config: Optional[RunnableConfig] = None,
         **kwargs: Optional[Any],
     ) -> AsyncIterator[Output]:
-        if input:
-            lc_input = input
-        else:
-            lc_input = cast(Input, {})
-
         with self.instrumentator.watch(stream=True) as watcher:
-            async for item in super().astream(lc_input, config, **kwargs):
+            async for item in super().astream(input, config, **kwargs):
                 yield item
 
             await watcher.afinish()
@@ -140,15 +133,18 @@ class Prompt(RunnableBinding[Input, Output]):
         return list(tpl.items())
 
     @classmethod
-    def build_messages(
-        cls, prompt_template: dict[str, str], **kwargs
-    ) -> Sequence[MessageLikeRepresentation]:
+    def _build_prompt_template(
+        cls, prompt_template: dict[str, str]
+    ) -> Runnable[Input, PromptValue]:
         messages = []
 
         for role, template in cls._prompt_template_to_messages(prompt_template):
             messages.append((role, template))
 
-        return messages
+        return cast(
+            Runnable[Input, PromptValue],
+            ChatPromptTemplate.from_messages(messages, template_format="jinja2"),
+        )
 
 
 class BasePromptRegistry(ABC):

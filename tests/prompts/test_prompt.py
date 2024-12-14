@@ -6,6 +6,7 @@ import pytest
 from anthropic import APITimeoutError, AsyncAnthropic
 from gitlab_cloud_connector import GitLabUnitPrimitive
 from langchain_community.chat_models import ChatLiteLLM
+from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.runnables import Runnable
 from litellm.exceptions import Timeout
 from pydantic import HttpUrl
@@ -24,10 +25,13 @@ class TestPrompt:
         assert prompt.unit_primitives == unit_primitives
         assert isinstance(prompt.bound, Runnable)
 
-    def test_build_messages(self, prompt_template):
-        messages = Prompt.build_messages(prompt_template)
+    def test_build_prompt_template(self, prompt_template):
+        prompt_template = Prompt._build_prompt_template(prompt_template)
 
-        assert messages == [("system", "Hi, I'm {{name}}"), ("user", "{{content}}")]
+        assert prompt_template == ChatPromptTemplate.from_messages(
+            [("system", "Hi, I'm {{name}}"), ("user", "{{content}}")],
+            template_format="jinja2",
+        )
 
     def test_instrumentator(self, model_engine: str, model_name: str, prompt: Prompt):
         assert prompt.instrumentator.labels == {

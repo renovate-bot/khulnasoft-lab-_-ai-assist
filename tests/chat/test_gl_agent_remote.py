@@ -133,11 +133,8 @@ class TestGLAgentRemoteExecutor:
             else:
                 assert context.get("duo_chat.agent_available_tools") == ["issue_reader"]
 
-        agent_factory.assert_called_once_with(
-            model_metadata=inputs.model_metadata,
-            agent_inputs=inputs,
-        )
-        agent.astream.assert_called_once()
+        agent_factory.assert_called_once_with(model_metadata=inputs.model_metadata)
+        agent.astream.assert_called_once_with(inputs)
         assert actual_actions == agent_events
 
 
