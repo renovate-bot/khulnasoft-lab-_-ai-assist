@@ -52,10 +52,6 @@ async def get_code_suggestions_completions_litellm_factory_provider():
     yield get_container_application().code_suggestions.completions.litellm_factory
 
 
-async def get_code_suggestions_completions_litellm_vertex_codestral_factory_provider():
-    yield get_container_application().code_suggestions.completions.litellm_vertex_codestral_factory
-
-
 async def get_code_suggestions_completions_agent_factory_provider():
     yield get_container_application().code_suggestions.completions.agent_factory
 

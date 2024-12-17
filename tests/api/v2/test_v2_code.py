@@ -53,34 +53,6 @@ def unit_primitives():
     return ["complete_code", "generate_code"]
 
 
-@pytest.fixture
-def mock_gcp_location():
-    with patch("ai_gateway.api.v2.code.completions.Config") as mock:
-        mock.return_value = Mock(
-            google_cloud_platform=Mock(location="us-mock-location")
-        )
-
-        yield mock
-
-
-@pytest.fixture
-def mock_gcp_location_in_asia():
-    with patch("ai_gateway.api.v2.code.completions.Config") as mock:
-        mock.return_value = Mock(
-            google_cloud_platform=Mock(location="asia-mock-location")
-        )
-
-        yield mock
-
-
-@pytest.fixture
-def mock_post_processor():
-    with patch("ai_gateway.code_suggestions.completions.PostProcessor.process") as mock:
-        mock.return_value = "Post-processed completion response"
-
-        yield mock
-
-
 class TestCodeCompletions:
     def cleanup(self):
         """Ensure Snowplow cache is reset between tests."""
@@ -648,44 +620,6 @@ class TestCodeCompletions:
                     }
                 ],
             ),
-            (
-                1,
-                None,
-                "vertex-ai",
-                "codestral@2405",
-                None,
-                None,
-                None,
-                True,
-                False,
-                200,
-                [
-                    {
-                        "text": "test completion",
-                        "index": 0,
-                        "finish_reason": "length",
-                    }
-                ],
-            ),
-            (
-                2,
-                None,
-                "vertex-ai",
-                "codestral@2405",
-                None,
-                None,
-                None,
-                True,
-                False,
-                200,
-                [
-                    {
-                        "text": "test completion",
-                        "index": 0,
-                        "finish_reason": "length",
-                    }
-                ],
-            ),
         ],
     )
     def test_non_stream_response(
@@ -761,28 +695,6 @@ class TestCodeCompletions:
                 "codestral",
                 {},
                 [],
-            ),
-            (
-                "def search",
-                "vertex-ai",
-                "codestral@2405",
-                {
-                    "temperature": 0.7,
-                    "max_output_tokens": 64,
-                    "context_max_percent": 0.3,
-                },
-                [],
-            ),
-            (
-                "def search",
-                "vertex-ai",
-                "codestral@2405",
-                {
-                    "temperature": 0.7,
-                    "max_output_tokens": 64,
-                    "context_max_percent": 0.3,
-                },
-                [{"name": "test", "type": "file", "content": "some context"}],
             ),
         ],
     )
@@ -1026,108 +938,6 @@ class TestCodeCompletions:
 
         assert response.status_code == expected_status_code
 
-    def test_vertex_codestral(
-        self,
-        mock_client: Mock,
-        mock_litellm_acompletion: Mock,
-        mock_gcp_location: Mock,
-        mock_post_processor: Mock,
-    ):
-        params = {
-            "prompt_version": 2,
-            "project_path": "gitlab-org/gitlab",
-            "project_id": 278964,
-            "current_file": {
-                "file_name": "main.py",
-                "content_above_cursor": "foo",
-                "content_below_cursor": "\n",
-            },
-            "model_provider": "vertex-ai",
-            "model_name": "codestral@2405",
-        }
-
-        response = self._send_code_completions_request(mock_client, params)
-
-        mock_litellm_acompletion.assert_called_with(
-            model="vertex_ai/codestral@2405",
-            messages=[{"content": "foo", "role": Role.USER}],
-            suffix="\n",
-            text_completion=True,
-            vertex_ai_location="us-central1",
-            max_tokens=64,
-            temperature=0.7,
-            top_p=0.95,
-            stream=False,
-            timeout=60,
-            stop=["\n\n", "\n+++++"],
-        )
-
-        mock_post_processor.assert_called_with("Test text completion response")
-
-        result = response.json()
-        assert result["model"]["engine"] == "vertex-ai"
-        assert result["model"]["name"] == "vertex_ai/codestral@2405"
-        assert result["choices"][0]["text"] == "Post-processed completion response"
-
-    def test_vertex_codestral_with_prompt(self, mock_client, mock_agent_model: Mock):
-        params = {
-            "prompt_version": 2,
-            "project_path": "gitlab-org/gitlab",
-            "project_id": 278964,
-            "current_file": {
-                "file_name": "main.py",
-                "content_above_cursor": "foo",
-                "content_below_cursor": "\n",
-            },
-            "prompt": "bar",
-            "model_provider": "vertex-ai",
-            "model_name": "codestral@2405",
-        }
-
-        response = self._send_code_completions_request(mock_client, params)
-
-        assert not mock_agent_model.called
-        assert response.status_code == 400
-
-        body = response.json()
-        assert (
-            (body["detail"])
-            == "You cannot specify a prompt with the given provider and model combination"
-        )
-
-    def test_attempt_vertex_codestral_in_asia(
-        self,
-        mock_client: Mock,
-        mock_litellm_acompletion: Mock,
-        mock_completions_legacy: Mock,
-        mock_gcp_location_in_asia: Mock,
-    ):
-        params = {
-            "prompt_version": 1,
-            "project_path": "gitlab-org/gitlab",
-            "project_id": 278964,
-            "current_file": {
-                "file_name": "main.py",
-                "content_above_cursor": "foo",
-                "content_below_cursor": "\n",
-            },
-            "model_provider": "vertex-ai",
-            "model_name": "codestral@2405",
-        }
-
-        self._send_code_completions_request(mock_client, params)
-
-        assert not mock_litellm_acompletion.called
-
-        mock_completions_legacy.assert_called_once_with(
-            prefix="foo",
-            suffix="\n",
-            file_name="main.py",
-            editor_lang=None,
-            stream=False,
-            snowplow_event_context=ANY,
-        )
-
     @pytest.mark.asyncio
     @capture_validation_errors()
     async def test_completions_with_validation_error(self, mock_client):
@@ -1140,7 +950,7 @@ class TestCodeCompletions:
             },
             "prompt_version": 2,
             "model_provider": "codestral",
-            "model_name": "codestral@2405",
+            "model_name": "dummy_model",
         }
 
         response = self._send_code_completions_request(mock_client, params)
@@ -1151,9 +961,9 @@ class TestCodeCompletions:
         expected_error_message = [
             {
                 "ctx": {"error": {}},
-                "input": "codestral@2405",
+                "input": "dummy_model",
                 "loc": ["body", 2, "model_name"],
-                "msg": "Value error, model codestral@2405 is not supported by use case code completions and provider codestral",
+                "msg": "Value error, model dummy_model is not supported by use case code completions and provider codestral",
                 "type": "value_error",
             }
         ]

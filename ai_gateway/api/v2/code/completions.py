@@ -30,7 +30,6 @@ from ai_gateway.async_dependency_resolver import (
     get_code_suggestions_completions_agent_factory_provider,
     get_code_suggestions_completions_anthropic_provider,
     get_code_suggestions_completions_litellm_factory_provider,
-    get_code_suggestions_completions_litellm_vertex_codestral_factory_provider,
     get_code_suggestions_completions_vertex_legacy_provider,
     get_code_suggestions_generations_agent_factory_provider,
     get_code_suggestions_generations_anthropic_chat_factory_provider,
@@ -56,7 +55,6 @@ from ai_gateway.instrumentators.base import TelemetryInstrumentator
 from ai_gateway.internal_events import InternalEventsClient
 from ai_gateway.models import KindAnthropicModel, KindModelProvider
 from ai_gateway.models.base import TokensConsumptionMetadata
-from ai_gateway.models.vertex_text import KindVertexTextModel
 from ai_gateway.prompts import BasePromptRegistry
 from ai_gateway.prompts.typing import ModelMetadata
 from ai_gateway.structured_logging import get_request_logger
@@ -108,9 +106,6 @@ async def completions(
     ),
     completions_litellm_factory: Factory[CodeCompletions] = Depends(
         get_code_suggestions_completions_litellm_factory_provider
-    ),
-    completions_litellm_vertex_codestral_factory: Factory[CodeCompletions] = Depends(
-        get_code_suggestions_completions_litellm_vertex_codestral_factory_provider
     ),
     completions_agent_factory: Factory[CodeCompletions] = Depends(
         get_code_suggestions_completions_agent_factory_provider
@@ -181,33 +176,6 @@ async def completions(
             completions_litellm_factory=completions_litellm_factory,
         )
 
-        if payload.context:
-            kwargs.update({"code_context": [ctx.content for ctx in payload.context]})
-    elif (
-        payload.model_provider == KindModelProvider.VERTEX_AI
-        and payload.model_name == KindVertexTextModel.CODESTRAL_2405
-        # Codestral is currently not supported in asia-* locations
-        # This is a temporary change to allow rollout of Codestral to all internal users
-        # while we are looking into getting support for Codestral in Asia
-        # https://gitlab.com/gitlab-org/modelops/applied-ml/code-suggestions/ai-assist/-/issues/635
-        and _allow_vertex_codestral()
-    ):
-        code_completions = _resolve_code_completions_vertex_codestral(
-            payload=payload,
-            completions_litellm_vertex_codestral_factory=completions_litellm_vertex_codestral_factory,
-        )
-
-        # We need to pass this here since litellm.LiteLlmTextGenModel
-        # sets the default temperature and max_output_tokens in the `generate` function signature
-        # To override those values, the kwargs passed to `generate` is updated here
-        # For further details, see:
-        #     https://gitlab.com/gitlab-org/modelops/applied-ml/code-suggestions/ai-assist/-/merge_requests/1172#note_2060587592
-        #
-        # The temperature value is taken from Mistral's docs: https://docs.mistral.ai/api/#operation/createFIMCompletion
-        # context_max_percent is set to 0.3 to limit the amount of context right now because latency increases with larger context
-        kwargs.update(
-            {"temperature": 0.7, "max_output_tokens": 64, "context_max_percent": 0.3}
-        )
         if payload.context:
             kwargs.update({"code_context": [ctx.content for ctx in payload.context]})
     elif payload.model_provider == KindModelProvider.FIREWORKS:
@@ -462,19 +430,6 @@ def _resolve_code_completions_litellm(
     )
 
 
-def _resolve_code_completions_vertex_codestral(
-    payload: SuggestionsRequest,
-    completions_litellm_vertex_codestral_factory: Factory[CodeCompletions],
-) -> CodeCompletions:
-    if payload.prompt_version == 2 and payload.prompt is not None:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="You cannot specify a prompt with the given provider and model combination",
-        )
-
-    return completions_litellm_vertex_codestral_factory()
-
-
 def _resolve_agent_code_completions(
     model_metadata: ModelMetadata,
     current_user: StarletteUser,
@@ -528,10 +483,6 @@ def _completion_suggestion_choices(
 
 def _generation_suggestion_choices(text: str) -> list:
     return [SuggestionsResponse.Choice(text=text)] if text else []
-
-
-def _allow_vertex_codestral():
-    return not _get_gcp_location().startswith("asia-")
 
 
 def _get_gcp_location():

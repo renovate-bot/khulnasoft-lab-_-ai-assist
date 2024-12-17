@@ -5,7 +5,6 @@ from litellm import CustomStreamWrapper, ModelResponse, acompletion
 from litellm.exceptions import APIConnectionError, InternalServerError
 from openai import AsyncOpenAI
 
-from ai_gateway.config import Config
 from ai_gateway.models.base import (
     KindModelProvider,
     ModelAPIError,
@@ -18,7 +17,6 @@ from ai_gateway.models.base_text import (
     TextGenModelChunk,
     TextGenModelOutput,
 )
-from ai_gateway.models.vertex_text import KindVertexTextModel
 from ai_gateway.safety_attributes import SafetyAttributes
 from ai_gateway.tracking import SnowplowEventContext
 
@@ -101,9 +99,6 @@ MODEL_STOP_TOKENS = {
         "<|fim_middle|>",
         "<|file_separator|>",
     ],
-    # Ref: https://docs.litellm.ai/docs/providers/vertex#mistral-api
-    # This model is served by Vertex AI but accessed through LiteLLM abstraction
-    KindVertexTextModel.CODESTRAL_2405: ["\n\n", "\n+++++"],
     KindLiteLlmModel.QWEN_2_5: [
         "<|fim_prefix|>",
         "<|fim_suffix|>",
@@ -118,10 +113,6 @@ MODEL_STOP_TOKENS = {
 }
 
 MODEL_SPECIFICATIONS = {
-    KindVertexTextModel.CODESTRAL_2405: {
-        "timeout": 60,
-        "completion_type": ModelCompletionType.TEXT,
-    },
     KindLiteLlmModel.QWEN_2_5: {
         "timeout": 60,
         "completion_type": ModelCompletionType.FIM,
@@ -417,14 +408,10 @@ class LiteLlmTextGenModel(TextGenModelBase):
             "top_p": top_p,
             "stream": stream,
             "timeout": self.specifications.get("timeout", 30.0),
-            "stop": self._get_stop_tokens(suffix),
+            "stop": self._get_stop_tokens(),
         }
 
-        if self._is_vertex():
-            completion_args["vertex_ai_location"] = self._get_vertex_model_location()
-            completion_args["model"] = self.metadata.name
-        else:
-            completion_args = completion_args | self.model_metadata_to_params()
+        completion_args = completion_args | self.model_metadata_to_params()
 
         if self._completion_type() == ModelCompletionType.TEXT:
             completion_args["suffix"] = suffix
@@ -465,41 +452,8 @@ class LiteLlmTextGenModel(TextGenModelBase):
             ),
         )
 
-    def _get_stop_tokens(self, suffix):
-        if self._is_vertex_codestral():
-            suffix_stop_token = self._get_suffix_stop_token(suffix)
-            if suffix_stop_token:
-                return self.stop_tokens + [self._get_suffix_stop_token(suffix)]
-
+    def _get_stop_tokens(self):
         return self.stop_tokens
-
-    def _get_suffix_stop_token(self, suffix):
-        if not suffix or not suffix.strip():
-            return ""
-
-        suffix_lines = suffix.split("\n")
-        if len(suffix_lines) > 1:
-            # For multi-line suffixes, we return the first line
-            # that is not empty or all white spaces
-            for line in suffix_lines:
-                if line.strip():
-                    return line
-
-        return suffix.strip()
-
-    def _is_vertex(self):
-        return self.provider == KindModelProvider.VERTEX_AI
-
-    def _is_vertex_codestral(self):
-        return (
-            self._is_vertex() and self.model_name == KindVertexTextModel.CODESTRAL_2405
-        )
-
-    def _get_vertex_model_location(self):
-        if Config().vertex_text_model.location.startswith("europe-"):
-            return "europe-west4"
-
-        return "us-central1"
 
     @classmethod
     def from_model_name(
@@ -518,10 +472,6 @@ class LiteLlmTextGenModel(TextGenModelBase):
         if endpoint is not None or api_key is not None:
             if not custom_models_enabled and provider == KindModelProvider.LITELLM:
                 raise ValueError("specifying custom models endpoint is disabled")
-            if provider == KindModelProvider.VERTEX_AI:
-                raise ValueError(
-                    "specifying api endpoint or key for vertex-ai provider is disabled"
-                )
 
         if provider == KindModelProvider.MISTRALAI:
             api_key = provider_keys.get("mistral_api_key")
@@ -536,10 +486,7 @@ class LiteLlmTextGenModel(TextGenModelBase):
             identifier = f"text-completion-openai/{identifier}"
 
         try:
-            if provider == KindModelProvider.VERTEX_AI:
-                kind_model = KindVertexTextModel(name)
-            else:
-                kind_model = KindLiteLlmModel(name)
+            kind_model = KindLiteLlmModel(name)
         except ValueError:
             raise ValueError(f"no model found by the name '{name}'")
 
