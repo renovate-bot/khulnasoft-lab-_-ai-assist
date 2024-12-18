@@ -202,6 +202,8 @@ class LiteLlmChatModel(ChatModelBase):
 
         if self.provider == KindModelProvider.FIREWORKS:
             completion_args["client"] = self.async_fireworks_client
+            # disable prompt caching
+            completion_args["prompt_cache_max_len"] = 0
 
         with self.instrumentator.watch(stream=stream) as watcher:
             suggestion = await acompletion(**completion_args)
@@ -441,6 +443,8 @@ class LiteLlmTextGenModel(TextGenModelBase):
 
         if self.provider == KindModelProvider.FIREWORKS:
             completion_args["client"] = self.async_fireworks_client
+            # disable prompt caching
+            completion_args["prompt_cache_max_len"] = 0
 
         return await acompletion(**completion_args)
 
