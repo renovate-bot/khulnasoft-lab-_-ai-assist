@@ -23,7 +23,6 @@ def test_container(mock_container: containers.DeclarativeContainer):
         completions.litellm_factory(model__name=KindLiteLlmModel.CODEGEMMA),
         CodeCompletions,
     )
-    assert isinstance(completions.litellm_vertex_codestral_factory(), CodeCompletions)
 
     assert isinstance(generations.vertex(), CodeGenerations)
     assert isinstance(

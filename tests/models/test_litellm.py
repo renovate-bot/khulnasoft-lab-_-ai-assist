@@ -14,26 +14,7 @@ from ai_gateway.models.litellm import (
     LiteLlmInternalServerError,
     LiteLlmTextGenModel,
 )
-from ai_gateway.models.vertex_text import KindVertexTextModel
 from ai_gateway.tracking import SnowplowEventContext
-
-
-@pytest.fixture
-def mock_vertex_ai_location():
-    with patch("ai_gateway.models.litellm.Config") as mock:
-        mock.return_value = Mock(vertex_text_model=Mock(location="mock-location"))
-
-        yield mock
-
-
-@pytest.fixture
-def mock_vertex_ai_location_in_europe():
-    with patch("ai_gateway.models.litellm.Config") as mock:
-        mock.return_value = Mock(
-            vertex_text_model=Mock(location="europe-mock-location")
-        )
-
-        yield mock
 
 
 class TestKindLiteLlmModel:
@@ -62,12 +43,6 @@ class TestKindLiteLlmModel:
         assert (
             KindLiteLlmModel.CODESTRAL.text_model(provider=KindModelProvider.MISTRALAI)
             == "text-completion-codestral/codestral"
-        )
-        assert (
-            KindVertexTextModel.CODESTRAL_2405.text_model(
-                provider=KindModelProvider.VERTEX_AI
-            )
-            == "vertex_ai/codestral@2405"
         )
 
 
@@ -577,21 +552,6 @@ class TestLiteLlmTextGenModel:
                 LiteLlmTextGenModel.from_model_name(name=model_name, api_key="api-key")
             assert str(exc.value) == "specifying custom models endpoint is disabled"
 
-        if provider == KindModelProvider.VERTEX_AI:
-            with pytest.raises(ValueError) as exc:
-                LiteLlmTextGenModel.from_model_name(name=model_name, endpoint=endpoint)
-            assert (
-                str(exc.value)
-                == "specifying api endpoint or key for vertex-ai provider is disabled"
-            )
-
-            with pytest.raises(ValueError) as exc:
-                LiteLlmTextGenModel.from_model_name(name=model_name, api_key="api-key")
-            assert (
-                str(exc.value)
-                == "specifying api endpoint or key for vertex-ai provider is disabled"
-            )
-
         if provider == KindModelProvider.FIREWORKS:
             with pytest.raises(ValueError) as exc:
                 LiteLlmTextGenModel.from_model_name(
@@ -944,119 +904,6 @@ class TestLiteLlmTextGenModel:
         assert str(ex.value) == expected_error_message
 
     @pytest.mark.asyncio
-    async def test_generate_vertex_codestral(
-        self,
-        mock_vertex_ai_location: Mock,
-        mock_litellm_acompletion: Mock,
-    ):
-        lite_llm_vertex_codestral_model = LiteLlmTextGenModel.from_model_name(
-            name=KindVertexTextModel.CODESTRAL_2405,
-            provider=KindModelProvider.VERTEX_AI,
-        )
-
-        output = await lite_llm_vertex_codestral_model.generate(
-            prefix="func hello(name){",
-            suffix="}",
-            temperature=0.7,
-            max_output_tokens=128,
-        )
-
-        mock_litellm_acompletion.assert_called_with(
-            model="vertex_ai/codestral@2405",
-            messages=[{"content": "func hello(name){", "role": Role.USER}],
-            suffix="}",
-            text_completion=True,
-            vertex_ai_location="us-central1",
-            max_tokens=128,
-            temperature=0.7,
-            top_p=0.95,
-            stream=False,
-            timeout=60.0,
-            stop=["\n\n", "\n+++++", "}"],
-        )
-
-        assert isinstance(output, TextGenModelOutput)
-        assert output.text == "Test text completion response"
-
-    @pytest.mark.asyncio
-    async def test_generate_vertex_codestral_in_europe(
-        self,
-        mock_vertex_ai_location_in_europe: Mock,
-        mock_litellm_acompletion: Mock,
-    ):
-        lite_llm_vertex_codestral_model = LiteLlmTextGenModel.from_model_name(
-            name=KindVertexTextModel.CODESTRAL_2405,
-            provider=KindModelProvider.VERTEX_AI,
-        )
-
-        await lite_llm_vertex_codestral_model.generate(
-            prefix="func hello(name){",
-            suffix="}",
-        )
-
-        _args, kwargs = mock_litellm_acompletion.call_args
-        assert kwargs["vertex_ai_location"] == "europe-west4"
-
-    @pytest.mark.asyncio
-    @pytest.mark.parametrize(
-        ("prefix", "suffix", "expected_stop_tokens"),
-        [
-            (
-                "func hello(name){",
-                "}",
-                ["\n\n", "\n+++++", "}"],
-            ),
-            (
-                "    func hello(name){",
-                "\n    }\n}",
-                ["\n\n", "\n+++++", "    }"],
-            ),
-            (
-                "func hello(name):",
-                "",
-                ["\n\n", "\n+++++"],
-            ),
-            (
-                "func hello(name):",
-                "\n    \n    \n    \n    \n",
-                ["\n\n", "\n+++++"],
-            ),
-            (
-                "    def hello(name)",
-                "\n    end\n  end",
-                ["\n\n", "\n+++++", "    end"],
-            ),
-            (
-                "    def hello(name)",
-                "\n\n    \n    \n    end\n  end",
-                ["\n\n", "\n+++++", "    end"],
-            ),
-        ],
-    )
-    async def test_generate_vertex_codestral_suffix(
-        self,
-        prefix,
-        suffix,
-        expected_stop_tokens,
-        mock_vertex_ai_location: Mock,
-        mock_litellm_acompletion: Mock,
-    ):
-        lite_llm_vertex_codestral_model = LiteLlmTextGenModel.from_model_name(
-            name=KindVertexTextModel.CODESTRAL_2405,
-            provider=KindModelProvider.VERTEX_AI,
-        )
-
-        await lite_llm_vertex_codestral_model.generate(
-            prefix=prefix,
-            suffix=suffix,
-            temperature=0.7,
-            max_output_tokens=128,
-        )
-
-        _args, kwargs = mock_litellm_acompletion.call_args
-        assert kwargs["stop"] == expected_stop_tokens
-
-    @pytest.mark.asyncio
     @pytest.mark.parametrize(
         (
             "model_name",
@@ -1078,13 +925,6 @@ class TestLiteLlmTextGenModel:
                 KindModelProvider.MISTRALAI,
                 True,
                 "http://codestral.local",
-                None,
-            ),
-            (
-                "codestral@2405",
-                KindModelProvider.VERTEX_AI,
-                True,
-                None,
                 None,
             ),
             (

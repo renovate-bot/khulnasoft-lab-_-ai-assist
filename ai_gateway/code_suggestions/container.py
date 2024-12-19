@@ -11,12 +11,9 @@ from ai_gateway.code_suggestions.processing import ModelEngineCompletions
 from ai_gateway.code_suggestions.processing.post.completions import (
     PostProcessor as PostProcessorCompletions,
 )
-from ai_gateway.code_suggestions.processing.post.completions import (
-    PostProcessorOperation,
-)
 from ai_gateway.code_suggestions.processing.pre import TokenizerTokenStrategy
 from ai_gateway.experimentation import experiment_registry_provider
-from ai_gateway.models import KindAnthropicModel, KindModelProvider, KindVertexTextModel
+from ai_gateway.models import KindAnthropicModel, KindVertexTextModel
 from ai_gateway.models.base_chat import ChatModelBase
 from ai_gateway.models.base_text import TextGenModelBase
 from ai_gateway.tokenizer import init_tokenizer
@@ -141,26 +138,6 @@ class ContainerCodeCompletions(containers.DeclarativeContainer):
         tokenization_strategy=providers.Factory(
             TokenizerTokenStrategy, tokenizer=tokenizer
         ),
-    )
-
-    litellm_vertex_codestral_factory = providers.Factory(
-        CodeCompletions,
-        model=providers.Factory(
-            litellm,
-            name=KindVertexTextModel.CODESTRAL_2405,
-            provider=KindModelProvider.VERTEX_AI,
-        ),
-        tokenization_strategy=providers.Factory(
-            TokenizerTokenStrategy, tokenizer=tokenizer
-        ),
-        post_processor=providers.Factory(
-            PostProcessorCompletions,
-            overrides={
-                PostProcessorOperation.FIX_END_BLOCK_ERRORS: PostProcessorOperation.FIX_END_BLOCK_ERRORS_WITH_COMPARISON,
-            },
-            extras=[PostProcessorOperation.STRIP_ASTERISKS],
-            exclude=config.excl_post_proc,
-        ).provider,
     )
 
     agent_factory = providers.Factory(
