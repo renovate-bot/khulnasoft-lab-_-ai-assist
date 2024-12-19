@@ -4,15 +4,15 @@ model:
   name: codestral
   params:
     model_class_provider: litellm
-    temperature: 0.95
+    temperature: 0.3
     max_tokens: 512
     max_retries: 1
 unit_primitives:
   - generate_code
 prompt_template:
   system: |
-    {% include 'code_suggestions/generations/jinja_template/self_hosted/system.jinja' %}
+    {% include 'code_suggestions/generations/jinja_template/self_hosted/system_codestral.jinja' %}
   user: |
-    {% include 'code_suggestions/generations/jinja_template/self_hosted/user.jinja' %}
+    {% include 'code_suggestions/generations/jinja_template/self_hosted/user_codestral.jinja' %}
 params:
   timeout: 60

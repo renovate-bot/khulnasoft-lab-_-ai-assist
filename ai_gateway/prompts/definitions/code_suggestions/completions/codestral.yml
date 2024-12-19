@@ -4,12 +4,14 @@ model:
   name: codestral
   params:
     model_class_provider: litellm
-    temperature: 0.95
-    max_tokens: 128
+    temperature: 0.32
+    max_tokens: 64
     max_retries: 1
 unit_primitives:
   - complete_code
 prompt_template:
+  system: |
+    {% include 'code_suggestions/completions/codestral_system.jinja' %}
   user: |
     <s>[SUFFIX]{{suffix}}[PREFIX]{{prefix}}
 params:

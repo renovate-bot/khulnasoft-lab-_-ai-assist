@@ -1,0 +1,16 @@
+Existing code: {{prefix}}
+
+{%- if instruction %}
+  {{instruction}}
+{%- else %}
+  Generate the best possible code based on instructions.
+{%- endif %}
+
+CRITICAL INSTRUCTIONS:
+
+1. Output only the requested code.
+2. Exclusion of all non-code content.
+3. Concise and deployable code.
+4. Return an empty response if necessary.
+
+Respond exclusively with code—avoid adding any human-readable content intros, explanations, closings or instructions.
