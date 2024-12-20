@@ -8,7 +8,6 @@ from sse_starlette.sse import AppStatus
 
 from ai_gateway.api.v4 import api_router
 from ai_gateway.api.v4.code.typing import StreamEvent
-from ai_gateway.feature_flags.context import current_feature_flag_context
 
 # Pytest runs these imported tests as part of this file.
 from tests.api.v3.test_v3_code import (  # pylint: disable=unused-import
@@ -64,8 +63,6 @@ class TestEditorContentCompletionStream:
             "prompt_components": [prompt_component],
         }
 
-        current_feature_flag_context.set({"flag_a", "flag_b"})
-
         response = mock_client.post(
             route,
             headers={
@@ -83,17 +80,12 @@ class TestEditorContentCompletionStream:
             "name": "claude-3-5-sonnet-20240620",
         }
 
-        expected_feature_flags = {"flag_a", "flag_b"}
-
         assert response.status_code == 200
         assert response.headers["content-type"] == "text/event-stream; charset=utf-8"
         assert response.headers["X-Streaming-Format"] == "sse"
 
         _assert_stream_sse_responses(
-            response.text,
-            mock_suggestions_output_text,
-            expected_model_metadata,
-            expected_feature_flags,
+            response.text, mock_suggestions_output_text, expected_model_metadata
         )
 
 
@@ -103,7 +95,6 @@ class TestEditorContentGenerationStream:
             "prompt_id",
             "model_provider",
             "expected_model_metadata",
-            "expected_feature_flags",
         ),
         [
             (
@@ -113,7 +104,6 @@ class TestEditorContentGenerationStream:
                     "engine": "vertex-ai",
                     "name": "code-bison@002",
                 },
-                {"flag_a", "flag_b"},
             ),
             (
                 None,
@@ -122,7 +112,6 @@ class TestEditorContentGenerationStream:
                     "engine": "anthropic",
                     "name": "claude-2.0",
                 },
-                {"flag_a", "flag_b"},
             ),
             (
                 "code_suggestions/generations",
@@ -131,7 +120,6 @@ class TestEditorContentGenerationStream:
                     "engine": "agent",
                     "name": "Claude 3 Code Generations Agent",
                 },
-                {"flag_a", "flag_b"},
             ),
         ],
     )
@@ -144,7 +132,6 @@ class TestEditorContentGenerationStream:
         prompt_id: Optional[str],
         model_provider: Optional[str],
         expected_model_metadata: dict,
-        expected_feature_flags: set,
     ):
         payload = {
             "file_name": "main.py",
@@ -165,8 +152,6 @@ class TestEditorContentGenerationStream:
             "prompt_components": [prompt_component],
         }
 
-        current_feature_flag_context.set({"flag_a", "flag_b"})
-
         response = mock_client.post(
             route,
             headers={
@@ -184,10 +169,7 @@ class TestEditorContentGenerationStream:
         assert response.headers["X-Streaming-Format"] == "sse"
 
         _assert_stream_sse_responses(
-            response.text,
-            mock_suggestions_output_text,
-            expected_model_metadata,
-            expected_feature_flags,
+            response.text, mock_suggestions_output_text, expected_model_metadata
         )
 
 
@@ -195,7 +177,6 @@ def _assert_stream_sse_responses(
     response_text: str,
     expected_suggestions_output_text: str,
     expected_model_metadata: dict,
-    expected_feature_flags: set,
 ):
     def _parse_sse_messages():
         parsed_list = []
@@ -213,10 +194,6 @@ def _assert_stream_sse_responses(
     assert start_message["event"] == StreamEvent.START
     assert start_message["data"]["metadata"]["model"] == expected_model_metadata
     assert start_message["data"]["metadata"]["timestamp"] > 0
-    assert (
-        set(start_message["data"]["metadata"]["enabled_feature_flags"])
-        == expected_feature_flags
-    )
 
     assert end_message["event"] == StreamEvent.END
     assert end_message["data"] is None

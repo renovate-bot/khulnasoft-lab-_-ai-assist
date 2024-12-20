@@ -1,7 +1,6 @@
 .semantic-release:
   image: node:20
   stage: release
-  when: manual
   before_script:
     - npm install -g semantic-release @semantic-release/gitlab
 
@@ -32,7 +31,6 @@ publish-dryrun:
 
 .docker-release:
   extends: .docker
-  when: manual
   script:
     - docker pull "${TARGET_IMAGE}"
     - docker tag "${TARGET_IMAGE}" "${RELEASE_VERSION}"

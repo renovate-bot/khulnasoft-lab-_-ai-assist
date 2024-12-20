@@ -14,7 +14,6 @@ include:
     GITLAB_DOCS_JSONL_EXPORT_PATH: "$CI_PROJECT_DIR/docs.jsonl"
     GITLAB_DOCS_WEB_ROOT_URL: "https://gitlab.com/help"
   needs: [build:ingest-image]
-  when: manual
 
 .ingest-dev:
   variables:
