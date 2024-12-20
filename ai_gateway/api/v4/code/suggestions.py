@@ -22,7 +22,6 @@ from ai_gateway.api.v4.code.typing import (
 )
 from ai_gateway.async_dependency_resolver import get_container_application
 from ai_gateway.code_suggestions import CodeSuggestionsChunk
-from ai_gateway.feature_flags.context import current_feature_flag_context
 from ai_gateway.prompts import BasePromptRegistry
 
 __all__ = [
@@ -52,7 +51,6 @@ async def handle_stream_sse(
                             engine=engine.model.metadata.engine,
                             name=engine.model.metadata.name,
                         ),
-                        enabled_feature_flags=current_feature_flag_context.get(),
                     ).model_dump(exclude_none=True)
                 },
             ).dump_with_json_data()

@@ -132,16 +132,12 @@ class SuggestionsResponse(BaseModel):
         lang: str
         tokens_consumption_metadata: Optional[TokensConsumptionMetadata] = None
 
-    class MetadataBase(BaseModel):
-        enabled_feature_flags: Optional[list[str]] = None
-
     id: str
     model: Model
     experiments: list[ExperimentTelemetry] = []
     object: str = "text_completion"
     created: int
     choices: list[Choice]
-    metadata: Optional[MetadataBase] = None
 
 
 class StreamSuggestionsResponse(StreamingResponse):
