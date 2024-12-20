@@ -51,6 +51,7 @@ from ai_gateway.code_suggestions.language_server import LanguageServerVersion
 from ai_gateway.code_suggestions.processing.base import ModelEngineOutput
 from ai_gateway.code_suggestions.processing.ops import lang_from_filename
 from ai_gateway.config import Config
+from ai_gateway.feature_flags.context import current_feature_flag_context
 from ai_gateway.instrumentators.base import TelemetryInstrumentator
 from ai_gateway.internal_events import InternalEventsClient
 from ai_gateway.models import KindAnthropicModel, KindModelProvider
@@ -222,6 +223,9 @@ async def completions(
             tokens_consumption_metadata=tokens_consumption_metadata,
         ),
         experiments=suggestions[0].metadata.experiments,
+        metadata=SuggestionsResponse.MetadataBase(
+            enabled_feature_flags=current_feature_flag_context.get(),
+        ),
         choices=choices,
     )
 
@@ -349,6 +353,9 @@ async def generations(
             engine=suggestion.model.engine,
             name=suggestion.model.name,
             lang=suggestion.lang,
+        ),
+        metadata=SuggestionsResponse.MetadataBase(
+            enabled_feature_flags=current_feature_flag_context.get(),
         ),
         choices=_generation_suggestion_choices(suggestion.text),
     )
