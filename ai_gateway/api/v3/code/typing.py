@@ -127,6 +127,7 @@ class ModelMetadata(BaseModel):
 class ResponseMetadataBase(BaseModel):
     model: Optional[ModelMetadata] = None
     timestamp: int
+    enabled_feature_flags: Optional[list[str]] = None
 
 
 class CompletionResponse(BaseModel):

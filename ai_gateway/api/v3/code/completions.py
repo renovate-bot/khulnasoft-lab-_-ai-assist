@@ -38,6 +38,7 @@ from ai_gateway.code_suggestions import (
 )
 from ai_gateway.config import Config
 from ai_gateway.container import ContainerApplication
+from ai_gateway.feature_flags.context import current_feature_flag_context
 from ai_gateway.models import KindModelProvider
 from ai_gateway.prompts import BasePromptRegistry
 from ai_gateway.structured_logging import get_request_logger
@@ -192,6 +193,7 @@ async def code_completion(
                 name=suggestions[0].model.name,
                 lang=suggestions[0].lang,
             ),
+            enabled_feature_flags=current_feature_flag_context.get(),
         ),
     )
 
@@ -280,6 +282,7 @@ async def code_generation(
                 name=suggestion.model.name,
                 lang=suggestion.lang,
             ),
+            enabled_feature_flags=current_feature_flag_context.get(),
         ),
     )
 

@@ -6,6 +6,7 @@ from fastapi.testclient import TestClient
 from gitlab_cloud_connector import CloudConnectorUser, UserClaims
 
 from ai_gateway.api.v3 import api_router
+from ai_gateway.feature_flags.context import current_feature_flag_context
 from ai_gateway.tracking import SnowplowEventContext
 
 __all__ = [
@@ -66,6 +67,7 @@ class TestEditorContentCompletion:
                             "name": "code-gecko",
                             "lang": "python",
                         },
+                        "enabled_feature_flags": ["flag_a", "flag_b"],
                     },
                 },
             ),
@@ -80,6 +82,7 @@ class TestEditorContentCompletion:
                             "name": "code-gecko",
                             "lang": "python",
                         },
+                        "enabled_feature_flags": ["flag_a", "flag_b"],
                     },
                 },
             ),
@@ -110,6 +113,8 @@ class TestEditorContentCompletion:
             "prompt_components": [prompt_component],
         }
 
+        current_feature_flag_context.set({"flag_a", "flag_b"})
+
         response = mock_client.post(
             route,
             headers={
@@ -131,6 +136,10 @@ class TestEditorContentCompletion:
         assert body["metadata"]["model"] == expected_response["metadata"]["model"]
 
         assert body["metadata"]["timestamp"] > 0
+
+        assert set(body["metadata"]["enabled_feature_flags"]) == set(
+            expected_response["metadata"]["enabled_feature_flags"]
+        )
 
         expected_snowplow_event = SnowplowEventContext(
             prefix_length=30,
@@ -386,6 +395,7 @@ class TestEditorContentGeneration:
                             "name": "code-gecko",
                             "lang": "python",
                         },
+                        "enabled_feature_flags": ["flag_a", "flag_b"],
                     },
                 },
             ),
@@ -402,6 +412,7 @@ class TestEditorContentGeneration:
                             "name": "code-gecko",
                             "lang": "python",
                         },
+                        "enabled_feature_flags": ["flag_a", "flag_b"],
                     },
                 },
             ),
@@ -431,6 +442,8 @@ class TestEditorContentGeneration:
             "prompt_components": [prompt_component],
         }
 
+        current_feature_flag_context.set({"flag_a", "flag_b"})
+
         response = mock_client.post(
             route,
             headers={
@@ -452,6 +465,10 @@ class TestEditorContentGeneration:
         assert body["metadata"]["model"] == expected_response["metadata"]["model"]
 
         assert body["metadata"]["timestamp"] > 0
+
+        assert set(body["metadata"]["enabled_feature_flags"]) == set(
+            expected_response["metadata"]["enabled_feature_flags"]
+        )
 
         expected_snowplow_event = SnowplowEventContext(
             prefix_length=30,
@@ -503,6 +520,7 @@ class TestEditorContentGeneration:
                             "name": "Claude 3 Code Generations Agent",
                             "lang": "python",
                         },
+                        "enabled_feature_flags": ["flag_a", "flag_b"],
                     },
                 },
             ),
@@ -519,6 +537,7 @@ class TestEditorContentGeneration:
                             "name": "Claude 3 Code Generations Agent",
                             "lang": "python",
                         },
+                        "enabled_feature_flags": ["flag_a", "flag_b"],
                     },
                 },
             ),
@@ -573,6 +592,8 @@ class TestEditorContentGeneration:
             ],
         }
 
+        current_feature_flag_context.set({"flag_a", "flag_b"})
+
         response = mock_client.post(
             route,
             headers={
@@ -594,6 +615,10 @@ class TestEditorContentGeneration:
         assert body["metadata"]["model"] == expected_response["metadata"]["model"]
 
         assert body["metadata"]["timestamp"] > 0
+
+        assert set(body["metadata"]["enabled_feature_flags"]) == set(
+            expected_response["metadata"]["enabled_feature_flags"]
+        )
 
         expected_snowplow_event = SnowplowEventContext(
             prefix_length=30,
