@@ -3,6 +3,11 @@
 GitLab AI Gateway is a standalone-service that will give access to AI features to all users of
 GitLab, no matter which instance they are using: self-managed, dedicated or GitLab.com.
 
+## Production Change Lock :christmas_tree:
+
+In according to global [GitLab Production Change Lock](https://handbook.gitlab.com/handbook/engineering/infrastructure/change-management/#recent-pcls)
+there will be no releases of AI Gateway from 2024-12-20 till 2025-01-06 
+
 ## API
 
 See [API](docs/api.md).
