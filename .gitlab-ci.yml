@@ -67,7 +67,7 @@ include:
       runway_service_id: ai-gateway-custom
       image: "$SELF_HOSTED_TARGET_IMAGE"
       runway_version: v3.43.3
-  - component: ${CI_SERVER_FQDN}/gitlab-org/components/danger-review/danger-review@1.4.1
+  - component: ${CI_SERVER_FQDN}/gitlab-org/components/danger-review/danger-review@2.0.0
     rules:
       - if: $CI_SERVER_HOST == "gitlab.com"
 
