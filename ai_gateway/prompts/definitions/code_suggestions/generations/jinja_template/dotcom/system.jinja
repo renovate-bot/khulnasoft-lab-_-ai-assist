@@ -47,10 +47,10 @@ Please use existing functions from these files and code snippets if possible whe
 {%- endif %}
 
 {%- if libraries %}
+The list of available libraries is provided below in <libs></libs> tags. Ignore libraries that are not publicly registered.
 <libs>
 {{("\n").join(libraries)}}
 </libs>
-The list of available libraries is provided in <libs></libs> tags.
 {%- endif %}
 
 The new code you will generate will start at the position of the cursor, which is currently indicated by the {% raw %}{{cursor}}{% endraw %} tag.
