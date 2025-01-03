@@ -153,6 +153,7 @@ class TestReActAgent:
                             Message(
                                 role=Role.USER,
                                 content="What's the title of this issue?",
+                                resource_content="Please use this information about identified issue",
                             ),
                         ],
                         agent_scratchpad=[],
@@ -175,6 +176,7 @@ class TestReActAgent:
                             Message(
                                 role=Role.USER,
                                 content="Summarize this Merge request",
+                                resource_content="Please use this information about identified issue",
                             ),
                         ],
                         agent_scratchpad=[],
@@ -216,6 +218,7 @@ class TestReActAgent:
                             Message(
                                 role=Role.USER,
                                 content="what's the description of this issue",
+                                resource_content="Please use this information about identified issue",
                             ),
                             Message(role=Role.ASSISTANT, content="PoC ReAct"),
                             Message(role=Role.USER, content="What's your name?"),
@@ -248,6 +251,7 @@ class TestReActAgent:
                             Message(
                                 role=Role.USER,
                                 content="Explain this issue",
+                                resource_content="Please use this information about identified issue",
                                 context=Context(
                                     type="issue", content="this issue is about Duo Chat"
                                 ),

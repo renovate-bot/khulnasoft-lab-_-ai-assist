@@ -90,3 +90,4 @@ class Message(BaseModel):
     context: Optional[Context] = None
     current_file: Optional[CurrentFile] = None
     additional_context: Optional[list[AdditionalContext]] = None
+    resource_content: Optional[str] = None
