@@ -1,6 +1,10 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
-  "extends": ["gitlab>gitlab-com/gl-infra/common-ci-tasks:renovate-common", ":semanticCommitTypeAll(chore)"],
+  "extends": [
+    "gitlab>gitlab-com/gl-infra/common-ci-tasks:renovate-common",
+    "gitlab>gitlab-com/gl-infra/platform/runway/runwayctl:renovate-runway",
+    ":semanticCommitTypeAll(chore)"
+  ],
   "reviewersFromCodeOwners": false,
   "reviewersSampleSize": 2,
   "additionalReviewers": [
