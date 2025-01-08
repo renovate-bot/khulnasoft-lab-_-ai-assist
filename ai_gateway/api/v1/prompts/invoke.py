@@ -3,6 +3,7 @@ from typing import Annotated, Any, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Request, status
 from gitlab_cloud_connector import GitLabFeatureCategory, WrongUnitPrimitives
+from poetry.core.constraints.version.exceptions import ParseConstraintError
 from pydantic import BaseModel, RootModel
 from starlette.responses import StreamingResponse
 
@@ -23,6 +24,7 @@ class PromptInputs(RootModel):
 
 class PromptRequest(BaseModel):
     inputs: PromptInputs
+    prompt_version: Optional[str] = None
     stream: Optional[bool] = False
     model_metadata: Optional[ModelMetadata] = None
 
@@ -40,7 +42,7 @@ async def get_prompt_registry():
     status_code=status.HTTP_200_OK,
 )
 @feature_category(GitLabFeatureCategory.AI_ABSTRACTION_LAYER)
-async def prompt(
+async def invoke(
     request: Request,
     prompt_request: PromptRequest,
     prompt_id: str,
@@ -49,8 +51,18 @@ async def prompt(
     internal_event_client: InternalEventsClient = Depends(get_internal_event_client),
 ):
     try:
+        # Create a dict of the params to pass to `prompt_registry.get_on_behalf`, excluding the ones the user didn't
+        # specify, so we respect the default in the method
+        registry_get_kwargs = prompt_request.model_dump(
+            include=["prompt_version", "model_metadata"], exclude_none=True
+        )
         prompt = prompt_registry.get_on_behalf(
-            current_user, prompt_id, prompt_request.model_metadata
+            current_user, prompt_id, **registry_get_kwargs
+        )
+    except ParseConstraintError:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail="Invalid version constraint",
         )
     except KeyError:
         raise HTTPException(

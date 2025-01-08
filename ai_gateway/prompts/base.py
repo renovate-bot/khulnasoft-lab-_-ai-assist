@@ -152,6 +152,7 @@ class BasePromptRegistry(ABC):
     def get(
         self,
         prompt_id: str,
+        prompt_version: str,
         model_metadata: Optional[ModelMetadata] = None,
     ) -> Prompt:
         pass
@@ -160,9 +161,10 @@ class BasePromptRegistry(ABC):
         self,
         user: StarletteUser,
         prompt_id: str,
+        prompt_version: str = "^1.0.0",
         model_metadata: Optional[ModelMetadata] = None,
     ) -> Prompt:
-        prompt = self.get(prompt_id, model_metadata)
+        prompt = self.get(prompt_id, prompt_version, model_metadata)
 
         for unit_primitive in prompt.unit_primitives:
             if not user.can(unit_primitive):
