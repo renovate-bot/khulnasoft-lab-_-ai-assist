@@ -50,7 +50,6 @@ class LocalPromptRegistry(BasePromptRegistry):
         self,
         prompt_id: str,
         model_metadata: Optional[ModelMetadata] = None,
-        **kwargs,
     ) -> Prompt:
         if (
             model_metadata
@@ -76,7 +75,6 @@ class LocalPromptRegistry(BasePromptRegistry):
             config,
             model_metadata,
             disable_streaming=self.disable_streaming,
-            **kwargs,
         )
 
     @classmethod

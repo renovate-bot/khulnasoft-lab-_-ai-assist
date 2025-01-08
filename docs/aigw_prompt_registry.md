@@ -75,10 +75,10 @@ registry = LocalPromptRegistry.from_local_yaml(
 messages = [{"role": "user", "content": "hello!"}]
 
 # Retrieve the prompt using the registry
-prompt = registry.get("chat/react", agent_inputs=ReActAgentInputs(messages=messages))
+prompt = registry.get("chat/react")
 
 # Invoke the prompt asynchronously
-response = await prompt.ainvoke({"messages": messages})
+response = await prompt.ainvoke(ReActAgentInputs(messages=messages))
 
 # Print the response
 print(response)

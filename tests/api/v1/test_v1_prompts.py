@@ -62,17 +62,6 @@ def prompt_template():
 
 
 @pytest.fixture
-def prompt(
-    prompt_class: Type[Prompt],
-    model_factory: TypeModelFactory,
-    prompt_config: PromptConfig,
-    model_metadata: ModelMetadata | None,
-    prompt_kwargs: dict,
-):
-    yield prompt_class(model_factory, prompt_config, model_metadata, **prompt_kwargs)
-
-
-@pytest.fixture
 def mock_registry_get(request, prompt_class: Optional[Type[Prompt]]):
     with patch("ai_gateway.prompts.registry.LocalPromptRegistry.get") as mock:
         if prompt_class:

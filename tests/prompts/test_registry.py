@@ -5,6 +5,7 @@ from typing import Sequence, Type, cast
 import pytest
 from langchain_anthropic import ChatAnthropic
 from langchain_community.chat_models import ChatLiteLLM
+from langchain_core.messages import AIMessage, HumanMessage, SystemMessage
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.prompts.chat import MessageLikeRepresentation
 from langchain_core.runnables import RunnableBinding, RunnableSequence
@@ -474,9 +475,11 @@ class TestLocalPromptRegistry:
             "libraries": [],
             "user_instruction": "// write a function to find min abs value from an array",
         }
-        expected_rendered_prompt = dedent(
-            """\
-            System: You are a tremendously accurate and skilled coding autocomplete agent. We want to generate new Go code inside the
+        expected_rendered_prompt = [
+            SystemMessage(
+                dedent(
+                    """\
+            You are a tremendously accurate and skilled coding autocomplete agent. We want to generate new Go code inside the
             file 'test.go' based on instructions from the user.
             Here are a few examples of successfully generated code:
             <examples>
@@ -524,11 +527,15 @@ class TestLocalPromptRegistry:
             6. Do not add any comments that duplicates any of the already existing comments, including the comment with instructions.
 
             Return new code enclosed in <new_code></new_code> tags. We will then insert this at the {{cursor}} position.
-            If you are not able to write code based on the given instructions return an empty result like <new_code></new_code>.
-            Human: // write a function to find min abs value from an array
-            AI: <new_code>"""
+            If you are not able to write code based on the given instructions return an empty result like <new_code></new_code>."""
+                )
+            ),
+            HumanMessage("// write a function to find min abs value from an array"),
+            AIMessage("<new_code>"),
+        ]
+        assert (
+            prompt.prompt_tpl.invoke(params).to_messages() == expected_rendered_prompt
         )
-        assert prompt.prompt_tpl.format(**params) == expected_rendered_prompt
         assert prompt.name == expected_name
         assert isinstance(prompt, expected_class)
         assert isinstance(prompt.model, expected_model_class)

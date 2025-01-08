@@ -6,10 +6,8 @@ import pytest
 from dependency_injector import containers, providers
 from pydantic import AnyUrl
 
-from ai_gateway.chat.agents.react import ReActAgent, ReActAgentInputs
-from ai_gateway.chat.agents.typing import Message
+from ai_gateway.chat.agents.react import ReActAgent
 from ai_gateway.config import Config
-from ai_gateway.models.base_chat import Role
 from ai_gateway.prompts import Prompt
 from ai_gateway.prompts.registry import LocalPromptRegistry
 from ai_gateway.prompts.typing import ModelMetadata
@@ -49,9 +47,6 @@ def test_container(mock_container: containers.DeclarativeContainer):
         prompt = registry.get(
             str(prompt_id),
             model_metadata=model_metadata,
-            agent_inputs=ReActAgentInputs(
-                messages=[Message(role=Role.USER, content="hi")]
-            ),
         )
         assert isinstance(prompt, Prompt)
         assert prompt.model.disable_streaming
