@@ -130,13 +130,6 @@ class KindVertexTextModel(StrEnum):
 
 
 class PalmCodeGenBaseModel(TextGenModelBase):
-    # Max number of tokens the model can handle
-    # Source: https://cloud.google.com/vertex-ai/docs/generative-ai/learn/models#foundation_models
-    MAX_MODEL_LEN = 2048
-    # If we assume that 4 characters per token, this gives us an upper bound of approximately
-    # how many characters should be in the prompt.
-    UPPER_BOUND_MODEL_CHARS = MAX_MODEL_LEN * 5
-
     def __init__(
         self,
         model_name: str,
@@ -238,6 +231,12 @@ class PalmCodeGenBaseModel(TextGenModelBase):
     def metadata(self) -> ModelMetadata:
         return self._metadata
 
+    @property
+    def input_token_limit(self) -> int:
+        # Max number of tokens the model can handle
+        # Source: https://cloud.google.com/vertex-ai/docs/generative-ai/learn/models#foundation_models
+        return 2_048
+
     @abstractmethod
     async def generate(
         self,
@@ -256,8 +255,6 @@ class PalmCodeGenBaseModel(TextGenModelBase):
 
 
 class PalmTextBisonModel(PalmCodeGenBaseModel):
-    MAX_MODEL_LEN = 8192
-
     def __init__(
         self,
         client: PredictionServiceAsyncClient,
@@ -268,6 +265,10 @@ class PalmTextBisonModel(PalmCodeGenBaseModel):
         **kwargs: Any,
     ):
         super().__init__(model_name, client, project, location, *args, **kwargs)
+
+    @property
+    def input_token_limit(self) -> int:
+        return 8_192
 
     async def generate(
         self,
@@ -310,8 +311,6 @@ class PalmTextBisonModel(PalmCodeGenBaseModel):
 
 
 class PalmCodeBisonModel(PalmCodeGenBaseModel):
-    MAX_MODEL_LEN = 4096
-
     def __init__(
         self,
         client: PredictionServiceAsyncClient,
@@ -322,6 +321,10 @@ class PalmCodeBisonModel(PalmCodeGenBaseModel):
         **kwargs: Any,
     ):
         super().__init__(model_name, client, project, location, *args, **kwargs)
+
+    @property
+    def input_token_limit(self) -> int:
+        return 4_096
 
     async def generate(
         self,
@@ -364,7 +367,6 @@ class PalmCodeBisonModel(PalmCodeGenBaseModel):
 
 
 class PalmCodeGeckoModel(PalmCodeGenBaseModel):
-    MAX_MODEL_LEN = 2048
     DEFAULT_STOP_SEQUENCES = ["\n\n"]
     PREFIX_MODEL_IDENTIFIER = "code-gecko"
 
@@ -378,6 +380,10 @@ class PalmCodeGeckoModel(PalmCodeGenBaseModel):
         **kwargs: Any,
     ):
         super().__init__(model_name, client, project, location, *args, **kwargs)
+
+    @property
+    def input_token_limit(self) -> int:
+        return 2_048
 
     async def generate(
         self,

@@ -53,7 +53,7 @@ class CodeGenerations:
             model.metadata.engine, model.metadata.name
         )
         self.prompt_builder = PromptBuilderPrefixBased(
-            model.MAX_MODEL_LEN, tokenization_strategy
+            model.input_token_limit, tokenization_strategy
         )
         self.tokenization_strategy = tokenization_strategy
         self.snowplow_instrumentator = snowplow_instrumentator

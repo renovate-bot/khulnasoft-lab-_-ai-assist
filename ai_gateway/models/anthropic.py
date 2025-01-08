@@ -84,9 +84,6 @@ class AnthropicModel(TextGenModelBase):
     Ref: https://docs.anthropic.com/claude/reference/migrating-from-text-completions-to-messages
     """
 
-    # Ref: https://docs.anthropic.com/claude/docs/models-overview#model-comparison
-    MAX_MODEL_LEN = 100_000
-
     # Ref: https://docs.anthropic.com/claude/reference/versioning
     DEFAULT_VERSION = "2023-06-01"
 
@@ -138,6 +135,11 @@ class AnthropicModel(TextGenModelBase):
     @property
     def metadata(self) -> ModelMetadata:
         return self._metadata
+
+    @property
+    def input_token_limit(self) -> int:
+        # Ref: https://docs.anthropic.com/en/docs/about-claude/models#legacy-model-comparison
+        return 100_000
 
     async def generate(
         self,
@@ -200,9 +202,6 @@ class AnthropicModel(TextGenModelBase):
 
 
 class AnthropicChatModel(ChatModelBase):
-    # Ref: https://docs.anthropic.com/claude/docs/models-overview#model-comparison
-    MAX_MODEL_LEN = 200_000
-
     # Ref: https://docs.anthropic.com/claude/reference/versioning
     DEFAULT_VERSION = "2023-06-01"
 
@@ -254,6 +253,11 @@ class AnthropicChatModel(ChatModelBase):
     @property
     def metadata(self) -> ModelMetadata:
         return self._metadata
+
+    @property
+    def input_token_limit(self) -> int:
+        # Ref: https://docs.anthropic.com/claude/docs/models-overview#model-comparison
+        return 200_000
 
     async def generate(
         self,

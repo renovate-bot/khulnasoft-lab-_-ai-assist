@@ -80,7 +80,7 @@ class TestLiteLlmChatModel:
     )
     def test_max_model_len(self, model_name: str, expected_limit: int):
         model = LiteLlmChatModel.from_model_name(name=model_name)
-        assert model.MAX_MODEL_LEN == expected_limit
+        assert model.input_token_limit == expected_limit
 
     @pytest.mark.parametrize(
         (
@@ -411,7 +411,7 @@ class TestLiteLlmTextGenModel:
     )
     def test_max_model_len(self, model_name: str, expected_limit: int):
         model = LiteLlmTextGenModel.from_model_name(name=model_name)
-        assert model.MAX_MODEL_LEN == expected_limit
+        assert model.input_token_limit == expected_limit
 
     @pytest.mark.parametrize(
         (

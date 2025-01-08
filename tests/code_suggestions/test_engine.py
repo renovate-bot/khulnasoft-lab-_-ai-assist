@@ -17,7 +17,6 @@ from ai_gateway.experimentation import ExperimentRegistry
 from ai_gateway.models import (
     ModelAPIError,
     ModelMetadata,
-    PalmCodeGenBaseModel,
     VertexAPIConnectionError,
     VertexAPIStatusError,
 )
@@ -126,13 +125,14 @@ def _side_effect_with_suffix(
     safety_attributes: SafetyAttributes,
 ):
     original_suffix = suffix
+    input_token_limit = 2_048  # the value of PalmCodeGenBaseModel.input_token_limit
 
     def _fn(prompt: str, suffix: str):
         assert original_suffix.startswith(suffix)
         assert (
             tokenization_strategy.estimate_length(prompt)[0]
             + tokenization_strategy.estimate_length(suffix)[0]
-            <= PalmCodeGenBaseModel.MAX_MODEL_LEN
+            <= input_token_limit
         )
 
         return [
@@ -613,14 +613,14 @@ async def test_model_engine_palm(
 
     if prompt_builder_metadata:
         max_imports_len = int(
-            text_gen_base_model.MAX_MODEL_LEN
+            text_gen_base_model.input_token_limit
             * ModelEngineCompletions.MAX_TOKENS_IMPORTS_PERCENT
         )
         assert 0 <= completion.metadata.imports.post.length_tokens <= max_imports_len
 
         components = completion.metadata.components
         body_len = (
-            text_gen_base_model.MAX_MODEL_LEN
+            text_gen_base_model.input_token_limit
             - completion.metadata.imports.post.length_tokens
         )
         max_suffix_len = int(
