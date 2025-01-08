@@ -15,7 +15,7 @@ from structlog.testing import capture_logs
 
 from ai_gateway.api.error_utils import capture_validation_errors
 from ai_gateway.api.v2 import api_router
-from ai_gateway.config import Config
+from ai_gateway.config import Config, ConfigModelEndpoints, ConfigModelKeys
 from ai_gateway.models.base_chat import Message, Role
 from ai_gateway.tracking.container import ContainerTracking
 from ai_gateway.tracking.instrumentator import SnowplowInstrumentator
@@ -44,6 +44,15 @@ def auth_user():
 def mock_config():
     config = Config()
     config.custom_models.enabled = True
+    config.model_keys = ConfigModelKeys(
+        fireworks_api_key="mock_fireworks_key",
+    )
+    config.model_endpoints = ConfigModelEndpoints(
+        fireworks_current_region_endpoint={
+            "endpoint": "https://fireworks.endpoint",
+            "identifier": "qwen2p5-coder-7b",
+        }
+    )
 
     yield config
 
@@ -513,6 +522,7 @@ class TestCodeCompletions:
         (
             "prompt_version",
             "prompt",
+            "context",
             "model_provider",
             "model_name",
             "model_endpoint",
@@ -528,6 +538,7 @@ class TestCodeCompletions:
             (
                 2,
                 "foo",
+                [],
                 "litellm",
                 "codegemma",
                 "http://localhost:4000/",
@@ -547,6 +558,7 @@ class TestCodeCompletions:
             (
                 2,
                 "foo",
+                [],
                 "litellm",
                 "codegemma",
                 "http://localhost:4000/",
@@ -566,6 +578,7 @@ class TestCodeCompletions:
             (
                 2,
                 "",
+                [],
                 "litellm",
                 "codegemma",
                 "http://localhost:4000/",
@@ -585,6 +598,7 @@ class TestCodeCompletions:
             (
                 2,
                 None,
+                [],
                 "litellm",
                 "codegemma",
                 "http://localhost:4000/",
@@ -604,9 +618,30 @@ class TestCodeCompletions:
             (
                 2,
                 "foo",
+                [],
                 "codestral",
                 "codestral",
                 "http://localhost:4000/",
+                "api-key",
+                None,
+                True,
+                False,
+                200,
+                [
+                    {
+                        "text": "test completion",
+                        "index": 0,
+                        "finish_reason": "length",
+                    }
+                ],
+            ),
+            (
+                2,
+                "foo",
+                [],
+                "fireworks_ai",
+                "qwen2p5-coder-7b",
+                "https://fireworks.endpoint",
                 "api-key",
                 None,
                 True,
@@ -627,8 +662,10 @@ class TestCodeCompletions:
         mock_client,
         mock_llm_text: Mock,
         mock_agent_model: Mock,
+        mock_config,
         prompt_version,
         prompt,
+        context,
         model_provider,
         model_name,
         model_endpoint,
@@ -657,6 +694,7 @@ class TestCodeCompletions:
                     "content_below_cursor": "\n",
                 },
                 "prompt": prompt,
+                "context": context,
                 "model_provider": model_provider,
                 "model_name": model_name,
                 "model_endpoint": model_endpoint,
@@ -672,6 +710,15 @@ class TestCodeCompletions:
         if want_status == 200:
             body = response.json()
             assert body["choices"] == want_choices
+
+        if model_provider == "fireworks_ai":
+            mock_llm_text.assert_called_with(
+                "foo",
+                "\n",
+                False,
+                snowplow_event_context=ANY,
+                max_output_tokens=64,
+            )
 
     @pytest.mark.parametrize(
         (
