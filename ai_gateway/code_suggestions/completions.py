@@ -136,7 +136,7 @@ class CodeCompletions:
         # In the future, we plan to completely drop CodeCompletionsLegacy and move its logic to CodeCompletions
         # Ref: https://gitlab.com/gitlab-org/modelops/applied-ml/code-suggestions/ai-assist/-/issues/296
         self.prompt_builder = PromptBuilderPrefixBased(
-            model.MAX_MODEL_LEN, tokenization_strategy
+            model.input_token_limit, tokenization_strategy
         )
 
     def _get_prompt(

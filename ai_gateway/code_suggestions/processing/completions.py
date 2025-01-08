@@ -313,7 +313,7 @@ class ModelEngineCompletions(ModelEngineBase):
     ) -> Prompt:
         imports = await self._get_imports(prefix, lang_id)
         prompt_len_imports_max = int(
-            self.model.MAX_MODEL_LEN * self.MAX_TOKENS_IMPORTS_PERCENT
+            self.model.input_token_limit * self.MAX_TOKENS_IMPORTS_PERCENT
         )
         prompt_len_imports = min(imports.total_length_tokens, prompt_len_imports_max)
 
@@ -323,7 +323,9 @@ class ModelEngineCompletions(ModelEngineBase):
         )  # max 1024 tokens
 
         prompt_len_body = (
-            self.model.MAX_MODEL_LEN - prompt_len_imports - prompt_len_func_signatures
+            self.model.input_token_limit
+            - prompt_len_imports
+            - prompt_len_func_signatures
         )
 
         experiments = []
@@ -353,7 +355,7 @@ class ModelEngineCompletions(ModelEngineBase):
         # Add code context
         if code_context:
             prompt_context_imports_max = int(
-                self.model.MAX_MODEL_LEN * self.MAX_TOKENS_CONTEXT_PERCENT
+                self.model.input_token_limit * self.MAX_TOKENS_CONTEXT_PERCENT
             )
             code_context_info = self._to_code_info(
                 code_context, lang_id, as_comments=False

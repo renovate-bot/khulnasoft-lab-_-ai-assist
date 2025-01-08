@@ -92,7 +92,10 @@ class ModelMetadata(NamedTuple):
 
 
 class ModelBase(ABC):
-    MAX_MODEL_LEN = 2048
+    @property
+    def input_token_limit(self) -> int:
+        # Default token limit
+        return 2_048
 
     @property
     def instrumentator(self) -> ModelRequestInstrumentator:

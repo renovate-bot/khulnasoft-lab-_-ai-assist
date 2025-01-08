@@ -1,6 +1,6 @@
 from contextlib import contextmanager
 from typing import Any, Type
-from unittest.mock import AsyncMock, MagicMock, Mock, call, patch
+from unittest.mock import AsyncMock, MagicMock, Mock, PropertyMock, call, patch
 
 import pytest
 
@@ -292,7 +292,7 @@ class TestCodeCompletions:
     @pytest.fixture(scope="class")
     def use_case(self):
         model = Mock(spec=TextGenModelBase)
-        model.MAX_MODEL_LEN = 2048
+        type(model).input_token_limit = PropertyMock(return_value=2_048)
 
         use_case = CodeCompletions(model, Mock(spec=TokenStrategyBase))
         use_case.instrumentator = InstrumentorMock(spec=TextGenModelInstrumentator)
@@ -303,7 +303,7 @@ class TestCodeCompletions:
     @pytest.fixture(scope="class")
     def completions_with_post_processing(self):
         model = Mock(spec=TextGenModelBase)
-        model.MAX_MODEL_LEN = 2048
+        type(model).input_token_limit = PropertyMock(return_value=2_048)
         model.generate = AsyncMock(
             return_value=TextGenModelOutput(
                 text="Unprocessed completion output",

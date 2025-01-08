@@ -1,7 +1,7 @@
 from contextlib import contextmanager
 from pathlib import Path
 from typing import Any, AsyncIterator, Optional, Type
-from unittest.mock import AsyncMock, Mock, patch
+from unittest.mock import AsyncMock, Mock, PropertyMock, patch
 
 import pytest
 from fastapi import FastAPI
@@ -23,10 +23,7 @@ from ai_gateway.code_suggestions.processing.typing import (
 from ai_gateway.config import Config
 from ai_gateway.container import ContainerApplication
 from ai_gateway.experimentation.base import ExperimentTelemetry
-from ai_gateway.models.base import (
-    ModelMetadata,
-    TokensConsumptionMetadata,
-)
+from ai_gateway.models.base import ModelMetadata, TokensConsumptionMetadata
 from ai_gateway.models.base_text import (
     TextGenModelBase,
     TextGenModelChunk,
@@ -55,8 +52,7 @@ def tpl_assets_codegen_dir(assets_dir) -> Path:
 @pytest.fixture
 def text_gen_base_model():
     model = Mock(spec=TextGenModelBase)
-    model.MAX_MODEL_LEN = 1_000
-    model.UPPER_BOUND_MODEL_CHARS = model.MAX_MODEL_LEN * 5
+    type(model).input_token_limit = PropertyMock(return_value=1_000)
     return model
 
 

@@ -126,24 +126,17 @@ MODEL_SPECIFICATIONS = {
 }
 
 
+INPUT_TOKENS_LIMIT = {
+    KindLiteLlmModel.CODEGEMMA: 8_192,
+    KindLiteLlmModel.CODELLAMA: 16_384,
+}
+DEFAULT_TOKEN_LIMIT = 32_768
+
+
 class LiteLlmChatModel(ChatModelBase):
     @property
-    def MAX_MODEL_LEN(self):  # pylint: disable=invalid-name
-        codegemma_models = {
-            KindLiteLlmModel.CODEGEMMA,
-        }
-
-        codelama_models = {
-            KindLiteLlmModel.CODELLAMA,
-        }
-
-        if self.model_name in codegemma_models:
-            return 8_192
-
-        if self.model_name in codelama_models:
-            return 16_384
-
-        return 32_768
+    def input_token_limit(self) -> int:
+        return INPUT_TOKENS_LIMIT.get(self.model_name, DEFAULT_TOKEN_LIMIT)
 
     def __init__(
         self,
@@ -289,14 +282,8 @@ class LiteLlmChatModel(ChatModelBase):
 
 class LiteLlmTextGenModel(TextGenModelBase):
     @property
-    def MAX_MODEL_LEN(self):  # pylint: disable=invalid-name
-        if self.model_name == KindLiteLlmModel.CODEGEMMA:
-            return 8_192
-
-        if self.model_name == KindLiteLlmModel.CODELLAMA:
-            return 16_384
-
-        return 32_768
+    def input_token_limit(self) -> int:
+        return INPUT_TOKENS_LIMIT.get(self.model_name, DEFAULT_TOKEN_LIMIT)
 
     def __init__(
         self,

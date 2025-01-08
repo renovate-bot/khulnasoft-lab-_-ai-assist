@@ -1,6 +1,6 @@
 from contextlib import contextmanager
 from typing import Any, AsyncIterator
-from unittest.mock import AsyncMock, MagicMock, Mock, call, patch
+from unittest.mock import AsyncMock, MagicMock, Mock, PropertyMock, call, patch
 
 import pytest
 from snowplow_tracker import Snowplow
@@ -49,7 +49,7 @@ class TestCodeGeneration:
     @pytest.fixture(scope="class")
     def use_case(self):
         model = Mock(spec=TextGenModelBase)
-        model.MAX_MODEL_LEN = 2048
+        type(model).input_token_limit = PropertyMock(return_value=2_048)
         tokenization_strategy_mock = Mock(spec=TokenStrategyBase)
         tokenization_strategy_mock.estimate_length = Mock(return_value=[1, 2])
         prompt_builder_mock = Mock(spec=PromptBuilderBase)
