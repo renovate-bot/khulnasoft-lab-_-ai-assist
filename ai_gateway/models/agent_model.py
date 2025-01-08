@@ -1,4 +1,4 @@
-from typing import Any, AsyncIterator
+from typing import Any, AsyncIterator, Optional
 
 from ai_gateway.models.base import ModelMetadata
 from ai_gateway.models.base_text import (
@@ -43,8 +43,10 @@ class AgentModel(TextGenModelBase):
 
         response = await self.prompt.ainvoke(params)
 
+        response_content = self._format_response_content(response.content)
+
         return TextGenModelOutput(
-            text=response.content,
+            text=response_content,
             # Give a high value, the model doesn't return scores.
             score=10**5,
             safety_attributes=SafetyAttributes(),
@@ -55,4 +57,11 @@ class AgentModel(TextGenModelBase):
         params: dict,
     ) -> AsyncIterator[TextGenModelChunk]:
         async for chunk in self.prompt.astream(params):
-            yield TextGenModelChunk(text=chunk.content)
+            chunk_content = self._format_response_content(chunk.content)
+            yield TextGenModelChunk(text=chunk_content)
+
+    def _format_response_content(self, text: Optional[str]) -> Optional[str]:
+        if text and self.prompt.model_name == "mixtral":
+            return text.replace("\\_", "_")
+
+        return text
