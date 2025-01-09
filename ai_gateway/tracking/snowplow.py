@@ -21,7 +21,7 @@ class SnowplowClientConfiguration:
     endpoint: str
     namespace: str = "gl"
     app_id: str = "gitlab_ai_gateway"
-    batch_size: int = 10
+    batch_size: int = 1
     thread_count: int = 1
 
 
