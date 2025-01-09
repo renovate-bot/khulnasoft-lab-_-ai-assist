@@ -51,13 +51,11 @@ async def invoke(
     internal_event_client: InternalEventsClient = Depends(get_internal_event_client),
 ):
     try:
-        # Create a dict of the params to pass to `prompt_registry.get_on_behalf`, excluding the ones the user didn't
-        # specify, so we respect the default in the method
-        registry_get_kwargs = prompt_request.model_dump(
-            include=["prompt_version", "model_metadata"], exclude_none=True
-        )
         prompt = prompt_registry.get_on_behalf(
-            current_user, prompt_id, **registry_get_kwargs
+            current_user,
+            prompt_id,
+            prompt_request.prompt_version,
+            prompt_request.model_metadata,
         )
     except ParseConstraintError:
         raise HTTPException(

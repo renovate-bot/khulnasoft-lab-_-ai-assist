@@ -132,12 +132,12 @@ class TestPrompt:
                 (
                     "test",
                     "^1.0.0",
-                    {
-                        "name": "mistral",
-                        "provider": "litellm",
-                        "endpoint": AnyUrl("http://localhost:4000"),
-                        "api_key": "token",
-                    },
+                    ModelMetadata(
+                        name="mistral",
+                        provider="litellm",
+                        endpoint=AnyUrl("http://localhost:4000"),
+                        api_key="token",
+                    ),
                 ),
                 200,
                 "Hi John!",
