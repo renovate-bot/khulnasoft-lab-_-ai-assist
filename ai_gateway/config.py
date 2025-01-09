@@ -81,7 +81,7 @@ class ConfigInternalEvent(BaseModel):
     app_id: str = "gitlab_ai_gateway"
     namespace: str = "gl"
     endpoint: Optional[str] = None
-    batch_size: Optional[int] = 10
+    batch_size: Optional[int] = 1
     thread_count: Optional[int] = 1
 
 
@@ -90,7 +90,7 @@ class ConfigInternalEvent(BaseModel):
 class ConfigSnowplow(ConfigInternalEvent):
     enabled: bool = False
     endpoint: Optional[str] = None
-    batch_size: Optional[int] = 10
+    batch_size: Optional[int] = 1
     thread_count: Optional[int] = 1
 
 
