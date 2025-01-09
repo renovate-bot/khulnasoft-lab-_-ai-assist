@@ -1,6 +1,7 @@
 import time
 from typing import Annotated
 
+from dependency_injector import providers
 from dependency_injector.providers import Factory
 from fastapi import APIRouter, Depends, HTTPException, Request, status
 from gitlab_cloud_connector import GitLabFeatureCategory, GitLabUnitPrimitive
@@ -30,6 +31,62 @@ from ai_gateway.structured_logging import get_request_logger
 router = APIRouter()
 
 request_log = get_request_logger("search")
+
+
+def estimate_token_count(text: str) -> int:
+    """Estimate the number of tokens in a given text (approx: 1.4 x word count)."""
+    return int(len(text.split()) * 1.4)
+
+
+def limit_search_results(response, max_tokens: int) -> tuple[list[SearchResult], int]:
+    """Limit search results based on a maximum token count."""
+    token_count = 0
+    results = []
+
+    for result in response:
+        tokens = estimate_token_count(result["content"])
+        if token_count + tokens > max_tokens:
+            break
+        token_count += tokens
+        results.append(
+            {
+                "id": result["id"],
+                "content": result["content"],
+                "metadata": result["metadata"],
+            }
+        )
+    search_results = [
+        SearchResult(
+            id=res["id"],
+            content=res["content"],
+            metadata=res["metadata"],
+        )
+        for res in results
+    ]
+
+    return search_results, token_count
+
+
+def log_search_results(
+    custom_models_enabled, search_params, response, results, token_count=None
+):
+    """Log details of the search results."""
+    log_data = {
+        "search_params": search_params,
+        "results_metadata": [res.metadata for res in results],
+        "total_results": len(response),
+        "filtered_results": len(results),
+    }
+
+    if custom_models_enabled:
+        log_data.update(
+            {
+                "custom_models_enabled": custom_models_enabled,
+                "total_tokens": token_count,
+            }
+        )
+
+    request_log.info("Search completed", **log_data)
 
 
 @router.post(
@@ -65,18 +122,24 @@ async def docs(
     searcher = search_factory()
 
     response = await searcher.search_with_retry(**search_params)
+    config = providers.Configuration(strict=True)
+    custom_models_enabled = config.custom_models.enabled
 
-    results = [
-        SearchResult(
-            id=result["id"], content=result["content"], metadata=result["metadata"]
-        )
-        for result in response
-    ]
+    if custom_models_enabled:
+        results, token_count = limit_search_results(response, max_tokens=8000)
+    else:
+        results = [
+            SearchResult(
+                id=res["id"],
+                content=res["content"],
+                metadata=res["metadata"],
+            )
+            for res in response
+        ]
+        token_count = None
 
-    request_log.info(
-        "Search completed",
-        search_params=search_params,
-        results_metadata=[result.metadata for result in results],
+    log_search_results(
+        custom_models_enabled, search_params, response, results, token_count
     )
 
     return SearchResponse(
