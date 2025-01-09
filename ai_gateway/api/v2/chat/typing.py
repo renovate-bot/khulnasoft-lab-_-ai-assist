@@ -17,7 +17,7 @@ class ReActAgentScratchpad(BaseModel):
         thought: str
         tool: str
         tool_input: str
-        observation: str = ""
+        observation: str
 
     agent_type: Literal["react"]
     steps: list[AgentStep]
