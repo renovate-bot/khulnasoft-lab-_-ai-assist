@@ -51,6 +51,7 @@ access_logger = structlog.stdlib.get_logger("api.access")
 X_GITLAB_REALM_HEADER = "X-Gitlab-Realm"
 X_GITLAB_INSTANCE_ID_HEADER = "X-Gitlab-Instance-Id"
 X_GITLAB_GLOBAL_USER_ID_HEADER = "X-Gitlab-Global-User-Id"
+X_GITLAB_TEAM_MEMBER_HEADER = "X-Gitlab-Is-Team-Member"
 X_GITLAB_HOST_NAME_HEADER = "X-Gitlab-Host-Name"
 X_GITLAB_VERSION_HEADER = "X-Gitlab-Version"
 X_GITLAB_SAAS_DUO_PRO_NAMESPACE_IDS_HEADER = "X-Gitlab-Saas-Duo-Pro-Namespace-Ids"
@@ -359,6 +360,7 @@ class InternalEventMiddleware:
             host_name=request.headers.get(X_GITLAB_HOST_NAME_HEADER),
             instance_version=request.headers.get(X_GITLAB_VERSION_HEADER),
             global_user_id=request.headers.get(X_GITLAB_GLOBAL_USER_ID_HEADER),
+            is_gitlab_team_member=request.headers.get(X_GITLAB_TEAM_MEMBER_HEADER),
             feature_enabled_by_namespace_ids=feature_enabled_by_namespace_ids,
             context_generated_at=datetime.now().isoformat(),
             correlation_id=correlation_id.get(),
