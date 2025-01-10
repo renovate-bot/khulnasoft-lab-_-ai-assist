@@ -60,13 +60,13 @@ include:
     inputs:
       runway_service_id: ai-gateway
       image: "$CI_REGISTRY_IMAGE/model-gateway:${CI_COMMIT_SHORT_SHA}"
-      runway_version: v3.43.3
+      runway_version: v3.53.0
   - project: "gitlab-com/gl-infra/platform/runway/runwayctl"
     file: "ci-tasks/service-project/runway.yml"
     inputs:
       runway_service_id: ai-gateway-custom
       image: "$SELF_HOSTED_TARGET_IMAGE"
-      runway_version: v3.43.3
+      runway_version: v3.53.0
   - component: ${CI_SERVER_FQDN}/gitlab-org/components/danger-review/danger-review@2.0.0
     rules:
       - if: $CI_SERVER_HOST == "gitlab.com"
