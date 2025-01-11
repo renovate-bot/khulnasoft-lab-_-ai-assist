@@ -28,6 +28,10 @@ def get_container_application(
     return container
 
 
+async def get_config():
+    yield get_container_application().config
+
+
 async def get_chat_anthropic_claude_factory_provider():
     yield get_container_application().chat.anthropic_claude_factory
 

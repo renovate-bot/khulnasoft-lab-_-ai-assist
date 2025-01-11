@@ -20,8 +20,9 @@ from ai_gateway.api.v4.code.typing import (
     StreamSSEMessage,
     StreamSuggestionChunk,
 )
-from ai_gateway.async_dependency_resolver import get_container_application
+from ai_gateway.async_dependency_resolver import get_config, get_container_application
 from ai_gateway.code_suggestions import CodeSuggestionsChunk
+from ai_gateway.config import Config
 from ai_gateway.prompts import BasePromptRegistry
 
 __all__ = [
@@ -89,11 +90,13 @@ async def suggestions(
     payload: CompletionRequest,
     current_user: Annotated[StarletteUser, Depends(get_current_user)],
     prompt_registry: Annotated[BasePromptRegistry, Depends(get_prompt_registry)],
+    config: Annotated[Config, Depends(get_config)],
 ):
     return await v3_code_suggestions(
         request=request,
         payload=payload,
         current_user=current_user,
         prompt_registry=prompt_registry,
+        config=config,
         stream_handler=handle_stream_sse,
     )
