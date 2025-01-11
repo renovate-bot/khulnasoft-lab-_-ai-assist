@@ -1,4 +1,4 @@
-lefthook 1.10.1 # datasource=github-releases depName=evilmartians/lefthook
+lefthook 1.10.3 # datasource=github-releases depName=evilmartians/lefthook
 python 3.11.11 # datasource=github-tags depName=python/cpython
 gcloud 428.0.0 # datasource=github-tags depName=GoogleCloudPlatform/cloud-sdk-docker
 poetry 1.8.5 # datasource=pypi depName=poetry
