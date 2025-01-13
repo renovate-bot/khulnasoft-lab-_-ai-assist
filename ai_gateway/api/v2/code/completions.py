@@ -36,6 +36,7 @@ from ai_gateway.async_dependency_resolver import (
     get_code_suggestions_generations_anthropic_factory_provider,
     get_code_suggestions_generations_litellm_factory_provider,
     get_code_suggestions_generations_vertex_provider,
+    get_config,
     get_container_application,
     get_internal_event_client,
     get_snowplow_instrumentator,
@@ -98,6 +99,7 @@ async def completions(
     payload: CompletionsRequestWithVersion,
     current_user: Annotated[StarletteUser, Depends(get_current_user)],
     prompt_registry: Annotated[BasePromptRegistry, Depends(get_prompt_registry)],
+    config: Annotated[Config, Depends(get_config)],
     completions_legacy_factory: Factory[CodeCompletionsLegacy] = Depends(
         get_code_suggestions_completions_vertex_legacy_provider
     ),
@@ -137,7 +139,7 @@ async def completions(
             suffix=payload.current_file.content_below_cursor,
             language=language_name,
             global_user_id=current_user.global_user_id,
-            region=_get_gcp_location(),
+            region=config.google_cloud_platform.location(),
         )
         snowplow_instrumentator.watch(SnowplowEvent(context=snowplow_event_context))
     except Exception as e:
@@ -234,6 +236,7 @@ async def generations(
     payload: GenerationsRequestWithVersion,
     current_user: Annotated[StarletteUser, Depends(get_current_user)],
     prompt_registry: Annotated[BasePromptRegistry, Depends(get_prompt_registry)],
+    config: Annotated[Config, Depends(get_config)],
     generations_vertex_factory: Factory[CodeGenerations] = Depends(
         get_code_suggestions_generations_vertex_provider
     ),
@@ -278,7 +281,7 @@ async def generations(
             suffix=payload.current_file.content_below_cursor,
             language=language_name,
             global_user_id=current_user.global_user_id,
-            region=_get_gcp_location(),
+            region=config.google_cloud_platform.location(),
         )
         snowplow_instrumentator.watch(SnowplowEvent(context=snowplow_event_context))
     except Exception as e:
@@ -483,10 +486,6 @@ def _completion_suggestion_choices(
 
 def _generation_suggestion_choices(text: str) -> list:
     return [SuggestionsResponse.Choice(text=text)] if text else []
-
-
-def _get_gcp_location():
-    return Config().google_cloud_platform.location
 
 
 async def _handle_stream(

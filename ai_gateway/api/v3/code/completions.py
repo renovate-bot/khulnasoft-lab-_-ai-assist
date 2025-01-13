@@ -27,7 +27,7 @@ from ai_gateway.api.v3.code.typing import (
     StreamModelEngine,
     StreamSuggestionsResponse,
 )
-from ai_gateway.async_dependency_resolver import get_container_application
+from ai_gateway.async_dependency_resolver import get_config, get_container_application
 from ai_gateway.code_suggestions import (
     CodeCompletions,
     CodeCompletionsLegacy,
@@ -77,12 +77,14 @@ async def completions(
     payload: CompletionRequest,
     current_user: Annotated[StarletteUser, Depends(get_current_user)],
     prompt_registry: Annotated[BasePromptRegistry, Depends(get_prompt_registry)],
+    config: Annotated[Config, Depends(get_config)],
 ):
     return await code_suggestions(
         request=request,
         payload=payload,
         current_user=current_user,
         prompt_registry=prompt_registry,
+        config=config,
     )
 
 
@@ -93,6 +95,7 @@ async def code_suggestions(
     payload: CompletionRequest,
     current_user: StarletteUser,
     prompt_registry: BasePromptRegistry,
+    config: Config,
     stream_handler: StreamHandler = handle_stream,
 ):
     if not current_user.can(
@@ -121,7 +124,7 @@ async def code_suggestions(
         suffix=component.payload.content_below_cursor,
         language=component.payload.language_identifier,
         global_user_id=current_user.global_user_id,
-        region=_get_gcp_location(),
+        region=config.google_cloud_platform.location(),
     )
     if component.type == CodeEditorComponents.COMPLETION:
         return await code_completion(
@@ -282,7 +285,3 @@ async def code_generation(
             ),
         ),
     )
-
-
-def _get_gcp_location():
-    return Config().google_cloud_platform.location
