@@ -20,7 +20,7 @@ numpy = "^1.24.1"
 python-dotenv = "^1.0.0"
 fastapi-health = "^0.4.0"
 google-cloud-aiplatform = "^1.36.4"
-structlog = "^24.0.0"
+structlog = "^25.0.0"
 asgi-correlation-id = "^4.1.0"
 prometheus-fastapi-instrumentator = "^7.0.0"
 python-jose = {extras = ["cryptography"], version = "^3.3.0"}
