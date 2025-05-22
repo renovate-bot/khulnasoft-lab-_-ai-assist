@@ -1,7 +1,7 @@
 include:
   # see https://gitlab.com/gitlab-com/gl-infra/common-ci-tasks/-/blob/main/oidc.md
   - project: 'gitlab-com/gl-infra/common-ci-tasks'
-    ref: v2.49.1 # renovate:managed
+    ref: v2.77 # renovate:managed
     file: 'oidc.yml'
 
 .ingest-base:
